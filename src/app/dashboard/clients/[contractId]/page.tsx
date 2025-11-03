@@ -634,9 +634,16 @@ function SectorDashboard() {
     ];
 
     const incidents = [
-        { id: 'INC-005', type: 'Não Conformidade', description: 'Uso incorreto de EPI', date: '2024-07-15' },
-        { id: 'INC-004', type: 'Incidente', description: 'Quase acidente com empilhadeira', date: '2024-06-28' },
+        { id: 'INC-005', type: 'Não Conformidade', description: 'Uso incorreto de EPI', date: '2024-07-15', status: 'Em Análise' },
+        { id: 'INC-004', type: 'Incidente', description: 'Quase acidente com empilhadeira', date: '2024-06-28', status: 'Concluído' },
     ];
+
+    const statusVariant: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
+        'Em Análise': 'default',
+        'Aberto': 'default',
+        'Pendente': 'secondary',
+        'Concluído': 'outline',
+    };
 
     return (
         <div className="space-y-6">
@@ -724,9 +731,61 @@ function SectorDashboard() {
                     </CardContent>
                 </Card>
                  <Card>
-                    <CardHeader>
-                        <CardTitle>Últimos Registros</CardTitle>
-                        <CardDescription>Histórico de incidentes, eventos e não conformidades.</CardDescription>
+                    <CardHeader className="flex items-center justify-between">
+                      <div>
+                        <CardTitle>Registros de Eventos</CardTitle>
+                        <CardDescription>Incidentes, não conformidades e acidentes.</CardDescription>
+                      </div>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button size="sm" className="h-8 gap-1">
+                            <PlusCircle className="h-3.5 w-3.5" />
+                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                              Adicionar Registro
+                            </span>
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Novo Registro de Evento</DialogTitle>
+                            <DialogDescription>
+                              Selecione o tipo e descreva a ocorrência.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <form className="grid gap-4 py-4">
+                            <div className="grid gap-2">
+                              <Label htmlFor="event-type">Tipo de Evento</Label>
+                              <Select>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione o tipo" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="incident">Incidente</SelectItem>
+                                  <SelectItem value="non-conformity">Não Conformidade</SelectItem>
+                                  <SelectItem value="work-accident">Acidente de Trabalho</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="event-description">Descrição da Ocorrência</Label>
+                                <Textarea id="event-description" placeholder="Descreva o que aconteceu, onde, quando e quem estava envolvido." />
+                            </div>
+                             <div className="grid gap-2">
+                                <Label htmlFor="event-status">Status Inicial</Label>
+                                <Select defaultValue="open">
+                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="open">Aberto</SelectItem>
+                                        <SelectItem value="in-analysis">Em Análise</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                          </form>
+                          <DialogFooter>
+                            <Button type="submit">Salvar Registro</Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
                     </CardHeader>
                     <CardContent>
                          <Table>
@@ -735,6 +794,8 @@ function SectorDashboard() {
                                     <TableHead>ID</TableHead>
                                     <TableHead>Tipo</TableHead>
                                     <TableHead>Data</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Acompanhamento</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -743,6 +804,10 @@ function SectorDashboard() {
                                     <TableCell className="font-medium">{inc.id}</TableCell>
                                     <TableCell>{inc.type}</TableCell>
                                     <TableCell>{inc.date}</TableCell>
+                                    <TableCell><Badge variant={statusVariant[inc.status as keyof typeof statusVariant]}>{inc.status}</Badge></TableCell>
+                                    <TableCell className="text-center">
+                                       <Button variant="outline" size="sm">Ver</Button>
+                                    </TableCell>
                                 </TableRow>
                                 ))}
                             </TableBody>
@@ -1015,11 +1080,11 @@ function ContractedServicesDashboard() {
 
 function PriceTableDashboard() {
   const clientExams = [
-    { code: '0201', name: 'Avaliação Clínica Ocupacional', price: 'R$ 48,00', catalogPrice: 'R$ 50,00' },
-    { code: '0211', name: 'Avaliação da acuidade visual', price: 'R$ 35,00', catalogPrice: 'R$ 35,00' },
-    { code: 'N/A', name: 'Avaliação Psicossocial', price: 'R$ 145,00', catalogPrice: 'R$ 150,00' },
-    { code: '0212', name: 'Exame oftalmológico', price: 'R$ 190,00', catalogPrice: 'R$ 200,00' },
-    { code: '0215', name: 'Glicemia', price: 'R$ 25,00', catalogPrice: 'R$ 25,00' },
+    { code: '0201', name: 'Avaliação Clínica Ocupacional', price: 'R$ 48,00' },
+    { code: '0211', name: 'Avaliação da acuidade visual', price: 'R$ 35,00' },
+    { code: 'N/A', name: 'Avaliação Psicossocial', price: 'R$ 145,00' },
+    { code: '0212', name: 'Exame oftalmológico', price: 'R$ 190,00' },
+    { code: '0215', name: 'Glicemia', price: 'R$ 25,00' },
   ];
 
   return (
