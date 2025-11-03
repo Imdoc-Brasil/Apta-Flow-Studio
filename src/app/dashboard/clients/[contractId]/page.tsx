@@ -29,7 +29,8 @@ export default function ClientDetailsPage({
 }: {
   params: { contractId: string };
 }) {
-  const client = getClientById(params.contractId);
+  const { contractId } = params;
+  const client = getClientById(contractId);
 
   if (!client) {
     return (
