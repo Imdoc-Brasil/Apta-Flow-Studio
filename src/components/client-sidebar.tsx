@@ -23,6 +23,7 @@ import {
   ChevronRight,
   ClipboardCheck,
   CalendarCheck,
+  Network,
 } from 'lucide-react';
 import {
   SidebarMenu,
@@ -42,6 +43,7 @@ export function ClientSidebar() {
   const params = useParams();
   const contractId = params.contractId as string;
   const [isSstOpen, setIsSstOpen] = useState(false);
+  const [isEstruturaOpen, setIsEstruturaOpen] = useState(false);
 
   if (!contractId) {
     return null; // Don't render sidebar on the main clients list page
@@ -52,13 +54,16 @@ export function ClientSidebar() {
   const mainNavItems = [
     { href: `${basePath}/info`, label: 'Informações', icon: Info },
     { href: `${basePath}/billing`, label: 'Faturamento', icon: CreditCard },
+    { href: `${basePath}/events`, label: 'Gestão de Eventos', icon: Siren },
+    { href: `${basePath}/services`, label: 'Serviços', icon: ListTodo },
+    { href: `${basePath}/prices`, label: 'Preços', icon: DollarSign },
+  ];
+
+  const estruturaNavItems = [
     { href: `${basePath}/units`, label: 'Unidades', icon: Building },
     { href: `${basePath}/sectors`, label: 'Setores', icon: HeartPulse },
     { href: `${basePath}/roles`, label: 'Cargos', icon: Briefcase },
     { href: `${basePath}/employees`, label: 'Colaboradores', icon: Users },
-    { href: `${basePath}/events`, label: 'Gestão de Eventos', icon: Siren },
-    { href: `${basePath}/services`, label: 'Serviços', icon: ListTodo },
-    { href: `${basePath}/prices`, label: 'Preços', icon: DollarSign },
   ];
 
   const sstNavItems = [
@@ -86,6 +91,7 @@ export function ClientSidebar() {
   };
   
   const isSstActive = sstNavItems.some(item => getIsActive(item.href));
+  const isEstruturaActive = estruturaNavItems.some(item => getIsActive(item.href));
 
 
   return (
@@ -103,6 +109,42 @@ export function ClientSidebar() {
           </Link>
         </SidebarMenuItem>
       ))}
+
+      <SidebarMenuItem>
+        <Collapsible open={isEstruturaOpen} onOpenChange={setIsEstruturaOpen}>
+          <CollapsibleTrigger asChild>
+             <SidebarMenuButton
+                isActive={isEstruturaActive}
+                tooltip="Estrutura da Empresa"
+                className="justify-between"
+              >
+                <div className="flex items-center gap-2">
+                  <Network />
+                  <span>Estrutura da Empresa</span>
+                </div>
+                <ChevronRight className={cn("h-4 w-4 transition-transform", isEstruturaOpen && "rotate-90")} />
+              </SidebarMenuButton>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+             <div className="pl-6 pt-1 space-y-1">
+                 {estruturaNavItems.map((item) => (
+                    <SidebarMenuItem key={item.label}>
+                        <Link href={item.href} asChild>
+                            <SidebarMenuButton
+                                isActive={getIsActive(item.href)}
+                                tooltip={item.label}
+                                className="h-8"
+                            >
+                                <item.icon />
+                                <span>{item.label}</span>
+                            </SidebarMenuButton>
+                        </Link>
+                    </SidebarMenuItem>
+                ))}
+             </div>
+          </CollapsibleContent>
+        </Collapsible>
+      </SidebarMenuItem>
 
       <SidebarMenuItem>
         <Collapsible open={isSstOpen} onOpenChange={setIsSstOpen}>
