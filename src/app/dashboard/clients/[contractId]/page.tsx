@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { FC } from 'react';
 import { useParams } from 'next/navigation';
 
@@ -180,8 +180,16 @@ function EmployeeDashboard() {
     };
 
     const selectedEmployee = employees[0];
-    const admissionDate = new Date(selectedEmployee.admissionDate);
-    const timeInCompany = formatDistanceToNow(admissionDate, { addSuffix: true, locale: ptBR });
+    const [formattedAdmissionDate, setFormattedAdmissionDate] = useState('');
+    const [timeInCompany, setTimeInCompany] = useState('');
+
+    useEffect(() => {
+        if (selectedEmployee) {
+            const admissionDate = new Date(selectedEmployee.admissionDate);
+            setFormattedAdmissionDate(format(admissionDate, 'dd/MM/yyyy'));
+            setTimeInCompany(formatDistanceToNow(admissionDate, { addSuffix: true, locale: ptBR }));
+        }
+    }, [selectedEmployee]);
 
 
     return (
@@ -322,7 +330,9 @@ function EmployeeDashboard() {
                                     <CardTitle>{selectedEmployee.name}</CardTitle>
                                     <CardDescription className="flex flex-col gap-1 mt-1">
                                         <span>{selectedEmployee.role} no setor de Produção na Unidade Principal - Matriz</span>
-                                        <span className="text-xs">Admitido em {format(admissionDate, 'dd/MM/yyyy')} ({timeInCompany})</span>
+                                        { (formattedAdmissionDate && timeInCompany) &&
+                                            <span className="text-xs">Admitido em {formattedAdmissionDate} ({timeInCompany})</span>
+                                        }
                                     </CardDescription>
                                 </div>
                             </div>
