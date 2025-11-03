@@ -1,8 +1,4 @@
 
-
-// Esta é uma página mockada. Em um cenário real, você buscaria os dados
-// do cliente com base no `params.contractId` de um banco de dados.
-
 'use client';
 
 import { useState } from 'react';
@@ -35,6 +31,10 @@ import {
   FileClock,
   Building,
   Briefcase,
+  HeartPulse,
+  BookUser,
+  FolderOpen,
+  CalendarDays,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -49,6 +49,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 
 // Simula a busca de dados do cliente.
 const getClientById = (id: string) => {
@@ -71,6 +75,231 @@ function PlaceholderContent({ icon, title, description }: { icon: React.ReactNod
         </div>
     )
 }
+
+function EmployeeDashboard() {
+    const employees = [
+        { id: 'COL-001', name: 'João da Silva', role: 'Operador de Máquina', avatar: 'https://i.pravatar.cc/150?u=col001' },
+        { id: 'COL-002', name: 'Maria Oliveira', role: 'Inspetora de Qualidade', avatar: 'https://i.pravatar.cc/150?u=col002' },
+        { id: 'COL-003', name: 'Carlos Pereira', role: 'Operador de Máquina', avatar: 'https://i.pravatar.cc/150?u=col003' },
+    ];
+
+    const kpiData = [
+        { title: 'ASOs Vencidos', value: '1', icon: <HeartPulse className="h-4 w-4 text-muted-foreground" /> },
+        { title: 'Treinamentos Vencidos', value: '0', icon: <HardHat className="h-4 w-4 text-muted-foreground" /> },
+        { title: 'Atestados (Últimos 30d)', value: '1', icon: <FileClock className="h-4 w-4 text-muted-foreground" /> },
+        { title: 'Chamados Abertos', value: '0', icon: <Ticket className="h-4 w-4 text-muted-foreground" /> },
+    ];
+    
+    const documents = [
+        { name: 'ASO Admissional', status: 'Válido', expiry: '2025-01-10' },
+        { name: 'Ordem de Serviço', status: 'Válido', expiry: 'N/A' },
+        { name: 'Treinamento NR-12', status: 'Vencido', expiry: '2024-07-01' },
+    ];
+
+    const statusIcons: Record<string, React.ReactNode> = {
+        'Válido': <CheckCircle2 className="text-green-500" />,
+        'Vencido': <XCircle className="text-red-500" />,
+        'Pendente': <Clock className="text-yellow-500" />,
+    };
+
+    return (
+        <div className="space-y-6">
+             <div className="flex items-center justify-between">
+                <h3 className="text-xl font-semibold">Gestão de Colaboradores</h3>
+                 <Dialog>
+                    <DialogTrigger asChild>
+                         <Button size="sm" className="h-8 gap-1">
+                            <PlusCircle className="h-3.5 w-3.5" />
+                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                            Adicionar Colaborador
+                            </span>
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-3xl">
+                         <DialogHeader>
+                            <DialogTitle>Adicionar Novo Colaborador</DialogTitle>
+                            <DialogDescription>
+                                Preencha os dados para cadastrar um novo colaborador na empresa.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <form className="max-h-[70vh]">
+                            <ScrollArea className="h-full">
+                            <div className="grid gap-6 p-6">
+                                <div className="grid gap-3">
+                                    <h4 className="font-semibold text-lg">Dados Cadastrais</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="fullname">Nome Completo</Label>
+                                            <Input id="fullname" placeholder="Nome do colaborador" />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="cpf">CPF</Label>
+                                            <Input id="cpf" placeholder="000.000.000-00" />
+                                        </div>
+                                         <div className="grid gap-2">
+                                            <Label htmlFor="birthdate">Data de Nascimento</Label>
+                                            <Input id="birthdate" type="date" />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="admission-date">Data de Admissão</Label>
+                                            <Input id="admission-date" type="date" />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="status">Situação</Label>
+                                            <Select>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Selecione a situação" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="ativo">Ativo</SelectItem>
+                                                    <SelectItem value="inativo">Inativo</SelectItem>
+                                                    <SelectItem value="ferias">Férias</SelectItem>
+                                                    <SelectItem value="b31">Afastado (B31)</SelectItem>
+                                                    <SelectItem value="b91">Afastado (B91)</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="grid gap-3">
+                                    <h4 className="font-semibold text-lg">Alocação</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="unit">Unidade</Label>
+                                            <Select><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent><SelectItem value="matriz">Unidade Principal - Matriz</SelectItem></SelectContent></Select>
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="sector">Setor</Label>
+                                            <Select><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent><SelectItem value="prod">Produção</SelectItem></SelectContent></Select>
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="role">Cargo</Label>
+                                            <Select><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent><SelectItem value="op">Operador de Máquina</SelectItem></SelectContent></Select>
+                                        </div>
+                                    </div>
+                                </div>
+                                 <div className="grid gap-3">
+                                    <h4 className="font-semibold text-lg">Contato</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                         <div className="grid gap-2">
+                                            <Label htmlFor="email">Email</Label>
+                                            <Input id="email" type="email" placeholder="email@exemplo.com"/>
+                                        </div>
+                                         <div className="grid gap-2">
+                                            <Label htmlFor="phone">Telefone</Label>
+                                            <Input id="phone" placeholder="(00) 00000-0000" />
+                                        </div>
+                                         <div className="grid gap-2 col-span-2">
+                                            <Label htmlFor="address">Endereço</Label>
+                                            <Input id="address" placeholder="Rua, Número, Bairro, Cidade - Estado" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            </ScrollArea>
+                        </form>
+                         <DialogFooter>
+                            <Button type="submit">Salvar Colaborador</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <Card className="md:col-span-1">
+                     <CardHeader>
+                        <CardTitle>Lista de Colaboradores</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex flex-col gap-4">
+                        {employees.map(emp => (
+                            <div key={emp.id} className="flex items-center gap-4 p-2 rounded-lg hover:bg-muted cursor-pointer">
+                                <Avatar className="h-9 w-9">
+                                    <AvatarImage src={emp.avatar} alt={emp.name} />
+                                    <AvatarFallback>{emp.name.substring(0,2)}</AvatarFallback>
+                                </Avatar>
+                                <div className="grid gap-1">
+                                    <p className="text-sm font-medium leading-none">{emp.name}</p>
+                                    <p className="text-sm text-muted-foreground">{emp.role}</p>
+                                </div>
+                            </div>
+                        ))}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <div className="md:col-span-2 space-y-4">
+                     <Card>
+                        <CardHeader>
+                            <div className="flex items-center gap-4">
+                                <Avatar className="h-12 w-12">
+                                    <AvatarImage src={employees[0].avatar} alt={employees[0].name} />
+                                    <AvatarFallback>{employees[0].name.substring(0,2)}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <CardTitle>{employees[0].name}</CardTitle>
+                                    <CardDescription>{employees[0].role} no setor de Produção</CardDescription>
+                                </div>
+                            </div>
+                        </CardHeader>
+                    </Card>
+
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                        {kpiData.map(kpi => (
+                            <Card key={kpi.title}>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                    <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
+                                    {kpi.icon}
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="text-2xl font-bold">{kpi.value}</div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Documentação do Colaborador</CardTitle>
+                            <CardDescription>Status dos principais documentos de SST.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Table>
+                                <TableHeader>
+                                <TableRow>
+                                    <TableHead>Documento</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Vencimento</TableHead>
+                                    <TableHead><span className="sr-only">Ações</span></TableHead>
+                                </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {documents.map(doc => (
+                                    <TableRow key={doc.name}>
+                                        <TableCell className="font-medium">{doc.name}</TableCell>
+                                        <TableCell><div className="flex items-center gap-2">{statusIcons[doc.status as keyof typeof statusIcons]} {doc.status}</div></TableCell>
+                                        <TableCell>{doc.expiry}</TableCell>
+                                        <TableCell>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                                <DropdownMenuContent>
+                                                    <DropdownMenuItem>Ver/Anexar PDF</DropdownMenuItem>
+                                                    <DropdownMenuItem>Editar</DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </TableCell>
+                                    </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 
 function RolesDashboard() {
     const kpiData = [
@@ -561,7 +790,7 @@ export default function ClientDetailsPage({
             </Badge>
         </div>
       
-       <Tabs defaultValue="units">
+       <Tabs defaultValue="employees">
             <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="info">Informações Gerais</TabsTrigger>
                 <TabsTrigger value="units">Unidades</TabsTrigger>
@@ -641,15 +870,9 @@ export default function ClientDetailsPage({
                  <RolesDashboard />
             </TabsContent>
             <TabsContent value="employees">
-                 <PlaceholderContent 
-                    icon={<Users className="h-10 w-10 text-muted-foreground"/>}
-                    title="Gestão de Colaboradores" 
-                    description="Adicione e gerencie todos os colaboradores, vinculando-os a seus respectivos cargos, setores e unidades."
-                />
+                <EmployeeDashboard />
             </TabsContent>
        </Tabs>
     </div>
   );
 }
-
-    
