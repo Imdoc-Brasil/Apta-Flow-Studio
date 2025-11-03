@@ -33,9 +33,18 @@ export function ClientSidebar() {
     { href: `${basePath}/roles`, label: 'Cargos', icon: Briefcase },
     { href: `${basePath}/employees`, label: 'Colaboradores', icon: Users },
     { href: `${basePath}/docs-sst`, label: 'Documentos SST', icon: BookUser },
-    { href: `${basePath}/services`, label: 'Serviços', icon: ListTodo },
+    { href: `${base-path}/services`, label: 'Serviços', icon: ListTodo },
     { href: `${basePath}/prices`, label: 'Tabela de Preços', icon: DollarSign },
   ];
+
+  const getIsActive = (href: string) => {
+    // Exact match for info page
+    if (href.endsWith('/info')) {
+      return pathname === href || pathname === basePath;
+    }
+    return pathname.startsWith(href);
+  };
+
 
   return (
     <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
@@ -45,7 +54,7 @@ export function ClientSidebar() {
           href={item.href}
           className={cn(
             'flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary',
-            pathname === item.href && 'bg-muted text-primary'
+            getIsActive(item.href) && 'bg-muted text-primary'
           )}
         >
           <item.icon className="h-4 w-4" />
