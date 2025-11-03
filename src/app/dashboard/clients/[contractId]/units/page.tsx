@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import {
   Card,
@@ -11,13 +11,13 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Search } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuCheckboxItem } from '@/components/ui/dropdown-menu';
 import { initialClientsData } from '@/app/dashboard/clients/page';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
@@ -59,6 +59,8 @@ export default function UnitsPage() {
     const [units, setUnits] = useState(initialUnitsData);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [inheritData, setInheritData] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState<string[]>(['Ativa']);
 
     // Form state
     const [name, setName] = useState('');
@@ -105,6 +107,14 @@ export default function UnitsPage() {
         setIsDialogOpen(false);
         setInheritData(false); // Reset checkbox
     }
+
+    const filteredUnits = useMemo(() => {
+        return units.filter(unit => {
+            const matchesSearch = unit.name.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesStatus = statusFilter.length === 0 || statusFilter.includes(unit.status);
+            return matchesSearch && matchesStatus;
+        });
+    }, [units, searchTerm, statusFilter]);
 
   return (
     <Card>
@@ -169,24 +179,64 @@ export default function UnitsPage() {
         <CardDescription>
           Gerencie as unidades, plantas ou locais de trabalho do cliente.
         </CardDescription>
+        <div className="flex items-center gap-2 pt-4">
+          <div className="relative w-full">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Buscar por nome..."
+              className="pl-8 sm:w-1/2 md:w-1/3"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="h-10 gap-1 text-sm">
+                <Filter className="h-3.5 w-3.5" />
+                <span>Status ({statusFilter.length})</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Filtrar por Status</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuCheckboxItem
+                checked={statusFilter.includes('Ativa')}
+                onCheckedChange={(checked) => {
+                  setStatusFilter(prev => checked ? [...prev, 'Ativa'] : prev.filter(s => s !== 'Ativa'));
+                }}
+              >
+                Ativa
+              </DropdownMenuCheckboxItem>
+               <DropdownMenuCheckboxItem
+                checked={statusFilter.includes('Inativa')}
+                onCheckedChange={(checked) => {
+                  setStatusFilter(prev => checked ? [...prev, 'Inativa'] : prev.filter(s => s !== 'Inativa'));
+                }}
+              >
+                Inativa
+              </DropdownMenuCheckboxItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </CardHeader>
       <CardContent>
-        {units.length > 0 ? (
+        {filteredUnits.length > 0 ? (
            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
-                <TableHead>CNPJ</TableHead>
+                <TableHead className="hidden sm:table-cell">Descrição</TableHead>
                 <TableHead className="hidden md:table-cell">Endereço</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead><span className="sr-only">Ações</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {units.map((unit) => (
+              {filteredUnits.map((unit) => (
                 <TableRow key={unit.id}>
                   <TableCell className="font-medium">{unit.name}</TableCell>
-                  <TableCell>{unit.cnpj}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{unit.description}</TableCell>
                   <TableCell className="hidden md:table-cell">{unit.address}</TableCell>
                   <TableCell>
                     <Badge variant={unit.status === 'Ativa' ? 'secondary' : 'outline'}>{unit.status}</Badge>
@@ -214,10 +264,10 @@ export default function UnitsPage() {
             <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm h-96">
                 <div className="flex flex-col items-center gap-1 text-center">
                     <h3 className="text-2xl font-bold tracking-tight">
-                    Nenhuma unidade cadastrada
+                    Nenhuma unidade encontrada
                     </h3>
                     <p className="text-sm text-muted-foreground">
-                    Comece adicionando a primeira unidade para este cliente.
+                     Ajuste seus filtros ou adicione uma nova unidade.
                     </p>
                     <Button className="mt-4" onClick={() => setIsDialogOpen(true)}>Adicionar Unidade</Button>
                 </div>
@@ -227,3 +277,5 @@ export default function UnitsPage() {
     </Card>
   );
 }
+
+    
