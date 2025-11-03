@@ -13,6 +13,9 @@ import {
   Info,
   ListTodo,
   Users,
+  ShieldAlert,
+  FileText,
+  ClipboardList,
 } from 'lucide-react';
 import {
   SidebarMenu,
@@ -38,7 +41,9 @@ export function ClientSidebar() {
     { href: `${basePath}/sectors`, label: 'Setores', icon: HeartPulse },
     { href: `${basePath}/roles`, label: 'Cargos', icon: Briefcase },
     { href: `${basePath}/employees`, label: 'Colaboradores', icon: Users },
-    { href: `${basePath}/docs-sst`, label: 'Documentos SST', icon: BookUser },
+    { href: `${basePath}/pgr`, label: 'Gestão de Riscos (PGR)', icon: ShieldAlert },
+    { href: `${basePath}/pgr-inventory`, label: 'Inventário de Riscos', icon: FileText },
+    { href: `${basePath}/pgr-action-plan`, label: 'Plano de Ação', icon: ClipboardList },
     { href: `${basePath}/services`, label: 'Serviços', icon: ListTodo },
     { href: `${basePath}/prices`, label: 'Preços', icon: DollarSign },
   ];
@@ -48,6 +53,9 @@ export function ClientSidebar() {
     if (href.endsWith('/info')) {
       return pathname === href || pathname === basePath;
     }
+     if (href.endsWith('/pgr')) {
+      return pathname === href;
+    }
     return pathname.startsWith(href);
   };
 
@@ -55,14 +63,16 @@ export function ClientSidebar() {
     <SidebarMenu>
       {navItems.map((item) => (
         <SidebarMenuItem key={item.label}>
-           <Link href={item.href} asChild>
-            <SidebarMenuButton
-              isActive={getIsActive(item.href)}
-              tooltip={item.label}
-            >
-              <item.icon />
-              <span>{item.label}</span>
-            </SidebarMenuButton>
+          <Link href={item.href} passHref legacyBehavior>
+             <a>
+              <SidebarMenuButton
+                isActive={getIsActive(item.href)}
+                tooltip={item.label}
+              >
+                <item.icon />
+                <span>{item.label}</span>
+              </SidebarMenuButton>
+            </a>
           </Link>
         </SidebarMenuItem>
       ))}
