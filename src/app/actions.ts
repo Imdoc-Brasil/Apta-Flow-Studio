@@ -1,3 +1,5 @@
 'use server';
 
-export { suggestProcessTool } from '@/ai/flows/suggest-process-tool';
+import { suggestProcessTool } from './ai-actions';
+
+export { suggestProcessTool };
