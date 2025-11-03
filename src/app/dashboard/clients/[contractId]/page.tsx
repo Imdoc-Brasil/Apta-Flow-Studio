@@ -36,6 +36,7 @@ import {
   BookUser,
   FolderOpen,
   CalendarDays,
+  FilePen,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -58,8 +59,8 @@ import { ptBR } from 'date-fns/locale';
 
 
 // Simula a busca de dados do cliente.
-const getClientById = (id: string) => {
-  return initialClientsData.find((client) => client.contractId === id);
+const getClientById = (contractId: string) => {
+  return initialClientsData.find((client) => client.contractId === contractId);
 };
 
 function PlaceholderContent({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) {
@@ -238,7 +239,7 @@ function EmployeeDashboard() {
 
                 <div className="md:col-span-2 space-y-4">
                      <Card>
-                        <CardHeader>
+                        <CardHeader className="flex items-start justify-between">
                             <div className="flex items-center gap-4">
                                 <Avatar className="h-12 w-12">
                                     <AvatarImage src={selectedEmployee.avatar} alt={selectedEmployee.name} />
@@ -252,6 +253,101 @@ function EmployeeDashboard() {
                                     </CardDescription>
                                 </div>
                             </div>
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                    <Button variant="ghost" size="icon">
+                                        <FilePen className="h-5 w-5" />
+                                        <span className="sr-only">Editar Colaborador</span>
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-3xl">
+                                    <DialogHeader>
+                                        <DialogTitle>Editar Colaborador</DialogTitle>
+                                        <DialogDescription>
+                                            Atualize os dados do colaborador.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                     <form className="max-h-[70vh]">
+                                        <ScrollArea className="h-full">
+                                        <div className="grid gap-6 p-6">
+                                            <div className="grid gap-3">
+                                                <h4 className="font-semibold text-lg">Dados Cadastrais</h4>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="edit-fullname">Nome Completo</Label>
+                                                        <Input id="edit-fullname" defaultValue={selectedEmployee.name} />
+                                                    </div>
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="edit-cpf">CPF</Label>
+                                                        <Input id="edit-cpf" placeholder="000.000.000-00" />
+                                                    </div>
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="edit-birthdate">Data de Nascimento</Label>
+                                                        <Input id="edit-birthdate" type="date" />
+                                                    </div>
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="edit-admission-date">Data de Admissão</Label>
+                                                        <Input id="edit-admission-date" type="date" defaultValue={selectedEmployee.admissionDate} />
+                                                    </div>
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="edit-status">Situação</Label>
+                                                        <Select defaultValue="ativo">
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Selecione a situação" />
+                                                            </SelectTrigger>
+                                                            <SelectContent>
+                                                                <SelectItem value="ativo">Ativo</SelectItem>
+                                                                <SelectItem value="inativo">Inativo</SelectItem>
+                                                                <SelectItem value="ferias">Férias</SelectItem>
+                                                                <SelectItem value="b31">Afastado (B31)</SelectItem>
+                                                                <SelectItem value="b91">Afastado (B91)</SelectItem>
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="grid gap-3">
+                                                <h4 className="font-semibold text-lg">Alocação</h4>
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="edit-unit">Unidade</Label>
+                                                        <Select defaultValue="matriz"><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent><SelectItem value="matriz">Unidade Principal - Matriz</SelectItem></SelectContent></Select>
+                                                    </div>
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="edit-sector">Setor</Label>
+                                                        <Select defaultValue="prod"><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent><SelectItem value="prod">Produção</SelectItem></SelectContent></Select>
+                                                    </div>
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="edit-role">Cargo</Label>
+                                                        <Select defaultValue="op"><SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger><SelectContent><SelectItem value="op">Operador de Máquina</SelectItem></SelectContent></Select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="grid gap-3">
+                                                <h4 className="font-semibold text-lg">Contato</h4>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                        <div className="grid gap-2">
+                                                        <Label htmlFor="edit-email">Email</Label>
+                                                        <Input id="edit-email" type="email" placeholder="email@exemplo.com"/>
+                                                    </div>
+                                                        <div className="grid gap-2">
+                                                        <Label htmlFor="edit-phone">Telefone</Label>
+                                                        <Input id="edit-phone" placeholder="(00) 00000-0000" />
+                                                    </div>
+                                                        <div className="grid gap-2 col-span-2">
+                                                        <Label htmlFor="edit-address">Endereço</Label>
+                                                        <Input id="edit-address" placeholder="Rua, Número, Bairro, Cidade - Estado" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        </ScrollArea>
+                                    </form>
+                                    <DialogFooter>
+                                        <Button type="submit">Salvar Alterações</Button>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
                         </CardHeader>
                     </Card>
 
@@ -866,7 +962,7 @@ export default function ClientDetailsPage({
                             </div>
                             <div className="pl-7 space-y-1">
                                 <p className="text-sm"><span className="font-medium text-muted-foreground">ID:</span> {client.contractId}</p>
-                                <div className="text-sm"><span className="font-medium text-muted-foreground">Plano: </span><Badge variant="default">{client.plan}</Badge></div>
+                                <div><span className="font-medium text-muted-foreground">Plano: </span><Badge variant="default">{client.plan}</Badge></div>
                             </div>
                          </div>
                     </CardContent>
