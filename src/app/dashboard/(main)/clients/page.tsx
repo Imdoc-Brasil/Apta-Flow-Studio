@@ -298,7 +298,7 @@ export default function ClientsPage() {
                 {clientsData.map((client) => (
                   <TableRow key={client.contractId}>
                     <TableCell className="font-medium">
-                      <Link href={`/dashboard/clients/${client.contractId}`} className="hover:underline">
+                      <Link href={`/dashboard/clients/${client.contractId}/info`} className="hover:underline">
                         {client.name}
                       </Link>
                       <div className="text-sm text-muted-foreground md:hidden">{client.contact}</div>
@@ -329,7 +329,7 @@ export default function ClientsPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Ações</DropdownMenuLabel>
                            <DropdownMenuItem asChild>
-                             <Link href={`/dashboard/clients/${client.contractId}`}>Ver Detalhes</Link>
+                             <Link href={`/dashboard/clients/${client.contractId}/info`}>Ver Detalhes</Link>
                            </DropdownMenuItem>
                           <DropdownMenuItem>Editar</DropdownMenuItem>
                           <DropdownMenuItem>Ver Contratos</DropdownMenuItem>
