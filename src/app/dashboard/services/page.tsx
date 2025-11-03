@@ -18,8 +18,11 @@ import {
 } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { File, PlusCircle } from 'lucide-react';
+import { File, PlusCircle, Percent } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 // --- Mock Data ---
 
@@ -70,6 +73,49 @@ function ServiceTableActions() {
     )
 }
 
+function MedicalExamsActions() {
+    return (
+        <div className="ml-auto flex items-center gap-2">
+            <Dialog>
+                <DialogTrigger asChild>
+                    <Button size="sm" variant="outline" className="h-8 gap-1">
+                        <Percent className="h-3.5 w-3.5" />
+                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Aplicar Reajuste Anual</span>
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Reajuste Anual de Preços</DialogTitle>
+                        <DialogDescription>
+                            Aplique um reajuste percentual a todos os exames médicos. Os novos preços serão refletidos em todos os novos contratos.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="adjustment" className="text-right">
+                                Percentual (%)
+                            </Label>
+                            <Input id="adjustment" type="number" placeholder="Ex: 10" className="col-span-3" />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button type="submit">Aplicar Reajuste</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            <Button size="sm" variant="outline" className="h-8 gap-1">
+                <File className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Exportar</span>
+            </Button>
+            <Button size="sm" className="h-8 gap-1">
+                <PlusCircle className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Adicionar Exame</span>
+            </Button>
+        </div>
+    )
+}
+
+
 export default function ServicesPage() {
   return (
     <div className="grid flex-1 auto-rows-max gap-4">
@@ -92,7 +138,7 @@ export default function ServicesPage() {
             <CardHeader>
               <CardTitle>Exames Médicos Ocupacionais</CardTitle>
               <CardDescription>Tabela de preços e configurações para exames médicos conforme NR7.</CardDescription>
-              <div className="pt-4"><ServiceTableActions /></div>
+              <div className="pt-4"><MedicalExamsActions /></div>
             </CardHeader>
             <CardContent>
               <Table>
