@@ -1,10 +1,10 @@
 
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import type { FC } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 
 import {
   ArrowLeft,
@@ -43,6 +43,7 @@ import {
   CircleOff,
   DollarSign,
   Percent,
+  Info,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -1162,11 +1163,95 @@ function PriceTableDashboard() {
   );
 }
 
+const InfoDashboard = ({ client }: { client: any }) => {
+    const riskLevelMap = {
+      '1': { label: 'Muito Baixo', color: 'bg-green-500' },
+      '2': { label: 'Baixo', color: 'bg-blue-500' },
+      '3': { label: 'Médio', color: 'bg-yellow-500' },
+      '4': { label: 'Alto', color: 'bg-red-500' },
+  } as const;
+
+  const riskInfo = riskLevelMap[client.riskLevel as keyof typeof riskLevelMap] || { label: 'N/A', color: 'bg-gray-400' };
+
+  return (
+    <Card>
+        <CardHeader>
+            <CardTitle>Detalhes da Empresa</CardTitle>
+            <CardDescription>Informações detalhadas sobre o cliente, contrato e responsável.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">CNPJ</p>
+                <p className="text-sm font-semibold">{client.cnpj}</p>
+            </div>
+            <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">CNAE</p>
+                <p className="text-sm font-semibold">{client.cnae}</p>
+            </div>
+            <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Grau de Risco</p>
+                <div className="flex items-center gap-2">
+                    <span className={`h-3 w-3 rounded-full ${riskInfo.color}`} />
+                    <p className="text-sm font-semibold">{riskInfo.label} (Grau {client.riskLevel})</p>
+                </div>
+            </div>
+            <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">Email</p>
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                    <Mail className="h-4 w-4 text-muted-foreground" /> {client.contact}
+                </div>
+            </div>
+            <div className="space-y-1 col-span-full">
+                <p className="text-sm font-medium text-muted-foreground">Endereço</p>
+                    <div className="flex items-center gap-2 text-sm font-semibold">
+                    <MapPin className="h-4 w-4 text-muted-foreground" /> {client.address}
+                    </div>
+            </div>
+                <div className="space-y-4">
+                <p className="text-sm font-medium text-muted-foreground">Responsável</p>
+                <div className="flex items-center gap-4">
+                    <User className="h-8 w-8 text-muted-foreground"/>
+                    <div>
+                        <p className="font-semibold">{client.responsibleName}</p>
+                        <p className="text-sm text-muted-foreground">Contato Principal</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    <span>{client.responsibleContact}</span>
+                </div>
+            </div>
+                <div className="space-y-4">
+                <p className="text-sm font-medium text-muted-foreground">Contrato</p>
+                <div className="flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-muted-foreground" />
+                    <h4 className="font-semibold">Detalhes</h4>
+                </div>
+                <div className="pl-7 space-y-1">
+                    <p className="text-sm"><span className="font-medium text-muted-foreground">ID:</span> {client.contractId}</p>
+                    <div><span className="font-medium text-muted-foreground">Plano: </span><Badge variant="default">{client.plan}</Badge></div>
+                </div>
+                </div>
+        </CardContent>
+    </Card>
+  )
+}
+
 
 export default function ClientDetailsPage() {
   const params = useParams();
+  const pathname = usePathname();
+  const router = useRouter();
   const contractId = params.contractId as string;
   const client = getClientById(contractId);
+
+  useEffect(() => {
+    // Redirect to the "info" sub-page by default if no sub-page is specified
+    if (pathname === `/dashboard/clients/${contractId}`) {
+      router.replace(`/dashboard/clients/${contractId}/info`);
+    }
+  }, [pathname, contractId, router]);
+
 
   if (!client) {
     return (
@@ -1192,15 +1277,36 @@ export default function ClientDetailsPage() {
 
   const riskInfo = riskLevelMap[client.riskLevel as keyof typeof riskLevelMap] || { label: 'N/A', color: 'bg-gray-400' };
 
+  const currentPage = pathname.split('/').pop();
+
+  const renderContent = () => {
+    switch (currentPage) {
+        case 'info':
+            return <InfoDashboard client={client} />;
+        case 'units':
+            return <UnitDashboard />;
+        case 'sectors':
+            return <SectorDashboard />;
+        case 'roles':
+            return <RolesDashboard />;
+        case 'employees':
+            return <EmployeeDashboard />;
+        case 'docs-sst':
+            return <SSTDocumentsDashboard />;
+        case 'services':
+            return <ContractedServicesDashboard />;
+        case 'prices':
+            return <PriceTableDashboard />;
+        default:
+            // This can be a loading state or a default view if needed
+            return null; 
+    }
+  }
+
+
   return (
     <div className="grid flex-1 auto-rows-max gap-4">
         <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon" className="h-7 w-7" asChild>
-                <Link href="/dashboard/clients">
-                    <ChevronLeft className="h-4 w-4" />
-                    <span className="sr-only">Voltar</span>
-                </Link>
-            </Button>
             <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
                 {client.name}
             </h1>
@@ -1209,110 +1315,9 @@ export default function ClientDetailsPage() {
             </Badge>
         </div>
       
-       <Tabs defaultValue="employees">
-            <TabsList className="grid w-full grid-cols-8">
-                <TabsTrigger value="info">Informações Gerais</TabsTrigger>
-                <TabsTrigger value="units">Unidades</TabsTrigger>
-                <TabsTrigger value="sectors">Setores</TabsTrigger>
-                <TabsTrigger value="roles">Cargos</TabsTrigger>
-                <TabsTrigger value="employees">Colaboradores</TabsTrigger>
-                <TabsTrigger value="docs-sst">
-                  <BookUser className="mr-2 h-4 w-4" />
-                  Documentos SST
-                </TabsTrigger>
-                 <TabsTrigger value="services">
-                  <ListTodo className="mr-2 h-4 w-4" />
-                  Serviços
-                </TabsTrigger>
-                <TabsTrigger value="prices">
-                  <DollarSign className="mr-2 h-4 w-4" />
-                  Tabela de Preços
-                </TabsTrigger>
-            </TabsList>
-            <TabsContent value="info">
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Detalhes da Empresa</CardTitle>
-                        <CardDescription>Informações detalhadas sobre o cliente, contrato e responsável.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                        <div className="space-y-1">
-                            <p className="text-sm font-medium text-muted-foreground">CNPJ</p>
-                            <p className="text-sm font-semibold">{client.cnpj}</p>
-                        </div>
-                        <div className="space-y-1">
-                            <p className="text-sm font-medium text-muted-foreground">CNAE</p>
-                            <p className="text-sm font-semibold">{client.cnae}</p>
-                        </div>
-                        <div className="space-y-1">
-                            <p className="text-sm font-medium text-muted-foreground">Grau de Risco</p>
-                            <div className="flex items-center gap-2">
-                                <span className={`h-3 w-3 rounded-full ${riskInfo.color}`} />
-                                <p className="text-sm font-semibold">{riskInfo.label} (Grau {client.riskLevel})</p>
-                            </div>
-                        </div>
-                        <div className="space-y-1">
-                            <p className="text-sm font-medium text-muted-foreground">Email</p>
-                            <div className="flex items-center gap-2 text-sm font-semibold">
-                                <Mail className="h-4 w-4 text-muted-foreground" /> {client.contact}
-                            </div>
-                        </div>
-                        <div className="space-y-1 col-span-full">
-                            <p className="text-sm font-medium text-muted-foreground">Endereço</p>
-                             <div className="flex items-center gap-2 text-sm font-semibold">
-                                <MapPin className="h-4 w-4 text-muted-foreground" /> {client.address}
-                             </div>
-                        </div>
-                         <div className="space-y-4">
-                            <p className="text-sm font-medium text-muted-foreground">Responsável</p>
-                            <div className="flex items-center gap-4">
-                                <User className="h-8 w-8 text-muted-foreground"/>
-                                <div>
-                                    <p className="font-semibold">{client.responsibleName}</p>
-                                    <p className="text-sm text-muted-foreground">Contato Principal</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm">
-                                <Phone className="h-4 w-4 text-muted-foreground" />
-                                <span>{client.responsibleContact}</span>
-                            </div>
-                        </div>
-                         <div className="space-y-4">
-                            <p className="text-sm font-medium text-muted-foreground">Contrato</p>
-                            <div className="flex items-center gap-2">
-                                <FileText className="h-5 w-5 text-muted-foreground" />
-                                <h4 className="font-semibold">Detalhes</h4>
-                            </div>
-                            <div className="pl-7 space-y-1">
-                                <p className="text-sm"><span className="font-medium text-muted-foreground">ID:</span> {client.contractId}</p>
-                                <div><span className="font-medium text-muted-foreground">Plano: </span><Badge variant="default">{client.plan}</Badge></div>
-                            </div>
-                         </div>
-                    </CardContent>
-                </Card>
-            </TabsContent>
-            <TabsContent value="units">
-                <UnitDashboard />
-            </TabsContent>
-            <TabsContent value="sectors">
-                <SectorDashboard />
-            </TabsContent>
-            <TabsContent value="roles">
-                 <RolesDashboard />
-            </TabsContent>
-            <TabsContent value="employees">
-                <EmployeeDashboard />
-            </TabsContent>
-            <TabsContent value="docs-sst">
-                <SSTDocumentsDashboard />
-            </TabsContent>
-            <TabsContent value="services">
-                <ContractedServicesDashboard />
-            </TabsContent>
-            <TabsContent value="prices">
-                <PriceTableDashboard />
-            </TabsContent>
-       </Tabs>
+       <div>
+         {renderContent()}
+       </div>
     </div>
   );
 }
