@@ -20,7 +20,7 @@ export default function ClientDetailLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen w-full flex-col bg-muted/40">
+    <div className="flex min-h-screen w-full bg-muted/40">
       <Sidebar
         variant="sidebar"
         collapsible="icon"
@@ -34,7 +34,7 @@ export default function ClientDetailLayout({
               className="w-full justify-start"
               asChild
             >
-              <Link href="/dashboard/clients">
+              <Link href="/dashboard/(main)/clients">
                 <ArrowLeft />
                 <span className="group-data-[collapsible=icon]:hidden">
                   Todos os Clientes
@@ -45,7 +45,7 @@ export default function ClientDetailLayout({
           <ClientSidebar />
         </SidebarContent>
       </Sidebar>
-      <div className="flex flex-col md:ml-14 group-data-[collapsible=icon]/sidebar-wrapper:md:ml-14">
+      <div className="flex flex-1 flex-col transition-all duration-200 ease-in-out md:ml-14 md:group-data-[state=expanded]/sidebar-wrapper:ml-60">
          <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
            <Sheet>
             <SheetTrigger asChild>
