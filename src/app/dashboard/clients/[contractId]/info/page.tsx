@@ -152,7 +152,6 @@ export default function InfoDashboard() {
                     </div>
                     <div className="pl-7 space-y-1">
                         <p className="text-sm"><span className="font-medium text-muted-foreground">ID:</span> {client.contractId}</p>
-                        <div><span className="font-medium text-muted-foreground">Plano: </span><Badge variant="default">{client.plan}</Badge></div>
                     </div>
                     </div>
             </CardContent>

@@ -62,7 +62,6 @@ export const initialClientsData = [
     contractId: 'CTR-2024-001',
     status: 'Ativo',
     contact: 'liam.johnson@innovate.com',
-    plan: 'Enterprise',
     cnpj: '12.345.678/0001-99',
     cnae: '62.01-5-01',
     riskLevel: '3',
@@ -75,7 +74,6 @@ export const initialClientsData = [
     contractId: 'CTR-2024-002',
     status: 'Ativo',
     contact: 'olivia.smith@solutions.com',
-    plan: 'Pro',
     cnpj: '98.765.432/0001-11',
     cnae: '70.20-4-00',
     riskLevel: '2',
@@ -88,7 +86,6 @@ export const initialClientsData = [
     contractId: 'CTR-2023-015',
     status: 'Integração',
     contact: 'noah.williams@quantum.com',
-    plan: 'Enterprise',
     cnpj: '11.222.333/0001-44',
     cnae: '62.03-1-00',
     riskLevel: '3',
@@ -101,7 +98,6 @@ export const initialClientsData = [
     contractId: 'CTR-2024-004',
     status: 'Ativo',
     contact: 'emma.brown@stellar.com',
-    plan: 'Pro',
     cnpj: '44.555.666/0001-77',
     cnae: '62.09-1-00',
     riskLevel: '2',
@@ -114,7 +110,6 @@ export const initialClientsData = [
     contractId: 'CTR-2022-008',
     status: 'Inativo',
     contact: 'ava.jones@apex.com',
-    plan: 'Básico',
     cnpj: '77.888.999/0001-00',
     cnae: '71.12-0-00',
     riskLevel: '4',
@@ -124,7 +119,7 @@ export const initialClientsData = [
   },
 ];
 
-type Client = typeof initialClientsData[0];
+type Client = Omit<typeof initialClientsData[0], 'plan'>;
 
 export default function ClientsPage() {
   const [clientsData, setClientsData] = useState(initialClientsData);
@@ -136,7 +131,6 @@ export default function ClientsPage() {
     const newClient: Client = {
       name: formData.get('name') as string,
       contact: formData.get('contact') as string,
-      plan: formData.get('plan') as string,
       status: formData.get('status') as string,
       cnpj: formData.get('cnpj') as string,
       cnae: formData.get('cnae') as string,
@@ -249,21 +243,6 @@ export default function ClientsPage() {
                         <Input id="riskLevel" name="riskLevel" className="col-span-3" />
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="plan" className="text-right">
-                          Plano
-                        </Label>
-                        <Select name="plan" defaultValue="Pro">
-                            <SelectTrigger className="col-span-3">
-                              <SelectValue placeholder="Selecione um plano" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Enterprise">Enterprise</SelectItem>
-                              <SelectItem value="Pro">Pro</SelectItem>
-                              <SelectItem value="Básico">Básico</SelectItem>
-                            </SelectContent>
-                          </Select>
-                      </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="status" className="text-right">
                           Status
                         </Label>
@@ -308,9 +287,6 @@ export default function ClientsPage() {
                     Responsável
                   </TableHead>
                   <TableHead className="hidden lg:table-cell">
-                    Plano
-                  </TableHead>
-                  <TableHead className="hidden lg:table-cell">
                     CNPJ
                   </TableHead>
                   <TableHead>
@@ -334,9 +310,6 @@ export default function ClientsPage() {
                     </TableCell>
                      <TableCell className="hidden md:table-cell">
                       {client.responsibleName}
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      {client.plan}
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
                       {client.cnpj}
