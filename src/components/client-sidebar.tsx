@@ -19,6 +19,7 @@ import {
   Factory,
   GraduationCap,
   Syringe,
+  Siren,
 } from 'lucide-react';
 import {
   SidebarMenu,
@@ -46,6 +47,7 @@ export function ClientSidebar() {
     { href: `${basePath}/employees`, label: 'Colaboradores', icon: Users },
     { href: `${basePath}/pgr`, label: 'Gestão de Riscos (PGR)', icon: ShieldAlert },
     { href: `${basePath}/pcmso`, label: 'Gestão de PCMSO', icon: BookUser },
+    { href: `${basePath}/events`, label: 'Gestão de Eventos', icon: Siren },
     { href: `${basePath}/pgr-inventory`, label: 'Inventário de Riscos', icon: FileText },
     { href: `${basePath}/pgr-action-plan`, label: 'Plano de Ação', icon: ClipboardList },
     { href: `${basePath}/epis`, label: 'Gestão de EPIs', icon: HardHat },
@@ -71,7 +73,7 @@ export function ClientSidebar() {
     <SidebarMenu>
       {navItems.map((item) => (
         <SidebarMenuItem key={item.label}>
-           <Link href={item.href} passHref legacyBehavior>
+          <Link href={item.href} passHref legacyBehavior>
             <a>
               <SidebarMenuButton
                 isActive={getIsActive(item.href)}
