@@ -53,6 +53,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const initialClientsData = [
   {
@@ -61,6 +62,12 @@ const initialClientsData = [
     status: 'Ativo',
     contact: 'liam.johnson@innovate.com',
     plan: 'Enterprise',
+    cnpj: '12.345.678/0001-99',
+    cnae: '62.01-5-01',
+    riskLevel: '3',
+    address: '123 Tech Avenue, Silicon Valley, CA',
+    responsibleName: 'Liam Johnson',
+    responsibleContact: '555-1234',
   },
   {
     name: 'Solutions Co.',
@@ -68,6 +75,12 @@ const initialClientsData = [
     status: 'Ativo',
     contact: 'olivia.smith@solutions.com',
     plan: 'Pro',
+    cnpj: '98.765.432/0001-11',
+    cnae: '70.20-4-00',
+    riskLevel: '2',
+    address: '456 Business Blvd, New York, NY',
+    responsibleName: 'Olivia Smith',
+    responsibleContact: '555-5678',
   },
   {
     name: 'Quantum Dynamics',
@@ -75,6 +88,12 @@ const initialClientsData = [
     status: 'Integração',
     contact: 'noah.williams@quantum.com',
     plan: 'Enterprise',
+    cnpj: '11.222.333/0001-44',
+    cnae: '62.03-1-00',
+    riskLevel: '3',
+    address: '789 Innovation Drive, Boston, MA',
+    responsibleName: 'Noah Williams',
+    responsibleContact: '555-9012',
   },
   {
     name: 'Stellar Tech',
@@ -82,6 +101,12 @@ const initialClientsData = [
     status: 'Ativo',
     contact: 'emma.brown@stellar.com',
     plan: 'Pro',
+    cnpj: '44.555.666/0001-77',
+    cnae: '62.09-1-00',
+    riskLevel: '2',
+    address: '321 Galaxy Way, Seattle, WA',
+    responsibleName: 'Emma Brown',
+    responsibleContact: '555-3456',
   },
   {
     name: 'Apex Innovations',
@@ -89,6 +114,12 @@ const initialClientsData = [
     status: 'Inativo',
     contact: 'ava.jones@apex.com',
     plan: 'Básico',
+    cnpj: '77.888.999/0001-00',
+    cnae: '71.12-0-00',
+    riskLevel: '4',
+    address: '654 Peak Circle, Denver, CO',
+    responsibleName: 'Ava Jones',
+    responsibleContact: '555-7890',
   },
 ];
 
@@ -106,6 +137,12 @@ export default function ClientsPage() {
       contact: formData.get('contact') as string,
       plan: formData.get('plan') as string,
       status: formData.get('status') as string,
+      cnpj: formData.get('cnpj') as string,
+      cnae: formData.get('cnae') as string,
+      riskLevel: formData.get('riskLevel') as string,
+      address: formData.get('address') as string,
+      responsibleName: formData.get('responsibleName') as string,
+      responsibleContact: formData.get('responsibleContact') as string,
       contractId: `CTR-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
     };
     setClientsData((prev) => [newClient, ...prev]);
@@ -152,58 +189,96 @@ export default function ClientsPage() {
                 </span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-md">
               <DialogHeader>
                 <DialogTitle>Adicionar Novo Cliente</DialogTitle>
                 <DialogDescription>
                   Preencha os detalhes abaixo para adicionar um novo cliente.
                 </DialogDescription>
               </DialogHeader>
-              <form id="add-client-form" onSubmit={handleAddClient}>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="name" className="text-right">
-                      Empresa
-                    </Label>
-                    <Input id="name" name="name" className="col-span-3" required />
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="contact" className="text-right">
-                      Email
-                    </Label>
-                    <Input id="contact" name="contact" type="email" className="col-span-3" required/>
-                  </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="plan" className="text-right">
-                      Plano
-                    </Label>
-                     <Select name="plan" defaultValue="Pro">
-                        <SelectTrigger className="col-span-3">
-                          <SelectValue placeholder="Selecione um plano" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Enterprise">Enterprise</SelectItem>
-                          <SelectItem value="Pro">Pro</SelectItem>
-                          <SelectItem value="Básico">Básico</SelectItem>
-                        </SelectContent>
-                      </Select>
-                  </div>
-                   <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="status" className="text-right">
-                      Status
-                    </Label>
-                     <Select name="status" defaultValue="Integração">
-                        <SelectTrigger className="col-span-3">
-                          <SelectValue placeholder="Selecione o status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Ativo">Ativo</SelectItem>
-                          <SelectItem value="Integração">Integração</SelectItem>
-                           <SelectItem value="Inativo">Inativo</SelectItem>
-                        </SelectContent>
-                      </Select>
-                  </div>
-                </div>
+               <form id="add-client-form" onSubmit={handleAddClient}>
+                <ScrollArea className="h-96 w-full">
+                    <div className="grid gap-4 py-4 px-6">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="name" className="text-right">
+                          Empresa
+                        </Label>
+                        <Input id="name" name="name" className="col-span-3" required />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="cnpj" className="text-right">
+                          CNPJ
+                        </Label>
+                        <Input id="cnpj" name="cnpj" className="col-span-3" required />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="contact" className="text-right">
+                          Email
+                        </Label>
+                        <Input id="contact" name="contact" type="email" className="col-span-3" required/>
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="address" className="text-right">
+                          Endereço
+                        </Label>
+                        <Input id="address" name="address" className="col-span-3" />
+                      </div>
+                       <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="responsibleName" className="text-right">
+                          Responsável
+                        </Label>
+                        <Input id="responsibleName" name="responsibleName" className="col-span-3" required />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="responsibleContact" className="text-right">
+                          Contato
+                        </Label>
+                        <Input id="responsibleContact" name="responsibleContact" className="col-span-3" />
+                      </div>
+                       <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="cnae" className="text-right">
+                          CNAE
+                        </Label>
+                        <Input id="cnae" name="cnae" className="col-span-3" />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="riskLevel" className="text-right">
+                          Grau de Risco
+                        </Label>
+                        <Input id="riskLevel" name="riskLevel" className="col-span-3" />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="plan" className="text-right">
+                          Plano
+                        </Label>
+                        <Select name="plan" defaultValue="Pro">
+                            <SelectTrigger className="col-span-3">
+                              <SelectValue placeholder="Selecione um plano" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Enterprise">Enterprise</SelectItem>
+                              <SelectItem value="Pro">Pro</SelectItem>
+                              <SelectItem value="Básico">Básico</SelectItem>
+                            </SelectContent>
+                          </Select>
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="status" className="text-right">
+                          Status
+                        </Label>
+                        <Select name="status" defaultValue="Integração">
+                            <SelectTrigger className="col-span-3">
+                              <SelectValue placeholder="Selecione o status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Ativo">Ativo</SelectItem>
+                              <SelectItem value="Integração">Integração</SelectItem>
+                              <SelectItem value="Inativo">Inativo</SelectItem>
+                            </SelectContent>
+                          </Select>
+                      </div>
+                    </div>
+                </ScrollArea>
               </form>
                <DialogFooter>
                 <Button type="submit" form="add-client-form">
@@ -229,10 +304,13 @@ export default function ClientsPage() {
                   <TableHead>Empresa</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="hidden md:table-cell">
+                    Responsável
+                  </TableHead>
+                  <TableHead className="hidden lg:table-cell">
                     Plano
                   </TableHead>
-                  <TableHead className="hidden md:table-cell">
-                    ID do Contrato
+                  <TableHead className="hidden lg:table-cell">
+                    CNPJ
                   </TableHead>
                   <TableHead>
                     <span className="sr-only">Ações</span>
@@ -251,11 +329,14 @@ export default function ClientsPage() {
                         {client.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">
+                     <TableCell className="hidden md:table-cell">
+                      {client.responsibleName}
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">
                       {client.plan}
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {client.contractId}
+                    <TableCell className="hidden lg:table-cell">
+                      {client.cnpj}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
