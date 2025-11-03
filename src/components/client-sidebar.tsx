@@ -55,13 +55,16 @@ export function ClientSidebar() {
     <SidebarMenu>
       {navItems.map((item) => (
         <SidebarMenuItem key={item.label}>
-          <Link href={item.href} asChild>
+          <Link href={item.href} legacyBehavior passHref>
             <SidebarMenuButton
+              asChild
               isActive={getIsActive(item.href)}
               tooltip={item.label}
             >
-              <item.icon />
-              <span>{item.label}</span>
+              <a>
+                <item.icon />
+                <span>{item.label}</span>
+              </a>
             </SidebarMenuButton>
           </Link>
         </SidebarMenuItem>
