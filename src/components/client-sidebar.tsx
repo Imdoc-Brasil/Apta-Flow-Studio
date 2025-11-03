@@ -20,17 +20,26 @@ import {
   GraduationCap,
   Syringe,
   Siren,
+  ChevronRight,
 } from 'lucide-react';
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { cn } from '@/lib/utils';
+import { useState } from 'react';
 
 export function ClientSidebar() {
   const pathname = usePathname();
   const params = useParams();
   const contractId = params.contractId as string;
+  const [isSstOpen, setIsSstOpen] = useState(false);
 
   if (!contractId) {
     return null; // Don't render sidebar on the main clients list page
@@ -38,24 +47,27 @@ export function ClientSidebar() {
 
   const basePath = `/dashboard/clients/${contractId}`;
 
-  const navItems = [
+  const mainNavItems = [
     { href: `${basePath}/info`, label: 'Informações', icon: Info },
     { href: `${basePath}/billing`, label: 'Faturamento', icon: CreditCard },
     { href: `${basePath}/units`, label: 'Unidades', icon: Building },
     { href: `${basePath}/sectors`, label: 'Setores', icon: HeartPulse },
     { href: `${basePath}/roles`, label: 'Cargos', icon: Briefcase },
     { href: `${basePath}/employees`, label: 'Colaboradores', icon: Users },
+    { href: `${basePath}/events`, label: 'Gestão de Eventos', icon: Siren },
+    { href: `${basePath}/services`, label: 'Serviços', icon: ListTodo },
+    { href: `${basePath}/prices`, label: 'Preços', icon: DollarSign },
+  ];
+
+  const sstNavItems = [
     { href: `${basePath}/pgr`, label: 'Gestão de Riscos (PGR)', icon: ShieldAlert },
     { href: `${basePath}/pcmso`, label: 'Gestão de PCMSO', icon: BookUser },
-    { href: `${basePath}/events`, label: 'Gestão de Eventos', icon: Siren },
     { href: `${basePath}/pgr-inventory`, label: 'Inventário de Riscos', icon: FileText },
     { href: `${basePath}/pgr-action-plan`, label: 'Plano de Ação', icon: ClipboardList },
     { href: `${basePath}/epis`, label: 'Gestão de EPIs', icon: HardHat },
     { href: `${basePath}/epc`, label: 'Gestão de EPC', icon: Factory },
     { href: `${basePath}/trainings`, label: 'Gestão de Treinamentos', icon: GraduationCap },
     { href: `${basePath}/vaccines`, label: 'Gestão de Vacinas', icon: Syringe },
-    { href: `${basePath}/services`, label: 'Serviços', icon: ListTodo },
-    { href: `${basePath}/prices`, label: 'Preços', icon: DollarSign },
   ];
 
   const getIsActive = (href: string) => {
@@ -68,10 +80,13 @@ export function ClientSidebar() {
     }
     return pathname.startsWith(href);
   };
+  
+  const isSstActive = sstNavItems.some(item => getIsActive(item.href));
+
 
   return (
     <SidebarMenu>
-      {navItems.map((item) => (
+      {mainNavItems.map((item) => (
         <SidebarMenuItem key={item.label}>
           <Link href={item.href} passHref legacyBehavior>
             <a>
@@ -86,6 +101,44 @@ export function ClientSidebar() {
           </Link>
         </SidebarMenuItem>
       ))}
+
+      <SidebarMenuItem>
+        <Collapsible open={isSstOpen} onOpenChange={setIsSstOpen}>
+          <CollapsibleTrigger asChild>
+             <SidebarMenuButton
+                isActive={isSstActive}
+                tooltip="Gestão de SST"
+                className="justify-between"
+              >
+                <div className="flex items-center gap-2">
+                  <ShieldAlert />
+                  <span>Gestão de SST</span>
+                </div>
+                <ChevronRight className={cn("h-4 w-4 transition-transform", isSstOpen && "rotate-90")} />
+              </SidebarMenuButton>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+             <div className="pl-6 pt-1 space-y-1">
+                 {sstNavItems.map((item) => (
+                    <SidebarMenuItem key={item.label}>
+                        <Link href={item.href} passHref legacyBehavior>
+                            <a>
+                            <SidebarMenuButton
+                                isActive={getIsActive(item.href)}
+                                tooltip={item.label}
+                                className="h-8"
+                            >
+                                <item.icon />
+                                <span>{item.label}</span>
+                            </SidebarMenuButton>
+                            </a>
+                        </Link>
+                    </SidebarMenuItem>
+                ))}
+             </div>
+          </CollapsibleContent>
+        </Collapsible>
+      </SidebarMenuItem>
     </SidebarMenu>
   );
 }
