@@ -932,6 +932,85 @@ function UnitDashboard() {
     )
 }
 
+function ContractedServicesDashboard() {
+  const services = [
+    { name: 'Assessoria em Medicina do Trabalho', category: 'Assessoria Técnica', status: 'Ativo', renewalDate: '2025-01-01' },
+    { name: 'PCMSO', category: 'Programas e Laudos', status: 'Ativo', renewalDate: '2025-06-30' },
+    { name: 'PGR', category: 'Programas e Laudos', status: 'Ativo', renewalDate: '2026-01-15' },
+    { name: 'Exames Médicos Ocupacionais', category: 'Exames Médicos', status: 'Recorrente', renewalDate: 'N/A' },
+  ];
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h3 className="text-xl font-semibold">Serviços Contratados</h3>
+        <Button size="sm" className="h-8 gap-1">
+          <PlusCircle className="h-3.5 w-3.5" />
+          <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+            Adicionar Serviço
+          </span>
+        </Button>
+      </div>
+       <Card>
+        <CardHeader>
+          <CardTitle>Lista de Serviços</CardTitle>
+          <CardDescription>
+            Visão geral de todos os serviços contratados pelo cliente.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Serviço</TableHead>
+                <TableHead>Categoria</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Próxima Renovação</TableHead>
+                <TableHead>
+                  <span className="sr-only">Ações</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {services.map((service) => (
+                <TableRow key={service.name}>
+                  <TableCell className="font-medium">{service.name}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{service.category}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={service.status === 'Ativo' ? 'secondary' : 'default'}>{service.status}</Badge>
+                  </TableCell>
+                  <TableCell>{service.renewalDate}</TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          aria-haspopup="true"
+                          size="icon"
+                          variant="ghost"
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Alternar menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                        <DropdownMenuItem>Ver Detalhes do Contrato</DropdownMenuItem>
+                        <DropdownMenuItem>Cancelar Serviço</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+
 export default function ClientDetailsPage() {
   const params = useParams();
   const contractId = params.contractId as string;
@@ -979,7 +1058,7 @@ export default function ClientDetailsPage() {
         </div>
       
        <Tabs defaultValue="employees">
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-7">
                 <TabsTrigger value="info">Informações Gerais</TabsTrigger>
                 <TabsTrigger value="units">Unidades</TabsTrigger>
                 <TabsTrigger value="sectors">Setores</TabsTrigger>
@@ -988,6 +1067,10 @@ export default function ClientDetailsPage() {
                 <TabsTrigger value="docs-sst">
                   <BookUser className="mr-2 h-4 w-4" />
                   Documentos SST
+                </TabsTrigger>
+                 <TabsTrigger value="services">
+                  <ListTodo className="mr-2 h-4 w-4" />
+                  Serviços
                 </TabsTrigger>
             </TabsList>
             <TabsContent value="info">
@@ -1067,7 +1150,12 @@ export default function ClientDetailsPage() {
             <TabsContent value="docs-sst">
                 <SSTDocumentsDashboard />
             </TabsContent>
+            <TabsContent value="services">
+                <ContractedServicesDashboard />
+            </TabsContent>
        </Tabs>
     </div>
   );
 }
+
+    
