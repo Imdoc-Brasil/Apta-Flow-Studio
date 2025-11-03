@@ -133,7 +133,7 @@ export default function ClientDetailsPage({
                     </div>
                     <div className="pl-7 space-y-1">
                         <p className="text-sm"><span className="font-medium text-muted-foreground">ID do Contrato:</span> {client.contractId}</p>
-                        <p className="text-sm"><span className="font-medium text-muted-foreground">Plano:</span> <Badge variant="default">{client.plan}</Badge></p>
+                        <div className="text-sm"><span className="font-medium text-muted-foreground">Plano: </span><Badge variant="default">{client.plan}</Badge></div>
                     </div>
                  </div>
                  <div className="space-y-2">
