@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -99,7 +100,7 @@ export default function ProcessesPage() {
             <CardHeader>
                 <CardTitle>Sugestão</CardTitle>
                 <CardDescription>Recomendação da IA baseada no seu projeto.</CardDescription>
-            </CardHeader>
+            </Header>
             <CardContent className="min-h-[220px] flex items-center justify-center">
                 {loading && <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />}
                 {!loading && !result && <div className="text-center text-muted-foreground">Sua sugestão aparecerá aqui.</div>}
