@@ -24,6 +24,11 @@ import {
   ClipboardCheck,
   CalendarCheck,
   Network,
+  Stethoscope,
+  FlaskConical,
+  BarChart3,
+  FileHeart,
+  AlertTriangle,
 } from 'lucide-react';
 import {
   SidebarMenu,
@@ -45,6 +50,7 @@ export function ClientSidebar() {
   const [isSstOpen, setIsSstOpen] = useState(false);
   const [isEstruturaOpen, setIsEstruturaOpen] = useState(false);
   const [isContratoOpen, setIsContratoOpen] = useState(false);
+  const [isSaudeOpen, setIsSaudeOpen] = useState(false);
 
 
   if (!contractId) {
@@ -70,6 +76,13 @@ export function ClientSidebar() {
     { href: `${basePath}/roles`, label: 'Cargos', icon: Briefcase },
     { href: `${basePath}/employees`, label: 'Colaboradores', icon: Users },
   ];
+
+  const saudeNavItems = [
+    { href: `${basePath}/clinical-exams`, label: 'Exames Clínicos', icon: FileHeart },
+    { href: `${basePath}/lab-exams`, label: 'Exames Laboratoriais', icon: FlaskConical },
+    { href: `${basePath}/graphical-exams`, label: 'Exames Gráficos', icon: BarChart3 },
+    { href: `${basePath}/pending-issues`, label: 'Gestão de Pendências', icon: AlertTriangle },
+  ]
 
   const sstNavItems = [
     { href: `${basePath}/pgr`, label: 'Gestão de Riscos (PGR)', icon: ShieldAlert },
@@ -98,6 +111,7 @@ export function ClientSidebar() {
   const isSstActive = sstNavItems.some(item => getIsActive(item.href));
   const isEstruturaActive = estruturaNavItems.some(item => getIsActive(item.href));
   const isContratoActive = contratoNavItems.some(item => getIsActive(item.href));
+  const isSaudeActive = saudeNavItems.some(item => getIsActive(item.href));
 
 
   return (
@@ -187,6 +201,43 @@ export function ClientSidebar() {
           </CollapsibleContent>
         </Collapsible>
       </SidebarMenuItem>
+      
+      <SidebarMenuItem>
+        <Collapsible open={isSaudeOpen} onOpenChange={setIsSaudeOpen}>
+          <CollapsibleTrigger asChild>
+             <SidebarMenuButton
+                isActive={isSaudeActive}
+                tooltip="Gestão de Saúde"
+                className="justify-between"
+              >
+                <div className="flex items-center gap-2">
+                  <Stethoscope />
+                  <span>Gestão de Saúde</span>
+                </div>
+                <ChevronRight className={cn("h-4 w-4 transition-transform", isSaudeOpen && "rotate-90")} />
+              </SidebarMenuButton>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+             <div className="pl-6 pt-1 space-y-1">
+                 {saudeNavItems.map((item) => (
+                    <SidebarMenuItem key={item.label}>
+                        <Link href={item.href} asChild>
+                            <SidebarMenuButton
+                                isActive={getIsActive(item.href)}
+                                tooltip={item.label}
+                                className="h-8"
+                            >
+                                <item.icon />
+                                <span>{item.label}</span>
+                            </SidebarMenuButton>
+                        </Link>
+                    </SidebarMenuItem>
+                ))}
+             </div>
+          </CollapsibleContent>
+        </Collapsible>
+      </SidebarMenuItem>
+
 
       <SidebarMenuItem>
         <Collapsible open={isSstOpen} onOpenChange={setIsSstOpen}>
