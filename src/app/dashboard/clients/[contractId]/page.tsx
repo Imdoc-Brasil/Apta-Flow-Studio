@@ -53,6 +53,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { differenceInMonths, format, formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 
 // Simula a busca de dados do cliente.
@@ -79,9 +81,9 @@ function PlaceholderContent({ icon, title, description }: { icon: React.ReactNod
 
 function EmployeeDashboard() {
     const employees = [
-        { id: 'COL-001', name: 'João da Silva', role: 'Operador de Máquina', avatar: 'https://i.pravatar.cc/150?u=col001' },
-        { id: 'COL-002', name: 'Maria Oliveira', role: 'Inspetora de Qualidade', avatar: 'https://i.pravatar.cc/150?u=col002' },
-        { id: 'COL-003', name: 'Carlos Pereira', role: 'Operador de Máquina', avatar: 'https://i.pravatar.cc/150?u=col003' },
+        { id: 'COL-001', name: 'João da Silva', role: 'Operador de Máquina', avatar: 'https://i.pravatar.cc/150?u=col001', admissionDate: '2022-03-15' },
+        { id: 'COL-002', name: 'Maria Oliveira', role: 'Inspetora de Qualidade', avatar: 'https://i.pravatar.cc/150?u=col002', admissionDate: '2023-10-01' },
+        { id: 'COL-003', name: 'Carlos Pereira', role: 'Operador de Máquina', avatar: 'https://i.pravatar.cc/150?u=col003', admissionDate: '2024-01-20' },
     ];
 
     const kpiData = [
@@ -102,6 +104,11 @@ function EmployeeDashboard() {
         'Vencido': <XCircle className="text-red-500" />,
         'Pendente': <Clock className="text-yellow-500" />,
     };
+
+    const selectedEmployee = employees[0];
+    const admissionDate = new Date(selectedEmployee.admissionDate);
+    const timeInCompany = formatDistanceToNow(admissionDate, { addSuffix: true, locale: ptBR });
+
 
     return (
         <div className="space-y-6">
@@ -234,12 +241,15 @@ function EmployeeDashboard() {
                         <CardHeader>
                             <div className="flex items-center gap-4">
                                 <Avatar className="h-12 w-12">
-                                    <AvatarImage src={employees[0].avatar} alt={employees[0].name} />
-                                    <AvatarFallback>{employees[0].name.substring(0,2)}</AvatarFallback>
+                                    <AvatarImage src={selectedEmployee.avatar} alt={selectedEmployee.name} />
+                                    <AvatarFallback>{selectedEmployee.name.substring(0,2)}</AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <CardTitle>{employees[0].name}</CardTitle>
-                                    <CardDescription>{employees[0].role} no setor de Produção na Unidade Principal - Matriz</CardDescription>
+                                    <CardTitle>{selectedEmployee.name}</CardTitle>
+                                    <CardDescription className="flex flex-col gap-1 mt-1">
+                                        <span>{selectedEmployee.role} no setor de Produção na Unidade Principal - Matriz</span>
+                                        <span className="text-xs">Admitido em {format(admissionDate, 'dd/MM/yyyy')} ({timeInCompany})</span>
+                                    </CardDescription>
                                 </div>
                             </div>
                         </CardHeader>
