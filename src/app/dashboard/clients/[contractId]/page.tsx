@@ -1,11 +1,13 @@
+
 // Esta é uma página mockada. Em um cenário real, você buscaria os dados
 // do cliente com base no `params.contractId` de um banco de dados.
 
 'use client';
 
+import { useState } from 'react';
+
 import {
   ArrowLeft,
-  Briefcase,
   ChevronLeft,
   FileText,
   Mail,
@@ -15,7 +17,19 @@ import {
   Building2,
   Network,
   UserRound,
-  Users
+  Users,
+  PlusCircle,
+  TrendingUp,
+  FileWarning,
+  Ticket,
+  ShieldAlert,
+  ClipboardCheck,
+  HardHat,
+  Bell,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  MoreHorizontal,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -23,6 +37,12 @@ import { Button } from '@/components/ui/button';
 import { initialClientsData } from '../page';
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 
 // Simula a busca de dados do cliente.
 const getClientById = (id: string) => {
@@ -42,6 +62,186 @@ function PlaceholderContent({ icon, title, description }: { icon: React.ReactNod
             </p>
             <Button className="mt-4">Adicionar</Button>
           </div>
+        </div>
+    )
+}
+
+function UnitDashboard() {
+    const kpiData = [
+        { title: 'Total de Colaboradores', value: '152', icon: <Users className="h-4 w-4 text-muted-foreground" /> },
+        { title: 'Documentos Vencidos', value: '3', icon: <FileWarning className="h-4 w-4 text-muted-foreground" /> },
+        { title: 'Chamados Abertos', value: '5', icon: <Ticket className="h-4 w-4 text-muted-foreground" /> },
+        { title: 'Acidentes de Trabalho (Últimos 12m)', value: '1', icon: <ShieldAlert className="h-4 w-4 text-muted-foreground" /> },
+        { title: 'ASOs Vencidos', value: '12', icon: <ClipboardCheck className="h-4 w-4 text-muted-foreground" /> },
+        { title: 'Treinamentos Vencidos', value: '8', icon: <HardHat className="h-4 w-4 text-muted-foreground" /> },
+    ];
+
+    const documents = [
+        { name: 'PCMSO', status: 'Válido', expiry: '2025-06-30' },
+        { name: 'PGR', status: 'Válido', expiry: '2026-01-15' },
+        { name: 'LTCAT', status: 'Vencido', expiry: '2024-07-01' },
+        { name: 'Alvará Sanitário', status: 'Pendente', expiry: 'N/A' },
+    ];
+
+    const tickets = [
+        { id: 'CHD-012', subject: 'Solicitação de AET', status: 'Aberto', opened: '2024-07-20' },
+        { id: 'CHD-011', subject: 'Dúvida sobre novo colaborador', status: 'Fechado', opened: '2024-07-18' },
+    ];
+
+    const statusIcons = {
+        'Válido': <CheckCircle2 className="text-green-500" />,
+        'Vencido': <XCircle className="text-red-500" />,
+        'Pendente': <Clock className="text-yellow-500" />,
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="flex items-center justify-between">
+                <h3 className="text-xl font-semibold">Unidade Principal - Matriz</h3>
+                <Dialog>
+                    <DialogTrigger asChild>
+                         <Button size="sm" className="h-8 gap-1">
+                            <PlusCircle className="h-3.5 w-3.5" />
+                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                            Adicionar Unidade
+                            </span>
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-2xl">
+                         <DialogHeader>
+                            <DialogTitle>Adicionar Nova Unidade</DialogTitle>
+                            <DialogDescription>
+                                Preencha os detalhes para cadastrar uma nova obra ou filial.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <form className="grid gap-4 py-4">
+                             <div className="grid grid-cols-4 items-center gap-4">
+                                <Label className="text-right">Tipo</Label>
+                                <RadioGroup defaultValue="filial" className="col-span-3 flex gap-4">
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="filial" id="r-filial" />
+                                        <Label htmlFor="r-filial">Filial</Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <RadioGroupItem value="obra" id="r-obra" />
+                                        <Label htmlFor="r-obra">Obra</Label>
+                                    </div>
+                                </RadioGroup>
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="cnpj-cno" className="text-right">CNPJ / CNO</Label>
+                                <Input id="cnpj-cno" className="col-span-3" placeholder="Número do registro" />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="unit-description" className="text-right">Descrição</Label>
+                                <Input id="unit-description" className="col-span-3" placeholder="Ex: Sede Administrativa, Obra Bloco A" />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="cnae" className="text-right">CNAE</Label>
+                                <Input id="cnae" className="col-span-2" />
+                                <Label htmlFor="risk" className="text-right">Grau de Risco</Label>
+                                <Input id="risk" className="col-span-1" />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="address" className="text-right">Endereço</Label>
+                                <Input id="address" className="col-span-3" />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="responsible" className="text-right">Responsável</Label>
+                                <Input id="responsible" className="col-span-3" />
+                            </div>
+                             <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="contact" className="text-right">Contato</Label>
+                                <Input id="contact" className="col-span-3" placeholder="Telefone ou email do responsável da unidade"/>
+                            </div>
+                        </form>
+                         <DialogFooter>
+                            <Button type="submit">Salvar Unidade</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            </div>
+            
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {kpiData.map(kpi => (
+                     <Card key={kpi.title}>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
+                            {kpi.icon}
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{kpi.value}</div>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Situação da Documentação</CardTitle>
+                        <CardDescription>Status dos principais documentos de SST da unidade.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Documento</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Vencimento</TableHead>
+                                    <TableHead><span className="sr-only">Ações</span></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {documents.map(doc => (
+                                <TableRow key={doc.name}>
+                                    <TableCell className="font-medium">{doc.name}</TableCell>
+                                    <TableCell><div className="flex items-center gap-2">{statusIcons[doc.status as keyof typeof statusIcons]} {doc.status}</div></TableCell>
+                                    <TableCell>{doc.expiry}</TableCell>
+                                    <TableCell>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                            <DropdownMenuContent>
+                                                <DropdownMenuItem>Ver/Anexar PDF</DropdownMenuItem>
+                                                <DropdownMenuItem>Editar</DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </TableCell>
+                                </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Últimos Chamados</CardTitle>
+                        <CardDescription>Histórico de chamados e solicitações abertos para esta unidade.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                         <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>ID</TableHead>
+                                    <TableHead>Assunto</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Aberto em</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {tickets.map(ticket => (
+                                <TableRow key={ticket.id}>
+                                    <TableCell className="font-medium">{ticket.id}</TableCell>
+                                    <TableCell>{ticket.subject}</TableCell>
+                                    <TableCell><Badge variant={ticket.status === 'Aberto' ? 'default' : 'outline'}>{ticket.status}</Badge></TableCell>
+                                    <TableCell>{ticket.opened}</TableCell>
+                                </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     )
 }
@@ -95,7 +295,7 @@ export default function ClientDetailsPage({
             </Badge>
         </div>
       
-       <Tabs defaultValue="info">
+       <Tabs defaultValue="units">
             <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="info">Informações Gerais</TabsTrigger>
                 <TabsTrigger value="units">Unidades</TabsTrigger>
@@ -166,11 +366,7 @@ export default function ClientDetailsPage({
                 </Card>
             </TabsContent>
             <TabsContent value="units">
-                <PlaceholderContent 
-                    icon={<Building2 className="h-10 w-10 text-muted-foreground"/>}
-                    title="Gestão de Unidades" 
-                    description="Adicione e gerencie as diferentes unidades ou filiais desta empresa. Cada unidade pode ter seus próprios setores e colaboradores."
-                />
+                <UnitDashboard />
             </TabsContent>
             <TabsContent value="sectors">
                 <PlaceholderContent 
@@ -197,3 +393,4 @@ export default function ClientDetailsPage({
     </div>
   );
 }
+
