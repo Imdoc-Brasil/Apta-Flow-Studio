@@ -1,7 +1,8 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -17,6 +18,8 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { initialClientsData } from '@/app/dashboard/clients/page';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const initialUnitsData = [
   {
@@ -25,6 +28,8 @@ const initialUnitsData = [
     cnpj: '12.345.678/0001-99',
     address: '123 Tech Avenue, Silicon Valley, CA',
     status: 'Ativa',
+    cnae: '62.01-5-01',
+    riskLevel: '3'
   },
   {
     id: 'UNIT-002',
@@ -32,27 +37,66 @@ const initialUnitsData = [
     cnpj: '12.345.678/0002-88',
     address: '456 Ocean Drive, Rio de Janeiro, RJ',
     status: 'Ativa',
+    cnae: '62.01-5-01',
+    riskLevel: '3'
   },
 ];
 
 type Unit = typeof initialUnitsData[0];
 
+const getClientById = (contractId: string) => {
+    return initialClientsData.find((client) => client.contractId === contractId);
+};
+
 export default function UnitsPage() {
+    const params = useParams();
+    const contractId = params.contractId as string;
+    const client = getClientById(contractId);
+
     const [units, setUnits] = useState(initialUnitsData);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [inheritData, setInheritData] = useState(false);
+
+    // Form state
+    const [name, setName] = useState('');
+    const [cnpj, setCnpj] = useState('');
+    const [address, setAddress] = useState('');
+    const [cnae, setCnae] = useState('');
+    const [riskLevel, setRiskLevel] = useState('');
+
+    useEffect(() => {
+        if (client) {
+            if (inheritData) {
+                setName(client.name);
+                setCnpj(client.cnpj);
+                setAddress(client.address);
+                setCnae(client.cnae);
+                setRiskLevel(client.riskLevel);
+            } else {
+                setName('');
+                setCnpj('');
+                setAddress('');
+                setCnae('');
+                setRiskLevel('');
+            }
+        }
+    }, [inheritData, client]);
+
 
     const handleAddUnit = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
-        const formData = new FormData(event.currentTarget);
         const newUnit: Unit = {
             id: `UNIT-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
-            name: formData.get('name') as string,
-            cnpj: formData.get('cnpj') as string,
-            address: formData.get('address') as string,
+            name,
+            cnpj,
+            address,
+            cnae,
+            riskLevel,
             status: 'Ativa',
         };
         setUnits(prev => [...prev, newUnit]);
         setIsDialogOpen(false);
+        setInheritData(false); // Reset checkbox
     }
 
   return (
@@ -78,17 +122,29 @@ export default function UnitsPage() {
                     </DialogHeader>
                     <form id="add-unit-form" onSubmit={handleAddUnit}>
                         <div className="grid gap-4 py-4">
+                            <div className="flex items-center space-x-2 mb-4">
+                                <Checkbox id="inherit" checked={inheritData} onCheckedChange={(checked) => setInheritData(checked as boolean)} />
+                                <Label htmlFor="inherit" className="cursor-pointer">Herdar dados da empresa principal</Label>
+                            </div>
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="name" className="text-right">Nome</Label>
-                                <Input id="name" name="name" className="col-span-3" required />
+                                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" required disabled={inheritData} />
                             </div>
                              <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="cnpj" className="text-right">CNPJ</Label>
-                                <Input id="cnpj" name="cnpj" className="col-span-3" />
+                                <Input id="cnpj" value={cnpj} onChange={(e) => setCnpj(e.target.value)} className="col-span-3" disabled={inheritData} />
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="address" className="text-right">Endereço</Label>
-                                <Input id="address" name="address" className="col-span-3" required />
+                                <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} className="col-span-3" required disabled={inheritData} />
+                            </div>
+                             <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="cnae" className="text-right">CNAE</Label>
+                                <Input id="cnae" value={cnae} onChange={(e) => setCnae(e.target.value)} className="col-span-3" disabled={inheritData} />
+                            </div>
+                             <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="riskLevel" className="text-right">Grau de Risco</Label>
+                                <Input id="riskLevel" value={riskLevel} onChange={(e) => setRiskLevel(e.target.value)} className="col-span-3" disabled={inheritData} />
                             </div>
                         </div>
                     </form>
@@ -160,4 +216,3 @@ export default function UnitsPage() {
     </Card>
   );
 }
-
