@@ -7,61 +7,17 @@ import { useParams, usePathname, useRouter } from 'next/navigation';
 
 import {
   ArrowLeft,
-  ChevronLeft,
   FileText,
   Mail,
   MapPin,
   Phone,
   User,
-  Building2,
-  Network,
-  UserRound,
-  Users,
-  PlusCircle,
-  TrendingUp,
-  FileWarning,
-  Ticket,
-  ShieldAlert,
-  ClipboardCheck,
-  HardHat,
-  Bell,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  MoreHorizontal,
-  FileClock,
-  Building,
-  Briefcase,
-  HeartPulse,
-  BookUser,
-  FolderOpen,
-  CalendarDays,
-  FilePen,
-  ListTodo,
-  Loader,
-  CircleOff,
-  DollarSign,
-  Percent,
-  Info,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { initialClientsData } from '@/app/dashboard/(main)/clients/page';
 import Link from 'next/link';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { differenceInMonths, format, formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 
 const getClientById = (contractId: string) => {
     return initialClientsData.find((client) => client.contractId === contractId);
