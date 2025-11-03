@@ -9,6 +9,7 @@ import {
   Users,
   Search,
   PanelLeft,
+  ClipboardList,
 } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
@@ -82,7 +83,7 @@ export default function DashboardLayout({
                     <Logo className="text-primary-foreground" />
                     <span className="sr-only">AptaFlow</span>
                   </Link>
-                  <DashboardNav />
+                  <DashboardNav isSheet="true" />
                 </nav>
               </SheetContent>
             </Sheet>
