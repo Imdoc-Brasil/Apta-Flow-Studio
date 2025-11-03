@@ -9,7 +9,102 @@ import {
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+
+const physicalRisksData = [
+    { id: 'RF-001', name: 'Ruído Contínuo ou Intermitente', esocialCode: '01.01.001', method: 'Quantitativo', toleranceLimit: '85 dB(A)'},
+    { id: 'RF-002', name: 'Vibrações de Mãos e Braços (VMB)', esocialCode: '01.02.001', method: 'Quantitativo', toleranceLimit: '5 m/s²'},
+    { id: 'RF-003', name: 'Vibrações de Corpo Inteiro (VCI)', esocialCode: '01.02.002', method: 'Quantitativo', toleranceLimit: '1.15 m/s²'},
+    { id: 'RF-004', name: 'Temperaturas Anormais (Calor)', esocialCode: '01.03.001', method: 'Quantitativo', toleranceLimit: 'IBUTG'},
+    { id: 'RF-005', name: 'Radiações Não Ionizantes', esocialCode: '01.04.001', method: 'Qualitativo', toleranceLimit: 'N/A'},
+    { id: 'RF-006', name: 'Pressões Atmosféricas Anormais', esocialCode: '01.06.001', method: 'Qualitativo', toleranceLimit: 'N/A'},
+];
+
+
+function PhysicalRisksDashboard() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center justify-between">
+          Riscos Físicos
+          <Button size="sm" className="h-8 gap-1">
+            <PlusCircle className="h-3.5 w-3.5" />
+            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+              Adicionar Risco
+            </span>
+          </Button>
+        </CardTitle>
+        <CardDescription>
+          Gerencie os riscos físicos identificados no ambiente de trabalho, conforme a NR1 e NR9.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+         <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Agente/Risco</TableHead>
+              <TableHead>Cód. eSocial</TableHead>
+              <TableHead>Método</TableHead>
+              <TableHead>Limite de Tolerância</TableHead>
+              <TableHead>
+                <span className="sr-only">Ações</span>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {physicalRisksData.map((risk) => (
+                <TableRow key={risk.id}>
+                <TableCell className="font-medium">{risk.name}</TableCell>
+                <TableCell>
+                  <Badge variant="outline">{risk.esocialCode}</Badge>
+                </TableCell>
+                <TableCell>{risk.method}</TableCell>
+                <TableCell>{risk.toleranceLimit}</TableCell>
+                <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            aria-haspopup="true"
+                            size="icon"
+                            variant="ghost"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Alternar menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                          <DropdownMenuItem>Editar</DropdownMenuItem>
+                          <DropdownMenuItem>Ver Medições</DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive">Excluir</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+}
+
 
 function PlaceholderContent({ category }: { category: string }) {
   return (
@@ -70,7 +165,11 @@ export default function RisksPage() {
           ))}
         </TabsList>
 
-        {riskCategories.map((cat) => (
+        <TabsContent value="fisicos">
+          <PhysicalRisksDashboard />
+        </TabsContent>
+        
+        {riskCategories.slice(1).map((cat) => (
           <TabsContent key={cat.value} value={cat.value}>
             <PlaceholderContent category={cat.label} />
           </TabsContent>
