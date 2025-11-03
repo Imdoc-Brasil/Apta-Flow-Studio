@@ -20,13 +20,13 @@ import {
 } from '@/components/ui/tooltip';
 
 const navItems = [
-  { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/dashboard/clients', icon: Briefcase, label: 'Clients' },
-  { href: '/dashboard/employees', icon: Users, label: 'Employees' },
-  { href: '/dashboard/documents', icon: FileText, label: 'Documents' },
+  { href: '/dashboard', icon: LayoutDashboard, label: 'Painel' },
+  { href: '/dashboard/clients', icon: Briefcase, label: 'Clientes' },
+  { href: '/dashboard/employees', icon: Users, label: 'Funcionários' },
+  { href: '/dashboard/documents', icon: FileText, label: 'Documentos' },
   { href: '/dashboard/tickets', icon: Ticket, label: 'Tickets' },
-  { href: '/dashboard/performance', icon: Activity, label: 'Performance' },
-  { href: '/dashboard/processes', icon: Workflow, label: 'Processes' },
+  { href: '/dashboard/performance', icon: Activity, label: 'Desempenho' },
+  { href: '/dashboard/processes', icon: Workflow, label: 'Processos' },
   { href: '/dashboard/analytics', icon: BarChart2, label: 'Analytics' },
 ];
 

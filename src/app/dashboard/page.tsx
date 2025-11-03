@@ -29,27 +29,27 @@ import Link from 'next/link';
 
 const kpiData = [
   {
-    title: 'Active Clients',
+    title: 'Clientes Ativos',
     value: '+45',
-    description: '+12% from last month',
+    description: '+12% do último mês',
     icon: <Briefcase className="h-4 w-4 text-muted-foreground" />,
   },
   {
-    title: 'Open Tickets',
+    title: 'Tickets Abertos',
     value: '127',
-    description: '+5 since last hour',
+    description: '+5 desde a última hora',
     icon: <Users className="h-4 w-4 text-muted-foreground" />,
   },
   {
-    title: 'SLA Compliance',
+    title: 'Conformidade de SLA',
     value: '98.2%',
-    description: 'Target: 98%',
+    description: 'Meta: 98%',
     icon: <CreditCard className="h-4 w-4 text-muted-foreground" />,
   },
   {
-    title: 'Active Projects',
+    title: 'Projetos Ativos',
     value: '12',
-    description: '+2 from last month',
+    description: '+2 do último mês',
     icon: <Activity className="h-4 w-4 text-muted-foreground" />,
   },
 ];
@@ -58,31 +58,31 @@ const recentActivity = [
   {
     name: 'Olivia Martin',
     email: 'olivia.martin@email.com',
-    action: 'New Ticket',
+    action: 'Novo Ticket',
     details: '#TKT-2024-078',
   },
   {
     name: 'Jackson Lee',
     email: 'jackson.lee@email.com',
-    action: 'Contract Signed',
+    action: 'Contrato Assinado',
     details: 'Innovate Inc.',
   },
   {
     name: 'Isabella Nguyen',
     email: 'isabella.nguyen@email.com',
-    action: 'SLA Met',
-    details: 'Project Phoenix',
+    action: 'SLA Cumprido',
+    details: 'Projeto Phoenix',
   },
   {
     name: 'William Kim',
     email: 'will@email.com',
-    action: 'New Client',
+    action: 'Novo Cliente',
     details: 'Acme Corp',
   },
   {
     name: 'Sofia Davis',
     email: 'sofia.davis@email.com',
-    action: 'Ticket Closed',
+    action: 'Ticket Fechado',
     details: '#TKT-2024-075',
   },
 ];
@@ -110,14 +110,14 @@ export default function Dashboard() {
         <Card className="xl:col-span-2">
           <CardHeader className="flex flex-row items-center">
             <div className="grid gap-2">
-              <CardTitle>Recent Activity</CardTitle>
+              <CardTitle>Atividade Recente</CardTitle>
               <CardDescription>
-                A log of recent activities across the platform.
+                Um registro de atividades recentes em toda a plataforma.
               </CardDescription>
             </div>
             <Button asChild size="sm" className="ml-auto gap-1">
               <Link href="#">
-                View All
+                Ver Tudo
                 <ArrowUpRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -126,9 +126,9 @@ export default function Dashboard() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Action</TableHead>
-                  <TableHead className="text-right">Details</TableHead>
+                  <TableHead>Usuário</TableHead>
+                  <TableHead>Ação</TableHead>
+                  <TableHead className="text-right">Detalhes</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -141,7 +141,7 @@ export default function Dashboard() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={activity.action.includes('New') ? 'default' : 'secondary'} className="text-xs" >{activity.action}</Badge>
+                      <Badge variant={activity.action.includes('Novo') ? 'default' : 'secondary'} className="text-xs" >{activity.action}</Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       {activity.details}
@@ -154,9 +154,9 @@ export default function Dashboard() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>New Employees</CardTitle>
+            <CardTitle>Novos Funcionários</CardTitle>
             <CardDescription>
-              Welcoming the newest members of our team.
+              Dando as boas-vindas aos mais novos membros da nossa equipe.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-8">
@@ -170,10 +170,10 @@ export default function Dashboard() {
                   Olivia Martin
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Project Manager
+                  Gerente de Projeto
                 </p>
               </div>
-              <div className="ml-auto font-medium">Joined Today</div>
+              <div className="ml-auto font-medium">Entrou Hoje</div>
             </div>
             <div className="flex items-center gap-4">
               <Avatar className="hidden h-9 w-9 sm:flex">
@@ -183,10 +183,10 @@ export default function Dashboard() {
               <div className="grid gap-1">
                 <p className="text-sm font-medium leading-none">Jackson Lee</p>
                 <p className="text-sm text-muted-foreground">
-                  Software Engineer
+                  Engenheiro de Software
                 </p>
               </div>
-              <div className="ml-auto font-medium">Joined Yesterday</div>
+              <div className="ml-auto font-medium">Entrou Ontem</div>
             </div>
           </CardContent>
         </Card>

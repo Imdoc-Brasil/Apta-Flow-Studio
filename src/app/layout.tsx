@@ -16,7 +16,7 @@ const fontHeadline = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: 'AptaFlow',
-  description: 'Streamline Your Service Delivery',
+  description: 'Otimize sua entrega de serviços',
 };
 
 export default function RootLayout({
@@ -25,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="pt-BR" className="dark">
       <body
         className={cn(
           'min-h-screen font-body antialiased',

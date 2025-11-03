@@ -14,13 +14,13 @@ import {z} from 'genkit';
 const SuggestProcessToolInputSchema = z.object({
   projectDescription: z
     .string()
-    .describe('A detailed description of the project for which a process management tool is needed.'),
+    .describe('Uma descrição detalhada do projeto para o qual uma ferramenta de gerenciamento de processos é necessária.'),
 });
 export type SuggestProcessToolInput = z.infer<typeof SuggestProcessToolInputSchema>;
 
 const SuggestProcessToolOutputSchema = z.object({
-  toolName: z.string().describe('The name of the suggested process management tool (e.g., Kanban, Timeline, PDCA, 5W2H, Fishbone).'),
-  justification: z.string().describe('A brief justification for why the suggested tool is appropriate for the given project description.'),
+  toolName: z.string().describe('O nome da ferramenta de gerenciamento de processos sugerida (por exemplo, Kanban, Linha do Tempo, PDCA, 5W2H, Diagrama de Ishikawa).'),
+  justification: z.string().describe('Uma breve justificativa do porquê a ferramenta sugerida é apropriada para a descrição do projeto fornecida.'),
 });
 export type SuggestProcessToolOutput = z.infer<typeof SuggestProcessToolOutputSchema>;
 
@@ -32,11 +32,11 @@ const prompt = ai.definePrompt({
   name: 'suggestProcessToolPrompt',
   input: {schema: SuggestProcessToolInputSchema},
   output: {schema: SuggestProcessToolOutputSchema},
-  prompt: `You are an AI assistant specializing in project management methodologies. Based on the project description provided, suggest the most suitable process management tool from the following options: Kanban, Timeline, PDCA, 5W2H, Fishbone. Provide a brief justification for your suggestion.
+  prompt: `Você é um assistente de IA especializado em metodologias de gerenciamento de projetos. Com base na descrição do projeto fornecida, sugira a ferramenta de gerenciamento de processos mais adequada entre as seguintes opções: Kanban, Linha do Tempo, PDCA, 5W2H, Diagrama de Ishikawa. Forneça uma breve justificativa para sua sugestão.
 
-Project Description: {{{projectDescription}}}
+Descrição do Projeto: {{{projectDescription}}}
 
-Tool Suggestion:`,
+Sugestão de Ferramenta:`,
 });
 
 const suggestProcessToolFlow = ai.defineFlow(

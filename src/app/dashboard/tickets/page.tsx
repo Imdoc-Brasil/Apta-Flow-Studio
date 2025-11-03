@@ -30,24 +30,24 @@ import {
 import { Button } from '@/components/ui/button';
 
 const ticketsData = [
-  { id: 'TKT-001', subject: 'Cannot login to portal', client: 'Innovate Inc.', priority: 'High', status: 'Open', updated: '2024-07-21 10:30 AM' },
-  { id: 'TKT-002', subject: 'Feature Request: Dark Mode', client: 'Solutions Co.', priority: 'Medium', status: 'In Progress', updated: '2024-07-21 09:15 AM' },
-  { id: 'TKT-003', subject: 'Billing Inquiry', client: 'Stellar Tech', priority: 'Low', status: 'Open', updated: '2024-07-20 04:00 PM' },
-  { id: 'TKT-004', subject: 'API endpoint returning 500 error', client: 'Quantum Dynamics', priority: 'High', status: 'Resolved', updated: '2024-07-19 11:00 AM' },
-  { id: 'TKT-005', subject: 'Onboarding question', client: 'Apex Innovations', priority: 'Low', status: 'Closed', updated: '2024-07-18 02:45 PM' },
+  { id: 'TKT-001', subject: 'Não consigo fazer login no portal', client: 'Innovate Inc.', priority: 'Alta', status: 'Aberto', updated: '2024-07-21 10:30' },
+  { id: 'TKT-002', subject: 'Pedido de recurso: Modo Escuro', client: 'Solutions Co.', priority: 'Média', status: 'Em Progresso', updated: '2024-07-21 09:15' },
+  { id: 'TKT-003', subject: 'Consulta de faturamento', client: 'Stellar Tech', priority: 'Baixa', status: 'Aberto', updated: '2024-07-20 16:00' },
+  { id: 'TKT-004', subject: 'Endpoint da API retornando erro 500', client: 'Quantum Dynamics', priority: 'Alta', status: 'Resolvido', updated: '2024-07-19 11:00' },
+  { id: 'TKT-005', subject: 'Dúvida sobre integração', client: 'Apex Innovations', priority: 'Baixa', status: 'Fechado', updated: '2024-07-18 14:45' },
 ];
 
 const priorityVariant = {
-    'High': 'destructive',
-    'Medium': 'default',
-    'Low': 'secondary'
+    'Alta': 'destructive',
+    'Média': 'default',
+    'Baixa': 'secondary'
 } as const;
 
 const statusVariant = {
-    'Open': 'default',
-    'In Progress': 'secondary',
-    'Resolved': 'outline',
-    'Closed': 'outline'
+    'Aberto': 'default',
+    'Em Progresso': 'secondary',
+    'Resolvido': 'outline',
+    'Fechado': 'outline'
 } as const;
 
 
@@ -57,20 +57,20 @@ export default function TicketsPage() {
       <CardHeader>
         <div className="flex items-start justify-between">
             <div>
-                <CardTitle>Service Tickets</CardTitle>
+                <CardTitle>Tickets de Serviço</CardTitle>
                 <CardDescription>
-                Track and manage client service requests.
+                Rastreie e gerencie as solicitações de serviço do cliente.
                 </CardDescription>
             </div>
             <div className="flex gap-2">
                  <Button variant="outline" size="sm" className="h-8 gap-1">
                     <Filter className="h-3.5 w-3.5" />
-                    <span>Filter</span>
+                    <span>Filtrar</span>
                 </Button>
                 <Button size="sm" className="h-8 gap-1">
                     <PlusCircle className="h-3.5 w-3.5" />
                     <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    New Ticket
+                    Novo Ticket
                     </span>
                 </Button>
             </div>
@@ -80,14 +80,14 @@ export default function TicketsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[100px]">Ticket ID</TableHead>
-              <TableHead>Subject</TableHead>
-              <TableHead className="hidden md:table-cell">Client</TableHead>
-              <TableHead>Priority</TableHead>
+              <TableHead className="w-[100px]">ID do Ticket</TableHead>
+              <TableHead>Assunto</TableHead>
+              <TableHead className="hidden md:table-cell">Cliente</TableHead>
+              <TableHead>Prioridade</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead className="hidden md:table-cell">Last Updated</TableHead>
+              <TableHead className="hidden md:table-cell">Última Atualização</TableHead>
               <TableHead>
-                <span className="sr-only">Actions</span>
+                <span className="sr-only">Ações</span>
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -113,15 +113,15 @@ export default function TicketsPage() {
                             variant="ghost"
                           >
                             <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
+                            <span className="sr-only">Alternar menu</span>
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem>View Details</DropdownMenuItem>
-                          <DropdownMenuItem>Assign</DropdownMenuItem>
+                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                          <DropdownMenuItem>Ver Detalhes</DropdownMenuItem>
+                          <DropdownMenuItem>Atribuir</DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem>Close Ticket</DropdownMenuItem>
+                          <DropdownMenuItem>Fechar Ticket</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

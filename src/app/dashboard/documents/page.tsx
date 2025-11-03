@@ -30,10 +30,10 @@ import {
 import { Button } from '@/components/ui/button';
 
 const documentsData = [
-  { name: 'InnovateInc_MSA_2024.pdf', type: 'Contract', size: '2.5 MB', modified: '2024-07-15', relatedTo: 'Innovate Inc.'},
-  { name: 'Q1_2024_Performance_Report.docx', type: 'Report', size: '800 KB', modified: '2024-04-05', relatedTo: 'All Clients'},
-  { name: 'Project_Phoenix_SOW.pdf', type: 'SOW', size: '1.2 MB', modified: '2024-06-20', relatedTo: 'Solutions Co.'},
-  { name: 'Onboarding_Checklist_Quantum.xlsx', type: 'Checklist', size: '300 KB', modified: '2023-11-10', relatedTo: 'Quantum Dynamics'},
+  { name: 'InnovateInc_MSA_2024.pdf', type: 'Contrato', size: '2.5 MB', modified: '2024-07-15', relatedTo: 'Innovate Inc.'},
+  { name: 'Q1_2024_Relatorio_Desempenho.docx', type: 'Relatório', size: '800 KB', modified: '2024-04-05', relatedTo: 'Todos os Clientes'},
+  { name: 'Projeto_Phoenix_SOW.pdf', type: 'SOW', size: '1.2 MB', modified: '2024-06-20', relatedTo: 'Solutions Co.'},
+  { name: 'Checklist_Integracao_Quantum.xlsx', type: 'Checklist', size: '300 KB', modified: '2023-11-10', relatedTo: 'Quantum Dynamics'},
   { name: 'StellarTech_SLA.pdf', type: 'SLA', size: '600 KB', modified: '2024-02-01', relatedTo: 'Stellar Tech'},
 ];
 
@@ -41,15 +41,15 @@ export default function DocumentsPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Document Repository</CardTitle>
+        <CardTitle>Repositório de Documentos</CardTitle>
         <CardDescription>
-          Secure storage and management of contracts, documentation, and reports.
+          Armazenamento e gestão segura de contratos, documentação e relatórios.
         </CardDescription>
         <div className="flex items-center gap-2 pt-4">
             <Button size="sm" className="h-8 gap-1">
                 <Upload className="h-3.5 w-3.5" />
                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                Upload Document
+                Carregar Documento
                 </span>
             </Button>
         </div>
@@ -58,13 +58,13 @@ export default function DocumentsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead className="hidden sm:table-cell">Type</TableHead>
-              <TableHead className="hidden sm:table-cell">Related To</TableHead>
-              <TableHead className="hidden md:table-cell">Last Modified</TableHead>
-              <TableHead className="text-right">Size</TableHead>
+              <TableHead>Nome</TableHead>
+              <TableHead className="hidden sm:table-cell">Tipo</TableHead>
+              <TableHead className="hidden sm:table-cell">Relacionado a</TableHead>
+              <TableHead className="hidden md:table-cell">Última Modificação</TableHead>
+              <TableHead className="text-right">Tamanho</TableHead>
               <TableHead>
-                <span className="sr-only">Actions</span>
+                <span className="sr-only">Ações</span>
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -87,16 +87,16 @@ export default function DocumentsPage() {
                             variant="ghost"
                           >
                             <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
+                            <span className="sr-only">Alternar menu</span>
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem>Download</DropdownMenuItem>
-                          <DropdownMenuItem>Share</DropdownMenuItem>
+                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                          <DropdownMenuItem>Baixar</DropdownMenuItem>
+                          <DropdownMenuItem>Compartilhar</DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem className="text-destructive">
-                            Delete
+                            Excluir
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

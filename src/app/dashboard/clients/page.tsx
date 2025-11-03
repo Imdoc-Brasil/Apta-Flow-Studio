@@ -37,37 +37,37 @@ const clientsData = [
   {
     name: 'Innovate Inc.',
     contractId: 'CTR-2024-001',
-    status: 'Active',
+    status: 'Ativo',
     contact: 'liam.johnson@innovate.com',
     plan: 'Enterprise',
   },
   {
     name: 'Solutions Co.',
     contractId: 'CTR-2024-002',
-    status: 'Active',
+    status: 'Ativo',
     contact: 'olivia.smith@solutions.com',
     plan: 'Pro',
   },
   {
     name: 'Quantum Dynamics',
     contractId: 'CTR-2023-015',
-    status: 'Onboarding',
+    status: 'Integração',
     contact: 'noah.williams@quantum.com',
     plan: 'Enterprise',
   },
   {
     name: 'Stellar Tech',
     contractId: 'CTR-2024-004',
-    status: 'Active',
+    status: 'Ativo',
     contact: 'emma.brown@stellar.com',
     plan: 'Pro',
   },
   {
     name: 'Apex Innovations',
     contractId: 'CTR-2022-008',
-    status: 'Inactive',
+    status: 'Inativo',
     contact: 'ava.jones@apex.com',
-    plan: 'Basic',
+    plan: 'Básico',
   },
 ];
 
@@ -76,11 +76,11 @@ export default function ClientsPage() {
     <Tabs defaultValue="all">
       <div className="flex items-center">
         <TabsList>
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="active">Active</TabsTrigger>
-          <TabsTrigger value="onboarding">Onboarding</TabsTrigger>
+          <TabsTrigger value="all">Todos</TabsTrigger>
+          <TabsTrigger value="active">Ativo</TabsTrigger>
+          <TabsTrigger value="onboarding">Integração</TabsTrigger>
           <TabsTrigger value="inactive" className="hidden sm:flex">
-            Inactive
+            Inativo
           </TabsTrigger>
         </TabsList>
         <div className="ml-auto flex items-center gap-2">
@@ -89,24 +89,24 @@ export default function ClientsPage() {
               <Button variant="outline" size="sm" className="h-8 gap-1">
                 <ListFilter className="h-3.5 w-3.5" />
                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                  Filter
+                  Filtrar
                 </span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Filter by</DropdownMenuLabel>
+              <DropdownMenuLabel>Filtrar por</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuCheckboxItem checked>
-                Active
+                Ativo
               </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem>Onboarding</DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem>Inactive</DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem>Integração</DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem>Inativo</DropdownMenuCheckboxItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <Button size="sm" className="h-8 gap-1">
             <PlusCircle className="h-3.5 w-3.5" />
             <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-              Add Client
+              Adicionar Cliente
             </span>
           </Button>
         </div>
@@ -114,25 +114,25 @@ export default function ClientsPage() {
       <TabsContent value="all">
         <Card>
           <CardHeader>
-            <CardTitle>Clients</CardTitle>
+            <CardTitle>Clientes</CardTitle>
             <CardDescription>
-              Manage your clients and their service agreements.
+              Gerencie seus clientes e seus contratos de serviço.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Company</TableHead>
+                  <TableHead>Empresa</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="hidden md:table-cell">
-                    Plan
+                    Plano
                   </TableHead>
                   <TableHead className="hidden md:table-cell">
-                    Contract ID
+                    ID do Contrato
                   </TableHead>
                   <TableHead>
-                    <span className="sr-only">Actions</span>
+                    <span className="sr-only">Ações</span>
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -144,7 +144,7 @@ export default function ClientsPage() {
                       <div className="text-sm text-muted-foreground md:hidden">{client.contact}</div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={client.status === 'Active' ? 'secondary' : client.status === 'Onboarding' ? 'default' : 'outline'}>
+                      <Badge variant={client.status === 'Ativo' ? 'secondary' : client.status === 'Integração' ? 'default' : 'outline'}>
                         {client.status}
                       </Badge>
                     </TableCell>
@@ -163,16 +163,16 @@ export default function ClientsPage() {
                             variant="ghost"
                           >
                             <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
+                            <span className="sr-only">Alternar menu</span>
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem>Edit</DropdownMenuItem>
-                          <DropdownMenuItem>View Contracts</DropdownMenuItem>
+                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                          <DropdownMenuItem>Editar</DropdownMenuItem>
+                          <DropdownMenuItem>Ver Contratos</DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem className="text-destructive">
-                            Delete
+                            Excluir
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -184,7 +184,7 @@ export default function ClientsPage() {
           </CardContent>
           <CardFooter>
             <div className="text-xs text-muted-foreground">
-              Showing <strong>1-5</strong> of <strong>5</strong> clients
+              Mostrando <strong>1-5</strong> de <strong>5</strong> clientes
             </div>
           </CardFooter>
         </Card>

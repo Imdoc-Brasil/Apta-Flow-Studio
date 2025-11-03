@@ -13,46 +13,46 @@ import { Mail, Phone } from 'lucide-react';
 const employeesData = [
   {
     name: 'Sarah Chen',
-    role: 'Lead Project Manager',
+    role: 'Gerente de Projeto Principal',
     avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026701d',
     fallback: 'SC',
     email: 'sarah.chen@aptaflow.com',
     phone: '555-0101',
-    responsibilities: ['Client Onboarding', 'SLA Monitoring', 'Innovate Inc. Account'],
+    responsibilities: ['Integração de Clientes', 'Monitoramento de SLA', 'Conta Innovate Inc.'],
   },
   {
     name: 'David Rodriguez',
-    role: 'Senior Software Engineer',
+    role: 'Engenheiro de Software Sênior',
     avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026702d',
     fallback: 'DR',
     email: 'david.r@aptaflow.com',
     phone: '555-0102',
-    responsibilities: ['Backend Development', 'API Maintenance', 'Project Phoenix Lead'],
+    responsibilities: ['Desenvolvimento Backend', 'Manutenção de API', 'Líder do Projeto Phoenix'],
   },
   {
     name: 'Emily White',
-    role: 'Support Specialist',
+    role: 'Especialista de Suporte',
     avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026703d',
     fallback: 'EW',
     email: 'emily.w@aptaflow.com',
     phone: '555-0103',
-    responsibilities: ['Tier 1 Support', 'Ticket Triage', 'Client Communication'],
+    responsibilities: ['Suporte Nível 1', 'Triagem de Tickets', 'Comunicação com Cliente'],
   },
    {
     name: 'Michael Brown',
-    role: 'DevOps Engineer',
+    role: 'Engenheiro de DevOps',
     avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704d',
     fallback: 'MB',
     email: 'michael.b@aptaflow.com',
     phone: '555-0104',
-    responsibilities: ['CI/CD Pipeline', 'Infrastructure', 'Security Audits'],
+    responsibilities: ['Pipeline CI/CD', 'Infraestrutura', 'Auditorias de Segurança'],
   },
 ];
 
 export default function EmployeesPage() {
   return (
     <div className="grid flex-1 auto-rows-max gap-4">
-      <h1 className="font-headline text-3xl font-bold">Employee Hub</h1>
+      <h1 className="font-headline text-3xl font-bold">Hub de Funcionários</h1>
        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
         {employeesData.map((employee) => (
           <Card key={employee.name}>
@@ -68,7 +68,7 @@ export default function EmployeesPage() {
             </CardHeader>
             <CardContent className="space-y-4">
                <div>
-                <h4 className="text-sm font-medium mb-2">Contact Information</h4>
+                <h4 className="text-sm font-medium mb-2">Informações de Contato</h4>
                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Mail className="h-4 w-4" />
                     <span>{employee.email}</span>
@@ -79,7 +79,7 @@ export default function EmployeesPage() {
                 </div>
                </div>
                <div>
-                 <h4 className="text-sm font-medium mb-2">Key Responsibilities</h4>
+                 <h4 className="text-sm font-medium mb-2">Principais Responsabilidades</h4>
                 <div className="flex flex-wrap gap-1">
                     {employee.responsibilities.map((resp) => (
                         <Badge key={resp} variant="secondary">{resp}</Badge>

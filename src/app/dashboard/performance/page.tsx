@@ -18,8 +18,8 @@ import {
 } from '@/components/ui/chart';
 
 const slaData = [
-  { name: 'Met SLA', value: 392, fill: 'var(--color-met)' },
-  { name: 'Missed SLA', value: 8, fill: 'var(--color-missed)' },
+  { name: 'SLA Cumprido', value: 392, fill: 'var(--color-met)' },
+  { name: 'SLA Violado', value: 8, fill: 'var(--color-missed)' },
 ];
 
 const slaConfig = {
@@ -27,28 +27,28 @@ const slaConfig = {
     label: 'Tickets',
   },
   met: {
-    label: 'Met SLA',
+    label: 'SLA Cumprido',
     color: 'hsl(var(--chart-1))',
   },
   missed: {
-    label: 'Missed SLA',
+    label: 'SLA Violado',
     color: 'hsl(var(--destructive))',
   },
 } satisfies ChartConfig;
 
 const okrData = [
-    { goal: "Improve CSAT", progress: 75, target: 100 },
-    { goal: "Reduce Churn", progress: 40, target: 100 },
-    { goal: "Upsell Revenue", progress: 90, target: 100 },
+    { goal: "Melhorar CSAT", progress: 75, target: 100 },
+    { goal: "Reduzir Churn", progress: 40, target: 100 },
+    { goal: "Receita Upsell", progress: 90, target: 100 },
 ];
 
 const okrConfig = {
     progress: {
-        label: "Progress",
+        label: "Progresso",
         color: "hsl(var(--chart-2))",
     },
     target: {
-        label: "Target",
+        label: "Meta",
         color: "hsl(var(--muted))"
     }
 } satisfies ChartConfig;
@@ -57,12 +57,12 @@ const okrConfig = {
 export default function PerformancePage() {
   return (
     <div className="grid flex-1 auto-rows-max gap-4">
-      <h1 className="font-headline text-3xl font-bold">Performance Monitoring</h1>
+      <h1 className="font-headline text-3xl font-bold">Monitoramento de Desempenho</h1>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle>SLA Compliance</CardTitle>
-            <CardDescription>Last 30 days</CardDescription>
+            <CardTitle>Conformidade de SLA</CardTitle>
+            <CardDescription>Últimos 30 dias</CardDescription>
           </CardHeader>
           <CardContent className="flex justify-center">
             <ChartContainer
@@ -96,17 +96,17 @@ export default function PerformancePage() {
           </CardContent>
           <CardFooter className="flex-col gap-2 text-sm">
             <div className="flex items-center gap-2 font-medium leading-none">
-              98% Compliance Rate <TrendingUp className="h-4 w-4" />
+              Taxa de Conformidade de 98% <TrendingUp className="h-4 w-4" />
             </div>
             <div className="leading-none text-muted-foreground">
-              Showing total tickets for the last 30 days
+              Mostrando total de tickets dos últimos 30 dias
             </div>
           </CardFooter>
         </Card>
         <Card>
             <CardHeader>
-                <CardTitle>OKR Progress - Q3 2024</CardTitle>
-                <CardDescription>Current progress towards key results.</CardDescription>
+                <CardTitle>Progresso OKR - Q3 2024</CardTitle>
+                <CardDescription>Progresso atual em direção aos resultados-chave.</CardDescription>
             </CardHeader>
             <CardContent>
                 <ChartContainer config={okrConfig} className="h-[250px] w-full">
@@ -122,7 +122,7 @@ export default function PerformancePage() {
             </CardContent>
              <CardFooter className="flex-col gap-2 text-sm items-start">
                  <div className="leading-none text-muted-foreground">
-                    Progress is measured against quarterly targets.
+                    O progresso é medido em relação às metas trimestrais.
                 </div>
             </CardFooter>
         </Card>

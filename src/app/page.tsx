@@ -19,43 +19,43 @@ import { Logo } from '@/components/logo';
 const features = [
   {
     icon: <Briefcase className="h-8 w-8 text-primary" />,
-    title: 'Client Management',
+    title: 'Gestão de Clientes',
     description:
-      'Manage client companies, contracts, and service agreements seamlessly.',
+      'Gerencie empresas clientes, contratos e acordos de serviço de forma transparente.',
   },
   {
     icon: <Users className="h-8 w-8 text-primary" />,
-    title: 'Employee Information Hub',
+    title: 'Hub de Informações de Funcionários',
     description:
-      'Centralized repository for employee data and performance metrics.',
+      'Repositório centralizado para dados de funcionários e métricas de desempenho.',
   },
   {
     icon: <FileText className="h-8 w-8 text-primary" />,
-    title: 'Document Repository',
+    title: 'Repositório de Documentos',
     description:
-      'Securely store and manage contracts, documents, and reports.',
+      'Armazene e gerencie contratos, documentos e relatórios com segurança.',
   },
   {
     icon: <Ticket className="h-8 w-8 text-primary" />,
-    title: 'Service Request Ticketing',
-    description: 'Enable clients to submit and track service requests with ease.',
+    title: 'Ticketing de Solicitação de Serviço',
+    description: 'Permita que os clientes enviem e rastreiem solicitações de serviço com facilidade.',
   },
   {
     icon: <Gauge className="h-8 w-8 text-primary" />,
-    title: 'Performance Monitoring',
+    title: 'Monitoramento de Desempenho',
     description:
-      'Real-time tracking of SLAs and OKRs to ensure service delivery quality.',
+      'Acompanhamento em tempo real de SLAs e OKRs para garantir a qualidade da entrega do serviço.',
   },
   {
     icon: <Bot className="h-8 w-8 text-primary" />,
-    title: 'AI-Powered Process Tools',
+    title: 'Ferramentas de Processo com IA',
     description:
-      'Utilize Kanban, timelines, and AI suggestions to optimize processes.',
+      'Utilize Kanban, cronogramas e sugestões de IA para otimizar processos.',
   },
   {
     icon: <BarChart2 className="h-8 w-8 text-primary" />,
-    title: 'Analytics and Reporting',
-    description: 'Generate custom reports and dashboards for continuous improvement.',
+    title: 'Análise e Relatórios',
+    description: 'Gere relatórios e painéis personalizados para melhoria contínua.',
   },
 ];
 
@@ -74,7 +74,7 @@ export default function Home() {
           <div className="flex flex-1 items-center justify-end space-x-2">
             <Button asChild>
               <Link href="/dashboard">
-                Get Started <ArrowRight className="ml-2 h-4 w-4" />
+                Começar <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
           </div>
@@ -86,15 +86,15 @@ export default function Home() {
           <div className="container grid grid-cols-1 gap-8 text-center md:grid-cols-2 md:text-left">
             <div className="flex flex-col justify-center space-y-4">
               <h1 className="font-headline text-4xl font-extrabold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl">
-                Streamline Your Service Delivery with AptaFlow
+                Otimize Sua Entrega de Serviços com AptaFlow
               </h1>
               <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                The all-in-one platform to manage clients, employees, and processes with AI-powered insights for ultimate efficiency.
+                A plataforma tudo-em-um para gerenciar clientes, funcionários e processos com insights alimentados por IA para máxima eficiência.
               </p>
               <div className="flex flex-col gap-2 min-[400px]:flex-row justify-center md:justify-start">
                 <Button asChild size="lg">
                   <Link href="/dashboard">
-                    Go to Dashboard
+                    Ir para o Painel
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
@@ -119,13 +119,13 @@ export default function Home() {
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
                 <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">
-                  Key Features
+                  Principais Recursos
                 </div>
                 <h2 className="font-headline text-3xl font-bold tracking-tighter sm:text-5xl">
-                  Everything You Need to Succeed
+                  Tudo o que Você Precisa para o Sucesso
                 </h2>
                 <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  AptaFlow provides a comprehensive suite of tools designed to enhance productivity, improve client satisfaction, and drive business growth.
+                  AptaFlow oferece um conjunto abrangente de ferramentas projetadas para aumentar a produtividade, melhorar a satisfação do cliente e impulsionar o crescimento do negócio.
                 </p>
               </div>
             </div>
@@ -164,7 +164,7 @@ export default function Home() {
           <div className="flex flex-col items-center gap-4 px-8 md:flex-row md:gap-2 md:px-0">
             <Logo />
             <p className="text-center text-sm leading-loose text-muted-foreground md:text-left">
-              © {new Date().getFullYear()} AptaFlow Inc. All rights reserved.
+              © {new Date().getFullYear()} AptaFlow Inc. Todos os direitos reservados.
             </p>
           </div>
         </div>
