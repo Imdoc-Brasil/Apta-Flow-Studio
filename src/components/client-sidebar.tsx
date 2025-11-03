@@ -33,7 +33,7 @@ export function ClientSidebar() {
     { href: `${basePath}/roles`, label: 'Cargos', icon: Briefcase },
     { href: `${basePath}/employees`, label: 'Colaboradores', icon: Users },
     { href: `${basePath}/docs-sst`, label: 'Documentos SST', icon: BookUser },
-    { href: `${base-path}/services`, label: 'Serviços', icon: ListTodo },
+    { href: `${basePath}/services`, label: 'Serviços', icon: ListTodo },
     { href: `${basePath}/prices`, label: 'Tabela de Preços', icon: DollarSign },
   ];
 
