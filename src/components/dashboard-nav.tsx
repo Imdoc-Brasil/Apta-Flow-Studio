@@ -13,7 +13,6 @@ import {
   BarChart2,
   ClipboardList,
   ShieldAlert,
-  HardHat,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -28,7 +27,6 @@ const navItems = [
   { href: '/dashboard/employees', icon: Users, label: 'Funcionários' },
   { href: '/dashboard/services', icon: ClipboardList, label: 'Serviços' },
   { href: '/dashboard/risks', icon: ShieldAlert, label: 'Riscos' },
-  { href: '/dashboard/epis', icon: HardHat, label: 'EPIs' },
   { href: '/dashboard/documents', icon: FileText, label: 'Documentos' },
   { href: '/dashboard/tickets', icon: Ticket, label: 'Tickets' },
   { href: '/dashboard/performance', icon: Activity, label: 'Desempenho' },

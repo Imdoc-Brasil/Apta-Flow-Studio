@@ -102,8 +102,6 @@ export default function EpisPage() {
 
     return (
         <div className="grid flex-1 auto-rows-max gap-4">
-            <h1 className="font-headline text-3xl font-bold">Gestão de EPIs</h1>
-
              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {kpiData.map((kpi, index) => (
                     <Card key={index}>
@@ -122,7 +120,7 @@ export default function EpisPage() {
                 <CardHeader>
                     <CardTitle>Histórico de Entrega de EPIs</CardTitle>
                     <CardDescription>
-                    Registre e monitore todas as entregas de Equipamentos de Proteção Individual.
+                    Registre e monitore todas as entregas de Equipamentos de Proteção Individual para este cliente.
                     </CardDescription>
                      <div className="flex items-center gap-2 pt-4">
                         <Popover>
@@ -158,7 +156,6 @@ export default function EpisPage() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>Colaborador</TableHead>
-                                <TableHead className="hidden md:table-cell">Cliente</TableHead>
                                 <TableHead>EPI (CA)</TableHead>
                                 <TableHead>Data de Entrega</TableHead>
                                 <TableHead>Validade</TableHead>
@@ -172,7 +169,6 @@ export default function EpisPage() {
                             {epiDeliveries.map((delivery) => (
                                 <TableRow key={delivery.id}>
                                     <TableCell className="font-medium">{delivery.collaborator}</TableCell>
-                                    <TableCell className="hidden md:table-cell">{delivery.client}</TableCell>
                                     <TableCell>{delivery.epi}</TableCell>
                                     <TableCell>{format(new Date(delivery.deliveryDate), 'dd/MM/yyyy')}</TableCell>
                                     <TableCell>{format(new Date(delivery.validity), 'dd/MM/yyyy')}</TableCell>

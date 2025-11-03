@@ -16,6 +16,7 @@ import {
   ShieldAlert,
   FileText,
   ClipboardList,
+  HardHat,
 } from 'lucide-react';
 import {
   SidebarMenu,
@@ -44,6 +45,7 @@ export function ClientSidebar() {
     { href: `${basePath}/pgr`, label: 'Gestão de Riscos (PGR)', icon: ShieldAlert },
     { href: `${basePath}/pgr-inventory`, label: 'Inventário de Riscos', icon: FileText },
     { href: `${basePath}/pgr-action-plan`, label: 'Plano de Ação', icon: ClipboardList },
+    { href: `${basePath}/epis`, label: 'Gestão de EPIs', icon: HardHat },
     { href: `${basePath}/services`, label: 'Serviços', icon: ListTodo },
     { href: `${basePath}/prices`, label: 'Preços', icon: DollarSign },
   ];
@@ -63,7 +65,7 @@ export function ClientSidebar() {
     <SidebarMenu>
       {navItems.map((item) => (
         <SidebarMenuItem key={item.label}>
-           <Link href={item.href} legacyBehavior passHref>
+           <Link href={item.href} passHref legacyBehavior>
             <a>
               <SidebarMenuButton
                 isActive={getIsActive(item.href)}
