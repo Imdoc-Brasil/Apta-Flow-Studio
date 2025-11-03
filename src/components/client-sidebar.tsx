@@ -7,6 +7,7 @@ import {
   BookUser,
   Building,
   Briefcase,
+  CreditCard,
   DollarSign,
   HeartPulse,
   Info,
@@ -33,6 +34,7 @@ export function ClientSidebar() {
 
   const navItems = [
     { href: `${basePath}/info`, label: 'Informações', icon: Info },
+    { href: `${basePath}/billing`, label: 'Faturamento', icon: CreditCard },
     { href: `${basePath}/units`, label: 'Unidades', icon: Building },
     { href: `${basePath}/sectors`, label: 'Setores', icon: HeartPulse },
     { href: `${basePath}/roles`, label: 'Cargos', icon: Briefcase },
@@ -54,16 +56,16 @@ export function ClientSidebar() {
     <SidebarMenu>
       {navItems.map((item) => (
         <SidebarMenuItem key={item.label}>
-          <SidebarMenuButton
-            asChild
-            isActive={getIsActive(item.href)}
-            tooltip={item.label}
-          >
-            <Link href={item.href}>
+          <Link href={item.href} passHref legacyBehavior>
+            <SidebarMenuButton
+              as="a"
+              isActive={getIsActive(item.href)}
+              tooltip={item.label}
+            >
               <item.icon />
               <span>{item.label}</span>
-            </Link>
-          </SidebarMenuButton>
+            </SidebarMenuButton>
+          </Link>
         </SidebarMenuItem>
       ))}
     </SidebarMenu>
