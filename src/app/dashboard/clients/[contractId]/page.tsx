@@ -4,6 +4,7 @@
 
 import { useState } from 'react';
 import type { FC } from 'react';
+import { useParams } from 'next/navigation';
 
 import {
   ArrowLeft,
@@ -59,6 +60,10 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { differenceInMonths, format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
+const getClientById = (contractId: string) => {
+    return initialClientsData.find((client) => client.contractId === contractId);
+};
 
 
 function SSTDocumentsDashboard() {
@@ -917,12 +922,9 @@ function UnitDashboard() {
     )
 }
 
-export default function ClientDetailsPage({
-  params,
-}: {
-  params: { contractId: string };
-}) {
-  const { contractId } = params;
+export default function ClientDetailsPage() {
+  const params = useParams();
+  const contractId = params.contractId as string;
   const client = getClientById(contractId);
 
   if (!client) {
@@ -1059,5 +1061,3 @@ export default function ClientDetailsPage({
     </div>
   );
 }
-
-    
