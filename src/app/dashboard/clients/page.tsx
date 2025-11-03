@@ -7,6 +7,7 @@ import {
   MoreHorizontal,
   PlusCircle,
 } from 'lucide-react';
+import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import {
   Card,
@@ -55,7 +56,7 @@ import {
 } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-const initialClientsData = [
+export const initialClientsData = [
   {
     name: 'Innovate Inc.',
     contractId: 'CTR-2024-001',
@@ -321,7 +322,9 @@ export default function ClientsPage() {
                 {clientsData.map((client) => (
                   <TableRow key={client.contractId}>
                     <TableCell className="font-medium">
-                      {client.name}
+                      <Link href={`/dashboard/clients/${client.contractId}`} className="hover:underline">
+                        {client.name}
+                      </Link>
                       <div className="text-sm text-muted-foreground md:hidden">{client.contact}</div>
                     </TableCell>
                     <TableCell>
@@ -352,6 +355,9 @@ export default function ClientsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                           <DropdownMenuItem asChild>
+                             <Link href={`/dashboard/clients/${client.contractId}`}>Ver Detalhes</Link>
+                           </DropdownMenuItem>
                           <DropdownMenuItem>Editar</DropdownMenuItem>
                           <DropdownMenuItem>Ver Contratos</DropdownMenuItem>
                           <DropdownMenuSeparator />
