@@ -1,10 +1,12 @@
 
+
 // Esta é uma página mockada. Em um cenário real, você buscaria os dados
 // do cliente com base no `params.contractId` de um banco de dados.
 
 'use client';
 
 import { useState } from 'react';
+import type { FC } from 'react';
 
 import {
   ArrowLeft,
@@ -30,6 +32,8 @@ import {
   XCircle,
   Clock,
   MoreHorizontal,
+  FileClock,
+  Building,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -40,6 +44,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -66,13 +71,149 @@ function PlaceholderContent({ icon, title, description }: { icon: React.ReactNod
     )
 }
 
+function SectorDashboard() {
+    const kpiData = [
+        { title: 'Colaboradores no Setor', value: '25', icon: <Users className="h-4 w-4 text-muted-foreground" /> },
+        { title: 'Acidentes de Trabalho', value: '0', icon: <ShieldAlert className="h-4 w-4 text-muted-foreground" /> },
+        { title: 'Chamados Abertos', value: '2', icon: <Ticket className="h-4 w-4 text-muted-foreground" /> },
+        { title: 'ASOs Vencidos', value: '4', icon: <FileWarning className="h-4 w-4 text-muted-foreground" /> },
+        { title: 'Treinamentos Vencidos', value: '3', icon: <HardHat className="h-4 w-4 text-muted-foreground" /> },
+    ];
+
+    const employees = [
+        { id: 'COL-001', name: 'João Silva', role: 'Operador de Máquina', status: 'Ativo' },
+        { id: 'COL-002', name: 'Maria Oliveira', role: 'Inspetora de Qualidade', status: 'Ativo' },
+        { id: 'COL-003', name: 'Carlos Pereira', role: 'Operador de Máquina', status: 'Férias' },
+    ];
+
+    const incidents = [
+        { id: 'INC-005', type: 'Não Conformidade', description: 'Uso incorreto de EPI', date: '2024-07-15' },
+        { id: 'INC-004', type: 'Incidente', description: 'Quase acidente com empilhadeira', date: '2024-06-28' },
+    ];
+
+    return (
+        <div className="space-y-6">
+             <div className="flex items-center justify-between">
+                <h3 className="text-xl font-semibold">Setor: Produção</h3>
+                <Dialog>
+                    <DialogTrigger asChild>
+                         <Button size="sm" className="h-8 gap-1">
+                            <PlusCircle className="h-3.5 w-3.5" />
+                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                            Adicionar Setor
+                            </span>
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-xl">
+                         <DialogHeader>
+                            <DialogTitle>Adicionar Novo Setor</DialogTitle>
+                            <DialogDescription>
+                                Preencha os detalhes para cadastrar um novo setor de trabalho.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <form className="grid gap-4 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="unit-select" className="text-right">Unidade</Label>
+                                {/* Em um app real, isso seria um Select populado com as unidades */}
+                                <Input id="unit-select" className="col-span-3" defaultValue="Unidade Principal - Matriz" disabled/>
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="sector-name" className="text-right">Nome do Setor</Label>
+                                <Input id="sector-name" className="col-span-3" placeholder="Ex: Administração, Produção, Logística" />
+                            </div>
+                            <div className="grid grid-cols-4 items-start gap-4">
+                                <Label htmlFor="sector-description" className="text-right pt-2">Atividades</Label>
+                                <Textarea id="sector-description" className="col-span-3" placeholder="Descreva as principais atividades desenvolvidas neste setor." />
+                            </div>
+                        </form>
+                         <DialogFooter>
+                            <Button type="submit">Salvar Setor</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            </div>
+            
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+                {kpiData.map(kpi => (
+                     <Card key={kpi.title}>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
+                            {kpi.icon}
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{kpi.value}</div>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                 <Card className="lg:col-span-2">
+                    <CardHeader>
+                        <CardTitle>Colaboradores do Setor</CardTitle>
+                        <CardDescription>Colaboradores atualmente alocados neste setor.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>ID</TableHead>
+                                    <TableHead>Nome</TableHead>
+                                    <TableHead>Cargo</TableHead>
+                                    <TableHead>Situação</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {employees.map(emp => (
+                                <TableRow key={emp.id}>
+                                    <TableCell className="font-medium">{emp.id}</TableCell>
+                                    <TableCell>{emp.name}</TableCell>
+                                    <TableCell>{emp.role}</TableCell>
+                                    <TableCell><Badge variant="outline">{emp.status}</Badge></TableCell>
+                                </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Últimos Registros</CardTitle>
+                        <CardDescription>Histórico de incidentes, eventos e não conformidades.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                         <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>ID</TableHead>
+                                    <TableHead>Tipo</TableHead>
+                                    <TableHead>Data</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {incidents.map(inc => (
+                                <TableRow key={inc.id}>
+                                    <TableCell className="font-medium">{inc.id}</TableCell>
+                                    <TableCell>{inc.type}</TableCell>
+                                    <TableCell>{inc.date}</TableCell>
+                                </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
+    )
+}
+
 function UnitDashboard() {
     const kpiData = [
         { title: 'Total de Colaboradores', value: '152', icon: <Users className="h-4 w-4 text-muted-foreground" /> },
         { title: 'Documentos Vencidos', value: '3', icon: <FileWarning className="h-4 w-4 text-muted-foreground" /> },
         { title: 'Chamados Abertos', value: '5', icon: <Ticket className="h-4 w-4 text-muted-foreground" /> },
         { title: 'Acidentes de Trabalho (Últimos 12m)', value: '1', icon: <ShieldAlert className="h-4 w-4 text-muted-foreground" /> },
-        { title: 'ASOs Vencidos', value: '12', icon: <ClipboardCheck className="h-4 w-4 text-muted-foreground" /> },
+        { title: 'ASOs Vencidos', value: '12', icon: <FileClock className="h-4 w-4 text-muted-foreground" /> },
         { title: 'Treinamentos Vencidos', value: '8', icon: <HardHat className="h-4 w-4 text-muted-foreground" /> },
     ];
 
@@ -88,7 +229,7 @@ function UnitDashboard() {
         { id: 'CHD-011', subject: 'Dúvida sobre novo colaborador', status: 'Fechado', opened: '2024-07-18' },
     ];
 
-    const statusIcons = {
+    const statusIcons: Record<string, React.ReactNode> = {
         'Válido': <CheckCircle2 className="text-green-500" />,
         'Vencido': <XCircle className="text-red-500" />,
         'Pendente': <Clock className="text-yellow-500" />,
@@ -369,11 +510,7 @@ export default function ClientDetailsPage({
                 <UnitDashboard />
             </TabsContent>
             <TabsContent value="sectors">
-                <PlaceholderContent 
-                    icon={<Network className="h-10 w-10 text-muted-foreground"/>}
-                    title="Gestão de Setores" 
-                    description="Defina os setores de trabalho para cada unidade. A configuração de setores é fundamental para a organização dos cargos."
-                />
+                <SectorDashboard />
             </TabsContent>
             <TabsContent value="roles">
                  <PlaceholderContent 
@@ -393,4 +530,3 @@ export default function ClientDetailsPage({
     </div>
   );
 }
-
