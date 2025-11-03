@@ -21,6 +21,8 @@ import {
   Syringe,
   Siren,
   ChevronRight,
+  ClipboardCheck,
+  CalendarCheck,
 } from 'lucide-react';
 import {
   SidebarMenu,
@@ -62,6 +64,8 @@ export function ClientSidebar() {
   const sstNavItems = [
     { href: `${basePath}/pgr`, label: 'Gestão de Riscos (PGR)', icon: ShieldAlert },
     { href: `${basePath}/pcmso`, label: 'Gestão de PCMSO', icon: BookUser },
+    { href: `${basePath}/asos`, label: 'Gestão de ASOs', icon: ClipboardCheck },
+    { href: `${basePath}/periodicos`, label: 'Gestão de Periódicos', icon: CalendarCheck },
     { href: `${basePath}/pgr-inventory`, label: 'Inventário de Riscos', icon: FileText },
     { href: `${basePath}/pgr-action-plan`, label: 'Plano de Ação', icon: ClipboardList },
     { href: `${basePath}/epis`, label: 'Gestão de EPIs', icon: HardHat },
@@ -88,8 +92,7 @@ export function ClientSidebar() {
     <SidebarMenu>
       {mainNavItems.map((item) => (
         <SidebarMenuItem key={item.label}>
-          <Link href={item.href} passHref legacyBehavior>
-            <a>
+          <Link href={item.href} asChild>
               <SidebarMenuButton
                 isActive={getIsActive(item.href)}
                 tooltip={item.label}
@@ -97,7 +100,6 @@ export function ClientSidebar() {
                 <item.icon />
                 <span>{item.label}</span>
               </SidebarMenuButton>
-            </a>
           </Link>
         </SidebarMenuItem>
       ))}
@@ -121,8 +123,7 @@ export function ClientSidebar() {
              <div className="pl-6 pt-1 space-y-1">
                  {sstNavItems.map((item) => (
                     <SidebarMenuItem key={item.label}>
-                        <Link href={item.href} passHref legacyBehavior>
-                            <a>
+                        <Link href={item.href} asChild>
                             <SidebarMenuButton
                                 isActive={getIsActive(item.href)}
                                 tooltip={item.label}
@@ -131,7 +132,6 @@ export function ClientSidebar() {
                                 <item.icon />
                                 <span>{item.label}</span>
                             </SidebarMenuButton>
-                            </a>
                         </Link>
                     </SidebarMenuItem>
                 ))}
