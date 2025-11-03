@@ -37,6 +37,9 @@ import {
   FolderOpen,
   CalendarDays,
   FilePen,
+  ListTodo,
+  Loader,
+  CircleOff,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -58,24 +61,89 @@ import { differenceInMonths, format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 
-// Simula a busca de dados do cliente.
-const getClientById = (contractId: string) => {
-  return initialClientsData.find((client) => client.contractId === contractId);
-};
+function SSTDocumentsDashboard() {
+    const kpiData = [
+        { title: 'Ações Pendentes', value: '5', icon: <CircleOff className="h-4 w-4 text-muted-foreground" />, variant: 'pending' },
+        { title: 'Ações em Andamento', value: '3', icon: <Loader className="h-4 w-4 text-muted-foreground" />, variant: 'progress' },
+        { title: 'Ações Concluídas', value: '12', icon: <CheckCircle2 className="h-4 w-4 text-muted-foreground" />, variant: 'completed' },
+    ];
 
-function PlaceholderContent({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) {
+    const documents = [
+        { id: 'PGR-2024-V1', name: 'PGR - Programa de Gerenciamento de Riscos', version: '1.0', emissionDate: '2024-01-15', expiryDate: '2026-01-15' },
+        { id: 'LTCAT-2024-V1', name: 'LTCAT - Laudo Técnico das Condições do Ambiente de Trabalho', version: '1.0', emissionDate: '2024-01-15', expiryDate: 'N/A' },
+    ];
+
     return (
-        <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm h-96 mt-4">
-          <div className="flex flex-col items-center gap-2 text-center">
-            {icon}
-            <h3 className="text-2xl font-bold tracking-tight">
-              {title}
-            </h3>
-            <p className="text-sm text-muted-foreground max-w-md">
-              {description}
-            </p>
-            <Button className="mt-4">Adicionar</Button>
-          </div>
+        <div className="space-y-6">
+            <div className="flex items-center justify-between">
+                <h3 className="text-xl font-semibold">Gestão de Documentos SST</h3>
+                <Button size="sm" className="h-8 gap-1">
+                    <PlusCircle className="h-3.5 w-3.5" />
+                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                        Gerar PGR/LTCAT
+                    </span>
+                </Button>
+            </div>
+            
+            <Card>
+                <CardHeader>
+                    <CardTitle>Plano de Ação - KPIs</CardTitle>
+                    <CardDescription>Status das ações do plano de ação do PGR.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-4 md:grid-cols-3">
+                     {kpiData.map(kpi => (
+                        <Card key={kpi.title}>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
+                                {kpi.icon}
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{kpi.value}</div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Documentos Gerados</CardTitle>
+                    <CardDescription>Histórico de todos os programas e laudos gerados para a empresa.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Documento</TableHead>
+                                <TableHead>Versão</TableHead>
+                                <TableHead>Data Emissão</TableHead>
+                                <TableHead>Vigência</TableHead>
+                                <TableHead><span className="sr-only">Ações</span></TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {documents.map(doc => (
+                            <TableRow key={doc.id}>
+                                <TableCell className="font-medium">{doc.name}</TableCell>
+                                <TableCell><Badge variant="outline">{doc.version}</Badge></TableCell>
+                                <TableCell>{doc.emissionDate}</TableCell>
+                                <TableCell>{doc.expiryDate}</TableCell>
+                                <TableCell>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                        <DropdownMenuContent>
+                                            <DropdownMenuItem>Ver Detalhes</DropdownMenuItem>
+                                            <DropdownMenuItem>Baixar PDF</DropdownMenuItem>
+                                            <DropdownMenuItem>Criar Nova Versão</DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </TableCell>
+                            </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
         </div>
     )
 }
@@ -905,7 +973,10 @@ export default function ClientDetailsPage({
                 <TabsTrigger value="sectors">Setores</TabsTrigger>
                 <TabsTrigger value="roles">Cargos</TabsTrigger>
                 <TabsTrigger value="employees">Colaboradores</TabsTrigger>
-                <TabsTrigger value="docs-sst">Documentos SST</TabsTrigger>
+                <TabsTrigger value="docs-sst">
+                  <BookUser className="mr-2 h-4 w-4" />
+                  Documentos SST
+                </TabsTrigger>
             </TabsList>
             <TabsContent value="info">
                  <Card>
@@ -982,13 +1053,11 @@ export default function ClientDetailsPage({
                 <EmployeeDashboard />
             </TabsContent>
             <TabsContent value="docs-sst">
-                <PlaceholderContent
-                    icon={<BookUser className="h-16 w-16 text-muted-foreground" />}
-                    title="Gestão de Documentos SST"
-                    description="Em breve, você poderá gerenciar e gerar o PGR, LTCAT e outros laudos diretamente por aqui."
-                />
+                <SSTDocumentsDashboard />
             </TabsContent>
        </Tabs>
     </div>
   );
 }
+
+    
