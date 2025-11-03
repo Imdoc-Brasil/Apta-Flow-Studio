@@ -14,11 +14,10 @@ import {
   ListTodo,
   Users,
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import {
   SidebarMenu,
-  SidebarMenuItem,
   SidebarMenuButton,
+  SidebarMenuItem,
 } from '@/components/ui/sidebar';
 
 export function ClientSidebar() {
@@ -56,9 +55,8 @@ export function ClientSidebar() {
     <SidebarMenu>
       {navItems.map((item) => (
         <SidebarMenuItem key={item.label}>
-          <Link href={item.href} passHref legacyBehavior>
+          <Link href={item.href} asChild>
             <SidebarMenuButton
-              as="a"
               isActive={getIsActive(item.href)}
               tooltip={item.label}
             >
