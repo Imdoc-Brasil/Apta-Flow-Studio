@@ -1241,17 +1241,8 @@ const InfoDashboard = ({ client }: { client: any }) => {
 export default function ClientDetailsPage() {
   const params = useParams();
   const pathname = usePathname();
-  const router = useRouter();
   const contractId = params.contractId as string;
   const client = getClientById(contractId);
-
-  useEffect(() => {
-    // Redirect to the "info" sub-page by default if no sub-page is specified
-    if (pathname === `/dashboard/clients/${contractId}`) {
-      router.replace(`/dashboard/clients/${contractId}/info`);
-    }
-  }, [pathname, contractId, router]);
-
 
   if (!client) {
     return (
@@ -1277,7 +1268,12 @@ export default function ClientDetailsPage() {
 
   const riskInfo = riskLevelMap[client.riskLevel as keyof typeof riskLevelMap] || { label: 'N/A', color: 'bg-gray-400' };
 
-  const currentPage = pathname.split('/').pop();
+  let currentPage = pathname.split('/').pop();
+  
+  if (pathname === `/dashboard/clients/${contractId}`) {
+    currentPage = 'info';
+  }
+
 
   const renderContent = () => {
     switch (currentPage) {
@@ -1298,8 +1294,7 @@ export default function ClientDetailsPage() {
         case 'prices':
             return <PriceTableDashboard />;
         default:
-            // This can be a loading state or a default view if needed
-            return null; 
+            return <InfoDashboard client={client} />;
     }
   }
 
@@ -1321,3 +1316,5 @@ export default function ClientDetailsPage() {
     </div>
   );
 }
+
+    
