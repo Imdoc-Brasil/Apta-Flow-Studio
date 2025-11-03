@@ -1067,7 +1067,6 @@ function PriceTableDashboard() {
               <TableRow>
                 <TableHead>Código (eSocial)</TableHead>
                 <TableHead>Nome do Exame</TableHead>
-                <TableHead>Preço do Catálogo</TableHead>
                 <TableHead>Preço Negociado</TableHead>
                 <TableHead>
                   <span className="sr-only">Ações</span>
@@ -1079,7 +1078,6 @@ function PriceTableDashboard() {
                 <TableRow key={exam.code}>
                   <TableCell>{exam.code}</TableCell>
                   <TableCell className="font-medium">{exam.name}</TableCell>
-                  <TableCell className="text-muted-foreground line-through">{exam.catalogPrice}</TableCell>
                   <TableCell className="font-semibold">{exam.price}</TableCell>
                   <TableCell>
                      <DropdownMenu>
