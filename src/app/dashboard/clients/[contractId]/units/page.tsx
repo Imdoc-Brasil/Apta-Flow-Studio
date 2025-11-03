@@ -20,11 +20,13 @@ import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { initialClientsData } from '@/app/dashboard/clients/page';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
 
 const initialUnitsData = [
   {
     id: 'UNIT-001',
     name: 'Matriz São Paulo',
+    description: 'Sede administrativa e operações centrais.',
     cnpj: '12.345.678/0001-99',
     address: '123 Tech Avenue, Silicon Valley, CA',
     status: 'Ativa',
@@ -34,6 +36,7 @@ const initialUnitsData = [
   {
     id: 'UNIT-002',
     name: 'Filial Rio de Janeiro',
+    description: 'Foco em vendas e suporte ao cliente regional.',
     cnpj: '12.345.678/0002-88',
     address: '456 Ocean Drive, Rio de Janeiro, RJ',
     status: 'Ativa',
@@ -59,6 +62,7 @@ export default function UnitsPage() {
 
     // Form state
     const [name, setName] = useState('');
+    const [description, setDescription] = useState('');
     const [cnpj, setCnpj] = useState('');
     const [address, setAddress] = useState('');
     const [cnae, setCnae] = useState('');
@@ -68,12 +72,14 @@ export default function UnitsPage() {
         if (client) {
             if (inheritData) {
                 setName(client.name);
+                setDescription(''); // Description is specific to the unit
                 setCnpj(client.cnpj);
                 setAddress(client.address);
                 setCnae(client.cnae);
                 setRiskLevel(client.riskLevel);
             } else {
                 setName('');
+                setDescription('');
                 setCnpj('');
                 setAddress('');
                 setCnae('');
@@ -88,6 +94,7 @@ export default function UnitsPage() {
         const newUnit: Unit = {
             id: `UNIT-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
             name,
+            description,
             cnpj,
             address,
             cnae,
@@ -129,6 +136,10 @@ export default function UnitsPage() {
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="name" className="text-right">Nome</Label>
                                 <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" required disabled={inheritData} />
+                            </div>
+                             <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="description" className="text-right">Descrição</Label>
+                                <Textarea id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3" />
                             </div>
                              <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="cnpj" className="text-right">CNPJ</Label>
