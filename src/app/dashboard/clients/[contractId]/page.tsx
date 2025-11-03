@@ -41,6 +41,8 @@ import {
   ListTodo,
   Loader,
   CircleOff,
+  DollarSign,
+  Percent,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -1011,6 +1013,93 @@ function ContractedServicesDashboard() {
 }
 
 
+function PriceTableDashboard() {
+  const clientExams = [
+    { code: '0201', name: 'Avaliação Clínica Ocupacional', price: 'R$ 48,00', catalogPrice: 'R$ 50,00' },
+    { code: '0211', name: 'Avaliação da acuidade visual', price: 'R$ 35,00', catalogPrice: 'R$ 35,00' },
+    { code: 'N/A', name: 'Avaliação Psicossocial', price: 'R$ 145,00', catalogPrice: 'R$ 150,00' },
+    { code: '0212', name: 'Exame oftalmológico', price: 'R$ 190,00', catalogPrice: 'R$ 200,00' },
+    { code: '0215', name: 'Glicemia', price: 'R$ 25,00', catalogPrice: 'R$ 25,00' },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h3 className="text-xl font-semibold">Tabela de Preços do Cliente</h3>
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button size="sm" variant="outline" className="h-8 gap-1">
+                    <Percent className="h-3.5 w-3.5" />
+                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Aplicar Reajuste</span>
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Reajuste de Preços do Contrato</DialogTitle>
+                    <DialogDescription>
+                        Aplique um reajuste percentual aos serviços deste cliente.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="adjustment-client" className="text-right">
+                            Percentual (%)
+                        </Label>
+                        <Input id="adjustment-client" type="number" placeholder="Ex: 8.5" className="col-span-3" />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <Button type="submit">Aplicar Reajuste</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Preços de Exames Médicos</CardTitle>
+          <CardDescription>
+            Tabela de preços negociada para este cliente.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Código (eSocial)</TableHead>
+                <TableHead>Nome do Exame</TableHead>
+                <TableHead>Preço do Catálogo</TableHead>
+                <TableHead>Preço Negociado</TableHead>
+                <TableHead>
+                  <span className="sr-only">Ações</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {clientExams.map((exam) => (
+                <TableRow key={exam.code}>
+                  <TableCell>{exam.code}</TableCell>
+                  <TableCell className="font-medium">{exam.name}</TableCell>
+                  <TableCell className="text-muted-foreground line-through">{exam.catalogPrice}</TableCell>
+                  <TableCell className="font-semibold">{exam.price}</TableCell>
+                  <TableCell>
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            <DropdownMenuItem>Editar Preço</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+
 export default function ClientDetailsPage() {
   const params = useParams();
   const contractId = params.contractId as string;
@@ -1058,7 +1147,7 @@ export default function ClientDetailsPage() {
         </div>
       
        <Tabs defaultValue="employees">
-            <TabsList className="grid w-full grid-cols-7">
+            <TabsList className="grid w-full grid-cols-8">
                 <TabsTrigger value="info">Informações Gerais</TabsTrigger>
                 <TabsTrigger value="units">Unidades</TabsTrigger>
                 <TabsTrigger value="sectors">Setores</TabsTrigger>
@@ -1071,6 +1160,10 @@ export default function ClientDetailsPage() {
                  <TabsTrigger value="services">
                   <ListTodo className="mr-2 h-4 w-4" />
                   Serviços
+                </TabsTrigger>
+                <TabsTrigger value="prices">
+                  <DollarSign className="mr-2 h-4 w-4" />
+                  Tabela de Preços
                 </TabsTrigger>
             </TabsList>
             <TabsContent value="info">
@@ -1153,9 +1246,10 @@ export default function ClientDetailsPage() {
             <TabsContent value="services">
                 <ContractedServicesDashboard />
             </TabsContent>
+            <TabsContent value="prices">
+                <PriceTableDashboard />
+            </TabsContent>
        </Tabs>
     </div>
   );
 }
-
-    
