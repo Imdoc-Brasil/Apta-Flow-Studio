@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState } from 'react';
@@ -238,7 +239,7 @@ function EmployeeDashboard() {
                                 </Avatar>
                                 <div>
                                     <CardTitle>{employees[0].name}</CardTitle>
-                                    <CardDescription>{employees[0].role} no setor de Produção</CardDescription>
+                                    <CardDescription>{employees[0].role} no setor de Produção na Unidade Principal - Matriz</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>
@@ -747,7 +748,8 @@ export default function ClientDetailsPage({
 }: {
   params: { contractId: string };
 }) {
-  const client = getClientById(params.contractId);
+  const { contractId } = params;
+  const client = getClientById(contractId);
 
   if (!client) {
     return (
