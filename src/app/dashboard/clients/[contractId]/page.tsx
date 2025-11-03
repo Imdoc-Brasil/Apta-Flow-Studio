@@ -34,6 +34,7 @@ import {
   MoreHorizontal,
   FileClock,
   Building,
+  Briefcase,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -70,6 +71,131 @@ function PlaceholderContent({ icon, title, description }: { icon: React.ReactNod
         </div>
     )
 }
+
+function RolesDashboard() {
+    const kpiData = [
+        { title: 'Total de Colaboradores', value: '15', icon: <Users className="h-4 w-4 text-muted-foreground" /> },
+        { title: 'ASOs Vencidos', value: '2', icon: <FileWarning className="h-4 w-4 text-muted-foreground" /> },
+        { title: 'Acidentes no Cargo', value: '0', icon: <ShieldAlert className="h-4 w-4 text-muted-foreground" /> },
+        { title: 'Treinamentos Vencidos', value: '1', icon: <HardHat className="h-4 w-4 text-muted-foreground" /> },
+    ];
+
+    const roles = [
+        { id: 'CAR-001', name: 'Operador de Máquina', cbo: '7152-10', sector: 'Produção' },
+        { id: 'CAR-002', name: 'Inspetor de Qualidade', cbo: '3912-10', sector: 'Produção' },
+        { id: 'CAR-003', name: 'Auxiliar Administrativo', cbo: '4110-10', sector: 'Administração' },
+    ];
+
+    return (
+        <div className="space-y-6">
+             <div className="flex items-center justify-between">
+                <h3 className="text-xl font-semibold">Gestão de Cargos</h3>
+                <Dialog>
+                    <DialogTrigger asChild>
+                         <Button size="sm" className="h-8 gap-1">
+                            <PlusCircle className="h-3.5 w-3.5" />
+                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                            Adicionar Cargo
+                            </span>
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-xl">
+                         <DialogHeader>
+                            <DialogTitle>Adicionar Novo Cargo</DialogTitle>
+                            <DialogDescription>
+                                Preencha os detalhes para cadastrar um novo cargo.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <form className="grid gap-4 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="role-code" className="text-right">Código</Label>
+                                <Input id="role-code" className="col-span-3" placeholder="Ex: CAR-004" />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="role-name" className="text-right">Nome do Cargo</Label>
+                                <Input id="role-name" className="col-span-3" placeholder="Ex: Soldador, Eletricista" />
+                            </div>
+                             <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="role-cbo" className="text-right">CBO</Label>
+                                <Input id="role-cbo" className="col-span-3" placeholder="Ex: 7243-15" />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="role-sector" className="text-right">Setor</Label>
+                                {/* Em um app real, isso seria um Select populado com os setores */}
+                                <Input id="role-sector" className="col-span-3" defaultValue="Produção" />
+                            </div>
+                            <div className="grid grid-cols-4 items-start gap-4">
+                                <Label htmlFor="role-description" className="text-right pt-2">Descrição das Atividades</Label>
+                                <Textarea id="role-description" className="col-span-3" placeholder="Descreva as principais atividades e responsabilidades do cargo." />
+                            </div>
+                             <div className="grid grid-cols-4 items-start gap-4">
+                                <Label htmlFor="role-organization" className="text-right pt-2">Organização do Trabalho</Label>
+                                <Textarea id="role-organization" className="col-span-3" placeholder="Detalhar o que deve ser feito, como, onde, quando." />
+                            </div>
+                        </form>
+                         <DialogFooter>
+                            <Button type="submit">Salvar Cargo</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            </div>
+            
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                {kpiData.map(kpi => (
+                     <Card key={kpi.title}>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">{kpi.title}</CardTitle>
+                            {kpi.icon}
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{kpi.value}</div>
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Cargos Cadastrados</CardTitle>
+                    <CardDescription>Lista de todos os cargos existentes na empresa.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Código</TableHead>
+                                <TableHead>Nome do Cargo</TableHead>
+                                <TableHead>CBO</TableHead>
+                                <TableHead>Setor</TableHead>
+                                <TableHead><span className="sr-only">Ações</span></TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {roles.map(role => (
+                            <TableRow key={role.id}>
+                                <TableCell className="font-medium">{role.id}</TableCell>
+                                <TableCell>{role.name}</TableCell>
+                                <TableCell>{role.cbo}</TableCell>
+                                <TableCell><Badge variant="outline">{role.sector}</Badge></TableCell>
+                                <TableCell>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                        <DropdownMenuContent>
+                                            <DropdownMenuItem>Ver Detalhes</DropdownMenuItem>
+                                            <DropdownMenuItem>Editar</DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </TableCell>
+                            </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+        </div>
+    )
+}
+
 
 function SectorDashboard() {
     const kpiData = [
@@ -392,8 +518,7 @@ export default function ClientDetailsPage({
 }: {
   params: { contractId: string };
 }) {
-  const { contractId } = params;
-  const client = getClientById(contractId);
+  const client = getClientById(params.contractId);
 
   if (!client) {
     return (
@@ -513,11 +638,7 @@ export default function ClientDetailsPage({
                 <SectorDashboard />
             </TabsContent>
             <TabsContent value="roles">
-                 <PlaceholderContent 
-                    icon={<UserRound className="h-10 w-10 text-muted-foreground"/>}
-                    title="Gestão de Cargos" 
-                    description="Cadastre os cargos existentes em cada setor, incluindo a descrição das atividades e a classificação CBO."
-                />
+                 <RolesDashboard />
             </TabsContent>
             <TabsContent value="employees">
                  <PlaceholderContent 
@@ -530,3 +651,5 @@ export default function ClientDetailsPage({
     </div>
   );
 }
+
+    
