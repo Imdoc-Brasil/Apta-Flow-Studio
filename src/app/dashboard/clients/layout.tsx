@@ -13,7 +13,6 @@ import Link from 'next/link';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { UserNav } from '@/components/user-nav';
 import { Logo } from '@/components/logo';
-import { SidebarProvider } from '@/components/ui/sidebar';
 
 export default function ClientDetailLayout({
   children,
@@ -21,65 +20,63 @@ export default function ClientDetailLayout({
   children: React.ReactNode;
 }) {
   return (
-    <SidebarProvider>
-       <div className="flex min-h-screen w-full flex-col bg-muted/40">
-        <Sidebar
-          variant="sidebar"
-          collapsible="icon"
-          className="group hidden data-[variant=sidebar]:max-w-60 md:flex"
-        >
-          <SidebarContent>
-            <SidebarHeader>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-start"
-                asChild
-              >
-                <Link href="/dashboard/clients">
-                  <ArrowLeft />
-                  <span className="group-data-[collapsible=icon]:hidden">
-                    Todos os Clientes
-                  </span>
-                </Link>
+    <div className="flex min-h-screen w-full flex-col bg-muted/40">
+      <Sidebar
+        variant="sidebar"
+        collapsible="icon"
+        className="group hidden data-[variant=sidebar]:max-w-60 md:flex"
+      >
+        <SidebarContent>
+          <SidebarHeader>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start"
+              asChild
+            >
+              <Link href="/dashboard/clients">
+                <ArrowLeft />
+                <span className="group-data-[collapsible=icon]:hidden">
+                  Todos os Clientes
+                </span>
+              </Link>
+            </Button>
+          </SidebarHeader>
+          <ClientSidebar />
+        </SidebarContent>
+      </Sidebar>
+      <div className="flex flex-col md:ml-14 group-data-[collapsible=icon]/sidebar-wrapper:md:ml-14">
+         <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
+           <Sheet>
+            <SheetTrigger asChild>
+              <Button size="icon" variant="outline" className="md:hidden">
+                <PanelLeft className="h-5 w-5" />
+                <span className="sr-only">Alternar Menu</span>
               </Button>
-            </SidebarHeader>
-            <ClientSidebar />
-          </SidebarContent>
-        </Sidebar>
-        <div className="flex flex-col md:ml-14">
-           <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-             <Sheet>
-              <SheetTrigger asChild>
-                <Button size="icon" variant="outline" className="md:hidden">
-                  <PanelLeft className="h-5 w-5" />
-                  <span className="sr-only">Alternar Menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="sm:max-w-xs">
-                <nav className="grid gap-6 text-lg font-medium">
-                  <Link
-                    href="/"
-                    className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
-                  >
-                    <Logo className="text-primary-foreground" />
-                    <span className="sr-only">AptaFlow</span>
-                  </Link>
-                   <ClientSidebar />
-                </nav>
-              </SheetContent>
-            </Sheet>
-            
-            <div className="relative ml-auto flex-1 md:grow-0">
-              {/* This can be a global search in the future */}
-            </div>
-            <UserNav />
-          </header>
-          <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-            {children}
-          </main>
-        </div>
+            </SheetTrigger>
+            <SheetContent side="left" className="sm:max-w-xs">
+              <nav className="grid gap-6 text-lg font-medium">
+                <Link
+                  href="/"
+                  className="group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base"
+                >
+                  <Logo className="text-primary-foreground" />
+                  <span className="sr-only">AptaFlow</span>
+                </Link>
+                 <ClientSidebar />
+              </nav>
+            </SheetContent>
+          </Sheet>
+          
+          <div className="relative ml-auto flex-1 md:grow-0">
+            {/* This can be a global search in the future */}
+          </div>
+          <UserNav />
+        </header>
+        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+          {children}
+        </main>
       </div>
-    </SidebarProvider>
+    </div>
   );
 }
