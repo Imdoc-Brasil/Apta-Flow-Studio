@@ -899,12 +899,13 @@ export default function ClientDetailsPage({
         </div>
       
        <Tabs defaultValue="employees">
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="info">Informações Gerais</TabsTrigger>
                 <TabsTrigger value="units">Unidades</TabsTrigger>
                 <TabsTrigger value="sectors">Setores</TabsTrigger>
                 <TabsTrigger value="roles">Cargos</TabsTrigger>
                 <TabsTrigger value="employees">Colaboradores</TabsTrigger>
+                <TabsTrigger value="docs-sst">Documentos SST</TabsTrigger>
             </TabsList>
             <TabsContent value="info">
                  <Card>
@@ -979,6 +980,13 @@ export default function ClientDetailsPage({
             </TabsContent>
             <TabsContent value="employees">
                 <EmployeeDashboard />
+            </TabsContent>
+            <TabsContent value="docs-sst">
+                <PlaceholderContent
+                    icon={<BookUser className="h-16 w-16 text-muted-foreground" />}
+                    title="Gestão de Documentos SST"
+                    description="Em breve, você poderá gerenciar e gerar o PGR, LTCAT e outros laudos diretamente por aqui."
+                />
             </TabsContent>
        </Tabs>
     </div>
