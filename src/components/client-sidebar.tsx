@@ -17,6 +17,9 @@ import {
   FileText,
   ClipboardList,
   HardHat,
+  Factory,
+  GraduationCap,
+  Syringe,
 } from 'lucide-react';
 import {
   SidebarMenu,
@@ -46,6 +49,9 @@ export function ClientSidebar() {
     { href: `${basePath}/pgr-inventory`, label: 'Inventário de Riscos', icon: FileText },
     { href: `${basePath}/pgr-action-plan`, label: 'Plano de Ação', icon: ClipboardList },
     { href: `${basePath}/epis`, label: 'Gestão de EPIs', icon: HardHat },
+    { href: `${basePath}/epc`, label: 'Gestão de EPC', icon: Factory },
+    { href: `${basePath}/trainings`, label: 'Gestão de Treinamentos', icon: GraduationCap },
+    { href: `${basePath}/vaccines`, label: 'Gestão de Vacinas', icon: Syringe },
     { href: `${basePath}/services`, label: 'Serviços', icon: ListTodo },
     { href: `${basePath}/prices`, label: 'Preços', icon: DollarSign },
   ];
@@ -65,7 +71,7 @@ export function ClientSidebar() {
     <SidebarMenu>
       {navItems.map((item) => (
         <SidebarMenuItem key={item.label}>
-           <Link href={item.href} passHref legacyBehavior>
+           <Link href={item.href} legacyBehavior passHref>
             <a>
               <SidebarMenuButton
                 isActive={getIsActive(item.href)}
