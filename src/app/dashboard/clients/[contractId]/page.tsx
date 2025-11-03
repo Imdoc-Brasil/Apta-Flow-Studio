@@ -2,7 +2,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { initialClientsData } from '../page';
+import { initialClientsData } from '@/app/dashboard/(main)/clients/page';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
