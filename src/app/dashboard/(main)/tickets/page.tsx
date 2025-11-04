@@ -881,21 +881,6 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                   <CheckSquare className='mr-2 h-4 w-4' /> Checklist
                 </Button>
               </AddChecklistDialog>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant='secondary' className='justify-start'>
-                    <Calendar className='mr-2 h-4 w-4' /> Datas
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className='w-auto p-0'>
-                  <CalendarComponent
-                    mode='single'
-                    selected={date}
-                    onSelect={setDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
               <AddAttachmentDialog ticketId={ticket.id}>
                 <Button variant='secondary' className='justify-start'>
                   <Paperclip className='mr-2 h-4 w-4' /> Anexo
