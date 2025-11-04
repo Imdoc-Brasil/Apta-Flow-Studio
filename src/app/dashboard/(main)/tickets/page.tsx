@@ -1006,11 +1006,11 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
               <AddTextElementDialog
                 ticketId={ticket.id}
                 elementType='question'
-                dialogTitle='Fazer Pergunta'
+                dialogTitle='Abrir o Chat'
                 dialogDescription='Faça uma pergunta clara para a equipe ou cliente.'
               >
                 <Button variant='secondary' className='justify-start'>
-                  <HelpCircle className='mr-2 h-4 w-4' /> Fazer Pergunta
+                  <HelpCircle className='mr-2 h-4 w-4' /> Abrir o Chat
                 </Button>
               </AddTextElementDialog>
               <AddTextElementDialog
