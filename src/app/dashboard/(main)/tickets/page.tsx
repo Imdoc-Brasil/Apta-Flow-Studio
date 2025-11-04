@@ -29,6 +29,7 @@ import {
   Paperclip,
   Clock,
   Flag,
+  CheckSquare,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -257,6 +258,9 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
               </Button>
               <Button variant='secondary' className='justify-start'>
                 <Tag className='mr-2 h-4 w-4' /> Etiquetas
+              </Button>
+              <Button variant='secondary' className='justify-start'>
+                <CheckSquare className='mr-2 h-4 w-4' /> Checklist
               </Button>
               <Button variant='secondary' className='justify-start'>
                 <Calendar className='mr-2 h-4 w-4' /> Datas
@@ -677,6 +681,13 @@ export default function TicketsPage() {
                                 className='justify-start'
                               >
                                 <Tag className='mr-2 h-4 w-4' /> Etiquetas
+                              </Button>
+                              <Button
+                                variant='secondary'
+                                className='justify-start'
+                              >
+                                <CheckSquare className='mr-2 h-4 w-4' />{' '}
+                                Checklist
                               </Button>
                               <Button
                                 variant='secondary'
