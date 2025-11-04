@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import type { FC } from 'react';
 import { useParams, usePathname, useRouter } from 'next/navigation';
-import { PlusCircle, ArrowLeft, FileText, Mail, MapPin, Phone, User, Upload } from 'lucide-react';
+import { PlusCircle, ArrowLeft, FileText, Mail, MapPin, Phone, User, Upload, Building } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -80,9 +80,19 @@ export default function InfoDashboard() {
                     </DialogHeader>
                     <form id="new-ticket-form" onSubmit={handleNewTicket}>
                         <div className="grid gap-4 py-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="datetime">Data e Hora</Label>
-                                <Input id="datetime" name="datetime" defaultValue={new Date().toLocaleString('pt-BR')} disabled />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="datetime">Data e Hora</Label>
+                                    <Input id="datetime" name="datetime" defaultValue={new Date().toLocaleString('pt-BR')} disabled />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="unit">Unidade</Label>
+                                    <Input id="unit" name="unit" defaultValue={client.name} disabled />
+                                </div>
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="responsible">Responsável pela Abertura</Label>
+                                <Input id="responsible" name="responsible" defaultValue={client.responsibleName} disabled />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="subject">Assunto</Label>
@@ -173,3 +183,5 @@ export default function InfoDashboard() {
         </>
     )
 }
+
+    
