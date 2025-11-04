@@ -50,39 +50,47 @@ import { initialProfiles } from '@/app/dashboard/(main)/profiles/page'
 export const initialStaffsData = [
   {
     name: 'Sarah Chen',
+    perfilId: '1',
     assinatura: 'Gerente de Projeto Principal',
     avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026701d',
     fallback: 'SC',
     email: 'sarah.chen@aptaflow.com',
     phone: '555-0101',
     status: 'Ativo',
+    situacao: 'Online',
   },
   {
     name: 'David Rodriguez',
+    perfilId: '2',
     assinatura: 'Engenheiro de Software Sênior',
     avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026702d',
     fallback: 'DR',
     email: 'david.r@aptaflow.com',
     phone: '555-0102',
     status: 'Ativo',
+    situacao: 'Offline',
   },
   {
     name: 'Emily White',
+    perfilId: '3',
     assinatura: 'Especialista de Suporte',
     avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026703d',
     fallback: 'EW',
     email: 'emily.w@aptaflow.com',
     phone: '555-0103',
     status: 'Ativo',
+    situacao: 'Online',
   },
   {
     name: 'Michael Brown',
+    perfilId: '4',
     assinatura: 'Engenheiro de DevOps',
     avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704d',
     fallback: 'MB',
     email: 'michael.b@aptaflow.com',
     phone: '555-0104',
     status: 'Licença',
+    situacao: 'Offline',
   },
 ]
 
@@ -103,20 +111,23 @@ export default function StaffsPage() {
       .substring(0, 2)
       .toUpperCase()
 
-    const selectedProfileId = formData.get('profile') as string
-    const selectedProfile = initialProfiles.find(p => p.id === selectedProfileId)
-
     const newStaff: Staff = {
       name,
-      assinatura: selectedProfile?.name || '',
+      assinatura: formData.get('assinatura') as string,
+      perfilId: formData.get('perfil') as string,
       email: formData.get('email') as string,
       phone: formData.get('phone') as string,
       status: 'Ativo',
+      situacao: 'Offline',
       avatar: `https://i.pravatar.cc/150?u=${Math.random()}`,
       fallback,
     }
     setStaffs((prev) => [newStaff, ...prev])
     setIsDialogOpen(false)
+  }
+
+  const getProfileName = (perfilId: string) => {
+    return initialProfiles.find((p) => p.id === perfilId)?.name || 'N/A'
   }
 
   return (
@@ -159,10 +170,10 @@ export default function StaffsPage() {
                     />
                   </div>
                   <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label htmlFor='profile' className='text-right'>
+                    <Label htmlFor='perfil' className='text-right'>
                       Perfil
                     </Label>
-                    <Select name='profile' required>
+                    <Select name='perfil' required>
                       <SelectTrigger className='col-span-3'>
                         <SelectValue placeholder='Selecione um perfil' />
                       </SelectTrigger>
@@ -174,6 +185,17 @@ export default function StaffsPage() {
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+                  <div className='grid grid-cols-4 items-center gap-4'>
+                    <Label htmlFor='assinatura' className='text-right'>
+                      Assinatura
+                    </Label>
+                    <Input
+                      id='assinatura'
+                      name='assinatura'
+                      className='col-span-3'
+                      required
+                    />
                   </div>
                   <div className='grid grid-cols-4 items-center gap-4'>
                     <Label htmlFor='email' className='text-right'>
@@ -215,7 +237,9 @@ export default function StaffsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Staff</TableHead>
+              <TableHead className='hidden md:table-cell'>Perfil</TableHead>
               <TableHead className='hidden md:table-cell'>Assinatura</TableHead>
+              <TableHead className='hidden sm:table-cell'>Situação</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>
                 <span className='sr-only'>Ações</span>
@@ -240,7 +264,22 @@ export default function StaffsPage() {
                   </div>
                 </TableCell>
                 <TableCell className='hidden md:table-cell'>
+                  {getProfileName(staff.perfilId)}
+                </TableCell>
+                <TableCell className='hidden md:table-cell'>
                   {staff.assinatura}
+                </TableCell>
+                <TableCell className='hidden sm:table-cell'>
+                  <div className='flex items-center gap-2'>
+                    <span
+                      className={`h-2 w-2 rounded-full ${
+                        staff.situacao === 'Online'
+                          ? 'bg-green-500'
+                          : 'bg-gray-400'
+                      }`}
+                    ></span>
+                    <span>{staff.situacao}</span>
+                  </div>
                 </TableCell>
                 <TableCell>
                   <Badge
