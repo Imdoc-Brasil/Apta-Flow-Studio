@@ -77,13 +77,13 @@ export function ClientSidebar() {
   const saudeNavItems = [
     { href: `${basePath}/clinical-exams`, label: 'Exames Clínicos', icon: FileHeart },
     { href: `${basePath}/lab-exams`, label: 'Exames Laboratoriais', icon: FlaskConical },
-    { href: `${basePath}/graphical-exams`, label: 'Exames Gráficos', icon: BarChart3 },
+    { href: `${basePath}/graphical-exams`, label: 'Exames Gráficos', icon: BarChart3, },
     { href: `${basePath}/pending-issues`, label: 'Gestão de Pendências', icon: AlertTriangle },
   ]
 
   const sstNavItems = [
     { href: `${basePath}/pgr`, label: 'Gestão de Riscos (PGR)', icon: ShieldAlert },
-    { href: '~/dashboard/clients/CTR-2024-001/pcmso', label: 'Gestão de PCMSO', icon: BookUser },
+    { href: `${basePath}/pcmso`, label: 'Gestão de PCMSO', icon: BookUser },
     { href: `${basePath}/asos`, label: 'Gestão de ASOs', icon: ClipboardCheck },
     { href: `${basePath}/periodicos`, label: 'Gestão de Periódicos', icon: CalendarCheck },
     { href: `${basePath}/epis`, label: 'Gestão de EPIs', icon: HardHat },
@@ -99,7 +99,7 @@ export function ClientSidebar() {
       return pathname === href || pathname === basePath;
     }
      if (href.endsWith('/pgr')) {
-      return pathname === href;
+      return pathname === href || pathname.startsWith(`${href}-`);
     }
     // For other items, check if the path starts with the href.
     // This handles nested routes like /pgr/inventory correctly.
@@ -121,10 +121,10 @@ export function ClientSidebar() {
   const [isSaudeOpen, setIsSaudeOpen] = useState(isSaudeActive);
 
   useEffect(() => {
-    setIsSstOpen(isSstActive);
-    setIsEstruturaOpen(isEstruturaActive);
-    setIsContratoOpen(isContratoActive);
-    setIsSaudeOpen(isSaudeActive);
+    if (isSstActive) setIsSstOpen(true);
+    if (isEstruturaActive) setIsEstruturaOpen(true);
+    if (isContratoActive) setIsContratoOpen(true);
+    if (isSaudeActive) setIsSaudeOpen(true);
   }, [pathname, isSstActive, isEstruturaActive, isContratoActive, isSaudeActive]);
 
 
@@ -165,60 +165,56 @@ export function ClientSidebar() {
         </SidebarMenuItem>
       ))}
 
-      <li className="relative">
-          <Collapsible open={isContratoOpen} onOpenChange={setIsContratoOpen}>
-            <CollapsibleTrigger asChild>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                    isActive={isContratoActive}
-                    tooltip="Gestão de Contrato"
-                    className="justify-between"
-                  >
-                    <div className="flex items-center gap-2">
-                      <FileText />
-                      <span>Gestão de Contrato</span>
-                    </div>
-                    <ChevronRight className={cn("h-4 w-4 transition-transform", isContratoOpen && "rotate-90")} />
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-            </CollapsibleTrigger>
-            <CollapsibleContent asChild>
-              <ul className="pl-6 pt-1 space-y-1">
-                  {contratoNavItems.map((item) => (
-                      <SidebarMenuItem key={item.label}>
-                          <Link href={item.href}>
-                              <SidebarMenuButton
-                                  isActive={getIsActive(item.href)}
-                                  tooltip={item.label}
-                                  className="h-8"
-                              >
-                                    <item.icon />
-                                    <span>{item.label}</span>
-                              </SidebarMenuButton>
-                          </Link>
-                      </SidebarMenuItem>
-                  ))}
-              </ul>
-            </CollapsibleContent>
-          </Collapsible>
-        </li>
+      <SidebarMenuItem>
+        <Collapsible open={isContratoOpen} onOpenChange={setIsContratoOpen}>
+          <CollapsibleTrigger asChild>
+            <SidebarMenuButton
+                isActive={isContratoActive}
+                tooltip="Gestão de Contrato"
+                className="justify-between"
+              >
+                <div className="flex items-center gap-2">
+                  <FileText />
+                  <span>Gestão de Contrato</span>
+                </div>
+                <ChevronRight className={cn("h-4 w-4 transition-transform", isContratoOpen && "rotate-90")} />
+              </SidebarMenuButton>
+          </CollapsibleTrigger>
+          <CollapsibleContent asChild>
+            <ul className="pl-6 pt-1 space-y-1">
+                {contratoNavItems.map((item) => (
+                    <SidebarMenuItem key={item.label}>
+                        <Link href={item.href}>
+                            <SidebarMenuButton
+                                isActive={getIsActive(item.href)}
+                                tooltip={item.label}
+                                className="h-8"
+                            >
+                                  <item.icon />
+                                  <span>{item.label}</span>
+                            </SidebarMenuButton>
+                        </Link>
+                    </SidebarMenuItem>
+                ))}
+            </ul>
+          </CollapsibleContent>
+        </Collapsible>
+      </SidebarMenuItem>
 
-       <li className="relative">
+       <SidebarMenuItem>
         <Collapsible open={isEstruturaOpen} onOpenChange={setIsEstruturaOpen}>
           <CollapsibleTrigger asChild>
-            <SidebarMenuItem>
               <SidebarMenuButton
-                  isActive={isEstruturaActive}
-                  tooltip="Estrutura da Empresa"
-                  className="justify-between"
-                >
-                  <div className="flex items-center gap-2">
-                    <Network />
-                    <span>Estrutura da Empresa</span>
-                  </div>
-                  <ChevronRight className={cn("h-4 w-4 transition-transform", isEstruturaOpen && "rotate-90")} />
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+                isActive={isEstruturaActive}
+                tooltip="Estrutura da Empresa"
+                className="justify-between"
+              >
+                <div className="flex items-center gap-2">
+                  <Network />
+                  <span>Estrutura da Empresa</span>
+                </div>
+                <ChevronRight className={cn("h-4 w-4 transition-transform", isEstruturaOpen && "rotate-90")} />
+              </SidebarMenuButton>
           </CollapsibleTrigger>
           <CollapsibleContent asChild>
               <ul className="pl-6 pt-1 space-y-1">
@@ -239,24 +235,22 @@ export function ClientSidebar() {
               </ul>
           </CollapsibleContent>
         </Collapsible>
-      </li>
+      </SidebarMenuItem>
       
-      <li className="relative">
+      <SidebarMenuItem>
         <Collapsible open={isSaudeOpen} onOpenChange={setIsSaudeOpen}>
           <CollapsibleTrigger asChild>
-            <SidebarMenuItem>
               <SidebarMenuButton
-                  isActive={isSaudeActive}
-                  tooltip="Gestão de Saúde"
-                  className="justify-between"
-                >
-                  <div className="flex items-center gap-2">
-                    <Stethoscope />
-                    <span>Gestão de Saúde</span>
-                  </div>
-                  <ChevronRight className={cn("h-4 w-4 transition-transform", isSaudeOpen && "rotate-90")} />
-                </SidebarMenuButton>
-            </SidebarMenuItem>
+                isActive={isSaudeActive}
+                tooltip="Gestão de Saúde"
+                className="justify-between"
+              >
+                <div className="flex items-center gap-2">
+                  <Stethoscope />
+                  <span>Gestão de Saúde</span>
+                </div>
+                <ChevronRight className={cn("h-4 w-4 transition-transform", isSaudeOpen && "rotate-90")} />
+              </SidebarMenuButton>
           </CollapsibleTrigger>
           <CollapsibleContent asChild>
               <ul className="pl-6 pt-1 space-y-1">
@@ -277,24 +271,22 @@ export function ClientSidebar() {
               </ul>
           </CollapsibleContent>
         </Collapsible>
-      </li>
+      </SidebarMenuItem>
 
-      <li className="relative">
+      <SidebarMenuItem>
         <Collapsible open={isSstOpen} onOpenChange={setIsSstOpen}>
           <CollapsibleTrigger asChild>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                  isActive={isSstActive}
-                  tooltip="Gestão de SST"
-                  className="justify-between"
-                >
-                  <div className="flex items-center gap-2">
-                    <ShieldAlert />
-                    <span>Gestão de SST</span>
-                  </div>
-                  <ChevronRight className={cn("h-4 w-4 transition-transform", isSstOpen && "rotate-90")} />
-                </SidebarMenuButton>
-            </SidebarMenuItem>
+            <SidebarMenuButton
+                isActive={isSstActive}
+                tooltip="Gestão de SST"
+                className="justify-between"
+              >
+                <div className="flex items-center gap-2">
+                  <ShieldAlert />
+                  <span>Gestão de SST</span>
+                </div>
+                <ChevronRight className={cn("h-4 w-4 transition-transform", isSstOpen && "rotate-90")} />
+              </SidebarMenuButton>
           </CollapsibleTrigger>
           <CollapsibleContent asChild>
               <ul className="pl-6 pt-1 space-y-1">
@@ -315,7 +307,7 @@ export function ClientSidebar() {
               </ul>
           </CollapsibleContent>
         </Collapsible>
-      </li>
+      </SidebarMenuItem>
     </SidebarMenu>
   );
 }
