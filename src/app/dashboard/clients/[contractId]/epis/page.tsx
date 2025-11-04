@@ -42,8 +42,12 @@ import { Calendar as CalendarIcon } from 'lucide-react';
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const epiDeliveries = [
+const initialEpiDeliveries = [
   {
     id: 'EPI-001',
     collaborator: 'João Silva',
@@ -52,6 +56,7 @@ const epiDeliveries = [
     deliveryDate: '2024-07-01',
     validity: '2025-07-01',
     status: 'Válido',
+    deliveryFormId: 'FD-07-2024-001'
   },
   {
     id: 'EPI-002',
@@ -61,6 +66,7 @@ const epiDeliveries = [
     deliveryDate: '2024-01-15',
     validity: '2024-07-15',
     status: 'Vencido',
+    deliveryFormId: 'FD-01-2024-002'
   },
   {
     id: 'EPI-003',
@@ -70,6 +76,7 @@ const epiDeliveries = [
     deliveryDate: '2024-06-20',
     validity: '2024-08-20',
     status: 'A vencer',
+    deliveryFormId: 'FD-06-2024-003'
   },
   {
     id: 'EPI-004',
@@ -79,7 +86,16 @@ const epiDeliveries = [
     deliveryDate: '2023-12-10',
     validity: '2024-12-10',
     status: 'Válido',
+    deliveryFormId: 'FD-12-2023-004'
   },
+];
+
+const mockCollaborators = ['João Silva', 'Maria Oliveira', 'Carlos Pereira', 'Ana Costa', 'Pedro Martins'];
+const mockEpis = [
+    { ca: '12345', name: 'Protetor auricular tipo concha'},
+    { ca: '67890', name: 'Luva de segurança para proteção contra agentes mecânicos'},
+    { ca: '11223', name: 'Respirador purificador de ar'},
+    { ca: '98765', name: 'Óculos de proteção'}
 ];
 
 const kpiData = [
@@ -97,8 +113,33 @@ const getStatusVariant = (status: string) => {
     }
 }
 
+type EpiDelivery = typeof initialEpiDeliveries[0];
+
 export default function EpisPage() {
     const [date, setDate] = useState<Date | undefined>(new Date());
+    const [deliveries, setDeliveries] = useState(initialEpiDeliveries);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+    const handleAddDelivery = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        const formData = new FormData(event.currentTarget);
+        const epiSelection = formData.get('epi') as string;
+        const selectedEpi = mockEpis.find(e => e.ca === epiSelection);
+
+        const newDelivery: EpiDelivery = {
+            id: `EPI-${Math.random().toString(36).substr(2, 5).toUpperCase()}`,
+            collaborator: formData.get('collaborator') as string,
+            client: 'Innovate Inc.', // Mock client
+            epi: `${selectedEpi?.name} (CA: ${selectedEpi?.ca})`,
+            deliveryDate: format(new Date(formData.get('deliveryDate') as string), 'yyyy-MM-dd'),
+            validity: format(new Date(formData.get('validity') as string), 'yyyy-MM-dd'),
+            deliveryFormId: formData.get('deliveryFormId') as string,
+            status: 'Válido' // Simplified status for new entries
+        };
+        setDeliveries(prev => [newDelivery, ...prev]);
+        setIsDialogOpen(false);
+    }
+
 
     return (
         <div className="grid flex-1 auto-rows-max gap-4">
@@ -144,10 +185,64 @@ export default function EpisPage() {
                                 <File className="h-3.5 w-3.5" />
                                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Exportar</span>
                             </Button>
-                            <Button size="sm" className="h-8 gap-1">
-                                <PlusCircle className="h-3.5 w-3.5" />
-                                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Registrar Entrega</span>
-                            </Button>
+                            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                                <DialogTrigger asChild>
+                                    <Button size="sm" className="h-8 gap-1">
+                                        <PlusCircle className="h-3.5 w-3.5" />
+                                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Registrar Entrega</span>
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Registrar Entrega de EPI</DialogTitle>
+                                        <DialogDescription>
+                                            Preencha as informações da entrega do equipamento.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <form id="add-delivery-form" onSubmit={handleAddDelivery}>
+                                        <div className="grid gap-4 py-4">
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label htmlFor="collaborator" className="text-right">Colaborador</Label>
+                                                <Select name="collaborator" required>
+                                                    <SelectTrigger className="col-span-3">
+                                                        <SelectValue placeholder="Selecione o colaborador" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {mockCollaborators.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label htmlFor="epi" className="text-right">EPI</Label>
+                                                <Select name="epi" required>
+                                                    <SelectTrigger className="col-span-3">
+                                                        <SelectValue placeholder="Selecione o EPI" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {mockEpis.map(e => <SelectItem key={e.ca} value={e.ca}>{e.name} (CA: {e.ca})</SelectItem>)}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                             <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label htmlFor="deliveryDate" className="text-right">Data da Entrega</Label>
+                                                <Input id="deliveryDate" name="deliveryDate" type="date" className="col-span-3" required />
+                                            </div>
+                                             <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label htmlFor="validity" className="text-right">Validade</Label>
+                                                <Input id="validity" name="validity" type="date" className="col-span-3" required />
+                                            </div>
+                                            <div className="grid grid-cols-4 items-center gap-4">
+                                                <Label htmlFor="deliveryFormId" className="text-right">Nº da Ficha</Label>
+                                                <Input id="deliveryFormId" name="deliveryFormId" className="col-span-3" required />
+                                            </div>
+                                        </div>
+                                    </form>
+                                    <DialogFooter>
+                                        <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+                                        <Button type="submit" form="add-delivery-form">Salvar Registro</Button>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
                         </div>
                     </div>
                 </CardHeader>
@@ -166,7 +261,7 @@ export default function EpisPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {epiDeliveries.map((delivery) => (
+                            {deliveries.map((delivery) => (
                                 <TableRow key={delivery.id}>
                                     <TableCell className="font-medium">{delivery.collaborator}</TableCell>
                                     <TableCell>{delivery.epi}</TableCell>
