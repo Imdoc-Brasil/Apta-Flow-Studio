@@ -145,7 +145,7 @@ export default function UnitsPage() {
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="name" className="text-right">Nome</Label>
-                                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" required disabled={inheritData} />
+                                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" required />
                             </div>
                              <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="description" className="text-right">Descrição</Label>
@@ -153,19 +153,19 @@ export default function UnitsPage() {
                             </div>
                              <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="cnpj" className="text-right">CNPJ</Label>
-                                <Input id="cnpj" value={cnpj} onChange={(e) => setCnpj(e.target.value)} className="col-span-3" disabled={inheritData} />
+                                <Input id="cnpj" value={cnpj} onChange={(e) => setCnpj(e.target.value)} className="col-span-3" />
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="address" className="text-right">Endereço</Label>
-                                <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} className="col-span-3" required disabled={inheritData} />
+                                <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} className="col-span-3" required />
                             </div>
                              <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="cnae" className="text-right">CNAE</Label>
-                                <Input id="cnae" value={cnae} onChange={(e) => setCnae(e.target.value)} className="col-span-3" disabled={inheritData} />
+                                <Input id="cnae" value={cnae} onChange={(e) => setCnae(e.target.value)} className="col-span-3" />
                             </div>
                              <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="riskLevel" className="text-right">Grau de Risco</Label>
-                                <Input id="riskLevel" value={riskLevel} onChange={(e) => setRiskLevel(e.target.value)} className="col-span-3" disabled={inheritData} />
+                                <Input id="riskLevel" value={riskLevel} onChange={(e) => setRiskLevel(e.target.value)} className="col-span-3" />
                             </div>
                         </div>
                     </form>
