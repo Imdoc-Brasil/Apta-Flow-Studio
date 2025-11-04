@@ -373,7 +373,7 @@ function AddChecklistDialog({
       title,
       itemText,
       dueDate,
-      assignedTo ? [assignedTo] : []
+      assignedTo && assignedTo !== 'unassigned' ? [assignedTo] : []
     )
     toast({
       title: 'Checklist Adicionado!',
@@ -418,7 +418,7 @@ function AddChecklistDialog({
             </div>
             <div className='space-y-2'>
               <Label htmlFor='assignedTo'>Atribuir a (Opcional)</Label>
-              <Select name='assignedTo'>
+              <Select name='assignedTo' defaultValue='unassigned'>
                 <SelectTrigger>
                   <SelectValue placeholder='Selecione um membro' />
                 </SelectTrigger>
