@@ -23,6 +23,7 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -56,7 +57,10 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { Calendar as CalendarComponent } from '@/components/ui/calendar'
-import { initialEmployeesData } from '@/app/dashboard/(main)/employees/page'
+import {
+  initialEmployeesData,
+  type Employee,
+} from '@/app/dashboard/(main)/employees/page'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 
@@ -67,6 +71,7 @@ interface Task {
   title: string
   description: string
   status: TaskStatus
+  assignedTo?: string[]
 }
 
 const initialTasks: Task[] = [
@@ -75,6 +80,7 @@ const initialTasks: Task[] = [
     title: 'Desenvolver Recurso de Login',
     description: 'Implementar autenticação com email e senha.',
     status: 'In Progress',
+    assignedTo: ['sarah.chen@aptaflow.com'],
   },
   {
     id: '2',
@@ -87,6 +93,10 @@ const initialTasks: Task[] = [
     title: 'Criar Documentação da API',
     description: 'Detalhar todos os endpoints disponíveis.',
     status: 'Done',
+    assignedTo: [
+      'david.r@aptaflow.com',
+      'emily.w@aptaflow.com',
+    ],
   },
   {
     id: '4',
@@ -104,7 +114,13 @@ const statusLabels: Record<TaskStatus, string> = {
 
 const columns: TaskStatus[] = ['Backlog', 'In Progress', 'Done']
 
-const TaskCard = ({ task }: { task: Task }) => {
+const TaskCard = ({
+  task,
+  onAssignMember,
+}: {
+  task: Task
+  onAssignMember: (taskId: string, memberEmail: string) => void
+}) => {
   const {
     attributes,
     listeners,
@@ -121,6 +137,11 @@ const TaskCard = ({ task }: { task: Task }) => {
     opacity: isDragging ? 0.5 : 1,
   }
 
+  const assignedMembers =
+    initialEmployeesData.filter((emp) =>
+      task.assignedTo?.includes(emp.email)
+    ) ?? []
+
   return (
     <Dialog>
       <Card
@@ -128,10 +149,10 @@ const TaskCard = ({ task }: { task: Task }) => {
         style={style}
         {...attributes}
         {...listeners}
-        className='touch-none cursor-grab active:cursor-grabbing'
+        className='touch-none cursor-grab active:cursor-grabbing flex flex-col'
       >
         <DialogTrigger asChild>
-          <div>
+          <div className='flex-grow'>
             <CardHeader className='flex flex-row items-start justify-between p-4'>
               <CardTitle className='text-base'>{task.title}</CardTitle>
             </CardHeader>
@@ -142,6 +163,18 @@ const TaskCard = ({ task }: { task: Task }) => {
             </CardContent>
           </div>
         </DialogTrigger>
+        {assignedMembers.length > 0 && (
+          <CardFooter className='p-4 pt-0 flex justify-end'>
+            <div className='flex -space-x-2'>
+              {assignedMembers.map((member) => (
+                <Avatar key={member.email} className='h-6 w-6 border-2'>
+                  <AvatarImage src={member.avatar} />
+                  <AvatarFallback>{member.fallback}</AvatarFallback>
+                </Avatar>
+              ))}
+            </div>
+          </CardFooter>
+        )}
       </Card>
       <DialogContent className='sm:max-w-2xl'>
         <DialogHeader>
@@ -184,27 +217,38 @@ const TaskCard = ({ task }: { task: Task }) => {
                     </div>
                     <Separator />
                     <div className='flex flex-col gap-2'>
-                      {initialEmployeesData.map((employee) => (
-                        <div
-                          key={employee.email}
-                          className='flex items-center justify-between'
-                        >
-                          <div className='flex items-center gap-2'>
-                            <Avatar className='h-8 w-8'>
-                              <AvatarImage src={employee.avatar} />
-                              <AvatarFallback>
-                                {employee.fallback}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className='text-sm font-medium'>
-                              {employee.name}
-                            </span>
+                      {initialEmployeesData.map((employee) => {
+                        const isAssigned = task.assignedTo?.includes(
+                          employee.email
+                        )
+                        return (
+                          <div
+                            key={employee.email}
+                            className='flex items-center justify-between'
+                          >
+                            <div className='flex items-center gap-2'>
+                              <Avatar className='h-8 w-8'>
+                                <AvatarImage src={employee.avatar} />
+                                <AvatarFallback>
+                                  {employee.fallback}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className='text-sm font-medium'>
+                                {employee.name}
+                              </span>
+                            </div>
+                            <Button
+                              variant={isAssigned ? 'default' : 'outline'}
+                              size='sm'
+                              onClick={() =>
+                                onAssignMember(task.id, employee.email)
+                              }
+                            >
+                              {isAssigned ? 'Remover' : 'Atribuir'}
+                            </Button>
                           </div>
-                          <Button variant='outline' size='sm'>
-                            Atribuir
-                          </Button>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   </div>
                 </PopoverContent>
@@ -244,9 +288,11 @@ const TaskCard = ({ task }: { task: Task }) => {
 const KanbanColumn = ({
   status,
   tasks,
+  onAssignMember,
 }: {
   status: TaskStatus
   tasks: Task[]
+  onAssignMember: (taskId: string, memberEmail: string) => void
 }) => {
   const { setNodeRef } = useSortable({ id: status, data: { type: 'Column' } })
 
@@ -262,7 +308,11 @@ const KanbanColumn = ({
       >
         <div className='flex flex-col gap-4 overflow-y-auto'>
           {tasks.map((task) => (
-            <TaskCard key={task.id} task={task} />
+            <TaskCard
+              key={task.id}
+              task={task}
+              onAssignMember={onAssignMember}
+            />
           ))}
           {tasks.length === 0 && (
             <div className='py-8 text-center text-sm text-muted-foreground'>
@@ -293,6 +343,28 @@ export default function ProcessesPage() {
       },
     })
   )
+
+  const handleAssignMember = (taskId: string, memberEmail: string) => {
+    setTasks((currentTasks) =>
+      currentTasks.map((task) => {
+        if (task.id === taskId) {
+          const isAssigned = task.assignedTo?.includes(memberEmail)
+          if (isAssigned) {
+            return {
+              ...task,
+              assignedTo: task.assignedTo?.filter((email) => email !== memberEmail),
+            }
+          } else {
+            return {
+              ...task,
+              assignedTo: [...(task.assignedTo || []), memberEmail],
+            }
+          }
+        }
+        return task
+      })
+    )
+  }
 
   const handleSuggestTool = async () => {
     if (!projectDescriptionForAI) {
@@ -491,6 +563,7 @@ export default function ProcessesPage() {
                 key={status}
                 status={status}
                 tasks={tasks.filter((task) => task.status === status)}
+                onAssignMember={handleAssignMember}
               />
             ))}
           </SortableContext>

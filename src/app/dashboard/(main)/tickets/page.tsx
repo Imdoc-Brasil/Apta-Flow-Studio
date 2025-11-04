@@ -38,6 +38,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from '@/components/ui/card'
 import {
   DropdownMenu,
@@ -90,7 +91,10 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { Calendar as CalendarComponent } from '@/components/ui/calendar'
-import { initialEmployeesData } from '@/app/dashboard/(main)/employees/page'
+import {
+  initialEmployeesData,
+  type Employee,
+} from '@/app/dashboard/(main)/employees/page'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 
@@ -149,6 +153,27 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
     isDragging,
   } = useSortable({ id: ticket.id, data: { type: 'Ticket', ticket } })
   const [date, setDate] = useState<Date | undefined>(undefined)
+  const { setTickets, tickets } = useTicketStore()
+
+  const handleAssignMember = (ticketId: string, memberEmail: string) => {
+    setTickets(
+      tickets.map((t) => {
+        if (t.id === ticketId) {
+          const isAssigned = t.assignedTo?.includes(memberEmail)
+          const newAssignedTo = isAssigned
+            ? t.assignedTo?.filter((email) => email !== memberEmail)
+            : [...(t.assignedTo || []), memberEmail]
+          return { ...t, assignedTo: newAssignedTo }
+        }
+        return t
+      })
+    )
+  }
+
+  const assignedMembers =
+    initialEmployeesData.filter((emp) =>
+      ticket.assignedTo?.includes(emp.email)
+    ) ?? []
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -160,51 +185,59 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
     <Dialog>
       <DialogTrigger asChild>
         <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-          <Card className='touch-none cursor-grab active:cursor-grabbing'>
-            <div className='flex h-full flex-col'>
-              <div className='flex-grow cursor-pointer'>
-                <CardHeader className='p-4 pb-2'>
-                  <CardTitle className='leading-tight hover:underline'>
-                    {ticket.subject}
-                  </CardTitle>
-                  <CardDescription className='pt-1 text-xs'>
-                    {ticket.client} - {ticket.id}
-                  </CardDescription>
-                </CardHeader>
-              </div>
-              <CardContent className='flex items-end justify-between p-4 pt-2'>
-                <Badge
-                  variant={
-                    priorityVariant[
-                      ticket.priority as keyof typeof priorityVariant
-                    ]
-                  }
-                >
-                  {ticket.priority}
-                </Badge>
-                <div className='flex items-center gap-2'>
-                  <p className='text-xs text-muted-foreground'>
-                    <TimeAgo dateString={ticket.updated} />
-                  </p>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant='ghost'
-                        size='icon'
-                        className='h-6 w-6 shrink-0'
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <MoreHorizontal className='h-4 w-4' />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                      <DropdownMenuItem>Ver Detalhes</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </CardContent>
+          <Card className='touch-none cursor-grab active:cursor-grabbing flex flex-col'>
+            <div className='flex-grow cursor-pointer'>
+              <CardHeader className='p-4 pb-2'>
+                <CardTitle className='leading-tight hover:underline'>
+                  {ticket.subject}
+                </CardTitle>
+                <CardDescription className='pt-1 text-xs'>
+                  {ticket.client} - {ticket.id}
+                </CardDescription>
+              </CardHeader>
             </div>
+            <CardContent className='flex items-end justify-between p-4 pt-2'>
+              <Badge
+                variant={
+                  priorityVariant[
+                    ticket.priority as keyof typeof priorityVariant
+                  ]
+                }
+              >
+                {ticket.priority}
+              </Badge>
+              <div className='flex items-center gap-2'>
+                <p className='text-xs text-muted-foreground'>
+                  <TimeAgo dateString={ticket.updated} />
+                </p>
+                {assignedMembers.length > 0 && (
+                  <div className='flex -space-x-2'>
+                    {assignedMembers.map((member) => (
+                      <Avatar key={member.email} className='h-6 w-6 border-2'>
+                        <AvatarImage src={member.avatar} />
+                        <AvatarFallback>{member.fallback}</AvatarFallback>
+                      </Avatar>
+                    ))}
+                  </div>
+                )}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant='ghost'
+                      size='icon'
+                      className='h-6 w-6 shrink-0'
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MoreHorizontal className='h-4 w-4' />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                    <DropdownMenuItem>Ver Detalhes</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </CardContent>
           </Card>
         </div>
       </DialogTrigger>
@@ -279,27 +312,38 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
                     </div>
                     <Separator />
                     <div className='flex flex-col gap-2'>
-                      {initialEmployeesData.map((employee) => (
-                        <div
-                          key={employee.email}
-                          className='flex items-center justify-between'
-                        >
-                          <div className='flex items-center gap-2'>
-                            <Avatar className='h-8 w-8'>
-                              <AvatarImage src={employee.avatar} />
-                              <AvatarFallback>
-                                {employee.fallback}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className='text-sm font-medium'>
-                              {employee.name}
-                            </span>
+                      {initialEmployeesData.map((employee) => {
+                        const isAssigned = ticket.assignedTo?.includes(
+                          employee.email
+                        )
+                        return (
+                          <div
+                            key={employee.email}
+                            className='flex items-center justify-between'
+                          >
+                            <div className='flex items-center gap-2'>
+                              <Avatar className='h-8 w-8'>
+                                <AvatarImage src={employee.avatar} />
+                                <AvatarFallback>
+                                  {employee.fallback}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className='text-sm font-medium'>
+                                {employee.name}
+                              </span>
+                            </div>
+                            <Button
+                              variant={isAssigned ? 'default' : 'outline'}
+                              size='sm'
+                              onClick={() =>
+                                handleAssignMember(ticket.id, employee.email)
+                              }
+                            >
+                              {isAssigned ? 'Remover' : 'Atribuir'}
+                            </Button>
                           </div>
-                          <Button variant='outline' size='sm'>
-                            Atribuir
-                          </Button>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   </div>
                 </PopoverContent>
@@ -310,9 +354,21 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
               <Button variant='secondary' className='justify-start'>
                 <CheckSquare className='mr-2 h-4 w-4' /> Checklist
               </Button>
-              <Button variant='secondary' className='justify-start'>
-                <Calendar className='mr-2 h-4 w-4' /> Datas
-              </Button>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant='secondary' className='justify-start'>
+                    <Calendar className='mr-2 h-4 w-4' /> Datas
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className='w-auto p-0'>
+                  <CalendarComponent
+                    mode='single'
+                    selected={date}
+                    onSelect={setDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
               <Button variant='secondary' className='justify-start'>
                 <Paperclip className='mr-2 h-4 w-4' /> Anexo
               </Button>
@@ -376,6 +432,7 @@ export default function TicketsPage() {
   const { tickets, addTicket, setTickets } = useTicketStore()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null)
+  const [date, setDate] = useState<Date | undefined>(undefined)
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -395,6 +452,21 @@ export default function TicketsPage() {
       description: (formData.get('description') as string) || '',
     })
     setIsDialogOpen(false)
+  }
+
+  const handleAssignMember = (ticketId: string, memberEmail: string) => {
+    setTickets(
+      tickets.map((t) => {
+        if (t.id === ticketId) {
+          const isAssigned = t.assignedTo?.includes(memberEmail)
+          const newAssignedTo = isAssigned
+            ? t.assignedTo?.filter((email) => email !== memberEmail)
+            : [...(t.assignedTo || []), memberEmail]
+          return { ...t, assignedTo: newAssignedTo }
+        }
+        return t
+      })
+    )
   }
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -718,12 +790,76 @@ export default function TicketsPage() {
                               Adicionar ao cartão
                             </h3>
                             <div className='flex flex-col space-y-2'>
-                              <Button
-                                variant='secondary'
-                                className='justify-start'
-                              >
-                                <UserPlus className='mr-2 h-4 w-4' /> Membros
-                              </Button>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant='secondary'
+                                    className='justify-start'
+                                  >
+                                    <UserPlus className='mr-2 h-4 w-4' />{' '}
+                                    Membros
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className='w-80'>
+                                  <div className='grid gap-4'>
+                                    <div className='space-y-2'>
+                                      <h4 className='font-medium leading-none'>
+                                        Membros
+                                      </h4>
+                                      <p className='text-sm text-muted-foreground'>
+                                        Atribua membros a este cartão.
+                                      </p>
+                                    </div>
+                                    <Separator />
+                                    <div className='flex flex-col gap-2'>
+                                      {initialEmployeesData.map((employee) => {
+                                        const isAssigned =
+                                          ticket.assignedTo?.includes(
+                                            employee.email
+                                          )
+                                        return (
+                                          <div
+                                            key={employee.email}
+                                            className='flex items-center justify-between'
+                                          >
+                                            <div className='flex items-center gap-2'>
+                                              <Avatar className='h-8 w-8'>
+                                                <AvatarImage
+                                                  src={employee.avatar}
+                                                />
+                                                <AvatarFallback>
+                                                  {employee.fallback}
+                                                </AvatarFallback>
+                                              </Avatar>
+                                              <span className='text-sm font-medium'>
+                                                {employee.name}
+                                              </span>
+                                            </div>
+                                            <Button
+                                              variant={
+                                                isAssigned
+                                                  ? 'default'
+                                                  : 'outline'
+                                              }
+                                              size='sm'
+                                              onClick={() =>
+                                                handleAssignMember(
+                                                  ticket.id,
+                                                  employee.email
+                                                )
+                                              }
+                                            >
+                                              {isAssigned
+                                                ? 'Remover'
+                                                : 'Atribuir'}
+                                            </Button>
+                                          </div>
+                                        )
+                                      })}
+                                    </div>
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
                               <Button
                                 variant='secondary'
                                 className='justify-start'
@@ -737,12 +873,24 @@ export default function TicketsPage() {
                                 <CheckSquare className='mr-2 h-4 w-4' />{' '}
                                 Checklist
                               </Button>
-                              <Button
-                                variant='secondary'
-                                className='justify-start'
-                              >
-                                <Calendar className='mr-2 h-4 w-4' /> Datas
-                              </Button>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant='secondary'
+                                    className='justify-start'
+                                  >
+                                    <Calendar className='mr-2 h-4 w-4' /> Datas
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className='w-auto p-0'>
+                                  <CalendarComponent
+                                    mode='single'
+                                    selected={date}
+                                    onSelect={setDate}
+                                    initialFocus
+                                  />
+                                </PopoverContent>
+                              </Popover>
                               <Button
                                 variant='secondary'
                                 className='justify-start'

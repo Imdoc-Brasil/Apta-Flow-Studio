@@ -10,6 +10,7 @@ export const initialTicketsData = [
     updated: new Date('2024-07-21T10:30:00').toISOString(),
     description:
       'Ao tentar acessar o portal do cliente, recebo uma mensagem de "usuário ou senha inválida", mas minhas credenciais estão corretas. Já tentei limpar o cache e usar outro navegador.',
+    assignedTo: ['sarah.chen@aptaflow.com'],
   },
   {
     id: 'TKT-002',
@@ -40,6 +41,7 @@ export const initialTicketsData = [
     updated: new Date('2024-07-19T11:00:00').toISOString(),
     description:
       'O endpoint GET /api/v1/data está retornando um erro 500 Internal Server Error desde ontem. Isso está impactando nossa integração.',
+    assignedTo: ['david.r@aptaflow.com', 'michael.b@aptaflow.com'],
   },
   {
     id: 'TKT-005',
@@ -54,11 +56,16 @@ export const initialTicketsData = [
 ] as const
 
 export type TicketStatus = 'Aberto' | 'Em Progresso' | 'Resolvido' | 'Fechado'
-export type Ticket = (typeof initialTicketsData)[0]
+// Update Ticket type to include optional assignedTo property
+export type Ticket = Omit<(typeof initialTicketsData)[0], 'assignedTo'> & {
+  assignedTo?: string[]
+}
 
 type TicketStore = {
   tickets: Ticket[]
-  addTicket: (newTicket: Omit<Ticket, 'id' | 'status' | 'updated'>) => void
+  addTicket: (
+    newTicket: Omit<Ticket, 'id' | 'status' | 'updated' | 'assignedTo'>
+  ) => void
   setTickets: (tickets: Ticket[]) => void
 }
 
@@ -66,6 +73,7 @@ export const useTicketStore = create<TicketStore>((set) => ({
   tickets: [...initialTicketsData].map((ticket) => ({
     ...ticket,
     updated: new Date(ticket.updated).toISOString(),
+    assignedTo: ticket.assignedTo || [],
   })),
   addTicket: (newTicket) =>
     set((state) => ({
@@ -75,6 +83,7 @@ export const useTicketStore = create<TicketStore>((set) => ({
           id: `TKT-${Math.random().toString(36).substring(2, 5).toUpperCase()}`,
           status: 'Aberto',
           updated: new Date().toISOString(),
+          assignedTo: [],
         },
         ...state.tickets,
       ],
