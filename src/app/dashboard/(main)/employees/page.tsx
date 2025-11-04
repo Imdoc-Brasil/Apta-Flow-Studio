@@ -50,7 +50,7 @@ import { initialProfiles } from '@/app/dashboard/(main)/profiles/page'
 export const initialStaffsData = [
   {
     name: 'Sarah Chen',
-    profile: 'Gerente de Projeto Principal',
+    assinatura: 'Gerente de Projeto Principal',
     avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026701d',
     fallback: 'SC',
     email: 'sarah.chen@aptaflow.com',
@@ -59,7 +59,7 @@ export const initialStaffsData = [
   },
   {
     name: 'David Rodriguez',
-    profile: 'Engenheiro de Software Sênior',
+    assinatura: 'Engenheiro de Software Sênior',
     avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026702d',
     fallback: 'DR',
     email: 'david.r@aptaflow.com',
@@ -68,7 +68,7 @@ export const initialStaffsData = [
   },
   {
     name: 'Emily White',
-    profile: 'Especialista de Suporte',
+    assinatura: 'Especialista de Suporte',
     avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026703d',
     fallback: 'EW',
     email: 'emily.w@aptaflow.com',
@@ -77,7 +77,7 @@ export const initialStaffsData = [
   },
   {
     name: 'Michael Brown',
-    profile: 'Engenheiro de DevOps',
+    assinatura: 'Engenheiro de DevOps',
     avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704d',
     fallback: 'MB',
     email: 'michael.b@aptaflow.com',
@@ -108,7 +108,7 @@ export default function StaffsPage() {
 
     const newStaff: Staff = {
       name,
-      profile: selectedProfile?.assinatura || '',
+      assinatura: selectedProfile?.name || '',
       email: formData.get('email') as string,
       phone: formData.get('phone') as string,
       status: 'Ativo',
@@ -215,7 +215,7 @@ export default function StaffsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Staff</TableHead>
-              <TableHead className='hidden md:table-cell'>Perfil</TableHead>
+              <TableHead className='hidden md:table-cell'>Assinatura</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>
                 <span className='sr-only'>Ações</span>
@@ -240,7 +240,7 @@ export default function StaffsPage() {
                   </div>
                 </TableCell>
                 <TableCell className='hidden md:table-cell'>
-                  {staff.profile}
+                  {staff.assinatura}
                 </TableCell>
                 <TableCell>
                   <Badge
