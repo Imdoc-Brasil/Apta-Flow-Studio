@@ -47,8 +47,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { suggestProcessTool } from '@/app/actions'
-import type { SuggestProcessToolOutput } from '@/app/actions'
+import { suggestProcessTool } from '@/app/ai-actions'
+import type { SuggestProcessToolOutput } from '@/app/ai-actions'
 import { useToast } from '@/hooks/use-toast'
 
 type TaskStatus = 'Backlog' | 'In Progress' | 'Done'
