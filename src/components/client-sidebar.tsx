@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -120,16 +121,13 @@ export function ClientSidebar() {
     <SidebarMenu>
       {mainNavItems.map((item) => (
         <SidebarMenuItem key={item.label}>
-          <Link href={item.href} legacyBehavior passHref>
+          <Link href={item.href} asChild>
               <SidebarMenuButton
-                asChild
                 isActive={getIsActive(item.href)}
                 tooltip={item.label}
               >
-                <a>
                   <item.icon />
                   <span>{item.label}</span>
-                </a>
               </SidebarMenuButton>
           </Link>
         </SidebarMenuItem>
@@ -154,17 +152,14 @@ export function ClientSidebar() {
              <div className="pl-6 pt-1 space-y-1">
                  {contratoNavItems.map((item) => (
                     <SidebarMenuItem key={item.label}>
-                        <Link href={item.href} legacyBehavior passHref>
+                        <Link href={item.href} asChild>
                             <SidebarMenuButton
-                                asChild
                                 isActive={getIsActive(item.href)}
                                 tooltip={item.label}
                                 className="h-8"
                             >
-                                <a>
                                   <item.icon />
                                   <span>{item.label}</span>
-                                </a>
                             </SidebarMenuButton>
                         </Link>
                     </SidebarMenuItem>
@@ -193,17 +188,14 @@ export function ClientSidebar() {
              <div className="pl-6 pt-1 space-y-1">
                  {estruturaNavItems.map((item) => (
                     <SidebarMenuItem key={item.label}>
-                        <Link href={item.href} legacyBehavior passHref>
+                        <Link href={item.href} asChild>
                             <SidebarMenuButton
-                                asChild
                                 isActive={getIsActive(item.href)}
                                 tooltip={item.label}
                                 className="h-8"
                             >
-                                <a>
                                   <item.icon />
                                   <span>{item.label}</span>
-                                </a>
                             </SidebarMenuButton>
                         </Link>
                     </SidebarMenuItem>
@@ -232,17 +224,14 @@ export function ClientSidebar() {
              <div className="pl-6 pt-1 space-y-1">
                  {saudeNavItems.map((item) => (
                     <SidebarMenuItem key={item.label}>
-                        <Link href={item.href} legacyBehavior passHref>
+                        <Link href={item.href} asChild>
                             <SidebarMenuButton
-                                asChild
                                 isActive={getIsActive(item.href)}
                                 tooltip={item.label}
                                 className="h-8"
                             >
-                               <a>
                                  <item.icon />
                                  <span>{item.label}</span>
-                               </a>
                             </SidebarMenuButton>
                         </Link>
                     </SidebarMenuItem>
@@ -272,17 +261,14 @@ export function ClientSidebar() {
              <div className="pl-6 pt-1 space-y-1">
                  {sstNavItems.map((item) => (
                     <SidebarMenuItem key={item.label}>
-                        <Link href={item.href} legacyBehavior passHref>
+                        <Link href={item.href} asChild>
                             <SidebarMenuButton
-                                asChild
                                 isActive={getIsActive(item.href)}
                                 tooltip={item.label}
                                 className="h-8"
                             >
-                                <a>
                                   <item.icon />
                                   <span>{item.label}</span>
-                                </a>
                             </SidebarMenuButton>
                         </Link>
                     </SidebarMenuItem>
@@ -294,3 +280,5 @@ export function ClientSidebar() {
     </SidebarMenu>
   );
 }
+
+    
