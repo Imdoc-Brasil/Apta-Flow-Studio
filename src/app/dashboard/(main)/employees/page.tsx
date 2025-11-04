@@ -15,6 +15,11 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {
@@ -35,6 +40,16 @@ import {
   DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -47,6 +62,9 @@ import {
 } from '@/components/ui/select'
 import { initialProfiles } from '@/app/dashboard/(main)/profiles/page'
 
+type StaffStatus = 'Ativo' | 'Licença' | 'Suspenso'
+type StaffSituation = 'Online' | 'Offline'
+
 export const initialStaffsData = [
   {
     name: 'Sarah Chen',
@@ -56,8 +74,8 @@ export const initialStaffsData = [
     fallback: 'SC',
     email: 'sarah.chen@aptaflow.com',
     phone: '555-0101',
-    status: 'Ativo',
-    situacao: 'Online',
+    status: 'Ativo' as StaffStatus,
+    situacao: 'Online' as StaffSituation,
   },
   {
     name: 'David Rodriguez',
@@ -67,8 +85,8 @@ export const initialStaffsData = [
     fallback: 'DR',
     email: 'david.r@aptaflow.com',
     phone: '555-0102',
-    status: 'Ativo',
-    situacao: 'Offline',
+    status: 'Ativo' as StaffStatus,
+    situacao: 'Offline' as StaffSituation,
   },
   {
     name: 'Emily White',
@@ -78,8 +96,8 @@ export const initialStaffsData = [
     fallback: 'EW',
     email: 'emily.w@aptaflow.com',
     phone: '555-0103',
-    status: 'Ativo',
-    situacao: 'Online',
+    status: 'Ativo' as StaffStatus,
+    situacao: 'Online' as StaffSituation,
   },
   {
     name: 'Michael Brown',
@@ -89,8 +107,8 @@ export const initialStaffsData = [
     fallback: 'MB',
     email: 'michael.b@aptaflow.com',
     phone: '555-0104',
-    status: 'Licença',
-    situacao: 'Offline',
+    status: 'Licença' as StaffStatus,
+    situacao: 'Offline' as StaffSituation,
   },
 ]
 
@@ -101,6 +119,7 @@ export default function StaffsPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [currentStaff, setCurrentStaff] = useState<Staff | null>(null)
 
   const handleAddStaff = (event: React.FormEvent<HTMLFormElement>) => {
@@ -160,6 +179,23 @@ export default function StaffsPage() {
     setCurrentStaff(null)
   }
 
+  const handleDeleteStaff = () => {
+    if (!currentStaff) return
+    setStaffs((prev) =>
+      prev.filter((staff) => staff.email !== currentStaff.email)
+    )
+    setIsDeleteDialogOpen(false)
+    setCurrentStaff(null)
+  }
+
+  const handleChangeStatus = (staffEmail: string, newStatus: StaffStatus) => {
+    setStaffs((prev) =>
+      prev.map((staff) =>
+        staff.email === staffEmail ? { ...staff, status: newStatus } : staff
+      )
+    )
+  }
+
   const openEditDialog = (staff: Staff) => {
     setCurrentStaff(staff)
     setIsEditDialogOpen(true)
@@ -170,8 +206,26 @@ export default function StaffsPage() {
     setIsDetailOpen(true)
   }
 
+  const openDeleteDialog = (staff: Staff) => {
+    setCurrentStaff(staff)
+    setIsDeleteDialogOpen(true)
+  }
+
   const getProfileName = (perfilId: string) => {
     return initialProfiles.find((p) => p.id === perfilId)?.name || 'N/A'
+  }
+  
+  const getStatusBadgeVariant = (status: StaffStatus) => {
+    switch (status) {
+      case 'Ativo':
+        return 'secondary'
+      case 'Suspenso':
+        return 'destructive'
+      case 'Licença':
+        return 'outline'
+      default:
+        return 'default'
+    }
   }
 
   const renderStaffForm = (staff?: Staff | null) => (
@@ -183,7 +237,12 @@ export default function StaffsPage() {
             <AvatarImage src={staff?.avatar} />
             <AvatarFallback>{staff?.fallback}</AvatarFallback>
           </Avatar>
-          <Input id='avatar-upload' name='avatar-upload' type='file' className='text-sm' />
+          <Input
+            id='avatar-upload'
+            name='avatar-upload'
+            type='file'
+            className='text-sm'
+          />
         </div>
       </div>
       <div className='grid grid-cols-4 items-center gap-4'>
@@ -354,11 +413,7 @@ export default function StaffsPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge
-                      variant={
-                        staff.status === 'Ativo' ? 'secondary' : 'outline'
-                      }
-                    >
+                    <Badge variant={getStatusBadgeVariant(staff.status)}>
                       {staff.status}
                     </Badge>
                   </TableCell>
@@ -381,6 +436,24 @@ export default function StaffsPage() {
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => openEditDialog(staff)}>
                           Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuSub>
+                           <DropdownMenuSubTrigger>Alterar Status</DropdownMenuSubTrigger>
+                           <DropdownMenuPortal>
+                             <DropdownMenuSubContent>
+                               <DropdownMenuItem onClick={() => handleChangeStatus(staff.email, 'Ativo')}>Ativo</DropdownMenuItem>
+                               <DropdownMenuItem onClick={() => handleChangeStatus(staff.email, 'Licença')}>Licença</DropdownMenuItem>
+                               <DropdownMenuItem onClick={() => handleChangeStatus(staff.email, 'Suspenso')}>Suspenso</DropdownMenuItem>
+                             </DropdownMenuSubContent>
+                           </DropdownMenuPortal>
+                        </DropdownMenuSub>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className='text-destructive'
+                          onClick={() => openDeleteDialog(staff)}
+                        >
+                          Excluir
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -448,9 +521,7 @@ export default function StaffsPage() {
                  <div className='space-y-2'>
                     <p className='text-sm font-medium'>Status</p>
                      <Badge
-                      variant={
-                        currentStaff.status === 'Ativo' ? 'secondary' : 'outline'
-                      }
+                      variant={getStatusBadgeVariant(currentStaff.status)}
                     >
                       {currentStaff.status}
                     </Badge>
@@ -475,6 +546,23 @@ export default function StaffsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Isso irá excluir permanentemente o staff{' '}
+              <span className='font-semibold'>{currentStaff?.name}</span>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setCurrentStaff(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteStaff}>Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }
