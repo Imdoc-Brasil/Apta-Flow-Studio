@@ -37,6 +37,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarHeader,
 } from '@/components/ui/sidebar';
 import {
   Collapsible,
@@ -299,5 +300,3 @@ export function ClientSidebar() {
     </SidebarMenu>
   );
 }
-
-    
