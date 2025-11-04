@@ -418,7 +418,9 @@ function AddChecklistDialog({
               />
             </div>
             <div className='space-y-2'>
-              <Label htmlFor='dueDate'>Prazo da Primeira Tarefa (Opcional)</Label>
+              <Label htmlFor='dueDate'>
+                Prazo da Primeira Tarefa (Opcional)
+              </Label>
               <Input id='dueDate' name='dueDate' type='date' />
             </div>
             <div className='space-y-2'>
@@ -1122,6 +1124,8 @@ export default function TicketsPage() {
   const [labelFilter, setLabelFilter] = useState<string[]>([])
   const [staffFilter, setStaffFilter] = useState<string[]>([])
   const [clientFilter, setClientFilter] = useState<string[]>([])
+  const [selectedLabels, setSelectedLabels] = useState<Label[]>([])
+  const [assignedTo, setAssignedTo] = useState<string[]>([])
 
   const filteredTickets = useMemo(() => {
     return tickets.filter((ticket) => {
@@ -1159,8 +1163,12 @@ export default function TicketsPage() {
       client: formData.get('client') as string,
       priority: formData.get('priority') as Ticket['priority'],
       description: (formData.get('description') as string) || '',
+      labels: selectedLabels,
+      assignedTo: assignedTo,
     })
     setIsDialogOpen(false)
+    setSelectedLabels([])
+    setAssignedTo([])
   }
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -1341,7 +1349,7 @@ export default function TicketsPage() {
                 </span>
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className='sm:max-w-2xl'>
               <DialogHeader>
                 <DialogTitle>Abrir Novo Ticket</DialogTitle>
                 <DialogDescription>
@@ -1350,65 +1358,124 @@ export default function TicketsPage() {
                 </DialogDescription>
               </DialogHeader>
               <form id='add-ticket-form' onSubmit={handleAddTicket}>
-                <div className='grid gap-4 py-4'>
-                  <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label htmlFor='client' className='text-right'>
-                      Cliente
-                    </Label>
-                    <Select name='client' required>
-                      <SelectTrigger className='col-span-3'>
-                        <SelectValue placeholder='Selecione o cliente' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {initialClientsData.map((client) => (
-                          <SelectItem
-                            key={client.contractId}
-                            value={client.name}
-                          >
-                            {client.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                <ScrollArea className='h-[60vh]'>
+                  <div className='grid gap-4 py-4 px-6'>
+                    <div className='space-y-2'>
+                      <Label htmlFor='client'>Cliente</Label>
+                      <Select name='client' required>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Selecione o cliente' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {initialClientsData.map((client) => (
+                            <SelectItem
+                              key={client.contractId}
+                              value={client.name}
+                            >
+                              {client.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='subject'>Assunto</Label>
+                      <Input id='subject' name='subject' required />
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='priority'>Prioridade</Label>
+                      <Select name='priority' required>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Selecione a prioridade' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value='Baixa'>Baixa</SelectItem>
+                          <SelectItem value='Média'>Média</SelectItem>
+                          <SelectItem value='Alta'>Alta</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className='space-y-2'>
+                      <Label>Atribuir a</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant='outline' className='w-full justify-start font-normal'>
+                            <UserPlus className='mr-2' />
+                            {assignedTo.length > 0 ? `${assignedTo.length} membro(s) selecionado(s)`: "Selecione membros"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className='w-80'>
+                          <div className='grid gap-4'>
+                            <h4 className='font-medium leading-none'>Membros</h4>
+                            <ScrollArea className='h-48'>
+                              <div className='flex flex-col gap-2 p-1'>
+                                {initialStaffsData.map((staff) => (
+                                  <Label key={staff.email} className='flex items-center gap-2 font-normal'>
+                                    <Checkbox
+                                      checked={assignedTo.includes(staff.email)}
+                                      onCheckedChange={(checked) => {
+                                        setAssignedTo(prev => checked ? [...prev, staff.email] : prev.filter(email => email !== staff.email))
+                                      }}
+                                    />
+                                    <Avatar className='h-6 w-6'>
+                                      <AvatarImage src={staff.avatar} />
+                                      <AvatarFallback>{staff.fallback}</AvatarFallback>
+                                    </Avatar>
+                                    {staff.name}
+                                  </Label>
+                                ))}
+                              </div>
+                            </ScrollArea>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                     <div className='space-y-2'>
+                      <Label>Etiquetas</Label>
+                       <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant='outline' className='w-full justify-start font-normal'>
+                             <Tag className='mr-2' />
+                             {selectedLabels.length > 0 ? `${selectedLabels.length} etiqueta(s) selecionada(s)`: "Selecione etiquetas"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className='w-64'>
+                          <div className='grid gap-4'>
+                             <h4 className='font-medium leading-none'>Etiquetas</h4>
+                              <div className='flex flex-col gap-2'>
+                                {availableLabels.map((label) => {
+                                  const isChecked = selectedLabels.some((l) => l.id === label.id)
+                                  return (
+                                    <Label key={label.id} className='flex items-center gap-2 font-normal'>
+                                      <Checkbox
+                                        checked={isChecked}
+                                        onCheckedChange={(checked) =>
+                                          setSelectedLabels(prev => checked ? [...prev, label] : prev.filter(l => l.id !== label.id))
+                                        }
+                                      />
+                                      <span
+                                        className={`px-2 py-0.5 text-xs rounded-full text-white ${label.color}`}
+                                      >
+                                        {label.name}
+                                      </span>
+                                    </Label>
+                                  )
+                                })}
+                              </div>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='description'>Descrição</Label>
+                      <Textarea
+                        id='description'
+                        name='description'
+                        placeholder='Detalhe a solicitação...'
+                      />
+                    </div>
                   </div>
-                  <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label htmlFor='subject' className='text-right'>
-                      Assunto
-                    </Label>
-                    <Input
-                      id='subject'
-                      name='subject'
-                      className='col-span-3'
-                      required
-                    />
-                  </div>
-                  <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label htmlFor='priority' className='text-right'>
-                      Prioridade
-                    </Label>
-                    <Select name='priority' required>
-                      <SelectTrigger className='col-span-3'>
-                        <SelectValue placeholder='Selecione a prioridade' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value='Baixa'>Baixa</SelectItem>
-                        <SelectItem value='Média'>Média</SelectItem>
-                        <SelectItem value='Alta'>Alta</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label htmlFor='description' className='text-right'>
-                      Descrição
-                    </Label>
-                    <Textarea
-                      id='description'
-                      name='description'
-                      className='col-span-3'
-                      placeholder='Detalhe a solicitação...'
-                    />
-                  </div>
-                </div>
+                </ScrollArea>
               </form>
               <DialogFooter>
                 <Button

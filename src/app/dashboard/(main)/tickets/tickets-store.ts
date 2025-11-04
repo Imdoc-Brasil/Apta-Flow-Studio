@@ -117,7 +117,28 @@ export const initialTicketsData = [
         url: '#',
       },
     ],
-    textElements: [],
+    textElements: [
+      {
+        id: 'txt-1',
+        type: 'question',
+        title: 'Pergunta',
+        content: 'Qual a previsão para início do desenvolvimento?',
+        creator: 'Cliente',
+        creatorAvatar: '',
+        creatorFallback: 'CL',
+        createdAt: new Date('2024-07-22T10:00:00Z').toISOString(),
+      },
+      {
+        id: 'txt-2',
+        type: 'comment',
+        title: 'Comentário',
+        content: 'Já estamos analisando a viabilidade técnica.',
+        creator: 'Sarah Chen',
+        creatorAvatar: 'https://i.pravatar.cc/150?u=a042581f4e29026701d',
+        creatorFallback: 'SC',
+        createdAt: new Date('2024-07-22T11:20:00Z').toISOString(),
+      },
+    ],
   },
   {
     id: 'TKT-003',
@@ -176,21 +197,19 @@ export type Ticket = Omit<
   textElements?: TextElement[]
 }
 
+type NewTicketData = Omit<
+  Ticket,
+  | 'id'
+  | 'status'
+  | 'updated'
+  | 'checklists'
+  | 'attachments'
+  | 'textElements'
+>
+
 type TicketStore = {
   tickets: Ticket[]
-  addTicket: (
-    newTicket: Omit<
-      Ticket,
-      | 'id'
-      | 'status'
-      | 'updated'
-      | 'assignedTo'
-      | 'labels'
-      | 'checklists'
-      | 'attachments'
-      | 'textElements'
-    >
-  ) => void
+  addTicket: (newTicket: NewTicketData) => void
   setTickets: (tickets: Ticket[]) => void
   addChecklist: (
     ticketId: string,
@@ -251,8 +270,8 @@ export const useTicketStore = create<TicketStore>((set) => ({
             .toUpperCase()}`,
           status: 'Aberto',
           updated: new Date().toISOString(),
-          assignedTo: [],
-          labels: [],
+          assignedTo: newTicket.assignedTo || [],
+          labels: newTicket.labels || [],
           checklists: [],
           attachments: [],
           textElements: [],
