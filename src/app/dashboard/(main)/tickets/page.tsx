@@ -82,6 +82,8 @@ import {
   useTicketStore,
   type Ticket,
   type TicketStatus,
+  availableLabels,
+  type Label as LabelType,
 } from './tickets-store'
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -97,6 +99,7 @@ import {
 } from '@/app/dashboard/(main)/employees/page'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
+import { Checkbox } from '@/components/ui/checkbox'
 
 const priorityVariant = {
   Alta: 'destructive',
@@ -133,9 +136,7 @@ function TimeAgo({ dateString }: { dateString: string }) {
 
   useEffect(() => {
     const date = new Date(dateString)
-    setTimeAgo(
-      formatDistanceToNow(date, { addSuffix: true, locale: ptBR })
-    )
+    setTimeAgo(formatDistanceToNow(date, { addSuffix: true, locale: ptBR }))
   }, [dateString])
 
   if (!timeAgo) return null
@@ -170,6 +171,20 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
     )
   }
 
+  const handleLabelChange = (labelId: string, checked: boolean) => {
+    setTickets(
+      tickets.map((t) => {
+        if (t.id === ticket.id) {
+          const newLabels = checked
+            ? [...(t.labels || []), availableLabels.find((l) => l.id === labelId)!]
+            : t.labels?.filter((l) => l.id !== labelId)
+          return { ...t, labels: newLabels }
+        }
+        return t
+      })
+    )
+  }
+
   const assignedMembers =
     initialStaffsData.filter((emp) =>
       ticket.assignedTo?.includes(emp.email)
@@ -188,6 +203,18 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
           <Card className='touch-none cursor-grab active:cursor-grabbing flex flex-col'>
             <div className='flex-grow cursor-pointer'>
               <CardHeader className='p-4 pb-2'>
+                {ticket.labels && ticket.labels.length > 0 && (
+                  <div className='flex flex-wrap gap-1 mb-2'>
+                    {ticket.labels.map((label) => (
+                      <span
+                        key={label.id}
+                        className={`px-2 py-0.5 text-xs rounded-full text-white ${label.color}`}
+                      >
+                        {label.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 <CardTitle className='leading-tight hover:underline'>
                   {ticket.subject}
                 </CardTitle>
@@ -376,9 +403,48 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
                   </div>
                 </PopoverContent>
               </Popover>
-              <Button variant='secondary' className='justify-start'>
-                <Tag className='mr-2 h-4 w-4' /> Etiquetas
-              </Button>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant='secondary' className='justify-start'>
+                    <Tag className='mr-2 h-4 w-4' /> Etiquetas
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className='w-64'>
+                  <div className='grid gap-4'>
+                    <div className='space-y-2'>
+                      <h4 className='font-medium leading-none'>Etiquetas</h4>
+                      <p className='text-sm text-muted-foreground'>
+                        Adicione etiquetas a este ticket.
+                      </p>
+                    </div>
+                    <Separator />
+                    <div className='flex flex-col gap-2'>
+                      {availableLabels.map((label) => {
+                        const isChecked =
+                          ticket.labels?.some((l) => l.id === label.id) ?? false
+                        return (
+                          <Label
+                            key={label.id}
+                            className='flex items-center gap-2 font-normal'
+                          >
+                            <Checkbox
+                              checked={isChecked}
+                              onCheckedChange={(checked) =>
+                                handleLabelChange(label.id, Boolean(checked))
+                              }
+                            />
+                            <span
+                              className={`px-2 py-0.5 text-xs rounded-full text-white ${label.color}`}
+                            >
+                              {label.name}
+                            </span>
+                          </Label>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
               <Button variant='secondary' className='justify-start'>
                 <CheckSquare className='mr-2 h-4 w-4' /> Checklist
               </Button>
@@ -491,6 +557,24 @@ export default function TicketsPage() {
             ? t.assignedTo?.filter((email) => email !== memberEmail)
             : [...(t.assignedTo || []), memberEmail]
           return { ...t, assignedTo: newAssignedTo }
+        }
+        return t
+      })
+    )
+  }
+
+  const handleLabelChange = (
+    ticketId: string,
+    labelId: string,
+    checked: boolean
+  ) => {
+    setTickets(
+      tickets.map((t) => {
+        if (t.id === ticketId) {
+          const newLabels = checked
+            ? [...(t.labels || []), availableLabels.find((l) => l.id === labelId)!]
+            : t.labels?.filter((l) => l.id !== labelId)
+          return { ...t, labels: newLabels }
         }
         return t
       })
@@ -696,7 +780,23 @@ export default function TicketsPage() {
                           <TableCell className='font-medium'>
                             {ticket.id}
                           </TableCell>
-                          <TableCell>{ticket.subject}</TableCell>
+                          <TableCell>
+                            <div className='flex flex-col'>
+                              <span>{ticket.subject}</span>
+                              {ticket.labels && ticket.labels.length > 0 && (
+                                <div className='flex flex-wrap gap-1 mt-1'>
+                                  {ticket.labels.map((label) => (
+                                    <span
+                                      key={label.id}
+                                      className={`px-1.5 py-0.5 text-[10px] rounded-full text-white ${label.color}`}
+                                    >
+                                      {label.name}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
                           <TableCell className='hidden md:table-cell'>
                             {ticket.client}
                           </TableCell>
@@ -888,12 +988,59 @@ export default function TicketsPage() {
                                   </div>
                                 </PopoverContent>
                               </Popover>
-                              <Button
-                                variant='secondary'
-                                className='justify-start'
-                              >
-                                <Tag className='mr-2 h-4 w-4' /> Etiquetas
-                              </Button>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant='secondary'
+                                    className='justify-start'
+                                  >
+                                    <Tag className='mr-2 h-4 w-4' /> Etiquetas
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className='w-64'>
+                                  <div className='grid gap-4'>
+                                    <div className='space-y-2'>
+                                      <h4 className='font-medium leading-none'>
+                                        Etiquetas
+                                      </h4>
+                                      <p className='text-sm text-muted-foreground'>
+                                        Adicione etiquetas a este ticket.
+                                      </p>
+                                    </div>
+                                    <Separator />
+                                    <div className='flex flex-col gap-2'>
+                                      {availableLabels.map((label) => {
+                                        const isChecked =
+                                          ticket.labels?.some(
+                                            (l) => l.id === label.id
+                                          ) ?? false
+                                        return (
+                                          <Label
+                                            key={label.id}
+                                            className='flex items-center gap-2 font-normal'
+                                          >
+                                            <Checkbox
+                                              checked={isChecked}
+                                              onCheckedChange={(checked) =>
+                                                handleLabelChange(
+                                                  ticket.id,
+                                                  label.id,
+                                                  Boolean(checked)
+                                                )
+                                              }
+                                            />
+                                            <span
+                                              className={`px-2 py-0.5 text-xs rounded-full text-white ${label.color}`}
+                                            >
+                                              {label.name}
+                                            </span>
+                                          </Label>
+                                        )
+                                      })}
+                                    </div>
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
                               <Button
                                 variant='secondary'
                                 className='justify-start'
@@ -965,6 +1112,19 @@ export default function TicketsPage() {
                 {activeTicket ? (
                   <Card className='cursor-grabbing transform-gpu rotate-3 shadow-lg'>
                     <CardHeader className='p-4 pb-2'>
+                      {activeTicket.labels &&
+                        activeTicket.labels.length > 0 && (
+                          <div className='flex flex-wrap gap-1 mb-2'>
+                            {activeTicket.labels.map((label) => (
+                              <span
+                                key={label.id}
+                                className={`px-2 py-0.5 text-xs rounded-full text-white ${label.color}`}
+                              >
+                                {label.name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       <CardTitle className='leading-tight'>
                         {activeTicket.subject}
                       </CardTitle>
