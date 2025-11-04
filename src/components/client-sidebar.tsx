@@ -29,6 +29,7 @@ import {
   BarChart3,
   FileHeart,
   AlertTriangle,
+  ShieldCheck,
 } from 'lucide-react';
 import {
   SidebarMenu,
@@ -89,6 +90,7 @@ export function ClientSidebar() {
     { href: `${basePath}/pcmso`, label: 'Gestão de PCMSO', icon: BookUser },
     { href: `${basePath}/asos`, label: 'Gestão de ASOs', icon: ClipboardCheck },
     { href: `${basePath}/periodicos`, label: 'Gestão de Periódicos', icon: CalendarCheck },
+    { href: `${basePath}/sla`, label: 'Gestão de SLA', icon: ShieldCheck },
     { href: `${basePath}/pgr-inventory`, label: 'Inventário de Riscos', icon: FileText },
     { href: `${basePath}/pgr-action-plan`, label: 'Plano de Ação', icon: ClipboardList },
     { href: `${basePath}/epis`, label: 'Gestão de EPIs', icon: HardHat },
@@ -118,13 +120,16 @@ export function ClientSidebar() {
     <SidebarMenu>
       {mainNavItems.map((item) => (
         <SidebarMenuItem key={item.label}>
-          <Link href={item.href} asChild>
+          <Link href={item.href} legacyBehavior passHref>
               <SidebarMenuButton
+                asChild
                 isActive={getIsActive(item.href)}
                 tooltip={item.label}
               >
-                <item.icon />
-                <span>{item.label}</span>
+                <a>
+                  <item.icon />
+                  <span>{item.label}</span>
+                </a>
               </SidebarMenuButton>
           </Link>
         </SidebarMenuItem>
@@ -149,14 +154,17 @@ export function ClientSidebar() {
              <div className="pl-6 pt-1 space-y-1">
                  {contratoNavItems.map((item) => (
                     <SidebarMenuItem key={item.label}>
-                        <Link href={item.href} asChild>
+                        <Link href={item.href} legacyBehavior passHref>
                             <SidebarMenuButton
+                                asChild
                                 isActive={getIsActive(item.href)}
                                 tooltip={item.label}
                                 className="h-8"
                             >
-                                <item.icon />
-                                <span>{item.label}</span>
+                                <a>
+                                  <item.icon />
+                                  <span>{item.label}</span>
+                                </a>
                             </SidebarMenuButton>
                         </Link>
                     </SidebarMenuItem>
@@ -185,14 +193,17 @@ export function ClientSidebar() {
              <div className="pl-6 pt-1 space-y-1">
                  {estruturaNavItems.map((item) => (
                     <SidebarMenuItem key={item.label}>
-                        <Link href={item.href} asChild>
+                        <Link href={item.href} legacyBehavior passHref>
                             <SidebarMenuButton
+                                asChild
                                 isActive={getIsActive(item.href)}
                                 tooltip={item.label}
                                 className="h-8"
                             >
-                                <item.icon />
-                                <span>{item.label}</span>
+                                <a>
+                                  <item.icon />
+                                  <span>{item.label}</span>
+                                </a>
                             </SidebarMenuButton>
                         </Link>
                     </SidebarMenuItem>
@@ -221,14 +232,17 @@ export function ClientSidebar() {
              <div className="pl-6 pt-1 space-y-1">
                  {saudeNavItems.map((item) => (
                     <SidebarMenuItem key={item.label}>
-                        <Link href={item.href} asChild>
+                        <Link href={item.href} legacyBehavior passHref>
                             <SidebarMenuButton
+                                asChild
                                 isActive={getIsActive(item.href)}
                                 tooltip={item.label}
                                 className="h-8"
                             >
-                                <item.icon />
-                                <span>{item.label}</span>
+                               <a>
+                                 <item.icon />
+                                 <span>{item.label}</span>
+                               </a>
                             </SidebarMenuButton>
                         </Link>
                     </SidebarMenuItem>
@@ -258,14 +272,17 @@ export function ClientSidebar() {
              <div className="pl-6 pt-1 space-y-1">
                  {sstNavItems.map((item) => (
                     <SidebarMenuItem key={item.label}>
-                        <Link href={item.href} asChild>
+                        <Link href={item.href} legacyBehavior passHref>
                             <SidebarMenuButton
+                                asChild
                                 isActive={getIsActive(item.href)}
                                 tooltip={item.label}
                                 className="h-8"
                             >
-                                <item.icon />
-                                <span>{item.label}</span>
+                                <a>
+                                  <item.icon />
+                                  <span>{item.label}</span>
+                                </a>
                             </SidebarMenuButton>
                         </Link>
                     </SidebarMenuItem>
