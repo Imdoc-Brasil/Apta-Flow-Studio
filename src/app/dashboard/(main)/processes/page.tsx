@@ -11,6 +11,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  DragOverEvent,
 } from '@dnd-kit/core';
 import {
   SortableContext,
@@ -25,7 +26,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle, AlignLeft, Tag, CheckSquare, UserPlus, Calendar, Paperclip } from 'lucide-react';
+import { PlusCircle, AlignLeft, Tag, CheckSquare, UserPlus, Calendar, Paperclip } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -64,7 +65,7 @@ const statusLabels: Record<TaskStatus, string> = {
 const columns: TaskStatus[] = ['Backlog', 'In Progress', 'Done'];
 
 const TaskCard = ({ task }: { task: Task }) => {
-    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
+    const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id, data: {type: 'Task', task} });
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -137,7 +138,7 @@ const TaskCard = ({ task }: { task: Task }) => {
 };
 
 const KanbanColumn = ({ status, tasks }: { status: TaskStatus, tasks: Task[] }) => {
-    const { setNodeRef } = useSortable({ id: status });
+    const { setNodeRef } = useSortable({ id: status, data: { type: 'Column' } });
     
     return (
         <div ref={setNodeRef} className="flex flex-col gap-4 bg-muted/50 p-4 rounded-lg h-full">
@@ -184,45 +185,68 @@ export default function ProcessesPage() {
   };
   
     const handleDragStart = (event: DragStartEvent) => {
-        const { active } = event;
-        const task = tasks.find(t => t.id === active.id);
-        if (task) {
-            setActiveTask(task);
+        if (event.active.data.current?.type === 'Task') {
+            setActiveTask(event.active.data.current.task);
         }
     };
     
-    const handleDragEnd = (event: DragEndEvent) => {
+    const handleDragOver = (event: DragOverEvent) => {
         const { active, over } = event;
-        setActiveTask(null);
+        if (!over) return;
 
-        if (over && active.id !== over.id) {
-            setTasks(items => {
-                const activeIndex = items.findIndex(item => item.id === active.id);
-                
-                // If over.id is a column status
-                const isOverColumn = columns.includes(over.id as TaskStatus);
-                if (isOverColumn) {
-                    const newItems = [...items];
-                    newItems[activeIndex].status = over.id as TaskStatus;
-                    return newItems;
-                }
-                
-                // If over.id is another task
-                const overIndex = items.findIndex(item => item.id === over.id);
-                if (items[activeIndex].status !== items[overIndex].status) {
-                     const newItems = [...items];
-                     newItems[activeIndex].status = items[overIndex].status;
-                     return newItems;
-                }
+        const activeId = active.id;
+        const overId = over.id;
 
-                return items; // No change if dropped in the same place
+        if (activeId === overId) return;
+
+        const isActiveATask = active.data.current?.type === "Task";
+        const isOverAColumn = over.data.current?.type === "Column";
+
+        if (isActiveATask && isOverAColumn) {
+            setTasks((tasks) => {
+                const activeIndex = tasks.findIndex((t) => t.id === activeId);
+                tasks[activeIndex].status = overId as TaskStatus;
+                return [...tasks];
             });
         }
     };
 
+    const handleDragEnd = (event: DragEndEvent) => {
+        setActiveTask(null);
+        const { active, over } = event;
+        if (!over) return;
+
+        const activeId = active.id;
+        const overId = over.id;
+
+        if (activeId === overId) return;
+        
+        const isActiveATask = active.data.current?.type === "Task";
+        const isOverATask = over.data.current?.type === "Task";
+
+        if (isActiveATask && isOverATask) {
+            setTasks((tasks) => {
+                 const activeIndex = tasks.findIndex((t) => t.id === activeId);
+                 const overIndex = tasks.findIndex((t) => t.id === overId);
+
+                 if (tasks[activeIndex].status !== tasks[overIndex].status) {
+                    tasks[activeIndex].status = tasks[overIndex].status;
+                 }
+                 // Note: this is a simplified reordering logic.
+                 // A full implementation would use arrayMove.
+                 return [...tasks];
+            });
+        }
+    };
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <DndContext 
+        sensors={sensors} 
+        collisionDetection={closestCenter} 
+        onDragStart={handleDragStart} 
+        onDragEnd={handleDragEnd}
+        onDragOver={handleDragOver}
+    >
         <div className="flex flex-col gap-4 h-full">
             <div className="flex items-center justify-between">
                     <h1 className="font-headline text-3xl font-bold">Quadro Kanban</h1>
@@ -265,13 +289,15 @@ export default function ProcessesPage() {
                 </div>
 
             <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-                {columns.map(status => (
-                    <KanbanColumn
-                        key={status}
-                        status={status}
-                        tasks={tasks.filter(task => task.status === status)}
-                    />
-                ))}
+                 <SortableContext items={columns}>
+                    {columns.map(status => (
+                        <KanbanColumn
+                            key={status}
+                            status={status}
+                            tasks={tasks.filter(task => task.status === status)}
+                        />
+                    ))}
+                 </SortableContext>
             </div>
         </div>
          <DragOverlay>
