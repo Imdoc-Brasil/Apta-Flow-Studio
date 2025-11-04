@@ -5,133 +5,161 @@ import { useState } from 'react';
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { suggestProcessTool, type SuggestProcessToolOutput } from '@/app/actions';
-import { Loader2, Wand2 } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-function PlaceholderContent({ toolName }: { toolName: string }) {
-    return (
-        <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm h-96">
-          <div className="flex flex-col items-center gap-1 text-center">
-            <h3 className="text-2xl font-bold tracking-tight">
-              Quadro {toolName}
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Seus componentes e lógica do quadro {toolName} seriam exibidos aqui.
-            </p>
-          </div>
-        </div>
-    )
+type TaskStatus = 'Backlog' | 'In Progress' | 'Done';
+
+interface Task {
+  id: string;
+  title: string;
+  description: string;
+  status: TaskStatus;
 }
 
+const initialTasks: Task[] = [
+  { id: '1', title: 'Desenvolver Recurso de Login', description: 'Implementar autenticação com email e senha.', status: 'In Progress' },
+  { id: '2', title: 'Configurar Ambiente de Staging', description: 'Preparar servidor para testes.', status: 'Backlog' },
+  { id: '3', title: 'Criar Documentação da API', description: 'Detalhar todos os endpoints disponíveis.', status: 'Done' },
+  { id: '4', title: 'Testar Responsividade Mobile', description: 'Verificar layout em diversos dispositivos.', status: 'Backlog' },
+];
+
+const statusLabels: Record<TaskStatus, string> = {
+  'Backlog': 'Backlog',
+  'In Progress': 'Em Progresso',
+  'Done': 'Concluído',
+};
+
+const columns: TaskStatus[] = ['Backlog', 'In Progress', 'Done'];
+
 export default function ProcessesPage() {
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<SuggestProcessToolOutput | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleAddTask = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setLoading(true);
-    setResult(null);
-    setError(null);
-
     const formData = new FormData(event.currentTarget);
-    const projectDescription = formData.get('description') as string;
-
-    if (!projectDescription.trim()) {
-      setError('Por favor, forneça uma descrição do projeto.');
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const aiResult = await suggestProcessTool({ projectDescription });
-      setResult(aiResult);
-    } catch (e) {
-      setError('Falha ao obter sugestão. Por favor, tente novamente.');
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
+    const newTask: Task = {
+      id: `task-${Date.now()}`,
+      title: formData.get('title') as string,
+      description: formData.get('description') as string,
+      status: 'Backlog',
+    };
+    setTasks(prevTasks => [...prevTasks, newTask]);
+    setIsDialogOpen(false);
+  };
+  
+  const moveTask = (taskId: string, newStatus: TaskStatus) => {
+    setTasks(tasks.map(task => task.id === taskId ? { ...task, status: newStatus } : task));
   };
 
+
   return (
-    <div className="grid flex-1 auto-rows-max gap-4">
-      <h1 className="font-headline text-3xl font-bold">Gestão de Processos</h1>
-       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-          <Card className="lg:col-span-3">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Wand2 className="h-5 w-5 text-primary" />
-                Sugestão de Ferramenta por IA
-              </CardTitle>
-              <CardDescription>
-                Descreva seu projeto, e nossa IA irá sugerir a melhor ferramenta
-                de gestão de processos para o trabalho.
-              </CardDescription>
-            </CardHeader>
-            <form onSubmit={handleSubmit}>
-              <CardContent className="space-y-4">
-                <Textarea
-                  name="description"
-                  placeholder="ex: 'Precisamos desenvolver um novo recurso de aplicativo móvel para autenticação de usuário. A equipe é pequena e os requisitos podem mudar. Precisamos visualizar o fluxo de trabalho e limitar o trabalho em andamento.'"
-                  className="min-h-[120px]"
-                  disabled={loading}
-                />
-                {error && <p className="text-sm text-destructive">{error}</p>}
-              </CardContent>
-              <CardFooter className="flex justify-end">
-                <Button type="submit" disabled={loading}>
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Sugerir Ferramenta
+    <div className="flex flex-col gap-4 h-full">
+       <div className="flex items-center justify-between">
+            <h1 className="font-headline text-3xl font-bold">Quadro Kanban</h1>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+                <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Adicionar Tarefa
                 </Button>
-              </CardFooter>
-            </form>
-          </Card>
-          
-          <Card className="lg:col-span-4">
-            <CardHeader>
-                <CardTitle>Sugestão</CardTitle>
-                <CardDescription>Recomendação da IA baseada no seu projeto.</CardDescription>
-            </CardHeader>
-            <CardContent className="min-h-[220px] flex items-center justify-center">
-                {loading && <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />}
-                {!loading && !result && <div className="text-center text-muted-foreground">Sua sugestão aparecerá aqui.</div>}
-                {result && (
-                    <div className="space-y-4">
-                        <div>
-                            <h3 className="font-semibold text-lg">Ferramenta Sugerida: <span className="text-primary font-bold">{result.toolName}</span></h3>
-                        </div>
-                        <div>
-                             <h4 className="font-semibold">Justificativa:</h4>
-                            <p className="text-muted-foreground">{result.justification}</p>
-                        </div>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                <DialogTitle>Nova Tarefa</DialogTitle>
+                <DialogDescription>
+                    Preencha os detalhes da nova tarefa para o quadro.
+                </DialogDescription>
+                </DialogHeader>
+                <form id="add-task-form" onSubmit={handleAddTask}>
+                <div className="grid gap-4 py-4">
+                    <div className="space-y-2">
+                    <Label htmlFor="title">Título</Label>
+                    <Input id="title" name="title" required />
+                    </div>
+                    <div className="space-y-2">
+                    <Label htmlFor="description">Descrição</Label>
+                    <Textarea id="description" name="description" />
+                    </div>
+                </div>
+                </form>
+                <DialogFooter>
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                    Cancelar
+                </Button>
+                <Button type="submit" form="add-task-form">
+                    Salvar
+                </Button>
+                </DialogFooter>
+            </DialogContent>
+            </Dialog>
+        </div>
+
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+        {columns.map(status => (
+          <div key={status} className="flex flex-col gap-4 bg-muted/50 p-4 rounded-lg h-full">
+            <h2 className="font-bold text-lg">{statusLabels[status]}</h2>
+            <div className="flex flex-col gap-4 overflow-y-auto">
+              {tasks
+                .filter(task => task.status === status)
+                .map(task => (
+                  <Card key={task.id}>
+                    <CardHeader className="p-4 flex flex-row items-start justify-between">
+                      <CardTitle className="text-base">{task.title}</CardTitle>
+                       <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-6 w-6">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          {columns.filter(col => col !== task.status).map(newStatus => (
+                             <DropdownMenuItem key={newStatus} onClick={() => moveTask(task.id, newStatus)}>
+                                Mover para {statusLabels[newStatus]}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                      <p className="text-sm text-muted-foreground">
+                        {task.description}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+                {tasks.filter(task => task.status === status).length === 0 && (
+                    <div className="text-center text-sm text-muted-foreground py-8">
+                        Nenhuma tarefa nesta coluna.
                     </div>
                 )}
-            </CardContent>
-          </Card>
-        </div>
-        <Tabs defaultValue="kanban" className="w-full">
-            <TabsList>
-                <TabsTrigger value="kanban">Kanban</TabsTrigger>
-                <TabsTrigger value="timeline">Linha do Tempo</TabsTrigger>
-                <TabsTrigger value="pdca">PDCA</TabsTrigger>
-                <TabsTrigger value="5w2h">5W2H</TabsTrigger>
-                <TabsTrigger value="fishbone">Diagrama de Ishikawa</TabsTrigger>
-            </TabsList>
-            <TabsContent value="kanban"><PlaceholderContent toolName="Kanban" /></TabsContent>
-            <TabsContent value="timeline"><PlaceholderContent toolName="Linha do Tempo" /></TabsContent>
-            <TabsContent value="pdca"><PlaceholderContent toolName="PDCA" /></TabsContent>
-            <TabsContent value="5w2h"><PlaceholderContent toolName="5W2H" /></TabsContent>
-            <TabsContent value="fishbone"><PlaceholderContent toolName="Diagrama de Ishikawa" /></TabsContent>
-        </Tabs>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
