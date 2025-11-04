@@ -280,6 +280,18 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
           <DialogTitle className='text-2xl font-bold'>
             {ticket.subject}
           </DialogTitle>
+          {ticket.labels && ticket.labels.length > 0 && (
+            <div className='flex flex-wrap gap-1 pt-2'>
+              {ticket.labels.map((label) => (
+                <span
+                  key={label.id}
+                  className={`px-2 py-0.5 text-xs rounded-full text-white ${label.color}`}
+                >
+                  {label.name}
+                </span>
+              ))}
+            </div>
+          )}
           <DialogDescription>
             Na coluna {ticket.status} | Cliente: {ticket.client} ({ticket.id})
           </DialogDescription>
@@ -863,6 +875,18 @@ export default function TicketsPage() {
                           <DialogTitle className='text-2xl font-bold'>
                             {ticket.subject}
                           </DialogTitle>
+                           {ticket.labels && ticket.labels.length > 0 && (
+                            <div className='flex flex-wrap gap-1 pt-2'>
+                              {ticket.labels.map((label) => (
+                                <span
+                                  key={label.id}
+                                  className={`px-2 py-0.5 text-xs rounded-full text-white ${label.color}`}
+                                >
+                                  {label.name}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                           <DialogDescription>
                             Na coluna {ticket.status} | Cliente: {ticket.client}{' '}
                             ({ticket.id})
