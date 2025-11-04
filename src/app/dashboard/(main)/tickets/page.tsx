@@ -94,7 +94,7 @@ const initialTicketsData = [
 ];
 
 type TicketStatus = 'Aberto' | 'Em Progresso' | 'Resolvido' | 'Fechado';
-type Ticket = Omit<typeof initialTicketsData[0], 'status'> & {
+export type Ticket = Omit<typeof initialTicketsData[0], 'status'> & {
   status: TicketStatus;
 };
 
@@ -111,7 +111,7 @@ const statusVariant = {
   Fechado: 'outline',
 } as const;
 
-const kanbanColumns: TicketStatus[] = [
+export const kanbanColumns: TicketStatus[] = [
   'Aberto',
   'Em Progresso',
   'Resolvido',
@@ -128,6 +128,67 @@ function ClientSideDate({ dateString }: { dateString: string }) {
   
     return <>{formattedDate}</>;
 }
+
+
+const TicketCard = ({ ticket, moveTicket }: { ticket: Ticket; moveTicket: (ticketId: string, newStatus: TicketStatus) => void; }) => {
+  return (
+    <Dialog>
+      <DropdownMenu>
+        <Card>
+          <DialogTrigger asChild>
+            <div className="cursor-pointer">
+              <CardHeader className="p-4 flex flex-row items-start justify-between">
+                <div className="space-y-1">
+                  <CardTitle className="text-base font-semibold">{ticket.subject}</CardTitle>
+                  <CardDescription className="text-xs">{ticket.client} - {ticket.id}</CardDescription>
+                </div>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+              </CardHeader>
+              <CardContent className="p-4 pt-0">
+                <div className="flex justify-between items-center">
+                  <Badge variant={priorityVariant[ticket.priority as keyof typeof priorityVariant]}>
+                    {ticket.priority}
+                  </Badge>
+                  <p className="text-xs text-muted-foreground">
+                    <ClientSideDate dateString={ticket.updated} />
+                  </p>
+                </div>
+              </CardContent>
+            </div>
+          </DialogTrigger>
+
+          <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
+            <DropdownMenuLabel>Mover para</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            {kanbanColumns
+              .filter((col) => col !== ticket.status)
+              .map((newStatus) => (
+                <DropdownMenuItem key={newStatus} onClick={() => moveTicket(ticket.id, newStatus)}>
+                  {newStatus}
+                </DropdownMenuItem>
+              ))}
+          </DropdownMenuContent>
+        </Card>
+      </DropdownMenu>
+      
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{ticket.subject}</DialogTitle>
+          <DialogDescription>
+            {ticket.client} - {ticket.id}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-4">
+          <p>Aqui irão os detalhes completos do ticket, como a descrição, histórico de comentários, anexos, etc.</p>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 
 export default function TicketsPage() {
@@ -360,59 +421,7 @@ export default function TicketsPage() {
                     {tickets
                         .filter(ticket => ticket.status === status)
                         .map(ticket => (
-                          <Dialog key={ticket.id}>
-                            <DialogTrigger asChild>
-                              <Card className="cursor-pointer">
-                                <CardHeader className="p-4 flex flex-row items-start justify-between">
-                                  <div className="space-y-1">
-                                    <CardTitle className="text-base font-semibold">{ticket.subject}</CardTitle>
-                                    <CardDescription className="text-xs">{ticket.client} - {ticket.id}</CardDescription>
-                                  </div>
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => e.stopPropagation()}>
-                                        <MoreHorizontal className="h-4 w-4" />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
-                                      {kanbanColumns.filter(col => col !== ticket.status).map(newStatus => (
-                                        <DropdownMenuItem key={newStatus} onClick={() => moveTicket(ticket.id, newStatus)}>
-                                          Mover para {newStatus}
-                                        </DropdownMenuItem>
-                                      ))}
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </CardHeader>
-                                <CardContent className="p-4 pt-0">
-                                  <div className="flex justify-between items-center">
-                                    <Badge
-                                      variant={
-                                        priorityVariant[
-                                          ticket.priority as keyof typeof priorityVariant
-                                        ]
-                                      }
-                                    >
-                                      {ticket.priority}
-                                    </Badge>
-                                    <p className="text-xs text-muted-foreground">
-                                      <ClientSideDate dateString={ticket.updated} />
-                                    </p>
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>{ticket.subject}</DialogTitle>
-                                <DialogDescription>
-                                  {ticket.client} - {ticket.id}
-                                </DialogDescription>
-                              </DialogHeader>
-                              <div className="py-4">
-                                <p>Aqui irão os detalhes completos do ticket, como a descrição, histórico de comentários, anexos, etc.</p>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
+                          <TicketCard key={ticket.id} ticket={ticket} moveTicket={moveTicket} />
                         ))}
                         {tickets.filter(ticket => ticket.status === status).length === 0 && (
                             <div className="text-center text-sm text-muted-foreground py-8">
@@ -428,3 +437,5 @@ export default function TicketsPage() {
     </div>
   );
 }
+
+    
