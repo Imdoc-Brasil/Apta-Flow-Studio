@@ -31,6 +31,7 @@ import {
   FileHeart,
   AlertTriangle,
   ShieldCheck,
+  ArrowLeft,
 } from 'lucide-react';
 import {
   SidebarMenu,
@@ -44,6 +45,7 @@ import {
 } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import { Button } from './ui/button';
 
 export function ClientSidebar() {
   const pathname = usePathname();
@@ -98,6 +100,7 @@ export function ClientSidebar() {
     { href: `${basePath}/epc`, label: 'Gestão de EPC', icon: Factory },
     { href: `${basePath}/trainings`, label: 'Gestão de Treinamentos', icon: GraduationCap },
     { href: `${basePath}/vaccines`, label: 'Gestão de Vacinas', icon: Syringe },
+    { href: `${basePath}/docs-sst`, label: 'Documentos de SST', icon: FileText },
   ];
 
   const getIsActive = (href: string) => {
@@ -119,16 +122,32 @@ export function ClientSidebar() {
 
   return (
     <SidebarMenu>
+      <SidebarHeader>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start"
+          asChild
+        >
+          <Link href="/dashboard/clients">
+            <ArrowLeft />
+            <span className="group-data-[collapsible=icon]:hidden">
+              Todos os Clientes
+            </span>
+          </Link>
+        </Button>
+      </SidebarHeader>
+
       {mainNavItems.map((item) => (
         <SidebarMenuItem key={item.label}>
-          <Link href={item.href} asChild>
-              <SidebarMenuButton
-                isActive={getIsActive(item.href)}
-                tooltip={item.label}
-              >
-                  <item.icon />
-                  <span>{item.label}</span>
-              </SidebarMenuButton>
+          <Link href={item.href}>
+            <SidebarMenuButton
+              isActive={getIsActive(item.href)}
+              tooltip={item.label}
+            >
+                <item.icon />
+                <span>{item.label}</span>
+            </SidebarMenuButton>
           </Link>
         </SidebarMenuItem>
       ))}
@@ -152,7 +171,7 @@ export function ClientSidebar() {
              <div className="pl-6 pt-1 space-y-1">
                  {contratoNavItems.map((item) => (
                     <SidebarMenuItem key={item.label}>
-                        <Link href={item.href} asChild>
+                        <Link href={item.href}>
                             <SidebarMenuButton
                                 isActive={getIsActive(item.href)}
                                 tooltip={item.label}
@@ -188,7 +207,7 @@ export function ClientSidebar() {
              <div className="pl-6 pt-1 space-y-1">
                  {estruturaNavItems.map((item) => (
                     <SidebarMenuItem key={item.label}>
-                        <Link href={item.href} asChild>
+                        <Link href={item.href}>
                             <SidebarMenuButton
                                 isActive={getIsActive(item.href)}
                                 tooltip={item.label}
@@ -224,7 +243,7 @@ export function ClientSidebar() {
              <div className="pl-6 pt-1 space-y-1">
                  {saudeNavItems.map((item) => (
                     <SidebarMenuItem key={item.label}>
-                        <Link href={item.href} asChild>
+                        <Link href={item.href}>
                             <SidebarMenuButton
                                 isActive={getIsActive(item.href)}
                                 tooltip={item.label}
@@ -261,7 +280,7 @@ export function ClientSidebar() {
              <div className="pl-6 pt-1 space-y-1">
                  {sstNavItems.map((item) => (
                     <SidebarMenuItem key={item.label}>
-                        <Link href={item.href} asChild>
+                        <Link href={item.href}>
                             <SidebarMenuButton
                                 isActive={getIsActive(item.href)}
                                 tooltip={item.label}
