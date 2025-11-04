@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -57,13 +58,13 @@ type Accident = typeof initialAccidentData[0];
 
 
 const getStatusVariant = (status: string) => {
-    if (status.includes('Pendente') || status.includes('Investigação')) return 'default';
+    if (status.includes('Pendente') || status.includes('Investigação') || status.includes('Aguardando')) return 'default';
     if (status.includes('Concluído') || status.includes('Resolvida')) return 'secondary';
     return 'outline';
 }
 
 
-function EventTable({ title, description, data, headers, renderRow, dialogContent, dialogTitle, dialogDescription }: { title: string, description: string, data: any[], headers: string[], renderRow: (item: any) => React.ReactNode, dialogContent: React.ReactNode, dialogTitle: string, dialogDescription: string }) {
+function EventTable({ title, description, data, headers, renderRow, dialogContent, dialogTitle, dialogDescription, onAdd }: { title: string, description: string, data: any[], headers: string[], renderRow: (item: any) => React.ReactNode, dialogContent: React.ReactNode, dialogTitle: string, dialogDescription: string, onAdd: (e: React.FormEvent<HTMLFormElement>) => void }) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     return (
@@ -93,7 +94,16 @@ function EventTable({ title, description, data, headers, renderRow, dialogConten
                                     <DialogTitle>{dialogTitle}</DialogTitle>
                                     <DialogDescription>{dialogDescription}</DialogDescription>
                                 </DialogHeader>
-                                {dialogContent}
+                                <form id={`add-${title.split(' ')[1]}-form`} onSubmit={(e) => {
+                                    onAdd(e);
+                                    setIsDialogOpen(false);
+                                }}>
+                                    {dialogContent}
+                                     <DialogFooter>
+                                        <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+                                        <Button type="submit">Salvar Registro</Button>
+                                    </DialogFooter>
+                                </form>
                             </DialogContent>
                         </Dialog>
                     </div>
@@ -108,7 +118,7 @@ function EventTable({ title, description, data, headers, renderRow, dialogConten
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {data.map(item => renderRow(item))}
+                        {data.map((item, index) => renderRow(item))}
                     </TableBody>
                 </Table>
             </CardContent>
@@ -132,7 +142,7 @@ export default function EventsPage() {
             status: 'Em Investigação'
         };
         setIncidentData(prev => [newIncident, ...prev]);
-        (e.currentTarget.closest('div[role="dialog"]')!.querySelector('button[aria-label="Close"]') as HTMLButtonElement)?.click();
+        e.currentTarget.reset();
     }
 
     const handleAddNC = (e: React.FormEvent<HTMLFormElement>) => {
@@ -147,7 +157,7 @@ export default function EventsPage() {
             status: 'Plano de Ação Pendente'
         };
         setNonConformityData(prev => [newNC, ...prev]);
-        (e.currentTarget.closest('div[role="dialog"]')!.querySelector('button[aria-label="Close"]') as HTMLButtonElement)?.click();
+        e.currentTarget.reset();
     }
 
     const handleAddAccident = (e: React.FormEvent<HTMLFormElement>) => {
@@ -163,7 +173,7 @@ export default function EventsPage() {
             status: 'Aguardando INSS'
         };
         setAccidentData(prev => [newAccident, ...prev]);
-        (e.currentTarget.closest('div[role="dialog"]')!.querySelector('button[aria-label="Close"]') as HTMLButtonElement)?.click();
+        e.currentTarget.reset();
     }
 
   return (
@@ -181,25 +191,20 @@ export default function EventsPage() {
                     description="Gerencie todos os incidentes e quase acidentes reportados."
                     data={incidentData}
                     headers={['ID', 'Cliente', 'Data', 'Descrição', 'Status']}
-                    buttonLabel="Registrar Incidente"
+                    onAdd={handleAddIncident}
                     dialogTitle="Registrar Novo Incidente"
                     dialogDescription="Descreva o incidente ou quase acidente ocorrido."
                     dialogContent={
-                        <form id="add-incident-form" onSubmit={handleAddIncident}>
-                            <div className="grid gap-4 py-4">
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="date" className="text-right">Data</Label>
-                                    <Input id="date" name="date" type="date" className="col-span-3" required />
-                                </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="description" className="text-right">Descrição</Label>
-                                    <Textarea id="description" name="description" className="col-span-3" required />
-                                </div>
+                        <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="date" className="text-right">Data</Label>
+                                <Input id="date" name="date" type="date" className="col-span-3" required />
                             </div>
-                             <DialogFooter>
-                                <Button type="submit" form="add-incident-form">Salvar Registro</Button>
-                            </DialogFooter>
-                        </form>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="description" className="text-right">Descrição</Label>
+                                <Textarea id="description" name="description" className="col-span-3" required />
+                            </div>
+                        </div>
                     }
                     renderRow={(item: Incident) => (
                          <TableRow key={item.id}>
@@ -228,29 +233,24 @@ export default function EventsPage() {
                     description="Gerencie não conformidades identificadas em auditorias e inspeções."
                     data={nonConformityData}
                     headers={['ID', 'Cliente', 'Data', 'Origem', 'Descrição', 'Status']}
-                    buttonLabel="Registrar NC"
+                    onAdd={handleAddNC}
                     dialogTitle="Registrar Nova Não Conformidade"
                     dialogDescription="Detalhe a não conformidade identificada."
                      dialogContent={
-                        <form id="add-nc-form" onSubmit={handleAddNC}>
-                            <div className="grid gap-4 py-4">
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="date" className="text-right">Data</Label>
-                                    <Input id="date" name="date" type="date" className="col-span-3" required />
-                                </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="origin" className="text-right">Origem</Label>
-                                    <Input id="origin" name="origin" placeholder="Ex: Auditoria Interna" className="col-span-3" required />
-                                </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="description" className="text-right">Descrição</Label>
-                                    <Textarea id="description" name="description" className="col-span-3" required />
-                                </div>
+                        <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="date" className="text-right">Data</Label>
+                                <Input id="date" name="date" type="date" className="col-span-3" required />
                             </div>
-                             <DialogFooter>
-                                <Button type="submit" form="add-nc-form">Salvar Registro</Button>
-                            </DialogFooter>
-                        </form>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="origin" className="text-right">Origem</Label>
+                                <Input id="origin" name="origin" placeholder="Ex: Auditoria Interna" className="col-span-3" required />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="description" className="text-right">Descrição</Label>
+                                <Textarea id="description" name="description" className="col-span-3" required />
+                            </div>
+                        </div>
                     }
                     renderRow={(item: NonConformity) => (
                          <TableRow key={item.id}>
@@ -280,42 +280,37 @@ export default function EventsPage() {
                     description="Gerencie os registros e a emissão de CATs."
                     data={accidentData}
                     headers={['ID', 'Cliente', 'Colaborador', 'Data', 'Descrição', 'CAT Emitida', 'Status']}
-                    buttonLabel="Registrar Acidente"
+                    onAdd={handleAddAccident}
                     dialogTitle="Registrar Acidente de Trabalho"
                     dialogDescription="Preencha as informações sobre o acidente e a emissão da CAT."
                      dialogContent={
-                        <form id="add-accident-form" onSubmit={handleAddAccident}>
-                            <div className="grid gap-4 py-4">
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="date" className="text-right">Data</Label>
-                                    <Input id="date" name="date" type="date" className="col-span-3" required />
-                                </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="collaborator" className="text-right">Colaborador</Label>
-                                    <Input id="collaborator" name="collaborator" className="col-span-3" required />
-                                </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="description" className="text-right">Descrição</Label>
-                                    <Textarea id="description" name="description" className="col-span-3" required />
-                                </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="catEmitted" className="text-right">CAT Emitida?</Label>
-                                    <Select name="catEmitted" required>
-                                        <SelectTrigger className="col-span-3">
-                                            <SelectValue placeholder="Selecione" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="Sim">Sim</SelectItem>
-                                            <SelectItem value="Não">Não</SelectItem>
-                                            <SelectItem value="Pendente">Pendente</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                        <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="date" className="text-right">Data</Label>
+                                <Input id="date" name="date" type="date" className="col-span-3" required />
                             </div>
-                             <DialogFooter>
-                                <Button type="submit" form="add-accident-form">Salvar Registro</Button>
-                            </DialogFooter>
-                        </form>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="collaborator" className="text-right">Colaborador</Label>
+                                <Input id="collaborator" name="collaborator" className="col-span-3" required />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="description" className="text-right">Descrição</Label>
+                                <Textarea id="description" name="description" className="col-span-3" required />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="catEmitted" className="text-right">CAT Emitida?</Label>
+                                <Select name="catEmitted" required>
+                                    <SelectTrigger className="col-span-3">
+                                        <SelectValue placeholder="Selecione" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Sim">Sim</SelectItem>
+                                        <SelectItem value="Não">Não</SelectItem>
+                                        <SelectItem value="Pendente">Pendente</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
                     }
                     renderRow={(item: Accident) => (
                          <TableRow key={item.id}>
