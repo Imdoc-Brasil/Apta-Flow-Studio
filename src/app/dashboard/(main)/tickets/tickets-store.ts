@@ -137,8 +137,19 @@ type TicketStore = {
     >
   ) => void
   setTickets: (tickets: Ticket[]) => void
-  addChecklist: (ticketId: string, title: string, firstItemText: string, firstItemDueDate: string) => void
-  toggleChecklistItem: (ticketId: string, checklistId: string, itemId: string, completed: boolean, user: string) => void
+  addChecklist: (
+    ticketId: string,
+    title: string,
+    firstItemText: string,
+    firstItemDueDate: string
+  ) => void
+  toggleChecklistItem: (
+    ticketId: string,
+    checklistId: string,
+    itemId: string,
+    completed: boolean,
+    user: string
+  ) => void
 }
 
 export const useTicketStore = create<TicketStore>((set) => ({
@@ -147,14 +158,19 @@ export const useTicketStore = create<TicketStore>((set) => ({
     updated: new Date(ticket.updated).toISOString(),
     assignedTo: ticket.assignedTo || [],
     labels: ticket.labels || [],
-    checklists: ticket.checklists ? ticket.checklists.map(cl => ({...cl})) : [],
+    checklists: ticket.checklists
+      ? ticket.checklists.map((cl) => ({ ...cl }))
+      : [],
   })),
   addTicket: (newTicket) =>
     set((state) => ({
       tickets: [
         {
           ...newTicket,
-          id: `TKT-${Math.random().toString(36).substring(2, 5).toUpperCase()}`,
+          id: `TKT-${Math.random()
+            .toString(36)
+            .substring(2, 5)
+            .toUpperCase()}`,
           status: 'Aberto',
           updated: new Date().toISOString(),
           assignedTo: [],

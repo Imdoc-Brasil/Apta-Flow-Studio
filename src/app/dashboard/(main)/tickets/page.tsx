@@ -84,8 +84,10 @@ import {
   type TicketStatus,
   availableLabels,
   type Label as LabelType,
+  type Checklist,
+  type ChecklistItem,
 } from './tickets-store'
-import { formatDistanceToNow } from 'date-fns'
+import { format, formatDistanceToNow, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
   Popover,
@@ -100,6 +102,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { Checkbox } from '@/components/ui/checkbox'
+import { Progress } from '@/components/ui/progress'
+import { useToast } from '@/hooks/use-toast'
 
 const priorityVariant = {
   Alta: 'destructive',
@@ -275,214 +279,389 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
           </Card>
         </div>
       </DialogTrigger>
-      <DialogContent className='sm:max-w-2xl'>
+      <TicketDetailsDialog ticket={ticket} />
+    </Dialog>
+  )
+}
+
+function AddChecklistDialog({
+  ticketId,
+  children,
+}: {
+  ticketId: string
+  children: React.ReactNode
+}) {
+  const [open, setOpen] = useState(false)
+  const { addChecklist } = useTicketStore()
+  const { toast } = useToast()
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    const title = formData.get('title') as string
+    const itemText = formData.get('itemText') as string
+    const dueDate = formData.get('dueDate') as string
+
+    if (!title || !itemText || !dueDate) {
+      toast({
+        variant: 'destructive',
+        title: 'Campos obrigatórios',
+        description: 'Por favor, preencha todos os campos para criar o checklist.',
+      })
+      return
+    }
+
+    addChecklist(ticketId, title, itemText, dueDate)
+    toast({
+      title: 'Checklist Adicionado!',
+      description: `O checklist "${title}" foi adicionado ao ticket.`,
+    })
+    setOpen(false)
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle className='text-2xl font-bold'>
-            {ticket.subject}
-          </DialogTitle>
-          {ticket.labels && ticket.labels.length > 0 && (
-            <div className='flex flex-wrap gap-1 pt-2'>
-              {ticket.labels.map((label) => (
-                <span
-                  key={label.id}
-                  className={`px-2 py-0.5 text-xs rounded-full text-white ${label.color}`}
-                >
-                  {label.name}
-                </span>
-              ))}
-            </div>
-          )}
+          <DialogTitle>Adicionar Novo Checklist</DialogTitle>
           <DialogDescription>
-            Na coluna {ticket.status} | Cliente: {ticket.client} ({ticket.id})
+            Crie um novo checklist para detalhar as tarefas deste ticket.
           </DialogDescription>
         </DialogHeader>
-        <div className='grid grid-cols-3 gap-8 py-4'>
-          <div className='col-span-2 space-y-6'>
+        <form id='add-checklist-form' onSubmit={handleSubmit}>
+          <div className='grid gap-4 py-4'>
             <div className='space-y-2'>
-              <div className='flex items-center gap-2'>
-                <AlignLeft className='h-5 w-5 text-muted-foreground' />
-                <h3 className='font-semibold'>Descrição</h3>
-              </div>
-              <Textarea
-                placeholder='Adicione uma descrição mais detalhada...'
-                defaultValue={ticket.description}
-                className='ml-7 h-24'
-                readOnly
+              <Label htmlFor='title'>Título do Checklist</Label>
+              <Input
+                id='title'
+                name='title'
+                placeholder='Ex: Verificação de Bug'
+                required
               />
             </div>
-
-            <div className='space-y-4 pl-7'>
-              <div className='space-y-2'>
-                <div className='flex items-center gap-2'>
-                  <Flag className='h-5 w-5 text-muted-foreground' />
-                  <h3 className='font-semibold'>Prioridade</h3>
-                </div>
-                <Badge
-                  variant={
-                    priorityVariant[
-                      ticket.priority as keyof typeof priorityVariant
-                    ]
-                  }
-                >
-                  {ticket.priority}
-                </Badge>
-              </div>
-              <div className='space-y-2'>
-                <div className='flex items-center gap-2'>
-                  <Clock className='h-5 w-5 text-muted-foreground' />
-                  <h3 className='font-semibold'>Aberto</h3>
-                </div>
-                <p className='text-sm'>
-                  <TimeAgo dateString={ticket.updated} />
-                </p>
-              </div>
+            <div className='space-y-2'>
+              <Label htmlFor='itemText'>Primeira Tarefa</Label>
+              <Input
+                id='itemText'
+                name='itemText'
+                placeholder='Ex: Reproduzir o erro em ambiente de teste'
+                required
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='dueDate'>Prazo da Primeira Tarefa</Label>
+              <Input id='dueDate' name='dueDate' type='date' required />
             </div>
           </div>
+        </form>
+        <DialogFooter>
+          <Button variant='outline' onClick={() => setOpen(false)}>
+            Cancelar
+          </Button>
+          <Button type='submit' form='add-checklist-form'>
+            Adicionar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
-          <div className='col-span-1 space-y-4'>
-            {assignedMembers.length > 0 && (
-              <div className='space-y-2'>
-                <h3 className='text-sm font-semibold'>Membros</h3>
-                <div className='flex flex-col gap-2'>
-                  {assignedMembers.map((member) => (
-                    <div
-                      key={member.email}
-                      className='flex items-center gap-2'
-                    >
-                      <Avatar className='h-8 w-8'>
-                        <AvatarImage src={member.avatar} />
-                        <AvatarFallback>{member.fallback}</AvatarFallback>
-                      </Avatar>
-                      <span className='text-sm font-medium'>
-                        {member.name}
-                      </span>
+
+function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
+  const { setTickets, tickets, toggleChecklistItem } = useTicketStore()
+  const [date, setDate] = useState<Date>()
+
+  const handleAssignMember = (ticketId: string, memberEmail: string) => {
+    setTickets(
+      tickets.map((t) => {
+        if (t.id === ticketId) {
+          const isAssigned = t.assignedTo?.includes(memberEmail)
+          const newAssignedTo = isAssigned
+            ? t.assignedTo?.filter((email) => email !== memberEmail)
+            : [...(t.assignedTo || []), memberEmail]
+          return { ...t, assignedTo: newAssignedTo }
+        }
+        return t
+      })
+    )
+  }
+
+  const handleLabelChange = (labelId: string, checked: boolean) => {
+    setTickets(
+      tickets.map((t) => {
+        if (t.id === ticket.id) {
+          const newLabels = checked
+            ? [...(t.labels || []), availableLabels.find((l) => l.id === labelId)!]
+            : t.labels?.filter((l) => l.id !== labelId)
+          return { ...t, labels: newLabels }
+        }
+        return t
+      })
+    )
+  }
+  
+  const handleChecklistItemToggle = (checklistId: string, itemId: string, checked: boolean) => {
+    // Assuming a logged-in user of "John Doe" for the log
+    toggleChecklistItem(ticket.id, checklistId, itemId, checked, 'John Doe')
+  }
+
+  const assignedMembers =
+    initialStaffsData.filter((emp) =>
+      ticket.assignedTo?.includes(emp.email)
+    ) ?? []
+
+  return (
+    <DialogContent className='sm:max-w-4xl'>
+      <DialogHeader>
+        <DialogTitle className='text-2xl font-bold'>{ticket.subject}</DialogTitle>
+        {ticket.labels && ticket.labels.length > 0 && (
+          <div className='flex flex-wrap gap-1 pt-2'>
+            {ticket.labels.map((label) => (
+              <span
+                key={label.id}
+                className={`px-2 py-0.5 text-xs rounded-full text-white ${label.color}`}
+              >
+                {label.name}
+              </span>
+            ))}
+          </div>
+        )}
+        <DialogDescription>
+          Na coluna {ticket.status} | Cliente: {ticket.client} ({ticket.id})
+        </DialogDescription>
+      </DialogHeader>
+      <div className='grid grid-cols-3 gap-8 py-4'>
+        <div className='col-span-2 space-y-6'>
+          <div className='space-y-2'>
+            <div className='flex items-center gap-2'>
+              <AlignLeft className='h-5 w-5 text-muted-foreground' />
+              <h3 className='font-semibold'>Descrição</h3>
+            </div>
+            <div className='ml-7 text-sm text-muted-foreground bg-gray-50 p-3 rounded-md border'>
+              {ticket.description || 'Nenhuma descrição fornecida.'}
+            </div>
+          </div>
+          
+          {ticket.checklists && ticket.checklists.length > 0 && (
+            <div className="space-y-4">
+              {ticket.checklists.map((checklist) => {
+                 const completedItems = checklist.items.filter(item => item.completed).length
+                 const totalItems = checklist.items.length
+                 const progress = totalItems > 0 ? (completedItems / totalItems) * 100 : 0
+
+                return (
+                  <div key={checklist.id} className='space-y-2'>
+                    <div className='flex items-center gap-2'>
+                      <CheckSquare className='h-5 w-5 text-muted-foreground' />
+                      <h3 className='font-semibold'>{checklist.title}</h3>
                     </div>
-                  ))}
-                </div>
-              </div>
-            )}
-            <h3 className='text-sm font-semibold'>Adicionar ao cartão</h3>
-            <div className='flex flex-col space-y-2'>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant='secondary' className='justify-start'>
-                    <UserPlus className='mr-2 h-4 w-4' /> Membros
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className='w-80'>
-                  <div className='grid gap-4'>
-                    <div className='space-y-2'>
-                      <h4 className='font-medium leading-none'>Membros</h4>
-                      <p className='text-sm text-muted-foreground'>
-                        Atribua membros a este cartão.
-                      </p>
-                    </div>
-                    <Separator />
-                    <div className='flex flex-col gap-2'>
-                      {initialStaffsData.map((staff) => {
-                        const isAssigned = ticket.assignedTo?.includes(
-                          staff.email
-                        )
-                        return (
-                          <div
-                            key={staff.email}
-                            className='flex items-center justify-between'
-                          >
-                            <div className='flex items-center gap-2'>
-                              <Avatar className='h-8 w-8'>
-                                <AvatarImage src={staff.avatar} />
-                                <AvatarFallback>
-                                  {staff.fallback}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className='text-sm font-medium'>
-                                {staff.name}
-                              </span>
-                            </div>
-                            <Button
-                              variant={isAssigned ? 'default' : 'outline'}
-                              size='sm'
-                              onClick={() =>
-                                handleAssignMember(ticket.id, staff.email)
-                              }
-                            >
-                              {isAssigned ? 'Remover' : 'Atribuir'}
-                            </Button>
+                     <div className='ml-7 space-y-2'>
+                        <Progress value={progress} className="h-2" />
+                        {checklist.items.map(item => (
+                          <div key={item.id} className="flex items-start gap-2 group">
+                             <Checkbox 
+                                id={`item-${item.id}`}
+                                checked={item.completed}
+                                onCheckedChange={(checked) => handleChecklistItemToggle(checklist.id, item.id, !!checked)}
+                                className="mt-1"
+                              />
+                              <div className="grid gap-1 text-sm">
+                                <label htmlFor={`item-${item.id}`} className={`font-medium ${item.completed ? 'line-through text-muted-foreground' : ''}`}>{item.text}</label>
+                                 <div className="text-xs text-muted-foreground flex items-center gap-2">
+                                  {item.completed && item.completedBy && item.completedAt ? (
+                                    <span>Concluído por {item.completedBy} <TimeAgo dateString={item.completedAt} /></span>
+                                  ) : (
+                                    <>
+                                      <Calendar className="h-3 w-3" />
+                                      <span>Vence em {format(parseISO(item.dueDate), "dd/MM/yyyy")}</span>
+                                    </>
+                                  )}
+                                 </div>
+                              </div>
                           </div>
-                        )
-                      })}
-                    </div>
+                        ))}
+                     </div>
                   </div>
-                </PopoverContent>
-              </Popover>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant='secondary' className='justify-start'>
-                    <Tag className='mr-2 h-4 w-4' /> Etiquetas
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className='w-64'>
-                  <div className='grid gap-4'>
-                    <div className='space-y-2'>
-                      <h4 className='font-medium leading-none'>Etiquetas</h4>
-                      <p className='text-sm text-muted-foreground'>
-                        Adicione etiquetas a este ticket.
-                      </p>
-                    </div>
-                    <Separator />
-                    <div className='flex flex-col gap-2'>
-                      {availableLabels.map((label) => {
-                        const isChecked =
-                          ticket.labels?.some((l) => l.id === label.id) ?? false
-                        return (
-                          <Label
-                            key={label.id}
-                            className='flex items-center gap-2 font-normal'
-                          >
-                            <Checkbox
-                              checked={isChecked}
-                              onCheckedChange={(checked) =>
-                                handleLabelChange(label.id, Boolean(checked))
-                              }
-                            />
-                            <span
-                              className={`px-2 py-0.5 text-xs rounded-full text-white ${label.color}`}
-                            >
-                              {label.name}
-                            </span>
-                          </Label>
-                        )
-                      })}
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
-              <Button variant='secondary' className='justify-start'>
-                <CheckSquare className='mr-2 h-4 w-4' /> Checklist
-              </Button>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant='secondary' className='justify-start'>
-                    <Calendar className='mr-2 h-4 w-4' /> Datas
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className='w-auto p-0'>
-                  <CalendarComponent
-                    mode='single'
-                    selected={date}
-                    onSelect={setDate}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-              <Button variant='secondary' className='justify-start'>
-                <Paperclip className='mr-2 h-4 w-4' /> Anexo
-              </Button>
+                )
+              })}
+            </div>
+          )}
+
+          <div className='space-y-4 pl-7'>
+            <div className='space-y-2'>
+              <div className='flex items-center gap-2'>
+                <Flag className='h-5 w-5 text-muted-foreground' />
+                <h3 className='font-semibold'>Prioridade</h3>
+              </div>
+              <Badge
+                variant={
+                  priorityVariant[
+                    ticket.priority as keyof typeof priorityVariant
+                  ]
+                }
+              >
+                {ticket.priority}
+              </Badge>
+            </div>
+            <div className='space-y-2'>
+              <div className='flex items-center gap-2'>
+                <Clock className='h-5 w-5 text-muted-foreground' />
+                <h3 className='font-semibold'>Aberto</h3>
+              </div>
+              <p className='text-sm'>
+                <TimeAgo dateString={ticket.updated} />
+              </p>
             </div>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+
+        <div className='col-span-1 space-y-4'>
+          {assignedMembers.length > 0 && (
+            <div className='space-y-2'>
+              <h3 className='text-sm font-semibold'>Membros</h3>
+              <div className='flex flex-col gap-2'>
+                {assignedMembers.map((member) => (
+                  <div
+                    key={member.email}
+                    className='flex items-center gap-2'
+                  >
+                    <Avatar className='h-8 w-8'>
+                      <AvatarImage src={member.avatar} />
+                      <AvatarFallback>{member.fallback}</AvatarFallback>
+                    </Avatar>
+                    <span className='text-sm font-medium'>
+                      {member.name}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          <h3 className='text-sm font-semibold'>Adicionar ao cartão</h3>
+          <div className='flex flex-col space-y-2'>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant='secondary' className='justify-start'>
+                  <UserPlus className='mr-2 h-4 w-4' /> Membros
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className='w-80'>
+                <div className='grid gap-4'>
+                  <div className='space-y-2'>
+                    <h4 className='font-medium leading-none'>Membros</h4>
+                    <p className='text-sm text-muted-foreground'>
+                      Atribua membros a este cartão.
+                    </p>
+                  </div>
+                  <Separator />
+                  <div className='flex flex-col gap-2'>
+                    {initialStaffsData.map((staff) => {
+                      const isAssigned = ticket.assignedTo?.includes(
+                        staff.email
+                      )
+                      return (
+                        <div
+                          key={staff.email}
+                          className='flex items-center justify-between'
+                        >
+                          <div className='flex items-center gap-2'>
+                            <Avatar className='h-8 w-8'>
+                              <AvatarImage src={staff.avatar} />
+                              <AvatarFallback>
+                                {staff.fallback}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className='text-sm font-medium'>
+                              {staff.name}
+                            </span>
+                          </div>
+                          <Button
+                            variant={isAssigned ? 'default' : 'outline'}
+                            size='sm'
+                            onClick={() =>
+                              handleAssignMember(ticket.id, staff.email)
+                            }
+                          >
+                            {isAssigned ? 'Remover' : 'Atribuir'}
+                          </Button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant='secondary' className='justify-start'>
+                  <Tag className='mr-2 h-4 w-4' /> Etiquetas
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className='w-64'>
+                <div className='grid gap-4'>
+                  <div className='space-y-2'>
+                    <h4 className='font-medium leading-none'>Etiquetas</h4>
+                    <p className='text-sm text-muted-foreground'>
+                      Adicione etiquetas a este ticket.
+                    </p>
+                  </div>
+                  <Separator />
+                  <div className='flex flex-col gap-2'>
+                    {availableLabels.map((label) => {
+                      const isChecked =
+                        ticket.labels?.some((l) => l.id === label.id) ?? false
+                      return (
+                        <Label
+                          key={label.id}
+                          className='flex items-center gap-2 font-normal'
+                        >
+                          <Checkbox
+                            checked={isChecked}
+                            onCheckedChange={(checked) =>
+                              handleLabelChange(label.id, Boolean(checked))
+                            }
+                          />
+                          <span
+                            className={`px-2 py-0.5 text-xs rounded-full text-white ${label.color}`}
+                          >
+                            {label.name}
+                          </span>
+                        </Label>
+                      )
+                    })}
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+             <AddChecklistDialog ticketId={ticket.id}>
+              <Button variant='secondary' className='justify-start'>
+                <CheckSquare className='mr-2 h-4 w-4' /> Checklist
+              </Button>
+            </AddChecklistDialog>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant='secondary' className='justify-start'>
+                  <Calendar className='mr-2 h-4 w-4' /> Datas
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className='w-auto p-0'>
+                <CalendarComponent
+                  mode='single'
+                  selected={date}
+                  onSelect={setDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+            <Button variant='secondary' className='justify-start'>
+              <Paperclip className='mr-2 h-4 w-4' /> Anexo
+            </Button>
+          </div>
+        </div>
+      </div>
+    </DialogContent>
   )
 }
 
@@ -538,8 +717,7 @@ export default function TicketsPage() {
   const { tickets, addTicket, setTickets } = useTicketStore()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null)
-  const [date, setDate] = useState<Date | undefined>(undefined)
-
+  
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -558,39 +736,6 @@ export default function TicketsPage() {
       description: (formData.get('description') as string) || '',
     })
     setIsDialogOpen(false)
-  }
-
-  const handleAssignMember = (ticketId: string, memberEmail: string) => {
-    setTickets(
-      tickets.map((t) => {
-        if (t.id === ticketId) {
-          const isAssigned = t.assignedTo?.includes(memberEmail)
-          const newAssignedTo = isAssigned
-            ? t.assignedTo?.filter((email) => email !== memberEmail)
-            : [...(t.assignedTo || []), memberEmail]
-          return { ...t, assignedTo: newAssignedTo }
-        }
-        return t
-      })
-    )
-  }
-
-  const handleLabelChange = (
-    ticketId: string,
-    labelId: string,
-    checked: boolean
-  ) => {
-    setTickets(
-      tickets.map((t) => {
-        if (t.id === ticketId) {
-          const newLabels = checked
-            ? [...(t.labels || []), availableLabels.find((l) => l.id === labelId)!]
-            : t.labels?.filter((l) => l.id !== labelId)
-          return { ...t, labels: newLabels }
-        }
-        return t
-      })
-    )
   }
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -870,236 +1015,7 @@ export default function TicketsPage() {
                           </TableCell>
                         </TableRow>
                       </DialogTrigger>
-                      <DialogContent className='sm:max-w-2xl'>
-                        <DialogHeader>
-                          <DialogTitle className='text-2xl font-bold'>
-                            {ticket.subject}
-                          </DialogTitle>
-                           {ticket.labels && ticket.labels.length > 0 && (
-                            <div className='flex flex-wrap gap-1 pt-2'>
-                              {ticket.labels.map((label) => (
-                                <span
-                                  key={label.id}
-                                  className={`px-2 py-0.5 text-xs rounded-full text-white ${label.color}`}
-                                >
-                                  {label.name}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                          <DialogDescription>
-                            Na coluna {ticket.status} | Cliente: {ticket.client}{' '}
-                            ({ticket.id})
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className='grid grid-cols-3 gap-8 py-4'>
-                          <div className='col-span-2 space-y-6'>
-                            <div className='space-y-2'>
-                              <div className='flex items-center gap-2'>
-                                <AlignLeft className='h-5 w-5 text-muted-foreground' />
-                                <h3 className='font-semibold'>Descrição</h3>
-                              </div>
-                              <Textarea
-                                placeholder='Adicione uma descrição mais detalhada...'
-                                defaultValue={ticket.description}
-                                className='ml-7 h-24'
-                                readOnly
-                              />
-                            </div>
-
-                            <div className='space-y-4 pl-7'>
-                              <div className='space-y-2'>
-                                <div className='flex items-center gap-2'>
-                                  <Flag className='h-5 w-5 text-muted-foreground' />
-                                  <h3 className='font-semibold'>Prioridade</h3>
-                                </div>
-                                <Badge
-                                  variant={
-                                    priorityVariant[
-                                      ticket.priority as keyof typeof priorityVariant
-                                    ]
-                                  }
-                                >
-                                  {ticket.priority}
-                                </Badge>
-                              </div>
-                              <div className='space-y-2'>
-                                <div className='flex items-center gap-2'>
-                                  <Clock className='h-5 w-5 text-muted-foreground' />
-                                  <h3 className='font-semibold'>Aberto em</h3>
-                                </div>
-                                <p className='text-sm'>
-                                  <ClientSideDate
-                                    dateString={ticket.updated}
-                                  />
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className='col-span-1 space-y-4'>
-                            <h3 className='text-sm font-semibold'>
-                              Adicionar ao cartão
-                            </h3>
-                            <div className='flex flex-col space-y-2'>
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <Button
-                                    variant='secondary'
-                                    className='justify-start'
-                                  >
-                                    <UserPlus className='mr-2 h-4 w-4' />{' '}
-                                    Membros
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className='w-80'>
-                                  <div className='grid gap-4'>
-                                    <div className='space-y-2'>
-                                      <h4 className='font-medium leading-none'>
-                                        Membros
-                                      </h4>
-                                      <p className='text-sm text-muted-foreground'>
-                                        Atribua membros a este cartão.
-                                      </p>
-                                    </div>
-                                    <Separator />
-                                    <div className='flex flex-col gap-2'>
-                                      {initialStaffsData.map((staff) => {
-                                        const isAssigned =
-                                          ticket.assignedTo?.includes(
-                                            staff.email
-                                          )
-                                        return (
-                                          <div
-                                            key={staff.email}
-                                            className='flex items-center justify-between'
-                                          >
-                                            <div className='flex items-center gap-2'>
-                                              <Avatar className='h-8 w-8'>
-                                                <AvatarImage
-                                                  src={staff.avatar}
-                                                />
-                                                <AvatarFallback>
-                                                  {staff.fallback}
-                                                </AvatarFallback>
-                                              </Avatar>
-                                              <span className='text-sm font-medium'>
-                                                {staff.name}
-                                              </span>
-                                            </div>
-                                            <Button
-                                              variant={
-                                                isAssigned
-                                                  ? 'default'
-                                                  : 'outline'
-                                              }
-                                              size='sm'
-                                              onClick={() =>
-                                                handleAssignMember(
-                                                  ticket.id,
-                                                  staff.email
-                                                )
-                                              }
-                                            >
-                                              {isAssigned
-                                                ? 'Remover'
-                                                : 'Atribuir'}
-                                            </Button>
-                                          </div>
-                                        )
-                                      })}
-                                    </div>
-                                  </div>
-                                </PopoverContent>
-                              </Popover>
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <Button
-                                    variant='secondary'
-                                    className='justify-start'
-                                  >
-                                    <Tag className='mr-2 h-4 w-4' /> Etiquetas
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className='w-64'>
-                                  <div className='grid gap-4'>
-                                    <div className='space-y-2'>
-                                      <h4 className='font-medium leading-none'>
-                                        Etiquetas
-                                      </h4>
-                                      <p className='text-sm text-muted-foreground'>
-                                        Adicione etiquetas a este ticket.
-                                      </p>
-                                    </div>
-                                    <Separator />
-                                    <div className='flex flex-col gap-2'>
-                                      {availableLabels.map((label) => {
-                                        const isChecked =
-                                          ticket.labels?.some(
-                                            (l) => l.id === label.id
-                                          ) ?? false
-                                        return (
-                                          <Label
-                                            key={label.id}
-                                            className='flex items-center gap-2 font-normal'
-                                          >
-                                            <Checkbox
-                                              checked={isChecked}
-                                              onCheckedChange={(checked) =>
-                                                handleLabelChange(
-                                                  ticket.id,
-                                                  label.id,
-                                                  Boolean(checked)
-                                                )
-                                              }
-                                            />
-                                            <span
-                                              className={`px-2 py-0.5 text-xs rounded-full text-white ${label.color}`}
-                                            >
-                                              {label.name}
-                                            </span>
-                                          </Label>
-                                        )
-                                      })}
-                                    </div>
-                                  </div>
-                                </PopoverContent>
-                              </Popover>
-                              <Button
-                                variant='secondary'
-                                className='justify-start'
-                              >
-                                <CheckSquare className='mr-2 h-4 w-4' />{' '}
-                                Checklist
-                              </Button>
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <Button
-                                    variant='secondary'
-                                    className='justify-start'
-                                  >
-                                    <Calendar className='mr-2 h-4 w-4' /> Datas
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className='w-auto p-0'>
-                                  <CalendarComponent
-                                    mode='single'
-                                    selected={date}
-                                    onSelect={setDate}
-                                    initialFocus
-                                  />
-                                </PopoverContent>
-                              </Popover>
-                              <Button
-                                variant='secondary'
-                                className='justify-start'
-                              >
-                                <Paperclip className='mr-2 h-4 w-4' /> Anexo
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </DialogContent>
+                      <TicketDetailsDialog ticket={ticket} />
                     </Dialog>
                   ))}
                 </TableBody>
