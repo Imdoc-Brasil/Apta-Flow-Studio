@@ -153,7 +153,7 @@ export default function ProcessesPage() {
                                 </CardContent>
                             </Card>
                         </DialogTrigger>
-                        <DialogContent className="sm:max-w-3xl">
+                        <DialogContent>
                             <DialogHeader>
                                 <DialogTitle>{task.title}</DialogTitle>
                                 <DialogDescription>
