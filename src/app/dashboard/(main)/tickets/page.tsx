@@ -27,6 +27,8 @@ import {
   Tag,
   Calendar,
   Paperclip,
+  Clock,
+  Flag,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -127,10 +129,10 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
   }
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <Dialog>
-        <Card className='touch-none cursor-grab active:cursor-grabbing'>
-          <DialogTrigger asChild>
+    <Dialog>
+      <DialogTrigger asChild>
+        <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+          <Card className='touch-none cursor-grab active:cursor-grabbing'>
             <div className='flex h-full flex-col'>
               <div className='flex-grow cursor-pointer'>
                 <CardHeader className='p-4 pb-2'>
@@ -175,54 +177,81 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
                 </div>
               </CardContent>
             </div>
-          </DialogTrigger>
-        </Card>
-        <DialogContent className='sm:max-w-2xl'>
-          <DialogHeader>
-            <DialogTitle className='text-2xl font-bold'>
-              {ticket.subject}
-            </DialogTitle>
-            <DialogDescription>
-              Na coluna {ticket.status} | Cliente: {ticket.client} ({ticket.id})
-            </DialogDescription>
-          </DialogHeader>
-          <div className='grid grid-cols-3 gap-8 py-4'>
-            <div className='col-span-2 space-y-6'>
-              <div className='space-y-2'>
-                <div className='flex items-center gap-2'>
-                  <AlignLeft className='h-5 w-5 text-muted-foreground' />
-                  <h3 className='font-semibold'>Descrição</h3>
-                </div>
-                <Textarea
-                  placeholder='Adicione uma descrição mais detalhada...'
-                  defaultValue={ticket.description}
-                  className='ml-7 h-24'
-                  readOnly
-                />
+          </Card>
+        </div>
+      </DialogTrigger>
+      <DialogContent className='sm:max-w-2xl'>
+        <DialogHeader>
+          <DialogTitle className='text-2xl font-bold'>
+            {ticket.subject}
+          </DialogTitle>
+          <DialogDescription>
+            Na coluna {ticket.status} | Cliente: {ticket.client} ({ticket.id})
+          </DialogDescription>
+        </DialogHeader>
+        <div className='grid grid-cols-3 gap-8 py-4'>
+          <div className='col-span-2 space-y-6'>
+            <div className='space-y-2'>
+              <div className='flex items-center gap-2'>
+                <AlignLeft className='h-5 w-5 text-muted-foreground' />
+                <h3 className='font-semibold'>Descrição</h3>
               </div>
+              <Textarea
+                placeholder='Adicione uma descrição mais detalhada...'
+                defaultValue={ticket.description}
+                className='ml-7 h-24'
+                readOnly
+              />
             </div>
 
-            <div className='col-span-1 space-y-4'>
-              <h3 className='text-sm font-semibold'>Adicionar ao cartão</h3>
-              <div className='flex flex-col space-y-2'>
-                <Button variant='secondary' className='justify-start'>
-                  <UserPlus className='mr-2 h-4 w-4' /> Membros
-                </Button>
-                <Button variant='secondary' className='justify-start'>
-                  <Tag className='mr-2 h-4 w-4' /> Etiquetas
-                </Button>
-                <Button variant='secondary' className='justify-start'>
-                  <Calendar className='mr-2 h-4 w-4' /> Datas
-                </Button>
-                <Button variant='secondary' className='justify-start'>
-                  <Paperclip className='mr-2 h-4 w-4' /> Anexo
-                </Button>
+            <div className='space-y-4 pl-7'>
+              <div className='space-y-2'>
+                <div className='flex items-center gap-2'>
+                  <Flag className='h-5 w-5 text-muted-foreground' />
+                  <h3 className='font-semibold'>Prioridade</h3>
+                </div>
+                <Badge
+                  variant={
+                    priorityVariant[
+                      ticket.priority as keyof typeof priorityVariant
+                    ]
+                  }
+                >
+                  {ticket.priority}
+                </Badge>
+              </div>
+              <div className='space-y-2'>
+                <div className='flex items-center gap-2'>
+                  <Clock className='h-5 w-5 text-muted-foreground' />
+                  <h3 className='font-semibold'>Aberto em</h3>
+                </div>
+                <p className='text-sm'>
+                  <ClientSideDate dateString={ticket.updated} />
+                </p>
               </div>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+
+          <div className='col-span-1 space-y-4'>
+            <h3 className='text-sm font-semibold'>Adicionar ao cartão</h3>
+            <div className='flex flex-col space-y-2'>
+              <Button variant='secondary' className='justify-start'>
+                <UserPlus className='mr-2 h-4 w-4' /> Membros
+              </Button>
+              <Button variant='secondary' className='justify-start'>
+                <Tag className='mr-2 h-4 w-4' /> Etiquetas
+              </Button>
+              <Button variant='secondary' className='justify-start'>
+                <Calendar className='mr-2 h-4 w-4' /> Datas
+              </Button>
+              <Button variant='secondary' className='justify-start'>
+                <Paperclip className='mr-2 h-4 w-4' /> Anexo
+              </Button>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -525,7 +554,7 @@ export default function TicketsPage() {
                             </Badge>
                           </TableCell>
                           <TableCell className='hidden md:table-cell'>
-                            {ticket.updated}
+                            <ClientSideDate dateString={ticket.updated} />
                           </TableCell>
                           <TableCell>
                             <DropdownMenu>
@@ -584,7 +613,37 @@ export default function TicketsPage() {
                                 readOnly
                               />
                             </div>
+
+                            <div className='space-y-4 pl-7'>
+                              <div className='space-y-2'>
+                                <div className='flex items-center gap-2'>
+                                  <Flag className='h-5 w-5 text-muted-foreground' />
+                                  <h3 className='font-semibold'>Prioridade</h3>
+                                </div>
+                                <Badge
+                                  variant={
+                                    priorityVariant[
+                                      ticket.priority as keyof typeof priorityVariant
+                                    ]
+                                  }
+                                >
+                                  {ticket.priority}
+                                </Badge>
+                              </div>
+                              <div className='space-y-2'>
+                                <div className='flex items-center gap-2'>
+                                  <Clock className='h-5 w-5 text-muted-foreground' />
+                                  <h3 className='font-semibold'>Aberto em</h3>
+                                </div>
+                                <p className='text-sm'>
+                                  <ClientSideDate
+                                    dateString={ticket.updated}
+                                  />
+                                </p>
+                              </div>
+                            </div>
                           </div>
+
                           <div className='col-span-1 space-y-4'>
                             <h3 className='text-sm font-semibold'>
                               Adicionar ao cartão
