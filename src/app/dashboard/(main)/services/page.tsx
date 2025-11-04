@@ -29,7 +29,7 @@ import { useState } from 'react';
 
 // --- Mock Data ---
 
-const medicalExams = [
+const initialMedicalExams = [
   { code: '0201', name: 'Avaliação Clínica Ocupacional', type: 'Profissional Agenda', price: 'R$ 50,00', periodicity: '12 meses' },
   { code: '0211', name: 'Avaliação da acuidade visual', type: 'Laboratório', price: 'R$ 35,00', periodicity: '24 meses' },
   { code: 'N/A', name: 'Avaliação Psicossocial', type: 'Terceirizado', price: 'R$ 150,00', periodicity: 'Conforme PCMSO' },
@@ -150,7 +150,7 @@ export default function ServicesPage() {
             </h1>
         </div>
       <Tabs defaultValue="exams">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
           <TabsTrigger value="exams">Exames Médicos</TabsTrigger>
           <TabsTrigger value="programs">Programas e Laudos</TabsTrigger>
           <TabsTrigger value="advisory">Assessoria Técnica</TabsTrigger>
@@ -177,7 +177,7 @@ export default function ServicesPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {medicalExams.map((exam) => (
+                  {initialMedicalExams.map((exam) => (
                     <TableRow key={exam.code}>
                       <TableCell className="font-medium">{exam.code}</TableCell>
                       <TableCell>{exam.name}</TableCell>
