@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Card,
   CardContent,
@@ -18,7 +18,25 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { MoreHorizontal, PlusCircle, Upload } from 'lucide-react'
+import {
+  MoreHorizontal,
+  PlusCircle,
+  Upload,
+  AlignLeft,
+  UserPlus,
+  Tag,
+  Calendar,
+  Paperclip,
+  Clock,
+  Flag,
+  CheckSquare,
+  Plus,
+  X,
+  File as FileIcon,
+  FileText,
+  MessageSquare,
+  HelpCircle,
+} from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,6 +62,12 @@ import { initialClientsData } from '@/app/dashboard/(main)/clients/page'
 import {
   useTicketStore,
   type Ticket,
+  availableLabels,
+  type Label as LabelType,
+  type Checklist,
+  type ChecklistItem,
+  type Attachment,
+  type TextElement,
 } from '@/app/dashboard/(main)/tickets/tickets-store'
 import {
   Select,
@@ -52,6 +76,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { format, formatDistanceToNow, parseISO } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { initialStaffsData } from '@/app/dashboard/(main)/employees/page'
+import { Separator } from '@/components/ui/separator'
+import { Progress } from '@/components/ui/progress'
+import { Checkbox } from '@/components/ui/checkbox'
 
 const statusVariant = {
   Aberto: 'default',
@@ -60,8 +91,349 @@ const statusVariant = {
   Fechado: 'outline',
 } as const
 
+const priorityVariant = {
+  Alta: 'destructive',
+  Média: 'default',
+  Baixa: 'secondary',
+} as const
+
 const getClientById = (contractId: string) => {
   return initialClientsData.find((client) => client.contractId === contractId)
+}
+
+function TimeAgo({ dateString }: { dateString: string }) {
+  const [timeAgo, setTimeAgo] = useState('')
+
+  useEffect(() => {
+    const date = new Date(dateString)
+    setTimeAgo(formatDistanceToNow(date, { addSuffix: true, locale: ptBR }))
+  }, [dateString])
+
+  if (!timeAgo) return null
+
+  return <>{timeAgo}</>
+}
+
+function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
+  const { addTextElement } = useTicketStore()
+  const { toast } = useToast()
+
+  const assignedMembers =
+    initialStaffsData.filter((emp) =>
+      ticket.assignedTo?.includes(emp.email)
+    ) ?? []
+
+  const handleAddTextElement = (
+    e: React.FormEvent<HTMLFormElement>,
+    type: 'question' | 'comment'
+  ) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    const content = formData.get('content') as string
+    if (!content) {
+      toast({
+        variant: 'destructive',
+        title: 'Conteúdo obrigatório',
+        description: 'Por favor, escreva sua mensagem.',
+      })
+      return
+    }
+
+    const clientUser = {
+      name: 'Cliente', // This would be the logged in client user
+      avatar: '',
+      fallback: 'CL',
+    }
+
+    addTextElement(ticket.id, {
+      type,
+      title: type === 'question' ? 'Pergunta' : 'Comentário',
+      content,
+      creator: clientUser.name,
+      creatorAvatar: clientUser.avatar,
+      creatorFallback: clientUser.fallback,
+    })
+
+    toast({ title: 'Mensagem enviada!' })
+    ;(e.currentTarget.closest('dialog') as HTMLDialogElement)?.close()
+    ;(e.target as HTMLFormElement).reset()
+  }
+
+  function AddTextElementDialog({
+    children,
+    elementType,
+    dialogTitle,
+    dialogDescription,
+  }: {
+    children: React.ReactNode
+    elementType: 'question' | 'comment'
+    dialogTitle: string
+    dialogDescription: string
+  }) {
+    const [open, setOpen] = useState(false)
+    return (
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>{children}</DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{dialogTitle}</DialogTitle>
+            <DialogDescription>{dialogDescription}</DialogDescription>
+          </DialogHeader>
+          <form
+            id={`add-text-${elementType}-form`}
+            onSubmit={(e) => handleAddTextElement(e, elementType)}
+          >
+            <div className='grid gap-4 py-4'>
+              <div className='space-y-2'>
+                <Label htmlFor='content'>{dialogTitle}</Label>
+                <Textarea
+                  id='content'
+                  name='content'
+                  placeholder='Escreva aqui...'
+                  required
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant='outline' onClick={() => setOpen(false)}>
+                Cancelar
+              </Button>
+              <Button type='submit'>Adicionar</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    )
+  }
+
+  return (
+    <DialogContent className='sm:max-w-4xl'>
+      <DialogHeader>
+        <DialogTitle className='text-2xl font-bold'>
+          {ticket.subject}
+        </DialogTitle>
+        <div className='flex items-center justify-between'>
+          <DialogDescription>
+            Na coluna {ticket.status} | Ticket ID: {ticket.id}
+          </DialogDescription>
+          {ticket.labels && ticket.labels.length > 0 && (
+            <div className='flex flex-wrap gap-1 pt-2'>
+              {ticket.labels.map((label) => (
+                <span
+                  key={label.id}
+                  className={`px-2 py-0.5 text-xs rounded-full text-white ${label.color}`}
+                >
+                  {label.name}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      </DialogHeader>
+      <div className='grid grid-cols-3 gap-8 py-4'>
+        <div className='col-span-2 space-y-6'>
+          <div className='space-y-2'>
+            <div className='flex items-center gap-2'>
+              <AlignLeft className='h-5 w-5 text-muted-foreground' />
+              <h3 className='font-semibold'>Descrição</h3>
+            </div>
+            <div className='ml-7 text-sm text-muted-foreground bg-gray-50 p-3 rounded-md border'>
+              {ticket.description || 'Nenhuma descrição fornecida.'}
+            </div>
+          </div>
+
+          {ticket.textElements &&
+            ticket.textElements.map((element) => (
+              <div key={element.id} className='flex items-start gap-3'>
+                <Avatar className='h-8 w-8 mt-1'>
+                  <AvatarImage src={element.creatorAvatar} />
+                  <AvatarFallback>{element.creatorFallback}</AvatarFallback>
+                </Avatar>
+                <div className='flex-1'>
+                  <div className='flex items-center justify-between'>
+                    <div className='flex items-center gap-2'>
+                      <p className='font-semibold'>{element.creator}</p>
+                      <p className='text-xs text-muted-foreground font-medium'>
+                        {element.type === 'question'
+                          ? 'fez uma pergunta'
+                          : 'adicionou um comentário'}
+                      </p>
+                    </div>
+                    <p className='text-xs text-muted-foreground'>
+                      <TimeAgo dateString={element.createdAt} />
+                    </p>
+                  </div>
+                  <div className='mt-1 text-sm text-muted-foreground bg-gray-50 p-3 rounded-md border'>
+                    {element.content}
+                  </div>
+                </div>
+              </div>
+            ))}
+
+          {ticket.checklists && ticket.checklists.length > 0 && (
+            <div className='space-y-4'>
+              {ticket.checklists.map((checklist) => {
+                const completedItems = checklist.items.filter(
+                  (item) => item.completed
+                ).length
+                const totalItems = checklist.items.length
+                const progress =
+                  totalItems > 0 ? (completedItems / totalItems) * 100 : 0
+
+                return (
+                  <div key={checklist.id} className='space-y-2'>
+                    <div className='flex items-center justify-between'>
+                      <div className='flex items-center gap-2'>
+                        <CheckSquare className='h-5 w-5 text-muted-foreground' />
+                        <h3 className='font-semibold'>{checklist.title}</h3>
+                      </div>
+                    </div>
+                    <div className='ml-7 space-y-2'>
+                      <Progress value={progress} className='h-2' />
+                      {checklist.items.map((item) => {
+                        const itemAssignedMembers =
+                          initialStaffsData.filter((staff) =>
+                            item.assignedTo?.includes(staff.email)
+                          ) ?? []
+                        return (
+                          <div
+                            key={item.id}
+                            className='flex items-start gap-2 group'
+                          >
+                            <Checkbox
+                              id={`item-${item.id}`}
+                              checked={item.completed}
+                              disabled
+                              className='mt-1'
+                            />
+                            <div className='grid gap-1 text-sm flex-1'>
+                              <label
+                                htmlFor={`item-${item.id}`}
+                                className={`font-medium ${
+                                  item.completed
+                                    ? 'line-through text-muted-foreground'
+                                    : ''
+                                }`}
+                              >
+                                {item.text}
+                              </label>
+                              <div className='text-xs text-muted-foreground flex items-center gap-2 flex-wrap'>
+                                {item.completed &&
+                                item.completedBy &&
+                                item.completedAt ? (
+                                  <span>
+                                    Concluído por {item.completedBy}{' '}
+                                    <TimeAgo dateString={item.completedAt} />
+                                  </span>
+                                ) : item.dueDate ? (
+                                  <div className='flex items-center gap-1'>
+                                    <Calendar className='h-3 w-3' />
+                                    <span>
+                                      Vence em{' '}
+                                      {format(
+                                        parseISO(item.dueDate),
+                                        'dd/MM/yyyy'
+                                      )}
+                                    </span>
+                                  </div>
+                                ) : null}
+                              </div>
+                            </div>
+                            {itemAssignedMembers.length > 0 && (
+                              <div className='flex -space-x-1 self-center'>
+                                {itemAssignedMembers.map((member) => (
+                                  <Avatar
+                                    key={member.email}
+                                    className='h-5 w-5 border'
+                                  >
+                                    <AvatarImage src={member.avatar} />
+                                    <AvatarFallback>
+                                      {member.fallback}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className='col-span-1 flex flex-col'>
+          <div className='space-y-4'>
+            {assignedMembers.length > 0 && (
+              <div className='space-y-2'>
+                <h3 className='text-sm font-semibold'>Responsáveis</h3>
+                <div className='flex flex-col gap-2'>
+                  {assignedMembers.map((member) => (
+                    <div
+                      key={member.email}
+                      className='flex items-center gap-2'
+                    >
+                      <Avatar className='h-8 w-8'>
+                        <AvatarImage src={member.avatar} />
+                        <AvatarFallback>{member.fallback}</AvatarFallback>
+                      </Avatar>
+                      <span className='text-sm font-medium'>
+                        {member.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <Separator />
+            <AddTextElementDialog
+              elementType='question'
+              dialogTitle='Fazer uma Pergunta'
+              dialogDescription='Sua pergunta será enviada à nossa equipe de suporte.'
+            >
+              <Button variant='secondary' className='justify-start w-full'>
+                <HelpCircle className='mr-2 h-4 w-4' /> Fazer uma Pergunta
+              </Button>
+            </AddTextElementDialog>
+            <AddTextElementDialog
+              elementType='comment'
+              dialogTitle='Adicionar um Comentário'
+              dialogDescription='Adicione uma atualização ou mais informações ao chamado.'
+            >
+              <Button variant='secondary' className='justify-start w-full'>
+                <MessageSquare className='mr-2 h-4 w-4' /> Adicionar Comentário
+              </Button>
+            </AddTextElementDialog>
+            <Separator />
+            {ticket.attachments && ticket.attachments.length > 0 && (
+              <div className='mt-6 space-y-4'>
+                <div className='space-y-2'>
+                  <h3 className='text-sm font-semibold'>Anexos</h3>
+                  <div className='flex flex-col gap-2'>
+                    {ticket.attachments.map((attachment) => (
+                      <a
+                        key={attachment.id}
+                        href={attachment.url}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='flex items-center gap-2 text-sm text-primary hover:underline'
+                      >
+                        <FileIcon className='h-4 w-4' />
+                        <span>{attachment.name}</span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </DialogContent>
+  )
 }
 
 export default function ClientTicketsPage() {
@@ -202,36 +574,56 @@ export default function ClientTicketsPage() {
             </TableHeader>
             <TableBody>
               {clientTickets.map((ticket) => (
-                <TableRow key={ticket.id}>
-                  <TableCell className='font-medium'>{ticket.id}</TableCell>
-                  <TableCell>{ticket.subject}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        statusVariant[ticket.status as keyof typeof statusVariant]
-                      }
-                    >
-                      {ticket.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{ticket.updated}</TableCell>
-                  <TableCell className='text-right'>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button size='icon' variant='ghost'>
-                          <MoreHorizontal className='h-4 w-4' />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                        <DropdownMenuItem>Ver Detalhes</DropdownMenuItem>
-                        <DropdownMenuItem>
-                          Adicionar Comentário
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
+                <Dialog key={ticket.id}>
+                  <DialogTrigger asChild>
+                    <TableRow className='cursor-pointer'>
+                      <TableCell className='font-medium'>{ticket.id}</TableCell>
+                      <TableCell>{ticket.subject}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            statusVariant[
+                              ticket.status as keyof typeof statusVariant
+                            ]
+                          }
+                        >
+                          {ticket.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <TimeAgo dateString={ticket.updated} />
+                      </TableCell>
+                      <TableCell className='text-right'>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger
+                            asChild
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <Button
+                              aria-haspopup='true'
+                              size='icon'
+                              variant='ghost'
+                            >
+                              <MoreHorizontal className='h-4 w-4' />
+                              <span className='sr-only'>Alternar menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align='end'
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                            <DropdownMenuItem>Ver Detalhes</DropdownMenuItem>
+                            <DropdownMenuItem>
+                              Adicionar Comentário
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  </DialogTrigger>
+                  <TicketDetailsDialog ticket={ticket} />
+                </Dialog>
               ))}
             </TableBody>
           </Table>
