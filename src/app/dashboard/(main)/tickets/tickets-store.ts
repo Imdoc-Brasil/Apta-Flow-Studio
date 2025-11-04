@@ -21,7 +21,7 @@ export interface ChecklistItem {
   id: string
   text: string
   completed: boolean
-  dueDate: string
+  dueDate?: string
   completedBy?: string
   completedAt?: string
   assignedTo?: string[]
@@ -31,6 +31,10 @@ export interface Checklist {
   id: string
   title: string
   items: ChecklistItem[]
+  creator: string
+  creatorAvatar?: string
+  creatorFallback?: string
+  createdAt: string
 }
 
 export interface TextElement {
@@ -75,6 +79,10 @@ export const initialTicketsData = [
       {
         id: 'cl-1',
         title: 'Desenvolvimento Frontend',
+        createdAt: new Date('2024-07-22T13:45:00Z').toISOString(),
+        creator: 'Sarah Chen',
+        creatorAvatar: 'https://i.pravatar.cc/150?u=a042581f4e29026701d',
+        creatorFallback: 'SC',
         items: [
           {
             id: 'item-1-1',
@@ -187,14 +195,14 @@ type TicketStore = {
     ticketId: string,
     title: string,
     firstItemText: string,
-    firstItemDueDate: string,
+    firstItemDueDate?: string,
     firstItemAssignedTo?: string[]
   ) => void
   addChecklistItem: (
     ticketId: string,
     checklistId: string,
     text: string,
-    dueDate: string,
+    dueDate?: string,
     assignedTo?: string[]
   ) => void
   toggleChecklistItem: (
@@ -260,9 +268,19 @@ export const useTicketStore = create<TicketStore>((set) => ({
     set((state) => ({
       tickets: state.tickets.map((ticket) => {
         if (ticket.id === ticketId) {
+          // Mock creator info
+          const creator = {
+            name: 'Sarah Chen',
+            avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026701d',
+            fallback: 'SC',
+          }
           const newChecklist: Checklist = {
             id: `cl-${Date.now()}`,
             title,
+            createdAt: new Date().toISOString(),
+            creator: creator.name,
+            creatorAvatar: creator.avatar,
+            creatorFallback: creator.fallback,
             items: [
               {
                 id: `item-${Date.now()}`,

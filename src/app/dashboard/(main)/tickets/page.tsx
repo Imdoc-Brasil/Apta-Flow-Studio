@@ -359,12 +359,12 @@ function AddChecklistDialog({
     const dueDate = formData.get('dueDate') as string
     const assignedTo = formData.get('assignedTo') as string
 
-    if (!title || !itemText || !dueDate) {
+    if (!title || !itemText) {
       toast({
         variant: 'destructive',
         title: 'Campos obrigatórios',
         description:
-          'Por favor, preencha todos os campos para criar o checklist.',
+          'Por favor, preencha o título do checklist e a primeira tarefa.',
       })
       return
     }
@@ -373,7 +373,7 @@ function AddChecklistDialog({
       ticketId,
       title,
       itemText,
-      dueDate,
+      dueDate || undefined,
       assignedTo && assignedTo !== 'unassigned' ? [assignedTo] : []
     )
     toast({
@@ -414,8 +414,8 @@ function AddChecklistDialog({
               />
             </div>
             <div className='space-y-2'>
-              <Label htmlFor='dueDate'>Prazo da Primeira Tarefa</Label>
-              <Input id='dueDate' name='dueDate' type='date' required />
+              <Label htmlFor='dueDate'>Prazo da Primeira Tarefa (Opcional)</Label>
+              <Input id='dueDate' name='dueDate' type='date' />
             </div>
             <div className='space-y-2'>
               <Label htmlFor='assignedTo'>Atribuir a (Opcional)</Label>
@@ -466,11 +466,11 @@ function AddChecklistItemForm({
     const dueDate = formData.get('dueDate') as string
     const assignedTo = formData.get('assignedTo') as string
 
-    if (!text || !dueDate) {
+    if (!text) {
       toast({
         variant: 'destructive',
-        title: 'Campos obrigatórios',
-        description: 'Por favor, preencha a tarefa e o prazo.',
+        title: 'Campo obrigatório',
+        description: 'Por favor, descreva a tarefa.',
       })
       return
     }
@@ -479,7 +479,7 @@ function AddChecklistItemForm({
       ticketId,
       checklistId,
       text,
-      dueDate,
+      dueDate || undefined,
       assignedTo && assignedTo !== 'unassigned' ? [assignedTo] : []
     )
     toast({ title: 'Tarefa adicionada!' })
@@ -515,7 +515,6 @@ function AddChecklistItemForm({
             name='dueDate'
             type='date'
             className='border-none focus-visible:ring-0 text-xs h-auto p-1 w-auto'
-            required
           />
           <Select name='assignedTo' defaultValue='unassigned'>
             <SelectTrigger className='text-xs h-auto p-1 border-none focus-visible:ring-0 w-auto'>
@@ -804,10 +803,22 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
 
                 return (
                   <div key={checklist.id} className='space-y-2'>
-                    <div className='flex items-center gap-2'>
-                      <CheckSquare className='h-5 w-5 text-muted-foreground' />
-                      <h3 className='font-semibold'>{checklist.title}</h3>
+                    <div className='flex items-center justify-between'>
+                      <div className='flex items-center gap-2'>
+                        <CheckSquare className='h-5 w-5 text-muted-foreground' />
+                        <Avatar className='h-6 w-6'>
+                          <AvatarImage src={checklist.creatorAvatar} />
+                          <AvatarFallback>
+                            {checklist.creatorFallback}
+                          </AvatarFallback>
+                        </Avatar>
+                        <h3 className='font-semibold'>{checklist.title}</h3>
+                      </div>
+                      <p className='text-xs text-muted-foreground'>
+                        <TimeAgo dateString={checklist.createdAt} />
+                      </p>
                     </div>
+
                     <div className='ml-7 space-y-2'>
                       <Progress value={progress} className='h-2' />
                       {checklist.items.map((item) => {
@@ -843,7 +854,7 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                               >
                                 {item.text}
                               </label>
-                              <div className='text-xs text-muted-foreground flex items-center gap-2'>
+                              <div className='text-xs text-muted-foreground flex items-center gap-2 flex-wrap'>
                                 {item.completed &&
                                 item.completedBy &&
                                 item.completedAt ? (
@@ -851,8 +862,8 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                                     Concluído por {item.completedBy}{' '}
                                     <TimeAgo dateString={item.completedAt} />
                                   </span>
-                                ) : (
-                                  <>
+                                ) : item.dueDate ? (
+                                  <div className='flex items-center gap-1'>
                                     <Calendar className='h-3 w-3' />
                                     <span>
                                       Vence em{' '}
@@ -861,8 +872,8 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                                         'dd/MM/yyyy'
                                       )}
                                     </span>
-                                  </>
-                                )}
+                                  </div>
+                                ) : null}
                               </div>
                             </div>
                             {itemAssignedMembers.length > 0 && (
