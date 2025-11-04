@@ -44,6 +44,7 @@ export default function PgrActionPlanPage() {
         };
         setPlan(prev => [newItem, ...prev]);
         setIsDialogOpen(false);
+        (event.target as HTMLFormElement).reset();
     }
 
   return (
@@ -86,11 +87,11 @@ export default function PgrActionPlanPage() {
                             <Input id="deadline" name="deadline" type="date" className="col-span-3" required/>
                         </div>
                     </div>
+                     <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+                        <Button type="submit" form="add-action-form">Salvar Ação</Button>
+                    </DialogFooter>
                 </form>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-                    <Button type="submit" form="add-action-form">Salvar Ação</Button>
-                </DialogFooter>
             </DialogContent>
           </Dialog>
         </CardTitle>

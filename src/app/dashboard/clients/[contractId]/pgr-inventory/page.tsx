@@ -34,6 +34,13 @@ export default function PgrInventoryPage() {
     const handleAddRisk = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
+        const prob = parseInt(formData.get('probability') as string, 10);
+        const sev = parseInt(formData.get('severity') as string, 10);
+        const riskProduct = prob * sev;
+        let level = 'Baixo';
+        if (riskProduct > 4) level = 'Alto';
+        else if (riskProduct > 2) level = 'Médio';
+
         const newItem: RiskInventoryItem = {
             id: `INV-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
             sector: formData.get('sector') as string,
@@ -41,10 +48,11 @@ export default function PgrInventoryPage() {
             risk: formData.get('risk') as string,
             probability: formData.get('probability') as string,
             severity: formData.get('severity') as string,
-            level: 'Médio', // Simplified calculation
+            level,
         };
         setInventory(prev => [newItem, ...prev]);
         setIsDialogOpen(false);
+        (event.target as HTMLFormElement).reset();
     }
 
   return (
@@ -87,7 +95,7 @@ export default function PgrInventoryPage() {
                              <div className="grid grid-cols-2 gap-4">
                                <div className="space-y-2">
                                     <Label htmlFor="probability">Probabilidade</Label>
-                                    <Select name="probability" required>
+                                    <Select name="probability" required defaultValue="1">
                                         <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="1">1 - Baixa</SelectItem>
@@ -98,7 +106,7 @@ export default function PgrInventoryPage() {
                                 </div>
                                  <div className="space-y-2">
                                     <Label htmlFor="severity">Severidade</Label>
-                                    <Select name="severity" required>
+                                    <Select name="severity" required defaultValue="1">
                                         <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="1">1 - Baixa</SelectItem>
@@ -109,11 +117,11 @@ export default function PgrInventoryPage() {
                                 </div>
                             </div>
                         </div>
+                         <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+                            <Button type="submit">Salvar</Button>
+                        </DialogFooter>
                     </form>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-                        <Button type="submit" form="add-risk-form">Salvar</Button>
-                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </CardTitle>
