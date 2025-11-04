@@ -360,59 +360,59 @@ export default function TicketsPage() {
                     {tickets
                         .filter(ticket => ticket.status === status)
                         .map(ticket => (
-                        <Dialog key={ticket.id}>
-                          <DialogTrigger asChild>
-                            <Card className="cursor-pointer">
+                          <Dialog key={ticket.id}>
+                            <DialogTrigger asChild>
+                              <Card className="cursor-pointer">
                                 <CardHeader className="p-4 flex flex-row items-start justify-between">
-                                    <div className="space-y-1">
-                                        <CardTitle className="text-base font-semibold">{ticket.subject}</CardTitle>
-                                        <CardDescription className="text-xs">{ticket.client} - {ticket.id}</CardDescription>
-                                    </div>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => e.stopPropagation()}>
-                                            <MoreHorizontal className="h-4 w-4" />
-                                        </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
-                                        {kanbanColumns.filter(col => col !== ticket.status).map(newStatus => (
-                                            <DropdownMenuItem key={newStatus} onClick={() => moveTicket(ticket.id, newStatus)}>
-                                                Mover para {newStatus}
-                                            </DropdownMenuItem>
-                                        ))}
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
+                                  <div className="space-y-1">
+                                    <CardTitle className="text-base font-semibold">{ticket.subject}</CardTitle>
+                                    <CardDescription className="text-xs">{ticket.client} - {ticket.id}</CardDescription>
+                                  </div>
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => e.stopPropagation()}>
+                                        <MoreHorizontal className="h-4 w-4" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
+                                      {kanbanColumns.filter(col => col !== ticket.status).map(newStatus => (
+                                        <DropdownMenuItem key={newStatus} onClick={() => moveTicket(ticket.id, newStatus)}>
+                                          Mover para {newStatus}
+                                        </DropdownMenuItem>
+                                      ))}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
                                 </CardHeader>
                                 <CardContent className="p-4 pt-0">
-                                    <div className='flex justify-between items-center'>
-                                        <Badge
-                                            variant={
-                                                priorityVariant[
-                                                ticket.priority as keyof typeof priorityVariant
-                                                ]
-                                            }
-                                            >
-                                            {ticket.priority}
-                                        </Badge>
-                                        <p className="text-xs text-muted-foreground">
-                                           <ClientSideDate dateString={ticket.updated} />
-                                        </p>
-                                    </div>
+                                  <div className="flex justify-between items-center">
+                                    <Badge
+                                      variant={
+                                        priorityVariant[
+                                          ticket.priority as keyof typeof priorityVariant
+                                        ]
+                                      }
+                                    >
+                                      {ticket.priority}
+                                    </Badge>
+                                    <p className="text-xs text-muted-foreground">
+                                      <ClientSideDate dateString={ticket.updated} />
+                                    </p>
+                                  </div>
                                 </CardContent>
-                            </Card>
-                           </DialogTrigger>
-                           <DialogContent>
+                              </Card>
+                            </DialogTrigger>
+                            <DialogContent>
                               <DialogHeader>
                                 <DialogTitle>{ticket.subject}</DialogTitle>
                                 <DialogDescription>
-                                 {ticket.client} - {ticket.id}
+                                  {ticket.client} - {ticket.id}
                                 </DialogDescription>
                               </DialogHeader>
                               <div className="py-4">
                                 <p>Aqui irão os detalhes completos do ticket, como a descrição, histórico de comentários, anexos, etc.</p>
                               </div>
-                           </DialogContent>
-                        </Dialog>
+                            </DialogContent>
+                          </Dialog>
                         ))}
                         {tickets.filter(ticket => ticket.status === status).length === 0 && (
                             <div className="text-center text-sm text-muted-foreground py-8">
