@@ -38,6 +38,14 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { initialProfiles } from '@/app/dashboard/(main)/profiles/page'
 
 export const initialStaffsData = [
   {
@@ -151,12 +159,18 @@ export default function StaffsPage() {
                     <Label htmlFor='profile' className='text-right'>
                       Perfil
                     </Label>
-                    <Input
-                      id='profile'
-                      name='profile'
-                      className='col-span-3'
-                      required
-                    />
+                    <Select name='profile' required>
+                      <SelectTrigger className='col-span-3'>
+                        <SelectValue placeholder='Selecione um perfil' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {initialProfiles.map((profile) => (
+                          <SelectItem key={profile.id} value={profile.name}>
+                            {profile.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className='grid grid-cols-4 items-center gap-4'>
                     <Label htmlFor='email' className='text-right'>

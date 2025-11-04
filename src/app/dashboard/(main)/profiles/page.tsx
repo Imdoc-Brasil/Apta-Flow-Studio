@@ -44,7 +44,7 @@ interface Profile {
   permissions: string // Placeholder for now
 }
 
-const initialProfiles: Profile[] = [
+export const initialProfiles: Profile[] = [
   {
     id: '1',
     name: 'Gerente de Projeto Principal',
