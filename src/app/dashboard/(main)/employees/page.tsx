@@ -177,6 +177,16 @@ export default function StaffsPage() {
   const renderStaffForm = (staff?: Staff | null) => (
     <div className='grid gap-4 py-4'>
       <div className='grid grid-cols-4 items-center gap-4'>
+        <Label className='text-right'>Avatar</Label>
+        <div className='col-span-3 flex items-center gap-4'>
+          <Avatar className='h-16 w-16'>
+            <AvatarImage src={staff?.avatar} />
+            <AvatarFallback>{staff?.fallback}</AvatarFallback>
+          </Avatar>
+          <Input id='avatar-upload' name='avatar-upload' type='file' className='text-sm' />
+        </div>
+      </div>
+      <div className='grid grid-cols-4 items-center gap-4'>
         <Label htmlFor='name' className='text-right'>
           Nome
         </Label>
@@ -384,7 +394,7 @@ export default function StaffsPage() {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
+        <DialogContent className='sm:max-w-xl'>
           <DialogHeader>
             <DialogTitle>Editar Staff</DialogTitle>
             <DialogDescription>
