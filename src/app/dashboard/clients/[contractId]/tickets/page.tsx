@@ -114,6 +114,88 @@ function TimeAgo({ dateString }: { dateString: string }) {
   return <>{timeAgo}</>
 }
 
+function AddAttachmentDialog({
+  ticketId,
+  children,
+}: {
+  ticketId: string
+  children: React.ReactNode
+}) {
+  const [open, setOpen] = useState(false)
+  const { addAttachment } = useTicketStore()
+  const { toast } = useToast()
+  const [file, setFile] = useState<File | null>(null)
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    const name = formData.get('name') as string
+
+    if (!name || !file) {
+      toast({
+        variant: 'destructive',
+        title: 'Campos obrigatórios',
+        description: 'Por favor, forneça um nome e selecione um arquivo.',
+      })
+      return
+    }
+
+    addAttachment(ticketId, name, file)
+    toast({
+      title: 'Anexo Adicionado!',
+      description: `O arquivo "${name}" foi adicionado ao ticket.`,
+    })
+    setOpen(false)
+    setFile(null)
+    ;(e.currentTarget as HTMLFormElement).reset()
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Adicionar Novo Anexo</DialogTitle>
+          <DialogDescription>
+            Forneça um nome para o anexo e selecione o arquivo para upload.
+          </DialogDescription>
+        </DialogHeader>
+        <form id='add-attachment-form' onSubmit={handleSubmit}>
+          <div className='grid gap-4 py-4'>
+            <div className='space-y-2'>
+              <Label htmlFor='name'>Nome/Título do Anexo</Label>
+              <Input
+                id='name'
+                name='name'
+                placeholder='Ex: Relatório de Erro.pdf'
+                required
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='file'>Arquivo</Label>
+              <Input
+                id='file'
+                name='file'
+                type='file'
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                required
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant='outline' onClick={() => setOpen(false)}>
+              Cancelar
+            </Button>
+            <Button type='submit' form='add-attachment-form'>
+              Adicionar
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
   const { addTextElement } = useTicketStore()
   const { toast } = useToast()
@@ -407,6 +489,11 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                 <MessageSquare className='mr-2 h-4 w-4' /> Adicionar Comentário
               </Button>
             </AddTextElementDialog>
+             <AddAttachmentDialog ticketId={ticket.id}>
+                <Button variant='secondary' className='justify-start w-full'>
+                  <Paperclip className='mr-2 h-4 w-4' /> Anexar Arquivo
+                </Button>
+              </AddAttachmentDialog>
             <Separator />
             {ticket.attachments && ticket.attachments.length > 0 && (
               <div className='mt-6 space-y-4'>
