@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -10,14 +10,14 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle, ShieldCheck, Clock } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, ShieldCheck, Clock, Upload } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 const slaKpis = [
     { title: "Conformidade de SLA (Mês)", value: "99.2%", icon: <ShieldCheck className="h-4 w-4 text-muted-foreground" /> },
@@ -51,6 +51,14 @@ const getSlaBadgeVariant = (sla: string) => {
 export default function SlaPage() {
   const [tickets, setTickets] = useState(initialTicketData);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [currentDateTime, setCurrentDateTime] = useState('');
+
+  useEffect(() => {
+    if (isDialogOpen) {
+      const now = new Date();
+      setCurrentDateTime(now.toLocaleString('pt-BR'));
+    }
+  }, [isDialogOpen]);
 
   const handleAddTicket = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -87,13 +95,13 @@ export default function SlaPage() {
              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
                     <Button size="sm" className="h-8 gap-1">
-                        <PlusCircle className="h-3.5 w-3.5" />
+                        <PlusCircle className="h-3.5 w-3.five" />
                         <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                         Abrir Novo Chamado
                         </span>
                     </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="sm:max-w-[480px]">
                     <DialogHeader>
                         <DialogTitle>Abrir Novo Chamado de Serviço</DialogTitle>
                         <DialogDescription>
@@ -102,17 +110,28 @@ export default function SlaPage() {
                     </DialogHeader>
                     <form id="add-ticket-form" onSubmit={handleAddTicket}>
                         <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="service" className="text-right">Serviço</Label>
-                                <Input id="service" name="service" className="col-span-3" placeholder="Ex: Correção de ASO" required />
+                            <div className="space-y-2">
+                                <Label htmlFor="datetime">Data e Hora da Abertura</Label>
+                                <Input id="datetime" name="datetime" value={currentDateTime} readOnly />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="service">Serviço</Label>
+                                <Input id="service" name="service" placeholder="Ex: Correção de ASO" required />
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="description">Descrição</Label>
+                                <Textarea id="description" name="description" placeholder="Detalhe a sua solicitação aqui..." />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="attachment">Anexo (Opcional)</Label>
+                                <Input id="attachment" name="attachment" type="file" accept="image/*,.pdf" />
                             </div>
                         </div>
-                    
+                    </form>
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
                         <Button type="submit" form="add-ticket-form">Abrir Chamado</Button>
                     </DialogFooter>
-                    </form>
                 </DialogContent>
              </Dialog>
             </CardTitle>
