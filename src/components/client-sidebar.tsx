@@ -86,8 +86,6 @@ export function ClientSidebar() {
     { href: `${basePath}/asos`, label: 'Gestão de ASOs', icon: ClipboardCheck },
     { href: `${basePath}/periodicos`, label: 'Gestão de Periódicos', icon: CalendarCheck },
     { href: `${basePath}/sla`, label: 'Gestão de SLA', icon: ShieldCheckIcon },
-    { href: `${basePath}/pgr-inventory`, label: 'Inventário de Riscos', icon: FileText },
-    { href: `${basePath}/pgr-action-plan`, label: 'Plano de Ação', icon: ClipboardList },
     { href: `${basePath}/epis`, label: 'Gestão de EPIs', icon: HardHat },
     { href: `${basePath}/epc`, label: 'Gestão de EPC', icon: Factory },
     { href: `${basePath}/trainings`, label: 'Gestão de Treinamentos', icon: GraduationCap },
@@ -103,7 +101,13 @@ export function ClientSidebar() {
      if (href.endsWith('/pgr')) {
       return pathname === href;
     }
-    return pathname.startsWith(href);
+    // For other items, check if the path starts with the href.
+    // This handles nested routes like /pgr/inventory correctly.
+    if (href !== basePath && href !== `${basePath}/info`) {
+         return pathname.startsWith(href);
+    }
+    
+    return pathname === href;
   };
   
   const isSstActive = sstNavItems.some(item => getIsActive(item.href));
@@ -287,7 +291,7 @@ export function ClientSidebar() {
           </CollapsibleTrigger>
           <CollapsibleContent>
              <div className="pl-6 pt-1 space-y-1">
-                 {sstNavItems.map((item) => (
+                 {sstNavItems.filter(item => !item.href.includes('pgr-inventory') && !item.href.includes('pgr-action-plan')).map((item) => (
                     <SidebarMenuItem key={item.label}>
                         <Link href={item.href}>
                             <SidebarMenuButton
