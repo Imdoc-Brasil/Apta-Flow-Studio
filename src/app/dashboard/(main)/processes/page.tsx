@@ -55,7 +55,8 @@ const columns: TaskStatus[] = ['Backlog', 'In Progress', 'Done'];
 
 export default function ProcessesPage() {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   const handleAddTask = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -67,7 +68,7 @@ export default function ProcessesPage() {
       status: 'Backlog',
     };
     setTasks(prevTasks => [...prevTasks, newTask]);
-    setIsDialogOpen(false);
+    setIsNewTaskDialogOpen(false);
   };
   
   const moveTask = (taskId: string, newStatus: TaskStatus) => {
@@ -79,7 +80,7 @@ export default function ProcessesPage() {
     <div className="flex flex-col gap-4 h-full">
        <div className="flex items-center justify-between">
             <h1 className="font-headline text-3xl font-bold">Quadro Kanban</h1>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Dialog open={isNewTaskDialogOpen} onOpenChange={setIsNewTaskDialogOpen}>
             <DialogTrigger asChild>
                 <Button>
                 <PlusCircle className="mr-2 h-4 w-4" />
@@ -106,7 +107,7 @@ export default function ProcessesPage() {
                 </div>
                 </form>
                 <DialogFooter>
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                <Button variant="outline" onClick={() => setIsNewTaskDialogOpen(false)}>
                     Cancelar
                 </Button>
                 <Button type="submit" form="add-task-form">
@@ -125,30 +126,47 @@ export default function ProcessesPage() {
               {tasks
                 .filter(task => task.status === status)
                 .map(task => (
-                  <Card key={task.id}>
-                    <CardHeader className="p-4 flex flex-row items-start justify-between">
-                      <CardTitle className="text-base">{task.title}</CardTitle>
-                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-6 w-6">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          {columns.filter(col => col !== task.status).map(newStatus => (
-                             <DropdownMenuItem key={newStatus} onClick={() => moveTask(task.id, newStatus)}>
-                                Mover para {statusLabels[newStatus]}
-                            </DropdownMenuItem>
-                          ))}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </CardHeader>
-                    <CardContent className="p-4 pt-0">
-                      <p className="text-sm text-muted-foreground">
-                        {task.description}
-                      </p>
-                    </CardContent>
-                  </Card>
+                    <Dialog key={task.id} onOpenChange={(open) => !open && setSelectedTask(null)}>
+                        <DialogTrigger asChild>
+                            <Card className="cursor-pointer" onClick={() => setSelectedTask(task)}>
+                                <CardHeader className="p-4 flex flex-row items-start justify-between">
+                                <CardTitle className="text-base">{task.title}</CardTitle>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => e.stopPropagation()}>
+                                        <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
+                                    {columns.filter(col => col !== task.status).map(newStatus => (
+                                        <DropdownMenuItem key={newStatus} onClick={() => moveTask(task.id, newStatus)}>
+                                            Mover para {statusLabels[newStatus]}
+                                        </DropdownMenuItem>
+                                    ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                                </CardHeader>
+                                <CardContent className="p-4 pt-0">
+                                <p className="text-sm text-muted-foreground line-clamp-2">
+                                    {task.description}
+                                </p>
+                                </CardContent>
+                            </Card>
+                        </DialogTrigger>
+                        {selectedTask && selectedTask.id === task.id && (
+                             <DialogContent className="sm:max-w-3xl">
+                                <DialogHeader>
+                                    <DialogTitle>{selectedTask.title}</DialogTitle>
+                                    <DialogDescription>
+                                        Detalhes da tarefa, subtarefas e atividades.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="py-4">
+                                   <p>{selectedTask.description}</p>
+                                </div>
+                            </DialogContent>
+                        )}
+                   </Dialog>
                 ))}
                 {tasks.filter(task => task.status === status).length === 0 && (
                     <div className="text-center text-sm text-muted-foreground py-8">
