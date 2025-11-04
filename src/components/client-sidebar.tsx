@@ -30,7 +30,7 @@ import {
   BarChart3,
   FileHeart,
   AlertTriangle,
-  ShieldCheck,
+  ShieldCheck as ShieldCheckIcon, // Renamed to avoid conflict
   ArrowLeft,
 } from 'lucide-react';
 import {
@@ -45,22 +45,13 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from './ui/button';
 
 export function ClientSidebar() {
   const pathname = usePathname();
   const params = useParams();
   const contractId = params.contractId as string;
-  const [isSstOpen, setIsSstOpen] = useState(false);
-  const [isEstruturaOpen, setIsEstruturaOpen] = useState(false);
-  const [isContratoOpen, setIsContratoOpen] = useState(false);
-  const [isSaudeOpen, setIsSaudeOpen] = useState(false);
-
-
-  if (!contractId) {
-    return null; // Don't render sidebar on the main clients list page
-  }
 
   const basePath = `/dashboard/clients/${contractId}`;
 
@@ -94,7 +85,7 @@ export function ClientSidebar() {
     { href: `${basePath}/pcmso`, label: 'Gestão de PCMSO', icon: BookUser },
     { href: `${basePath}/asos`, label: 'Gestão de ASOs', icon: ClipboardCheck },
     { href: `${basePath}/periodicos`, label: 'Gestão de Periódicos', icon: CalendarCheck },
-    { href: `${basePath}/sla`, label: 'Gestão de SLA', icon: ShieldCheck },
+    { href: `${basePath}/sla`, label: 'Gestão de SLA', icon: ShieldCheckIcon },
     { href: `${basePath}/pgr-inventory`, label: 'Inventário de Riscos', icon: FileText },
     { href: `${basePath}/pgr-action-plan`, label: 'Plano de Ação', icon: ClipboardList },
     { href: `${basePath}/epis`, label: 'Gestão de EPIs', icon: HardHat },
@@ -119,6 +110,23 @@ export function ClientSidebar() {
   const isEstruturaActive = estruturaNavItems.some(item => getIsActive(item.href));
   const isContratoActive = contratoNavItems.some(item => getIsActive(item.href));
   const isSaudeActive = saudeNavItems.some(item => getIsActive(item.href));
+
+  const [isSstOpen, setIsSstOpen] = useState(isSstActive);
+  const [isEstruturaOpen, setIsEstruturaOpen] = useState(isEstruturaActive);
+  const [isContratoOpen, setIsContratoOpen] = useState(isContratoActive);
+  const [isSaudeOpen, setIsSaudeOpen] = useState(isSaudeActive);
+
+  useEffect(() => {
+    setIsSstOpen(isSstActive);
+    setIsEstruturaOpen(isEstruturaActive);
+    setIsContratoOpen(isContratoActive);
+    setIsSaudeOpen(isSaudeActive);
+  }, [pathname, isSstActive, isEstruturaActive, isContratoActive, isSaudeActive]);
+
+
+  if (!contractId) {
+    return null; // Don't render sidebar on the main clients list page
+  }
 
 
   return (

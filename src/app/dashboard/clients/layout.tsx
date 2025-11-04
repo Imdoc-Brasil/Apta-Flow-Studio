@@ -27,21 +27,6 @@ export default function ClientDetailLayout({
         className="group hidden data-[variant=sidebar]:max-w-60 md:flex"
       >
         <SidebarContent>
-          <SidebarHeader>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full justify-start"
-              asChild
-            >
-              <Link href="/dashboard/(main)/clients">
-                <ArrowLeft />
-                <span className="group-data-[collapsible=icon]:hidden">
-                  Todos os Clientes
-                </span>
-              </Link>
-            </Button>
-          </SidebarHeader>
           <ClientSidebar />
         </SidebarContent>
       </Sidebar>
