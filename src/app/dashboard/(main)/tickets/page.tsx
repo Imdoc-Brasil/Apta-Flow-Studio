@@ -32,6 +32,8 @@ import {
   CheckSquare,
   Plus,
   X,
+  File as FileIcon,
+  Upload,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -88,6 +90,7 @@ import {
   type Label as LabelType,
   type Checklist,
   type ChecklistItem,
+  type Attachment,
 } from './tickets-store'
 import { format, formatDistanceToNow, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -250,6 +253,88 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
         </div>
       </DialogTrigger>
       <TicketDetailsDialog ticket={ticket} />
+    </Dialog>
+  )
+}
+
+function AddAttachmentDialog({
+  ticketId,
+  children,
+}: {
+  ticketId: string
+  children: React.ReactNode
+}) {
+  const [open, setOpen] = useState(false)
+  const { addAttachment } = useTicketStore()
+  const { toast } = useToast()
+  const [file, setFile] = useState<File | null>(null)
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    const name = formData.get('name') as string
+
+    if (!name || !file) {
+      toast({
+        variant: 'destructive',
+        title: 'Campos obrigatórios',
+        description: 'Por favor, forneça um nome e selecione um arquivo.',
+      })
+      return
+    }
+
+    addAttachment(ticketId, name, file)
+    toast({
+      title: 'Anexo Adicionado!',
+      description: `O arquivo "${name}" foi adicionado ao ticket.`,
+    })
+    setOpen(false)
+    setFile(null)
+    e.currentTarget.reset()
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Adicionar Novo Anexo</DialogTitle>
+          <DialogDescription>
+            Forneça um nome para o anexo e selecione o arquivo para upload.
+          </DialogDescription>
+        </DialogHeader>
+        <form id='add-attachment-form' onSubmit={handleSubmit}>
+          <div className='grid gap-4 py-4'>
+            <div className='space-y-2'>
+              <Label htmlFor='name'>Nome/Título do Anexo</Label>
+              <Input
+                id='name'
+                name='name'
+                placeholder='Ex: Relatório de Erro.pdf'
+                required
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='file'>Arquivo</Label>
+              <Input
+                id='file'
+                name='file'
+                type='file'
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                required
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant='outline' onClick={() => setOpen(false)}>
+              Cancelar
+            </Button>
+            <Button type='submit' form='add-attachment-form'>
+              Adicionar
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
     </Dialog>
   )
 }
@@ -615,7 +700,7 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                                 )}
                               </div>
                             </div>
-                             {itemAssignedMembers.length > 0 && (
+                            {itemAssignedMembers.length > 0 && (
                               <div className='flex -space-x-1 self-center'>
                                 {itemAssignedMembers.map((member) => (
                                   <Avatar
@@ -672,147 +757,173 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
           </div>
         </div>
 
-        <div className='col-span-1 space-y-4'>
-          {assignedMembers.length > 0 && (
-            <div className='space-y-2'>
-              <h3 className='text-sm font-semibold'>Membros</h3>
-              <div className='flex flex-col gap-2'>
-                {assignedMembers.map((member) => (
-                  <div
-                    key={member.email}
-                    className='flex items-center gap-2'
-                  >
-                    <Avatar className='h-8 w-8'>
-                      <AvatarImage src={member.avatar} />
-                      <AvatarFallback>{member.fallback}</AvatarFallback>
-                    </Avatar>
-                    <span className='text-sm font-medium'>
-                      {member.name}
-                    </span>
-                  </div>
-                ))}
+        <div className='col-span-1 flex flex-col'>
+          <div className='space-y-4'>
+            {assignedMembers.length > 0 && (
+              <div className='space-y-2'>
+                <h3 className='text-sm font-semibold'>Membros</h3>
+                <div className='flex flex-col gap-2'>
+                  {assignedMembers.map((member) => (
+                    <div
+                      key={member.email}
+                      className='flex items-center gap-2'
+                    >
+                      <Avatar className='h-8 w-8'>
+                        <AvatarImage src={member.avatar} />
+                        <AvatarFallback>{member.fallback}</AvatarFallback>
+                      </Avatar>
+                      <span className='text-sm font-medium'>
+                        {member.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-          <h3 className='text-sm font-semibold'>Adicionar ao cartão</h3>
-          <div className='flex flex-col space-y-2'>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant='secondary' className='justify-start'>
-                  <UserPlus className='mr-2 h-4 w-4' /> Membros
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className='w-80'>
-                <div className='grid gap-4'>
-                  <div className='space-y-2'>
-                    <h4 className='font-medium leading-none'>Membros</h4>
-                    <p className='text-sm text-muted-foreground'>
-                      Atribua membros a este cartão.
-                    </p>
-                  </div>
-                  <Separator />
-                  <div className='flex flex-col gap-2'>
-                    {initialStaffsData.map((staff) => {
-                      const isAssigned = ticket.assignedTo?.includes(
-                        staff.email
-                      )
-                      return (
-                        <div
-                          key={staff.email}
-                          className='flex items-center justify-between'
-                        >
-                          <div className='flex items-center gap-2'>
-                            <Avatar className='h-8 w-8'>
-                              <AvatarImage src={staff.avatar} />
-                              <AvatarFallback>
-                                {staff.fallback}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className='text-sm font-medium'>
-                              {staff.name}
-                            </span>
+            )}
+            <h3 className='text-sm font-semibold'>Adicionar ao cartão</h3>
+            <div className='flex flex-col space-y-2'>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant='secondary' className='justify-start'>
+                    <UserPlus className='mr-2 h-4 w-4' /> Membros
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className='w-80'>
+                  <div className='grid gap-4'>
+                    <div className='space-y-2'>
+                      <h4 className='font-medium leading-none'>Membros</h4>
+                      <p className='text-sm text-muted-foreground'>
+                        Atribua membros a este cartão.
+                      </p>
+                    </div>
+                    <Separator />
+                    <div className='flex flex-col gap-2'>
+                      {initialStaffsData.map((staff) => {
+                        const isAssigned = ticket.assignedTo?.includes(
+                          staff.email
+                        )
+                        return (
+                          <div
+                            key={staff.email}
+                            className='flex items-center justify-between'
+                          >
+                            <div className='flex items-center gap-2'>
+                              <Avatar className='h-8 w-8'>
+                                <AvatarImage src={staff.avatar} />
+                                <AvatarFallback>
+                                  {staff.fallback}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className='text-sm font-medium'>
+                                {staff.name}
+                              </span>
+                            </div>
+                            <Button
+                              variant={isAssigned ? 'default' : 'outline'}
+                              size='sm'
+                              onClick={() =>
+                                handleAssignMember(ticket.id, staff.email)
+                              }
+                            >
+                              {isAssigned ? 'Remover' : 'Atribuir'}
+                            </Button>
                           </div>
-                          <Button
-                            variant={isAssigned ? 'default' : 'outline'}
-                            size='sm'
-                            onClick={() =>
-                              handleAssignMember(ticket.id, staff.email)
-                            }
+                        )
+                      })}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant='secondary' className='justify-start'>
+                    <Tag className='mr-2 h-4 w-4' /> Etiquetas
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className='w-64'>
+                  <div className='grid gap-4'>
+                    <div className='space-y-2'>
+                      <h4 className='font-medium leading-none'>Etiquetas</h4>
+                      <p className='text-sm text-muted-foreground'>
+                        Adicione etiquetas a este ticket.
+                      </p>
+                    </div>
+                    <Separator />
+                    <div className='flex flex-col gap-2'>
+                      {availableLabels.map((label) => {
+                        const isChecked =
+                          ticket.labels?.some((l) => l.id === label.id) ?? false
+                        return (
+                          <Label
+                            key={label.id}
+                            className='flex items-center gap-2 font-normal'
                           >
-                            {isAssigned ? 'Remover' : 'Atribuir'}
-                          </Button>
-                        </div>
-                      )
-                    })}
+                            <Checkbox
+                              checked={isChecked}
+                              onCheckedChange={(checked) =>
+                                handleLabelChange(label.id, Boolean(checked))
+                              }
+                            />
+                            <span
+                              className={`px-2 py-0.5 text-xs rounded-full text-white ${label.color}`}
+                            >
+                              {label.name}
+                            </span>
+                          </Label>
+                        )
+                      })}
+                    </div>
                   </div>
-                </div>
-              </PopoverContent>
-            </Popover>
-            <Popover>
-              <PopoverTrigger asChild>
+                </PopoverContent>
+              </Popover>
+              <AddChecklistDialog ticketId={ticket.id}>
                 <Button variant='secondary' className='justify-start'>
-                  <Tag className='mr-2 h-4 w-4' /> Etiquetas
+                  <CheckSquare className='mr-2 h-4 w-4' /> Checklist
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent className='w-64'>
-                <div className='grid gap-4'>
-                  <div className='space-y-2'>
-                    <h4 className='font-medium leading-none'>Etiquetas</h4>
-                    <p className='text-sm text-muted-foreground'>
-                      Adicione etiquetas a este ticket.
-                    </p>
-                  </div>
-                  <Separator />
+              </AddChecklistDialog>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant='secondary' className='justify-start'>
+                    <Calendar className='mr-2 h-4 w-4' /> Datas
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className='w-auto p-0'>
+                  <CalendarComponent
+                    mode='single'
+                    selected={date}
+                    onSelect={setDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              <AddAttachmentDialog ticketId={ticket.id}>
+                <Button variant='secondary' className='justify-start'>
+                  <Paperclip className='mr-2 h-4 w-4' /> Anexo
+                </Button>
+              </AddAttachmentDialog>
+            </div>
+            {ticket.attachments && ticket.attachments.length > 0 && (
+              <div className='mt-6 space-y-4'>
+                <Separator />
+                <div className='space-y-2'>
+                  <h3 className='text-sm font-semibold'>Anexos</h3>
                   <div className='flex flex-col gap-2'>
-                    {availableLabels.map((label) => {
-                      const isChecked =
-                        ticket.labels?.some((l) => l.id === label.id) ?? false
-                      return (
-                        <Label
-                          key={label.id}
-                          className='flex items-center gap-2 font-normal'
-                        >
-                          <Checkbox
-                            checked={isChecked}
-                            onCheckedChange={(checked) =>
-                              handleLabelChange(label.id, Boolean(checked))
-                            }
-                          />
-                          <span
-                            className={`px-2 py-0.5 text-xs rounded-full text-white ${label.color}`}
-                          >
-                            {label.name}
-                          </span>
-                        </Label>
-                      )
-                    })}
+                    {ticket.attachments.map((attachment) => (
+                      <a
+                        key={attachment.id}
+                        href={attachment.url}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='flex items-center gap-2 text-sm text-primary hover:underline'
+                      >
+                        <FileIcon className='h-4 w-4' />
+                        <span>{attachment.name}</span>
+                      </a>
+                    ))}
                   </div>
                 </div>
-              </PopoverContent>
-            </Popover>
-            <AddChecklistDialog ticketId={ticket.id}>
-              <Button variant='secondary' className='justify-start'>
-                <CheckSquare className='mr-2 h-4 w-4' /> Checklist
-              </Button>
-            </AddChecklistDialog>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant='secondary' className='justify-start'>
-                  <Calendar className='mr-2 h-4 w-4' /> Datas
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className='w-auto p-0'>
-                <CalendarComponent
-                  mode='single'
-                  selected={date}
-                  onSelect={setDate}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
-            <Button variant='secondary' className='justify-start'>
-              <Paperclip className='mr-2 h-4 w-4' /> Anexo
-            </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>

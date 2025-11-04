@@ -11,6 +11,12 @@ export const availableLabels = [
 
 export type Label = (typeof availableLabels)[number]
 
+export interface Attachment {
+  id: string
+  name: string
+  url: string
+}
+
 export interface ChecklistItem {
   id: string
   text: string
@@ -40,6 +46,7 @@ export const initialTicketsData = [
     assignedTo: ['sarah.chen@aptaflow.com'],
     labels: [availableLabels[0], availableLabels[3]],
     checklists: [],
+    attachments: [],
   },
   {
     id: 'TKT-002',
@@ -81,6 +88,13 @@ export const initialTicketsData = [
         ],
       },
     ],
+    attachments: [
+      {
+        id: 'att-1',
+        name: 'mockup-dark-mode.png',
+        url: '#',
+      },
+    ],
   },
   {
     id: 'TKT-003',
@@ -93,6 +107,7 @@ export const initialTicketsData = [
       'Tenho uma dúvida sobre um item que apareceu na nossa última fatura. Podemos agendar uma chamada para esclarecer?',
     labels: [],
     checklists: [],
+    attachments: [],
   },
   {
     id: 'TKT-004',
@@ -106,6 +121,7 @@ export const initialTicketsData = [
     assignedTo: ['david.r@aptaflow.com', 'michael.b@aptaflow.com'],
     labels: [availableLabels[0]],
     checklists: [],
+    attachments: [],
   },
   {
     id: 'TKT-005',
@@ -118,17 +134,19 @@ export const initialTicketsData = [
       'Estamos tentando integrar nosso sistema com a API de vocês e precisamos de ajuda para entender o fluxo de autenticação OAuth2.',
     labels: [availableLabels[2]],
     checklists: [],
+    attachments: [],
   },
 ] as const
 
 export type TicketStatus = 'Aberto' | 'Em Progresso' | 'Resolvido' | 'Fechado'
 export type Ticket = Omit<
   (typeof initialTicketsData)[0],
-  'assignedTo' | 'labels' | 'checklists'
+  'assignedTo' | 'labels' | 'checklists' | 'attachments'
 > & {
   assignedTo?: string[]
   labels?: Label[]
   checklists?: Checklist[]
+  attachments?: Attachment[]
 }
 
 type TicketStore = {
@@ -136,7 +154,7 @@ type TicketStore = {
   addTicket: (
     newTicket: Omit<
       Ticket,
-      'id' | 'status' | 'updated' | 'assignedTo' | 'labels' | 'checklists'
+      'id' | 'status' | 'updated' | 'assignedTo' | 'labels' | 'checklists' | 'attachments'
     >
   ) => void
   setTickets: (tickets: Ticket[]) => void
@@ -161,6 +179,7 @@ type TicketStore = {
     completed: boolean,
     user: string
   ) => void
+  addAttachment: (ticketId: string, name: string, file: File) => void
 }
 
 export const useTicketStore = create<TicketStore>((set) => ({
@@ -175,6 +194,7 @@ export const useTicketStore = create<TicketStore>((set) => ({
           items: cl.items.map((item) => ({ ...item, assignedTo: item.assignedTo ? [...item.assignedTo] : [] })),
         }))
       : [],
+    attachments: ticket.attachments ? [...ticket.attachments] : [],
   })),
   addTicket: (newTicket) =>
     set((state) => ({
@@ -190,6 +210,7 @@ export const useTicketStore = create<TicketStore>((set) => ({
           assignedTo: [],
           labels: [],
           checklists: [],
+          attachments: [],
         },
         ...state.tickets,
       ],
@@ -283,6 +304,23 @@ export const useTicketStore = create<TicketStore>((set) => ({
           }
         }
         return ticket
+      }),
+    })),
+  addAttachment: (ticketId, name, file) =>
+    set((state) => ({
+      tickets: state.tickets.map((ticket) => {
+        if (ticket.id === ticketId) {
+          const newAttachment: Attachment = {
+            id: `att-${Date.now()}`,
+            name,
+            url: URL.createObjectURL(file), // Placeholder URL
+          };
+          return {
+            ...ticket,
+            attachments: [...(ticket.attachments || []), newAttachment],
+          };
+        }
+        return ticket;
       }),
     })),
 }))
