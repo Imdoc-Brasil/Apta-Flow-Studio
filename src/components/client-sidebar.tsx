@@ -165,150 +165,158 @@ export function ClientSidebar() {
         </SidebarMenuItem>
       ))}
 
-       <SidebarMenuItem>
-        <Collapsible open={isContratoOpen} onOpenChange={setIsContratoOpen}>
+      <Collapsible asChild open={isContratoOpen} onOpenChange={setIsContratoOpen}>
+        <li>
           <CollapsibleTrigger asChild>
-             <SidebarMenuButton
-                isActive={isContratoActive}
-                tooltip="Gestão de Contrato"
-                className="justify-between"
-              >
-                <div className="flex items-center gap-2">
-                  <FileText />
-                  <span>Gestão de Contrato</span>
-                </div>
-                <ChevronRight className={cn("h-4 w-4 transition-transform", isContratoOpen && "rotate-90")} />
-              </SidebarMenuButton>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                  isActive={isContratoActive}
+                  tooltip="Gestão de Contrato"
+                  className="justify-between"
+                >
+                  <div className="flex items-center gap-2">
+                    <FileText />
+                    <span>Gestão de Contrato</span>
+                  </div>
+                  <ChevronRight className={cn("h-4 w-4 transition-transform", isContratoOpen && "rotate-90")} />
+                </SidebarMenuButton>
+              </SidebarMenuItem>
           </CollapsibleTrigger>
           <CollapsibleContent>
-             <div className="pl-6 pt-1 space-y-1">
-                 {contratoNavItems.map((item) => (
-                    <SidebarMenuItem key={item.label}>
-                        <Link href={item.href}>
-                            <SidebarMenuButton
-                                isActive={getIsActive(item.href)}
-                                tooltip={item.label}
-                                className="h-8"
-                            >
-                                  <item.icon />
-                                  <span>{item.label}</span>
-                            </SidebarMenuButton>
-                        </Link>
-                    </SidebarMenuItem>
-                ))}
-             </div>
+              <ul className="pl-6 pt-1 space-y-1">
+                  {contratoNavItems.map((item) => (
+                      <SidebarMenuItem key={item.label}>
+                          <Link href={item.href}>
+                              <SidebarMenuButton
+                                  isActive={getIsActive(item.href)}
+                                  tooltip={item.label}
+                                  className="h-8"
+                              >
+                                    <item.icon />
+                                    <span>{item.label}</span>
+                              </SidebarMenuButton>
+                          </Link>
+                      </SidebarMenuItem>
+                  ))}
+              </ul>
           </CollapsibleContent>
-        </Collapsible>
-      </SidebarMenuItem>
+        </li>
+      </Collapsible>
 
-      <SidebarMenuItem>
-        <Collapsible open={isEstruturaOpen} onOpenChange={setIsEstruturaOpen}>
+      <Collapsible asChild open={isEstruturaOpen} onOpenChange={setIsEstruturaOpen}>
+        <li>
           <CollapsibleTrigger asChild>
-             <SidebarMenuButton
-                isActive={isEstruturaActive}
-                tooltip="Estrutura da Empresa"
-                className="justify-between"
-              >
-                <div className="flex items-center gap-2">
-                  <Network />
-                  <span>Estrutura da Empresa</span>
-                </div>
-                <ChevronRight className={cn("h-4 w-4 transition-transform", isEstruturaOpen && "rotate-90")} />
-              </SidebarMenuButton>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                  isActive={isEstruturaActive}
+                  tooltip="Estrutura da Empresa"
+                  className="justify-between"
+                >
+                  <div className="flex items-center gap-2">
+                    <Network />
+                    <span>Estrutura da Empresa</span>
+                  </div>
+                  <ChevronRight className={cn("h-4 w-4 transition-transform", isEstruturaOpen && "rotate-90")} />
+                </SidebarMenuButton>
+              </SidebarMenuItem>
           </CollapsibleTrigger>
           <CollapsibleContent>
-             <div className="pl-6 pt-1 space-y-1">
-                 {estruturaNavItems.map((item) => (
-                    <SidebarMenuItem key={item.label}>
-                        <Link href={item.href}>
-                            <SidebarMenuButton
-                                isActive={getIsActive(item.href)}
-                                tooltip={item.label}
-                                className="h-8"
-                            >
-                                  <item.icon />
-                                  <span>{item.label}</span>
-                            </SidebarMenuButton>
-                        </Link>
-                    </SidebarMenuItem>
-                ))}
-             </div>
+              <ul className="pl-6 pt-1 space-y-1">
+                  {estruturaNavItems.map((item) => (
+                      <SidebarMenuItem key={item.label}>
+                          <Link href={item.href}>
+                              <SidebarMenuButton
+                                  isActive={getIsActive(item.href)}
+                                  tooltip={item.label}
+                                  className="h-8"
+                              >
+                                    <item.icon />
+                                    <span>{item.label}</span>
+                              </SidebarMenuButton>
+                          </Link>
+                      </SidebarMenuItem>
+                  ))}
+              </ul>
           </CollapsibleContent>
-        </Collapsible>
-      </SidebarMenuItem>
+        </li>
+      </Collapsible>
       
-      <SidebarMenuItem>
-        <Collapsible open={isSaudeOpen} onOpenChange={setIsSaudeOpen}>
+      <Collapsible asChild open={isSaudeOpen} onOpenChange={setIsSaudeOpen}>
+        <li>
           <CollapsibleTrigger asChild>
-             <SidebarMenuButton
-                isActive={isSaudeActive}
-                tooltip="Gestão de Saúde"
-                className="justify-between"
-              >
-                <div className="flex items-center gap-2">
-                  <Stethoscope />
-                  <span>Gestão de Saúde</span>
-                </div>
-                <ChevronRight className={cn("h-4 w-4 transition-transform", isSaudeOpen && "rotate-90")} />
-              </SidebarMenuButton>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                  isActive={isSaudeActive}
+                  tooltip="Gestão de Saúde"
+                  className="justify-between"
+                >
+                  <div className="flex items-center gap-2">
+                    <Stethoscope />
+                    <span>Gestão de Saúde</span>
+                  </div>
+                  <ChevronRight className={cn("h-4 w-4 transition-transform", isSaudeOpen && "rotate-90")} />
+                </SidebarMenuButton>
+            </SidebarMenuItem>
           </CollapsibleTrigger>
           <CollapsibleContent>
-             <div className="pl-6 pt-1 space-y-1">
-                 {saudeNavItems.map((item) => (
-                    <SidebarMenuItem key={item.label}>
-                        <Link href={item.href}>
-                            <SidebarMenuButton
-                                isActive={getIsActive(item.href)}
-                                tooltip={item.label}
-                                className="h-8"
-                            >
-                                 <item.icon />
-                                 <span>{item.label}</span>
-                            </SidebarMenuButton>
-                        </Link>
-                    </SidebarMenuItem>
-                ))}
-             </div>
-          </CollapsibleContent>
-        </Collapsible>
-      </SidebarMenuItem>
-
-
-      <SidebarMenuItem>
-        <Collapsible open={isSstOpen} onOpenChange={setIsSstOpen}>
-          <CollapsibleTrigger asChild>
-             <SidebarMenuButton
-                isActive={isSstActive}
-                tooltip="Gestão de SST"
-                className="justify-between"
-              >
-                <div className="flex items-center gap-2">
-                  <ShieldAlert />
-                  <span>Gestão de SST</span>
-                </div>
-                <ChevronRight className={cn("h-4 w-4 transition-transform", isSstOpen && "rotate-90")} />
-              </SidebarMenuButton>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-             <div className="pl-6 pt-1 space-y-1">
-                 {sstNavItems.filter(item => !item.href.includes('pgr-inventory') && !item.href.includes('pgr-action-plan')).map((item) => (
-                    <SidebarMenuItem key={item.label}>
-                        <Link href={item.href}>
-                            <SidebarMenuButton
-                                isActive={getIsActive(item.href)}
-                                tooltip={item.label}
-                                className="h-8"
-                            >
+              <ul className="pl-6 pt-1 space-y-1">
+                  {saudeNavItems.map((item) => (
+                      <SidebarMenuItem key={item.label}>
+                          <Link href={item.href}>
+                              <SidebarMenuButton
+                                  isActive={getIsActive(item.href)}
+                                  tooltip={item.label}
+                                  className="h-8"
+                              >
                                   <item.icon />
                                   <span>{item.label}</span>
-                            </SidebarMenuButton>
-                        </Link>
-                    </SidebarMenuItem>
-                ))}
-             </div>
+                              </SidebarMenuButton>
+                          </Link>
+                      </SidebarMenuItem>
+                  ))}
+              </ul>
           </CollapsibleContent>
-        </Collapsible>
-      </SidebarMenuItem>
+        </li>
+      </Collapsible>
+
+
+      <Collapsible asChild open={isSstOpen} onOpenChange={setIsSstOpen}>
+        <li>
+          <CollapsibleTrigger asChild>
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                  isActive={isSstActive}
+                  tooltip="Gestão de SST"
+                  className="justify-between"
+                >
+                  <div className="flex items-center gap-2">
+                    <ShieldAlert />
+                    <span>Gestão de SST</span>
+                  </div>
+                  <ChevronRight className={cn("h-4 w-4 transition-transform", isSstOpen && "rotate-90")} />
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+              <ul className="pl-6 pt-1 space-y-1">
+                  {sstNavItems.filter(item => !item.href.includes('pgr-inventory') && !item.href.includes('pgr-action-plan')).map((item) => (
+                      <SidebarMenuItem key={item.label}>
+                          <Link href={item.href}>
+                              <SidebarMenuButton
+                                  isActive={getIsActive(item.href)}
+                                  tooltip={item.label}
+                                  className="h-8"
+                              >
+                                    <item.icon />
+                                    <span>{item.label}</span>
+                              </SidebarMenuButton>
+                          </Link>
+                      </SidebarMenuItem>
+                  ))}
+              </ul>
+          </CollapsibleContent>
+        </li>
+      </Collapsible>
     </SidebarMenu>
   );
 }
