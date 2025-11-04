@@ -4,20 +4,17 @@
 import { useState, useEffect } from 'react';
 import type { FC } from 'react';
 import { useParams, usePathname, useRouter } from 'next/navigation';
-
-import {
-  ArrowLeft,
-  FileText,
-  Mail,
-  MapPin,
-  Phone,
-  User,
-} from 'lucide-react';
+import { PlusCircle, ArrowLeft, FileText, Mail, MapPin, Phone, User, Upload } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { initialClientsData } from '@/app/dashboard/(main)/clients/page';
 import Link from 'next/link';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/hooks/use-toast';
 
 const getClientById = (contractId: string) => {
     return initialClientsData.find((client) => client.contractId === contractId);
@@ -27,6 +24,17 @@ export default function InfoDashboard() {
     const params = useParams();
     const contractId = params.contractId as string;
     const client = getClientById(contractId);
+    const { toast } = useToast();
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+    const handleNewTicket = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        toast({
+            title: "Chamado Enviado com Sucesso!",
+            description: "Sua solicitação foi registrada e nossa equipe entrará em contato em breve.",
+        });
+        setIsDialogOpen(false);
+    };
     
     if (!client) {
       return (
@@ -53,6 +61,56 @@ export default function InfoDashboard() {
     const riskInfo = riskLevelMap[client.riskLevel as keyof typeof riskLevelMap] || { label: 'N/A', color: 'bg-gray-400' };
 
     return (
+        <>
+        <div className="flex items-center justify-between mb-4">
+            <div/>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                    <Button>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Abrir Novo Chamado
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-lg">
+                    <DialogHeader>
+                        <DialogTitle>Abrir Novo Chamado de Serviço</DialogTitle>
+                        <DialogDescription>
+                            Descreva sua solicitação ou problema. Nossa equipe responderá o mais breve possível.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form id="new-ticket-form" onSubmit={handleNewTicket}>
+                        <div className="grid gap-4 py-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="datetime">Data e Hora</Label>
+                                <Input id="datetime" name="datetime" defaultValue={new Date().toLocaleString('pt-BR')} disabled />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="subject">Assunto</Label>
+                                <Input id="subject" name="subject" placeholder="Ex: Problema com login" required />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="description">Descrição</Label>
+                                <Textarea id="description" name="description" placeholder="Detalhe sua solicitação aqui..." required />
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="attachment">Anexo (Opcional)</Label>
+                                <div className="flex items-center gap-2">
+                                    <Input id="attachment" name="attachment" type="file" className="flex-1" />
+                                    <Button type="button" variant="ghost" size="icon">
+                                        <Upload className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                <p className="text-xs text-muted-foreground">Você pode anexar uma imagem ou PDF.</p>
+                            </div>
+                        </div>
+                    </form>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+                        <Button type="submit" form="new-ticket-form">Enviar Chamado</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </div>
         <Card>
             <CardHeader>
                 <CardTitle>Detalhes da Empresa</CardTitle>
@@ -112,5 +170,6 @@ export default function InfoDashboard() {
                     </div>
             </CardContent>
         </Card>
+        </>
     )
 }
