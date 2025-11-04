@@ -162,77 +162,121 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
   }
 
   return (
-    <Dialog>
-      <Card
-        ref={setNodeRef}
-        style={style}
-        {...attributes}
-        {...listeners}
-        className='cursor-grab active:cursor-grabbing touch-none'
-      >
-        <DialogTrigger asChild>
-          <div className='flex flex-col h-full'>
-            <div className='flex-grow cursor-pointer'>
-              <CardHeader className='p-4 pb-2'>
-                <CardTitle className='text-base font-semibold leading-tight hover:underline'>
-                  {ticket.subject}
-                </CardTitle>
-                <CardDescription className='text-xs pt-1'>
-                  {ticket.client} - {ticket.id}
-                </CardDescription>
-              </CardHeader>
-            </div>
-            <CardContent className='p-4 pt-2 flex items-end justify-between'>
-              <Badge
-                variant={
-                  priorityVariant[
-                    ticket.priority as keyof typeof priorityVariant
-                  ]
-                }
-              >
-                {ticket.priority}
-              </Badge>
-              <div className='flex items-center gap-2'>
-                <p className='text-xs text-muted-foreground'>
-                  <ClientSideDate dateString={ticket.updated} />
-                </p>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant='ghost'
-                      size='icon'
-                      className='h-6 w-6 shrink-0'
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <MoreHorizontal className='h-4 w-4' />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                    <DropdownMenuItem>Ver Detalhes</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      <Dialog>
+        <Card className='cursor-grab active:cursor-grabbing touch-none'>
+          <DialogTrigger asChild>
+            <div className='flex flex-col h-full'>
+              <div className='flex-grow cursor-pointer'>
+                <CardHeader className='p-4 pb-2'>
+                  <CardTitle className='text-base font-semibold leading-tight hover:underline'>
+                    {ticket.subject}
+                  </CardTitle>
+                  <CardDescription className='text-xs pt-1'>
+                    {ticket.client} - {ticket.id}
+                  </CardDescription>
+                </CardHeader>
               </div>
-            </CardContent>
+              <CardContent className='p-4 pt-2 flex items-end justify-between'>
+                <Badge
+                  variant={
+                    priorityVariant[
+                      ticket.priority as keyof typeof priorityVariant
+                    ]
+                  }
+                >
+                  {ticket.priority}
+                </Badge>
+                <div className='flex items-center gap-2'>
+                  <p className='text-xs text-muted-foreground'>
+                    <ClientSideDate dateString={ticket.updated} />
+                  </p>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant='ghost'
+                        size='icon'
+                        className='h-6 w-6 shrink-0'
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreHorizontal className='h-4 w-4' />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                      <DropdownMenuItem>Ver Detalhes</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </CardContent>
+            </div>
+          </DialogTrigger>
+        </Card>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{ticket.subject}</DialogTitle>
+            <DialogDescription>
+              {ticket.client} - {ticket.id}
+            </DialogDescription>
+          </DialogHeader>
+          <div className='py-4'>
+            <p>
+              Aqui irão os detalhes completos do ticket, como a descrição,
+              histórico de comentários, anexos, etc.
+            </p>
           </div>
-        </DialogTrigger>
-      </Card>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{ticket.subject}</DialogTitle>
-          <DialogDescription>
-            {ticket.client} - {ticket.id}
-          </DialogDescription>
-        </DialogHeader>
-        <div className='py-4'>
-          <p>
-            Aqui irão os detalhes completos do ticket, como a descrição,
-            histórico de comentários, anexos, etc.
-          </p>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </div>
   )
+}
+
+const KanbanColumn = ({
+  status,
+  tickets,
+}: {
+  status: TicketStatus
+  tickets: Ticket[]
+}) => {
+  const { setNodeRef } = useSortable({
+    id: status,
+    data: { type: 'Column' },
+  })
+
+  return (
+    <div
+      ref={setNodeRef}
+      className='flex flex-col gap-4 bg-muted/50 p-4 rounded-lg h-full'
+    >
+      <h2 className='font-bold text-lg'>{status}</h2>
+      <SortableContext
+        items={tickets.map((t) => t.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        <div className='flex flex-col gap-4 overflow-y-auto'>
+          {tickets.map((ticket) => (
+            <TicketCard key={ticket.id} ticket={ticket} />
+          ))}
+          {tickets.length === 0 && (
+            <div className='text-center text-sm text-muted-foreground py-8'>
+              Nenhuma tarefa nesta coluna.
+            </div>
+          )}
+        </div>
+      </SortableContext>
+    </div>
+  )
+}
+
+function ClientOnly({ children }: { children: React.ReactNode }) {
+  const [hasMounted, setHasMounted] = useState(false)
+  useEffect(() => {
+    setHasMounted(true)
+  }, [])
+  if (!hasMounted) {
+    return null
+  }
+  return <>{children}</>
 }
 
 export default function TicketsPage() {
@@ -521,71 +565,57 @@ export default function TicketsPage() {
           </Card>
         </TabsContent>
         <TabsContent value='kanban' className='flex-1'>
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            onDragOver={handleDragOver}
-          >
-            <div className='flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start'>
-              <SortableContext items={kanbanColumns}>
-                {kanbanColumns.map((status) => {
-                  const columnTickets = tickets.filter(
-                    (ticket) => ticket.status === status
-                  )
-                  return (
-                    <div
-                      key={status}
-                      className='flex flex-col gap-4 bg-muted/50 p-4 rounded-lg h-full'
-                    >
-                      <h2 className='font-bold text-lg'>{status}</h2>
-                      <SortableContext
-                        items={columnTickets.map((t) => t.id)}
-                        strategy={verticalListSortingStrategy}
+          <ClientOnly>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              onDragOver={handleDragOver}
+            >
+              <div className='flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start'>
+                <SortableContext items={kanbanColumns}>
+                  {kanbanColumns.map((status) => {
+                    const columnTickets = tickets.filter(
+                      (ticket) => ticket.status === status
+                    )
+                    return (
+                      <KanbanColumn
+                        key={status}
+                        status={status}
+                        tickets={columnTickets}
+                      />
+                    )
+                  })}
+                </SortableContext>
+              </div>
+              <DragOverlay>
+                {activeTicket ? (
+                  <Card className='cursor-grabbing transform-gpu rotate-3 shadow-lg'>
+                    <CardHeader className='p-4 pb-2'>
+                      <CardTitle className='text-base font-semibold leading-tight'>
+                        {activeTicket.subject}
+                      </CardTitle>
+                      <CardDescription className='text-xs pt-1'>
+                        {activeTicket.client} - {activeTicket.id}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className='p-4 pt-2 flex items-end justify-between'>
+                      <Badge
+                        variant={
+                          priorityVariant[
+                            activeTicket.priority as keyof typeof priorityVariant
+                          ]
+                        }
                       >
-                        <div className='flex flex-col gap-4 overflow-y-auto'>
-                          {columnTickets.map((ticket) => (
-                            <TicketCard key={ticket.id} ticket={ticket} />
-                          ))}
-                          {columnTickets.length === 0 && (
-                            <div className='text-center text-sm text-muted-foreground py-8'>
-                              Nenhuma tarefa nesta coluna.
-                            </div>
-                          )}
-                        </div>
-                      </SortableContext>
-                    </div>
-                  )
-                })}
-              </SortableContext>
-            </div>
-            <DragOverlay>
-              {activeTicket ? (
-                <Card className='cursor-grabbing transform-gpu rotate-3 shadow-lg'>
-                  <CardHeader className='p-4 pb-2'>
-                    <CardTitle className='text-base font-semibold leading-tight'>
-                      {activeTicket.subject}
-                    </CardTitle>
-                    <CardDescription className='text-xs pt-1'>
-                      {activeTicket.client} - {activeTicket.id}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className='p-4 pt-2 flex items-end justify-between'>
-                    <Badge
-                      variant={
-                        priorityVariant[
-                          activeTicket.priority as keyof typeof priorityVariant
-                        ]
-                      }
-                    >
-                      {activeTicket.priority}
-                    </Badge>
-                  </CardContent>
-                </Card>
-              ) : null}
-            </DragOverlay>
-          </DndContext>
+                        {activeTicket.priority}
+                      </Badge>
+                    </CardContent>
+                  </Card>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
+          </ClientOnly>
         </TabsContent>
       </Tabs>
     </div>
