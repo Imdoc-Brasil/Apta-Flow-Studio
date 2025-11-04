@@ -31,6 +31,7 @@ import {
   FileHeart,
   AlertTriangle,
   ArrowLeft,
+  Ticket,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -58,6 +59,7 @@ export function ClientSidebar() {
 
   const mainNavItems = [
     { href: `${basePath}/info`, label: 'Informações', icon: Info },
+    { href: `${basePath}/tickets`, label: 'Meus Chamados', icon: Ticket },
     { href: `${basePath}/events`, label: 'Gestão de Eventos', icon: Siren },
   ];
 
@@ -165,7 +167,7 @@ export function ClientSidebar() {
         </SidebarMenuItem>
       ))}
 
-      <SidebarMenuItem>
+      <li className="relative">
         <Collapsible open={isContratoOpen} onOpenChange={setIsContratoOpen}>
           <CollapsibleTrigger asChild>
             <SidebarMenuButton
@@ -199,9 +201,9 @@ export function ClientSidebar() {
             </ul>
           </CollapsibleContent>
         </Collapsible>
-      </SidebarMenuItem>
+      </li>
 
-       <SidebarMenuItem>
+      <li className="relative">
         <Collapsible open={isEstruturaOpen} onOpenChange={setIsEstruturaOpen}>
           <CollapsibleTrigger asChild>
               <SidebarMenuButton
@@ -235,9 +237,9 @@ export function ClientSidebar() {
               </ul>
           </CollapsibleContent>
         </Collapsible>
-      </SidebarMenuItem>
+      </li>
       
-      <SidebarMenuItem>
+      <li className="relative">
         <Collapsible open={isSaudeOpen} onOpenChange={setIsSaudeOpen}>
           <CollapsibleTrigger asChild>
               <SidebarMenuButton
@@ -271,9 +273,9 @@ export function ClientSidebar() {
               </ul>
           </CollapsibleContent>
         </Collapsible>
-      </SidebarMenuItem>
+      </li>
 
-      <SidebarMenuItem>
+      <li className="relative">
         <Collapsible open={isSstOpen} onOpenChange={setIsSstOpen}>
           <CollapsibleTrigger asChild>
             <SidebarMenuButton
@@ -307,7 +309,7 @@ export function ClientSidebar() {
               </ul>
           </CollapsibleContent>
         </Collapsible>
-      </SidebarMenuItem>
+      </li>
     </SidebarMenu>
   );
 }
