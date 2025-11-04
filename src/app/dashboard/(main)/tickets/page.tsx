@@ -352,9 +352,9 @@ export default function TicketsPage() {
                           <DialogTrigger asChild>
                             <Card className="cursor-pointer">
                                 <CardHeader className="p-4 flex flex-row items-start justify-between">
-                                    <div>
-                                        <CardTitle className="text-base">{ticket.subject}</CardTitle>
-                                        <CardDescription>{ticket.client} - {ticket.id}</CardDescription>
+                                    <div className="space-y-1">
+                                        <CardTitle className="text-base font-semibold">{ticket.subject}</CardTitle>
+                                        <CardDescription className="text-xs">{ticket.client} - {ticket.id}</CardDescription>
                                     </div>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
