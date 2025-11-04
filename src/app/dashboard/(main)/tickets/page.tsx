@@ -81,6 +81,8 @@ import {
   type Ticket,
   type TicketStatus,
 } from './tickets-store'
+import { formatDistanceToNow } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 
 const priorityVariant = {
   Alta: 'destructive',
@@ -106,10 +108,25 @@ function ClientSideDate({ dateString }: { dateString: string }) {
   const [formattedDate, setFormattedDate] = useState('')
 
   useEffect(() => {
-    setFormattedDate(new Date(dateString).toLocaleDateString())
+    setFormattedDate(new Date(dateString).toLocaleDateString('pt-BR'))
   }, [dateString])
 
   return <>{formattedDate}</>
+}
+
+function TimeAgo({ dateString }: { dateString: string }) {
+  const [timeAgo, setTimeAgo] = useState('')
+
+  useEffect(() => {
+    const date = new Date(dateString)
+    setTimeAgo(
+      formatDistanceToNow(date, { addSuffix: true, locale: ptBR })
+    )
+  }, [dateString])
+
+  if (!timeAgo) return null
+
+  return <>{timeAgo}</>
 }
 
 const TicketCard = ({ ticket }: { ticket: Ticket }) => {
@@ -156,7 +173,7 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
                 </Badge>
                 <div className='flex items-center gap-2'>
                   <p className='text-xs text-muted-foreground'>
-                    <ClientSideDate dateString={ticket.updated} />
+                    <TimeAgo dateString={ticket.updated} />
                   </p>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -223,10 +240,10 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
               <div className='space-y-2'>
                 <div className='flex items-center gap-2'>
                   <Clock className='h-5 w-5 text-muted-foreground' />
-                  <h3 className='font-semibold'>Aberto em</h3>
+                  <h3 className='font-semibold'>Aberto</h3>
                 </div>
                 <p className='text-sm'>
-                  <ClientSideDate dateString={ticket.updated} />
+                  <TimeAgo dateString={ticket.updated} />
                 </p>
               </div>
             </div>

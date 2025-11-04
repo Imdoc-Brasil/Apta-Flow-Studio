@@ -7,7 +7,7 @@ export const initialTicketsData = [
     client: 'Innovate Inc.',
     priority: 'Alta',
     status: 'Aberto',
-    updated: '2024-07-21 10:30',
+    updated: new Date('2024-07-21T10:30:00').toISOString(),
     description:
       'Ao tentar acessar o portal do cliente, recebo uma mensagem de "usuário ou senha inválida", mas minhas credenciais estão corretas. Já tentei limpar o cache e usar outro navegador.',
   },
@@ -17,7 +17,7 @@ export const initialTicketsData = [
     client: 'Solutions Co.',
     priority: 'Média',
     status: 'Em Progresso',
-    updated: '2024-07-21 09:15',
+    updated: new Date('2024-07-21T09:15:00').toISOString(),
     description:
       'Gostaríamos de solicitar a implementação de um tema escuro na plataforma para melhorar o conforto visual durante o uso noturno.',
   },
@@ -27,7 +27,7 @@ export const initialTicketsData = [
     client: 'Stellar Tech',
     priority: 'Baixa',
     status: 'Aberto',
-    updated: '2024-07-20 16:00',
+    updated: new Date('2024-07-20T16:00:00').toISOString(),
     description:
       'Tenho uma dúvida sobre um item que apareceu na nossa última fatura. Podemos agendar uma chamada para esclarecer?',
   },
@@ -37,7 +37,7 @@ export const initialTicketsData = [
     client: 'Quantum Dynamics',
     priority: 'Alta',
     status: 'Resolvido',
-    updated: '2024-07-19 11:00',
+    updated: new Date('2024-07-19T11:00:00').toISOString(),
     description:
       'O endpoint GET /api/v1/data está retornando um erro 500 Internal Server Error desde ontem. Isso está impactando nossa integração.',
   },
@@ -47,7 +47,7 @@ export const initialTicketsData = [
     client: 'Apex Innovations',
     priority: 'Baixa',
     status: 'Fechado',
-    updated: '2024-07-18 14:45',
+    updated: new Date('2024-07-18T14:45:00').toISOString(),
     description:
       'Estamos tentando integrar nosso sistema com a API de vocês e precisamos de ajuda para entender o fluxo de autenticação OAuth2.',
   },
@@ -63,7 +63,10 @@ type TicketStore = {
 }
 
 export const useTicketStore = create<TicketStore>((set) => ({
-  tickets: [...initialTicketsData],
+  tickets: [...initialTicketsData].map((ticket) => ({
+    ...ticket,
+    updated: new Date(ticket.updated).toISOString(),
+  })),
   addTicket: (newTicket) =>
     set((state) => ({
       tickets: [
@@ -71,7 +74,7 @@ export const useTicketStore = create<TicketStore>((set) => ({
           ...newTicket,
           id: `TKT-${Math.random().toString(36).substring(2, 5).toUpperCase()}`,
           status: 'Aberto',
-          updated: new Date().toISOString().replace('T', ' ').substring(0, 16),
+          updated: new Date().toISOString(),
         },
         ...state.tickets,
       ],
