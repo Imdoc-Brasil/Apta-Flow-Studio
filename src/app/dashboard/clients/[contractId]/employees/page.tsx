@@ -109,11 +109,11 @@ export default function EmployeesPage() {
                                 <Input id="sector" name="sector" className="col-span-3" required />
                             </div>
                         </div>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+                            <Button type="submit">Salvar Colaborador</Button>
+                        </DialogFooter>
                     </form>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-                        <Button type="submit" form="add-employee-form">Salvar Colaborador</Button>
-                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </CardTitle>

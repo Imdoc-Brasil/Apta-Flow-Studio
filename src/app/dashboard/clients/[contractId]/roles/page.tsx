@@ -74,11 +74,11 @@ export default function RolesPage() {
                                 <Textarea id="description" name="description" className="col-span-3" required/>
                             </div>
                         </div>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+                            <Button type="submit">Salvar</Button>
+                        </DialogFooter>
                     </form>
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-                        <Button type="submit" form="add-role-form">Salvar</Button>
-                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </CardTitle>

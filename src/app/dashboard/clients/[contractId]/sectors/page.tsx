@@ -73,11 +73,11 @@ export default function SectorsPage() {
                             <Textarea id="description" name="description" className="col-span-3" required/>
                         </div>
                     </div>
+                     <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+                        <Button type="submit">Salvar</Button>
+                    </DialogFooter>
                 </form>
-                 <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-                    <Button type="submit" form="add-sector-form">Salvar</Button>
-                </DialogFooter>
             </DialogContent>
           </Dialog>
         </CardTitle>
