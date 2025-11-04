@@ -161,7 +161,7 @@ export default function Dashboard() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Novos Funcionários</CardTitle>
+            <CardTitle>Novos Staffs</CardTitle>
             <CardDescription>
               Dando as boas-vindas aos mais novos membros da nossa equipe.
             </CardDescription>

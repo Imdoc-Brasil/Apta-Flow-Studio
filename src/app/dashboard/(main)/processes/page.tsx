@@ -58,8 +58,8 @@ import {
 } from '@/components/ui/popover'
 import { Calendar as CalendarComponent } from '@/components/ui/calendar'
 import {
-  initialEmployeesData,
-  type Employee,
+  initialStaffsData,
+  type Staff,
 } from '@/app/dashboard/(main)/employees/page'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
@@ -138,7 +138,7 @@ const TaskCard = ({
   }
 
   const assignedMembers =
-    initialEmployeesData.filter((emp) =>
+    initialStaffsData.filter((emp) =>
       task.assignedTo?.includes(emp.email)
     ) ?? []
 
@@ -217,31 +217,31 @@ const TaskCard = ({
                     </div>
                     <Separator />
                     <div className='flex flex-col gap-2'>
-                      {initialEmployeesData.map((employee) => {
+                      {initialStaffsData.map((staff) => {
                         const isAssigned = task.assignedTo?.includes(
-                          employee.email
+                          staff.email
                         )
                         return (
                           <div
-                            key={employee.email}
+                            key={staff.email}
                             className='flex items-center justify-between'
                           >
                             <div className='flex items-center gap-2'>
                               <Avatar className='h-8 w-8'>
-                                <AvatarImage src={employee.avatar} />
+                                <AvatarImage src={staff.avatar} />
                                 <AvatarFallback>
-                                  {employee.fallback}
+                                  {staff.fallback}
                                 </AvatarFallback>
                               </Avatar>
                               <span className='text-sm font-medium'>
-                                {employee.name}
+                                {staff.name}
                               </span>
                             </div>
                             <Button
                               variant={isAssigned ? 'default' : 'outline'}
                               size='sm'
                               onClick={() =>
-                                onAssignMember(task.id, employee.email)
+                                onAssignMember(task.id, staff.email)
                               }
                             >
                               {isAssigned ? 'Remover' : 'Atribuir'}

@@ -25,7 +25,7 @@ import {
 const navItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Painel' },
   { href: '/dashboard/clients', icon: Briefcase, label: 'Clientes' },
-  { href: '/dashboard/employees', icon: Users, label: 'Funcionários' },
+  { href: '/dashboard/employees', icon: Users, label: 'Staffs' },
   { href: '/dashboard/services', icon: ClipboardList, label: 'Serviços' },
   { href: '/dashboard/risks', icon: ShieldAlert, label: 'Riscos' },
   { href: '/dashboard/documents', icon: FileText, label: 'Documentos' },

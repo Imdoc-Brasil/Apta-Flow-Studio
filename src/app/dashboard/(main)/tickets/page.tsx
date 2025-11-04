@@ -92,8 +92,8 @@ import {
 } from '@/components/ui/popover'
 import { Calendar as CalendarComponent } from '@/components/ui/calendar'
 import {
-  initialEmployeesData,
-  type Employee,
+  initialStaffsData,
+  type Staff,
 } from '@/app/dashboard/(main)/employees/page'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
@@ -171,7 +171,7 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
   }
 
   const assignedMembers =
-    initialEmployeesData.filter((emp) =>
+    initialStaffsData.filter((emp) =>
       ticket.assignedTo?.includes(emp.email)
     ) ?? []
 
@@ -340,31 +340,31 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
                     </div>
                     <Separator />
                     <div className='flex flex-col gap-2'>
-                      {initialEmployeesData.map((employee) => {
+                      {initialStaffsData.map((staff) => {
                         const isAssigned = ticket.assignedTo?.includes(
-                          employee.email
+                          staff.email
                         )
                         return (
                           <div
-                            key={employee.email}
+                            key={staff.email}
                             className='flex items-center justify-between'
                           >
                             <div className='flex items-center gap-2'>
                               <Avatar className='h-8 w-8'>
-                                <AvatarImage src={employee.avatar} />
+                                <AvatarImage src={staff.avatar} />
                                 <AvatarFallback>
-                                  {employee.fallback}
+                                  {staff.fallback}
                                 </AvatarFallback>
                               </Avatar>
                               <span className='text-sm font-medium'>
-                                {employee.name}
+                                {staff.name}
                               </span>
                             </div>
                             <Button
                               variant={isAssigned ? 'default' : 'outline'}
                               size='sm'
                               onClick={() =>
-                                handleAssignMember(ticket.id, employee.email)
+                                handleAssignMember(ticket.id, staff.email)
                               }
                             >
                               {isAssigned ? 'Remover' : 'Atribuir'}
@@ -840,27 +840,27 @@ export default function TicketsPage() {
                                     </div>
                                     <Separator />
                                     <div className='flex flex-col gap-2'>
-                                      {initialEmployeesData.map((employee) => {
+                                      {initialStaffsData.map((staff) => {
                                         const isAssigned =
                                           ticket.assignedTo?.includes(
-                                            employee.email
+                                            staff.email
                                           )
                                         return (
                                           <div
-                                            key={employee.email}
+                                            key={staff.email}
                                             className='flex items-center justify-between'
                                           >
                                             <div className='flex items-center gap-2'>
                                               <Avatar className='h-8 w-8'>
                                                 <AvatarImage
-                                                  src={employee.avatar}
+                                                  src={staff.avatar}
                                                 />
                                                 <AvatarFallback>
-                                                  {employee.fallback}
+                                                  {staff.fallback}
                                                 </AvatarFallback>
                                               </Avatar>
                                               <span className='text-sm font-medium'>
-                                                {employee.name}
+                                                {staff.name}
                                               </span>
                                             </div>
                                             <Button
@@ -873,7 +873,7 @@ export default function TicketsPage() {
                                               onClick={() =>
                                                 handleAssignMember(
                                                   ticket.id,
-                                                  employee.email
+                                                  staff.email
                                                 )
                                               }
                                             >

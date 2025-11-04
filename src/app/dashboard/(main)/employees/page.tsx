@@ -39,7 +39,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 
-export const initialEmployeesData = [
+export const initialStaffsData = [
   {
     name: 'Sarah Chen',
     role: 'Gerente de Projeto Principal',
@@ -78,13 +78,13 @@ export const initialEmployeesData = [
   },
 ]
 
-type Employee = (typeof initialEmployeesData)[0]
+export type Staff = (typeof initialStaffsData)[0]
 
-export default function EmployeesPage() {
-  const [employees, setEmployees] = useState(initialEmployeesData)
+export default function StaffsPage() {
+  const [staffs, setStaffs] = useState(initialStaffsData)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
-  const handleAddEmployee = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleAddStaff = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
     const name = formData.get('name') as string
@@ -95,7 +95,7 @@ export default function EmployeesPage() {
       .substring(0, 2)
       .toUpperCase()
 
-    const newEmployee: Employee = {
+    const newStaff: Staff = {
       name,
       role: formData.get('role') as string,
       email: formData.get('email') as string,
@@ -104,7 +104,7 @@ export default function EmployeesPage() {
       avatar: `https://i.pravatar.cc/150?u=${Math.random()}`,
       fallback,
     }
-    setEmployees((prev) => [newEmployee, ...prev])
+    setStaffs((prev) => [newStaff, ...prev])
     setIsDialogOpen(false)
   }
 
@@ -113,9 +113,9 @@ export default function EmployeesPage() {
       <CardHeader>
         <div className='flex items-center justify-between'>
           <div>
-            <CardTitle>Hub de Funcionários</CardTitle>
+            <CardTitle>Hub de Staffs</CardTitle>
             <CardDescription>
-              Gerencie os funcionários da sua empresa.
+              Gerencie os staffs da sua empresa.
             </CardDescription>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -123,18 +123,18 @@ export default function EmployeesPage() {
               <Button size='sm' className='h-8 gap-1'>
                 <PlusCircle className='h-3.5 w-3.5' />
                 <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
-                  Adicionar Funcionário
+                  Adicionar Staff
                 </span>
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Adicionar Novo Funcionário</DialogTitle>
+                <DialogTitle>Adicionar Novo Staff</DialogTitle>
                 <DialogDescription>
                   Preencha os detalhes para adicionar um novo membro à equipe.
                 </DialogDescription>
               </DialogHeader>
-              <form id='add-employee-form' onSubmit={handleAddEmployee}>
+              <form id='add-staff-form' onSubmit={handleAddStaff}>
                 <div className='grid gap-4 py-4'>
                   <div className='grid grid-cols-4 items-center gap-4'>
                     <Label htmlFor='name' className='text-right'>
@@ -185,8 +185,8 @@ export default function EmployeesPage() {
                 >
                   Cancelar
                 </Button>
-                <Button type='submit' form='add-employee-form'>
-                  Salvar Funcionário
+                <Button type='submit' form='add-staff-form'>
+                  Salvar Staff
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -197,7 +197,7 @@ export default function EmployeesPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Funcionário</TableHead>
+              <TableHead>Staff</TableHead>
               <TableHead className='hidden md:table-cell'>Cargo</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>
@@ -206,32 +206,32 @@ export default function EmployeesPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {employees.map((employee) => (
-              <TableRow key={employee.email}>
+            {staffs.map((staff) => (
+              <TableRow key={staff.email}>
                 <TableCell>
                   <div className='flex items-center gap-3'>
                     <Avatar className='h-9 w-9'>
-                      <AvatarImage src={employee.avatar} alt={employee.name} />
-                      <AvatarFallback>{employee.fallback}</AvatarFallback>
+                      <AvatarImage src={staff.avatar} alt={staff.name} />
+                      <AvatarFallback>{staff.fallback}</AvatarFallback>
                     </Avatar>
                     <div className='grid gap-1'>
-                      <p className='font-medium leading-none'>{employee.name}</p>
+                      <p className='font-medium leading-none'>{staff.name}</p>
                       <p className='text-sm text-muted-foreground'>
-                        {employee.email}
+                        {staff.email}
                       </p>
                     </div>
                   </div>
                 </TableCell>
                 <TableCell className='hidden md:table-cell'>
-                  {employee.role}
+                  {staff.role}
                 </TableCell>
                 <TableCell>
                   <Badge
                     variant={
-                      employee.status === 'Ativo' ? 'secondary' : 'outline'
+                      staff.status === 'Ativo' ? 'secondary' : 'outline'
                     }
                   >
-                    {employee.status}
+                    {staff.status}
                   </Badge>
                 </TableCell>
                 <TableCell>
