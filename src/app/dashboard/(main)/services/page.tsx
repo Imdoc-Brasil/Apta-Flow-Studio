@@ -24,6 +24,8 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
 
 // --- Mock Data ---
 
@@ -59,7 +61,7 @@ const outsourcing = [
 ];
 
 
-function ServiceTableActions() {
+function ServiceTableActions({ buttonLabel }: { buttonLabel: string }) {
     return (
         <div className="ml-auto flex items-center gap-2">
             <Button size="sm" variant="outline" className="h-8 gap-1">
@@ -68,16 +70,36 @@ function ServiceTableActions() {
             </Button>
             <Button size="sm" className="h-8 gap-1">
                 <PlusCircle className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Adicionar Serviço</span>
+                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">{buttonLabel}</span>
             </Button>
         </div>
     )
 }
 
 function MedicalExamsActions() {
+    const { toast } = useToast();
+    const [isAdjustmentDialogOpen, setIsAdjustmentDialogOpen] = useState(false);
+
+    const handleAdjustment = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        const formData = new FormData(event.currentTarget);
+        const adjustment = formData.get('adjustment') as string;
+
+        // Here you would typically apply the adjustment to the prices
+        // For now, we'll just show a toast notification
+
+        toast({
+            title: "Reajuste Aplicado!",
+            description: `O reajuste de ${adjustment}% foi aplicado a todos os exames.`,
+        });
+        
+        setIsAdjustmentDialogOpen(false);
+    };
+
+
     return (
         <div className="ml-auto flex items-center gap-2">
-            <Dialog>
+            <Dialog open={isAdjustmentDialogOpen} onOpenChange={setIsAdjustmentDialogOpen}>
                 <DialogTrigger asChild>
                     <Button size="sm" variant="outline" className="h-8 gap-1">
                         <Percent className="h-3.5 w-3.5" />
@@ -85,23 +107,25 @@ function MedicalExamsActions() {
                     </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Reajuste Anual de Preços</DialogTitle>
-                        <DialogDescription>
-                            Aplique um reajuste percentual a todos os exames médicos. Os novos preços serão refletidos em todos os novos contratos.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="adjustment" className="text-right">
-                                Percentual (%)
-                            </Label>
-                            <Input id="adjustment" type="number" placeholder="Ex: 10" className="col-span-3" />
+                     <form onSubmit={handleAdjustment}>
+                        <DialogHeader>
+                            <DialogTitle>Reajuste Anual de Preços</DialogTitle>
+                            <DialogDescription>
+                                Aplique um reajuste percentual a todos os exames médicos. Os novos preços serão refletidos em todos os novos contratos.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="adjustment" className="text-right">
+                                    Percentual (%)
+                                </Label>
+                                <Input id="adjustment" name="adjustment" type="number" placeholder="Ex: 10" className="col-span-3" required/>
+                            </div>
                         </div>
-                    </div>
-                    <DialogFooter>
-                        <Button type="submit">Aplicar Reajuste</Button>
-                    </DialogFooter>
+                        <DialogFooter>
+                            <Button type="submit">Aplicar Reajuste</Button>
+                        </DialogFooter>
+                    </form>
                 </DialogContent>
             </Dialog>
             <Button size="sm" variant="outline" className="h-8 gap-1">
@@ -173,7 +197,7 @@ export default function ServicesPage() {
             <CardHeader>
               <CardTitle>Programas e Laudos de SST</CardTitle>
               <CardDescription>Serviços cobrados por demanda para emissão de programas e laudos de segurança do trabalho.</CardDescription>
-               <div className="pt-4"><ServiceTableActions /></div>
+               <div className="pt-4"><ServiceTableActions buttonLabel="Adicionar Programa" /></div>
             </CardHeader>
             <CardContent>
               <Table>
@@ -207,7 +231,7 @@ export default function ServicesPage() {
             <CardHeader>
               <CardTitle>Assessoria Técnica</CardTitle>
               <CardDescription>Contratos de recorrência mensal para assessoria técnica especializada.</CardDescription>
-               <div className="pt-4"><ServiceTableActions /></div>
+               <div className="pt-4"><ServiceTableActions buttonLabel="Adicionar Contrato" /></div>
             </CardHeader>
             <CardContent>
               <Table>
@@ -243,7 +267,7 @@ export default function ServicesPage() {
             <CardHeader>
               <CardTitle>Aluguel de Unidade Móvel e Equipamentos</CardTitle>
               <CardDescription>Disponibilização de equipamentos e unidades móveis para atendimento in-company.</CardDescription>
-               <div className="pt-4"><ServiceTableActions /></div>
+               <div className="pt-4"><ServiceTableActions buttonLabel="Adicionar Item" /></div>
             </CardHeader>
             <CardContent>
               <Table>
@@ -275,7 +299,7 @@ export default function ServicesPage() {
             <CardHeader>
               <CardTitle>Terceirização de SESMT</CardTitle>
               <CardDescription>Alocação de profissionais de Saúde e Segurança do Trabalho para compor o SESMT do cliente.</CardDescription>
-               <div className="pt-4"><ServiceTableActions /></div>
+               <div className="pt-4"><ServiceTableActions buttonLabel="Adicionar Profissional" /></div>
             </CardHeader>
             <CardContent>
               <Table>
