@@ -492,59 +492,133 @@ export default function TicketsPage() {
                 </TableHeader>
                 <TableBody>
                   {tickets.map((ticket) => (
-                    <TableRow key={ticket.id}>
-                      <TableCell className='font-medium'>{ticket.id}</TableCell>
-                      <TableCell>{ticket.subject}</TableCell>
-                      <TableCell className='hidden md:table-cell'>
-                        {ticket.client}
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            priorityVariant[
-                              ticket.priority as keyof typeof priorityVariant
-                            ]
-                          }
-                        >
-                          {ticket.priority}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            statusVariant[
-                              ticket.status as keyof typeof statusVariant
-                            ]
-                          }
-                        >
-                          {ticket.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className='hidden md:table-cell'>
-                        {ticket.updated}
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              aria-haspopup='true'
-                              size='icon'
-                              variant='ghost'
+                    <Dialog key={ticket.id}>
+                      <DialogTrigger asChild>
+                        <TableRow className='cursor-pointer'>
+                          <TableCell className='font-medium'>
+                            {ticket.id}
+                          </TableCell>
+                          <TableCell>{ticket.subject}</TableCell>
+                          <TableCell className='hidden md:table-cell'>
+                            {ticket.client}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                priorityVariant[
+                                  ticket.priority as keyof typeof priorityVariant
+                                ]
+                              }
                             >
-                              <MoreHorizontal className='h-4 w-4' />
-                              <span className='sr-only'>Alternar menu</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align='end'>
-                            <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                            <DropdownMenuItem>Ver Detalhes</DropdownMenuItem>
-                            <DropdownMenuItem>Atribuir</DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem>Fechar Ticket</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
+                              {ticket.priority}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                statusVariant[
+                                  ticket.status as keyof typeof statusVariant
+                                ]
+                              }
+                            >
+                              {ticket.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className='hidden md:table-cell'>
+                            {ticket.updated}
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger
+                                asChild
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <Button
+                                  aria-haspopup='true'
+                                  size='icon'
+                                  variant='ghost'
+                                >
+                                  <MoreHorizontal className='h-4 w-4' />
+                                  <span className='sr-only'>Alternar menu</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent
+                                align='end'
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                                <DropdownMenuItem>
+                                  Ver Detalhes
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>Atribuir</DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem>
+                                  Fechar Ticket
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      </DialogTrigger>
+                      <DialogContent className='sm:max-w-2xl'>
+                        <DialogHeader>
+                          <DialogTitle className='text-2xl font-bold'>
+                            {ticket.subject}
+                          </DialogTitle>
+                          <DialogDescription>
+                            Na coluna {ticket.status} | Cliente: {ticket.client}{' '}
+                            ({ticket.id})
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className='grid grid-cols-3 gap-8 py-4'>
+                          <div className='col-span-2 space-y-6'>
+                            <div className='space-y-2'>
+                              <div className='flex items-center gap-2'>
+                                <AlignLeft className='h-5 w-5 text-muted-foreground' />
+                                <h3 className='font-semibold'>Descrição</h3>
+                              </div>
+                              <Textarea
+                                placeholder='Adicione uma descrição mais detalhada...'
+                                defaultValue={ticket.description}
+                                className='ml-7 h-24'
+                                readOnly
+                              />
+                            </div>
+                          </div>
+                          <div className='col-span-1 space-y-4'>
+                            <h3 className='text-sm font-semibold'>
+                              Adicionar ao cartão
+                            </h3>
+                            <div className='flex flex-col space-y-2'>
+                              <Button
+                                variant='secondary'
+                                className='justify-start'
+                              >
+                                <UserPlus className='mr-2 h-4 w-4' /> Membros
+                              </Button>
+                              <Button
+                                variant='secondary'
+                                className='justify-start'
+                              >
+                                <Tag className='mr-2 h-4 w-4' /> Etiquetas
+                              </Button>
+                              <Button
+                                variant='secondary'
+                                className='justify-start'
+                              >
+                                <Calendar className='mr-2 h-4 w-4' /> Datas
+                              </Button>
+                              <Button
+                                variant='secondary'
+                                className='justify-start'
+                              >
+                                <Paperclip className='mr-2 h-4 w-4' /> Anexo
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   ))}
                 </TableBody>
               </Table>
