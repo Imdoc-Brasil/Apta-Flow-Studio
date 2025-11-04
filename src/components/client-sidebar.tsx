@@ -30,14 +30,15 @@ import {
   BarChart3,
   FileHeart,
   AlertTriangle,
-  ShieldCheck as ShieldCheckIcon, // Renamed to avoid conflict
   ArrowLeft,
 } from 'lucide-react';
 import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarMenuItem,
   SidebarMenu,
   SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarHeader,
 } from '@/components/ui/sidebar';
 import {
   Collapsible,
@@ -82,10 +83,9 @@ export function ClientSidebar() {
 
   const sstNavItems = [
     { href: `${basePath}/pgr`, label: 'Gestão de Riscos (PGR)', icon: ShieldAlert },
-    { href: `${basePath}/pcmso`, label: 'Gestão de PCMSO', icon: BookUser },
+    { href: '~/dashboard/clients/CTR-2024-001/pcmso', label: 'Gestão de PCMSO', icon: BookUser },
     { href: `${basePath}/asos`, label: 'Gestão de ASOs', icon: ClipboardCheck },
     { href: `${basePath}/periodicos`, label: 'Gestão de Periódicos', icon: CalendarCheck },
-    { href: `${basePath}/sla`, label: 'Gestão de SLA', icon: ShieldCheckIcon },
     { href: `${basePath}/epis`, label: 'Gestão de EPIs', icon: HardHat },
     { href: `${basePath}/epc`, label: 'Gestão de EPC', icon: Factory },
     { href: `${basePath}/trainings`, label: 'Gestão de Treinamentos', icon: GraduationCap },
@@ -165,24 +165,24 @@ export function ClientSidebar() {
         </SidebarMenuItem>
       ))}
 
-      <Collapsible asChild open={isContratoOpen} onOpenChange={setIsContratoOpen}>
-        <li>
-          <CollapsibleTrigger asChild>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                  isActive={isContratoActive}
-                  tooltip="Gestão de Contrato"
-                  className="justify-between"
-                >
-                  <div className="flex items-center gap-2">
-                    <FileText />
-                    <span>Gestão de Contrato</span>
-                  </div>
-                  <ChevronRight className={cn("h-4 w-4 transition-transform", isContratoOpen && "rotate-90")} />
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
+      <li className="relative">
+          <Collapsible open={isContratoOpen} onOpenChange={setIsContratoOpen}>
+            <CollapsibleTrigger asChild>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                    isActive={isContratoActive}
+                    tooltip="Gestão de Contrato"
+                    className="justify-between"
+                  >
+                    <div className="flex items-center gap-2">
+                      <FileText />
+                      <span>Gestão de Contrato</span>
+                    </div>
+                    <ChevronRight className={cn("h-4 w-4 transition-transform", isContratoOpen && "rotate-90")} />
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+            </CollapsibleTrigger>
+            <CollapsibleContent asChild>
               <ul className="pl-6 pt-1 space-y-1">
                   {contratoNavItems.map((item) => (
                       <SidebarMenuItem key={item.label}>
@@ -199,12 +199,12 @@ export function ClientSidebar() {
                       </SidebarMenuItem>
                   ))}
               </ul>
-          </CollapsibleContent>
+            </CollapsibleContent>
+          </Collapsible>
         </li>
-      </Collapsible>
 
-      <Collapsible asChild open={isEstruturaOpen} onOpenChange={setIsEstruturaOpen}>
-        <li>
+       <li className="relative">
+        <Collapsible open={isEstruturaOpen} onOpenChange={setIsEstruturaOpen}>
           <CollapsibleTrigger asChild>
             <SidebarMenuItem>
               <SidebarMenuButton
@@ -220,7 +220,7 @@ export function ClientSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
           </CollapsibleTrigger>
-          <CollapsibleContent>
+          <CollapsibleContent asChild>
               <ul className="pl-6 pt-1 space-y-1">
                   {estruturaNavItems.map((item) => (
                       <SidebarMenuItem key={item.label}>
@@ -238,11 +238,11 @@ export function ClientSidebar() {
                   ))}
               </ul>
           </CollapsibleContent>
-        </li>
-      </Collapsible>
+        </Collapsible>
+      </li>
       
-      <Collapsible asChild open={isSaudeOpen} onOpenChange={setIsSaudeOpen}>
-        <li>
+      <li className="relative">
+        <Collapsible open={isSaudeOpen} onOpenChange={setIsSaudeOpen}>
           <CollapsibleTrigger asChild>
             <SidebarMenuItem>
               <SidebarMenuButton
@@ -258,7 +258,7 @@ export function ClientSidebar() {
                 </SidebarMenuButton>
             </SidebarMenuItem>
           </CollapsibleTrigger>
-          <CollapsibleContent>
+          <CollapsibleContent asChild>
               <ul className="pl-6 pt-1 space-y-1">
                   {saudeNavItems.map((item) => (
                       <SidebarMenuItem key={item.label}>
@@ -276,12 +276,11 @@ export function ClientSidebar() {
                   ))}
               </ul>
           </CollapsibleContent>
-        </li>
-      </Collapsible>
+        </Collapsible>
+      </li>
 
-
-      <Collapsible asChild open={isSstOpen} onOpenChange={setIsSstOpen}>
-        <li>
+      <li className="relative">
+        <Collapsible open={isSstOpen} onOpenChange={setIsSstOpen}>
           <CollapsibleTrigger asChild>
             <SidebarMenuItem>
               <SidebarMenuButton
@@ -297,7 +296,7 @@ export function ClientSidebar() {
                 </SidebarMenuButton>
             </SidebarMenuItem>
           </CollapsibleTrigger>
-          <CollapsibleContent>
+          <CollapsibleContent asChild>
               <ul className="pl-6 pt-1 space-y-1">
                   {sstNavItems.filter(item => !item.href.includes('pgr-inventory') && !item.href.includes('pgr-action-plan')).map((item) => (
                       <SidebarMenuItem key={item.label}>
@@ -315,8 +314,8 @@ export function ClientSidebar() {
                   ))}
               </ul>
           </CollapsibleContent>
-        </li>
-      </Collapsible>
+        </Collapsible>
+      </li>
     </SidebarMenu>
   );
 }
