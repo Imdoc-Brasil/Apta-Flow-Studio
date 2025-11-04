@@ -133,48 +133,46 @@ function ClientSideDate({ dateString }: { dateString: string }) {
 const TicketCard = ({ ticket, moveTicket }: { ticket: Ticket; moveTicket: (ticketId: string, newStatus: TicketStatus) => void; }) => {
   return (
     <Dialog>
-      <DropdownMenu>
-        <Card>
-          <DialogTrigger asChild>
-            <div className="cursor-pointer">
-              <CardHeader className="p-4 flex flex-row items-start justify-between">
-                <div className="space-y-1">
-                  <CardTitle className="text-base font-semibold">{ticket.subject}</CardTitle>
-                  <CardDescription className="text-xs">{ticket.client} - {ticket.id}</CardDescription>
-                </div>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={(e) => e.stopPropagation()}>
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-              </CardHeader>
-              <CardContent className="p-4 pt-0">
-                <div className="flex justify-between items-center">
-                  <Badge variant={priorityVariant[ticket.priority as keyof typeof priorityVariant]}>
-                    {ticket.priority}
-                  </Badge>
-                  <p className="text-xs text-muted-foreground">
+      <Card>
+        <div className="flex flex-col h-full">
+            <DialogTrigger asChild>
+              <div className="flex-grow cursor-pointer">
+                <CardHeader className="p-4 pb-2">
+                  <CardTitle className="text-base font-semibold leading-tight hover:underline">{ticket.subject}</CardTitle>
+                  <CardDescription className="text-xs pt-1">{ticket.client} - {ticket.id}</CardDescription>
+                </CardHeader>
+              </div>
+            </DialogTrigger>
+            <CardContent className="p-4 pt-2 flex items-end justify-between">
+              <Badge variant={priorityVariant[ticket.priority as keyof typeof priorityVariant]}>
+                {ticket.priority}
+              </Badge>
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-muted-foreground">
                     <ClientSideDate dateString={ticket.updated} />
-                  </p>
-                </div>
-              </CardContent>
-            </div>
-          </DialogTrigger>
-
-          <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
-            <DropdownMenuLabel>Mover para</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {kanbanColumns
-              .filter((col) => col !== ticket.status)
-              .map((newStatus) => (
-                <DropdownMenuItem key={newStatus} onClick={() => moveTicket(ticket.id, newStatus)}>
-                  {newStatus}
-                </DropdownMenuItem>
-              ))}
-          </DropdownMenuContent>
-        </Card>
-      </DropdownMenu>
-      
+                </p>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={(e) => e.stopPropagation()}>
+                        <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenuLabel>Mover para</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {kanbanColumns
+                        .filter((col) => col !== ticket.status)
+                        .map((newStatus) => (
+                        <DropdownMenuItem key={newStatus} onClick={() => moveTicket(ticket.id, newStatus)}>
+                            {newStatus}
+                        </DropdownMenuItem>
+                        ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </CardContent>
+        </div>
+      </Card>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{ticket.subject}</DialogTitle>
@@ -437,5 +435,3 @@ export default function TicketsPage() {
     </div>
   );
 }
-
-    
