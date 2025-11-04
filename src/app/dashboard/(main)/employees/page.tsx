@@ -103,9 +103,12 @@ export default function StaffsPage() {
       .substring(0, 2)
       .toUpperCase()
 
+    const selectedProfileId = formData.get('profile') as string
+    const selectedProfile = initialProfiles.find(p => p.id === selectedProfileId)
+
     const newStaff: Staff = {
       name,
-      profile: formData.get('profile') as string,
+      profile: selectedProfile?.assinatura || '',
       email: formData.get('email') as string,
       phone: formData.get('phone') as string,
       status: 'Ativo',
@@ -165,7 +168,7 @@ export default function StaffsPage() {
                       </SelectTrigger>
                       <SelectContent>
                         {initialProfiles.map((profile) => (
-                          <SelectItem key={profile.id} value={profile.name}>
+                          <SelectItem key={profile.id} value={profile.id}>
                             {profile.name}
                           </SelectItem>
                         ))}

@@ -41,29 +41,29 @@ import { Label } from '@/components/ui/label'
 interface Profile {
   id: string
   name: string
-  permissions: string // Placeholder for now
+  assinatura: string
 }
 
 export const initialProfiles: Profile[] = [
   {
     id: '1',
     name: 'Gerente de Projeto Principal',
-    permissions: 'Acesso total',
+    assinatura: 'Gerente de Projeto Principal',
   },
   {
     id: '2',
     name: 'Engenheiro de Software Sênior',
-    permissions: 'Acesso de desenvolvimento',
+    assinatura: 'Engenheiro de Software Sênior',
   },
   {
     id: '3',
     name: 'Especialista de Suporte',
-    permissions: 'Acesso a tickets',
+    assinatura: 'Especialista de Suporte',
   },
   {
     id: '4',
     name: 'Engenheiro de DevOps',
-    permissions: 'Acesso a infraestrutura',
+    assinatura: 'Engenheiro de DevOps',
   },
 ]
 
@@ -73,37 +73,50 @@ export default function ProfilesPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null)
   const [profileName, setProfileName] = useState('')
+  const [profileAssinatura, setProfileAssinatura] = useState('')
 
   const handleAddProfile = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!profileName) return
+    if (!profileName || !profileAssinatura) return
     const newProfile: Profile = {
       id: `profile-${Date.now()}`,
       name: profileName,
-      permissions: 'Acesso padrão', // Default placeholder
+      assinatura: profileAssinatura,
     }
     setProfiles((prev) => [...prev, newProfile])
     setIsAddDialogOpen(false)
     setProfileName('')
+    setProfileAssinatura('')
   }
 
   const handleEditProfile = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!currentProfile || !profileName) return
+    if (!currentProfile || !profileName || !profileAssinatura) return
     setProfiles((prev) =>
       prev.map((p) =>
-        p.id === currentProfile.id ? { ...p, name: profileName } : p
+        p.id === currentProfile.id
+          ? { ...p, name: profileName, assinatura: profileAssinatura }
+          : p
       )
     )
     setIsEditDialogOpen(false)
     setCurrentProfile(null)
     setProfileName('')
+    setProfileAssinatura('')
   }
 
   const openEditDialog = (profile: Profile) => {
     setCurrentProfile(profile)
     setProfileName(profile.name)
+    setProfileAssinatura(profile.assinatura)
     setIsEditDialogOpen(true)
+  }
+
+  const openAddDialog = () => {
+    setCurrentProfile(null)
+    setProfileName('')
+    setProfileAssinatura('')
+    setIsAddDialogOpen(true)
   }
 
   return (
@@ -118,7 +131,7 @@ export default function ProfilesPage() {
           </div>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button size='sm' className='h-8 gap-1'>
+              <Button size='sm' className='h-8 gap-1' onClick={openAddDialog}>
                 <PlusCircle className='h-3.5 w-3.5' />
                 <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
                   Adicionar Perfil
@@ -147,6 +160,19 @@ export default function ProfilesPage() {
                       required
                     />
                   </div>
+                  <div className='grid grid-cols-4 items-center gap-4'>
+                    <Label htmlFor='assinatura' className='text-right'>
+                      Assinatura
+                    </Label>
+                    <Input
+                      id='assinatura'
+                      name='assinatura'
+                      value={profileAssinatura}
+                      onChange={(e) => setProfileAssinatura(e.target.value)}
+                      className='col-span-3'
+                      required
+                    />
+                  </div>
                 </div>
               </form>
               <DialogFooter>
@@ -169,7 +195,7 @@ export default function ProfilesPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Nome do Perfil</TableHead>
-              <TableHead>Permissões de Acesso</TableHead>
+              <TableHead>Assinatura</TableHead>
               <TableHead>
                 <span className='sr-only'>Ações</span>
               </TableHead>
@@ -180,7 +206,7 @@ export default function ProfilesPage() {
               <TableRow key={profile.id}>
                 <TableCell className='font-medium'>{profile.name}</TableCell>
                 <TableCell>
-                  <Badge variant='outline'>{profile.permissions}</Badge>
+                  <Badge variant='outline'>{profile.assinatura}</Badge>
                 </TableCell>
                 <TableCell>
                   <DropdownMenu>
@@ -224,6 +250,19 @@ export default function ProfilesPage() {
                   name='edit-name'
                   value={profileName}
                   onChange={(e) => setProfileName(e.target.value)}
+                  className='col-span-3'
+                  required
+                />
+              </div>
+              <div className='grid grid-cols-4 items-center gap-4'>
+                <Label htmlFor='edit-assinatura' className='text-right'>
+                  Assinatura
+                </Label>
+                <Input
+                  id='edit-assinatura'
+                  name='edit-assinatura'
+                  value={profileAssinatura}
+                  onChange={(e) => setProfileAssinatura(e.target.value)}
                   className='col-span-3'
                   required
                 />
