@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { suggestProcessTool, SuggestProcessToolOutput } from '@/app/actions';
+import { suggestProcessTool, type SuggestProcessToolOutput } from '@/app/actions';
 import { Loader2, Wand2 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -100,7 +100,7 @@ export default function ProcessesPage() {
             <CardHeader>
                 <CardTitle>Sugestão</CardTitle>
                 <CardDescription>Recomendação da IA baseada no seu projeto.</CardDescription>
-            </Header>
+            </CardHeader>
             <CardContent className="min-h-[220px] flex items-center justify-center">
                 {loading && <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />}
                 {!loading && !result && <div className="text-center text-muted-foreground">Sua sugestão aparecerá aqui.</div>}

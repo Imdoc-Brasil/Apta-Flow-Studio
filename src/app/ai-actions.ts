@@ -5,3 +5,5 @@ import { suggestProcessTool as originalSuggestProcessTool, type SuggestProcessTo
 export async function suggestProcessTool(input: SuggestProcessToolInput): Promise<SuggestProcessToolOutput> {
     return originalSuggestProcessTool(input);
 }
+
+export type { SuggestProcessToolInput, SuggestProcessToolOutput };
