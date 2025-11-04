@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -54,6 +54,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu'
 import {
   Table,
@@ -1116,6 +1117,21 @@ export default function TicketsPage() {
   const { tickets, addTicket, setTickets } = useTicketStore()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null)
+  const [priorityFilter, setPriorityFilter] = useState<string[]>([])
+  const [labelFilter, setLabelFilter] = useState<string[]>([])
+
+  const filteredTickets = useMemo(() => {
+    return tickets.filter((ticket) => {
+      const priorityMatch =
+        priorityFilter.length === 0 || priorityFilter.includes(ticket.priority)
+
+      const labelMatch =
+        labelFilter.length === 0 ||
+        ticket.labels?.some((label) => labelFilter.includes(label.id))
+
+      return priorityMatch && labelMatch
+    })
+  }, [tickets, priorityFilter, labelFilter])
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -1204,10 +1220,56 @@ export default function TicketsPage() {
           </p>
         </div>
         <div className='flex gap-2'>
-          <Button variant='outline' size='sm' className='h-8 gap-1'>
-            <Filter className='h-3.5 w-3.5' />
-            <span>Filtrar</span>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant='outline' size='sm' className='h-8 gap-1'>
+                <Filter className='h-3.5 w-3.5' />
+                <span>Filtrar</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='end'>
+              <DropdownMenuLabel>Filtrar por Prioridade</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {(['Alta', 'Média', 'Baixa'] as const).map((priority) => (
+                <DropdownMenuCheckboxItem
+                  key={priority}
+                  checked={priorityFilter.includes(priority)}
+                  onCheckedChange={(checked) => {
+                    setPriorityFilter((prev) =>
+                      checked
+                        ? [...prev, priority]
+                        : prev.filter((p) => p !== priority)
+                    )
+                  }}
+                >
+                  {priority}
+                </DropdownMenuCheckboxItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Filtrar por Etiqueta</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {availableLabels.map((label) => (
+                <DropdownMenuCheckboxItem
+                  key={label.id}
+                  checked={labelFilter.includes(label.id)}
+                  onCheckedChange={(checked) => {
+                    setLabelFilter((prev) =>
+                      checked
+                        ? [...prev, label.id]
+                        : prev.filter((l) => l !== label.id)
+                    )
+                  }}
+                >
+                  <span
+                    className={`mr-2 px-1.5 py-0.5 text-xs rounded-full text-white ${label.color}`}
+                  >
+                    {label.name}
+                  </span>
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button size='sm' className='h-8 gap-1'>
@@ -1329,7 +1391,7 @@ export default function TicketsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {tickets.map((ticket) => (
+                  {filteredTickets.map((ticket) => (
                     <Dialog key={ticket.id}>
                       <DialogTrigger asChild>
                         <TableRow className='cursor-pointer'>
@@ -1434,7 +1496,7 @@ export default function TicketsPage() {
               <div className='grid flex-1 grid-cols-1 items-start gap-6 md:grid-cols-2 lg:grid-cols-4'>
                 <SortableContext items={kanbanColumns}>
                   {kanbanColumns.map((status) => {
-                    const columnTickets = tickets.filter(
+                    const columnTickets = filteredTickets.filter(
                       (ticket) => ticket.status === status
                     )
                     return (
