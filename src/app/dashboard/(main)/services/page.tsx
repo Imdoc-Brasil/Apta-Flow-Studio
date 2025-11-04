@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import {
@@ -61,14 +60,14 @@ const outsourcing = [
 ];
 
 
-function ServiceTableActions({ buttonLabel }: { buttonLabel: string }) {
+function ServiceTableActions({ buttonLabel, onAddClick }: { buttonLabel: string, onAddClick: () => void }) {
     return (
         <div className="ml-auto flex items-center gap-2">
             <Button size="sm" variant="outline" className="h-8 gap-1">
                 <File className="h-3.5 w-3.5" />
                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Exportar</span>
             </Button>
-            <Button size="sm" className="h-8 gap-1">
+            <Button size="sm" className="h-8 gap-1" onClick={onAddClick}>
                 <PlusCircle className="h-3.5 w-3.5" />
                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">{buttonLabel}</span>
             </Button>
@@ -76,17 +75,40 @@ function ServiceTableActions({ buttonLabel }: { buttonLabel: string }) {
     )
 }
 
-function MedicalExamsActions() {
+function AddServiceDialog({ open, onOpenChange, title, description }: { open: boolean, onOpenChange: (open: boolean) => void, title: string, description: string }) {
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{title}</DialogTitle>
+                    <DialogDescription>{description}</DialogDescription>
+                </DialogHeader>
+                <div className="py-4 text-center text-muted-foreground">
+                    O formulário para adicionar este serviço apareceria aqui.
+                </div>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+
+export default function ServicesPage() {
     const { toast } = useToast();
     const [isAdjustmentDialogOpen, setIsAdjustmentDialogOpen] = useState(false);
+    const [isAddExamDialogOpen, setIsAddExamDialogOpen] = useState(false);
+    const [isAddProgramDialogOpen, setIsAddProgramDialogOpen] = useState(false);
+    const [isAddContractDialogOpen, setIsAddContractDialogOpen] = useState(false);
+    const [isAddItemDialogOpen, setIsAddItemDialogOpen] = useState(false);
+    const [isAddProfessionalDialogOpen, setIsAddProfessionalDialogOpen] = useState(false);
+
 
     const handleAdjustment = (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
         const formData = new FormData(event.currentTarget);
         const adjustment = formData.get('adjustment') as string;
-
-        // Here you would typically apply the adjustment to the prices
-        // For now, we'll just show a toast notification
 
         toast({
             title: "Reajuste Aplicado!",
@@ -96,52 +118,6 @@ function MedicalExamsActions() {
         setIsAdjustmentDialogOpen(false);
     };
 
-
-    return (
-        <div className="ml-auto flex items-center gap-2">
-            <Dialog open={isAdjustmentDialogOpen} onOpenChange={setIsAdjustmentDialogOpen}>
-                <DialogTrigger asChild>
-                    <Button size="sm" variant="outline" className="h-8 gap-1">
-                        <Percent className="h-3.5 w-3.5" />
-                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Aplicar Reajuste Anual</span>
-                    </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
-                     <form onSubmit={handleAdjustment}>
-                        <DialogHeader>
-                            <DialogTitle>Reajuste Anual de Preços</DialogTitle>
-                            <DialogDescription>
-                                Aplique um reajuste percentual a todos os exames médicos. Os novos preços serão refletidos em todos os novos contratos.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                            <div className="grid grid-cols-4 items-center gap-4">
-                                <Label htmlFor="adjustment" className="text-right">
-                                    Percentual (%)
-                                </Label>
-                                <Input id="adjustment" name="adjustment" type="number" placeholder="Ex: 10" className="col-span-3" required/>
-                            </div>
-                        </div>
-                        <DialogFooter>
-                            <Button type="submit">Aplicar Reajuste</Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
-            <Button size="sm" variant="outline" className="h-8 gap-1">
-                <File className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Exportar</span>
-            </Button>
-            <Button size="sm" className="h-8 gap-1">
-                <PlusCircle className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Adicionar Exame</span>
-            </Button>
-        </div>
-    )
-}
-
-
-export default function ServicesPage() {
   return (
     <div className="grid flex-1 auto-rows-max gap-4">
         <div className="flex items-center gap-4">
@@ -163,7 +139,38 @@ export default function ServicesPage() {
             <CardHeader>
               <CardTitle>Exames Médicos Ocupacionais</CardTitle>
               <CardDescription>Tabela de preços e configurações para exames médicos conforme NR7.</CardDescription>
-              <div className="pt-4"><MedicalExamsActions /></div>
+              <div className="pt-4 flex items-center gap-2 ml-auto">
+                    <Dialog open={isAdjustmentDialogOpen} onOpenChange={setIsAdjustmentDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button size="sm" variant="outline" className="h-8 gap-1">
+                                <Percent className="h-3.5 w-3.5" />
+                                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Aplicar Reajuste Anual</span>
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-md">
+                            <form onSubmit={handleAdjustment}>
+                                <DialogHeader>
+                                    <DialogTitle>Reajuste Anual de Preços</DialogTitle>
+                                    <DialogDescription>
+                                        Aplique um reajuste percentual a todos os exames médicos. Os novos preços serão refletidos em todos os novos contratos.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="grid gap-4 py-4">
+                                    <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label htmlFor="adjustment" className="text-right">
+                                            Percentual (%)
+                                        </Label>
+                                        <Input id="adjustment" name="adjustment" type="number" placeholder="Ex: 10" className="col-span-3" required/>
+                                    </div>
+                                </div>
+                                <DialogFooter>
+                                    <Button type="submit">Aplicar Reajuste</Button>
+                                </DialogFooter>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
+                    <ServiceTableActions buttonLabel="Adicionar Exame" onAddClick={() => setIsAddExamDialogOpen(true)} />
+              </div>
             </CardHeader>
             <CardContent>
               <Table>
@@ -197,7 +204,7 @@ export default function ServicesPage() {
             <CardHeader>
               <CardTitle>Programas e Laudos de SST</CardTitle>
               <CardDescription>Serviços cobrados por demanda para emissão de programas e laudos de segurança do trabalho.</CardDescription>
-               <div className="pt-4"><ServiceTableActions buttonLabel="Adicionar Programa" /></div>
+               <div className="pt-4"><ServiceTableActions buttonLabel="Adicionar Programa" onAddClick={() => setIsAddProgramDialogOpen(true)} /></div>
             </CardHeader>
             <CardContent>
               <Table>
@@ -231,7 +238,7 @@ export default function ServicesPage() {
             <CardHeader>
               <CardTitle>Assessoria Técnica</CardTitle>
               <CardDescription>Contratos de recorrência mensal para assessoria técnica especializada.</CardDescription>
-               <div className="pt-4"><ServiceTableActions buttonLabel="Adicionar Contrato" /></div>
+               <div className="pt-4"><ServiceTableActions buttonLabel="Adicionar Contrato" onAddClick={() => setIsAddContractDialogOpen(true)} /></div>
             </CardHeader>
             <CardContent>
               <Table>
@@ -267,7 +274,7 @@ export default function ServicesPage() {
             <CardHeader>
               <CardTitle>Aluguel de Unidade Móvel e Equipamentos</CardTitle>
               <CardDescription>Disponibilização de equipamentos e unidades móveis para atendimento in-company.</CardDescription>
-               <div className="pt-4"><ServiceTableActions buttonLabel="Adicionar Item" /></div>
+               <div className="pt-4"><ServiceTableActions buttonLabel="Adicionar Item" onAddClick={() => setIsAddItemDialogOpen(true)} /></div>
             </CardHeader>
             <CardContent>
               <Table>
@@ -299,7 +306,7 @@ export default function ServicesPage() {
             <CardHeader>
               <CardTitle>Terceirização de SESMT</CardTitle>
               <CardDescription>Alocação de profissionais de Saúde e Segurança do Trabalho para compor o SESMT do cliente.</CardDescription>
-               <div className="pt-4"><ServiceTableActions buttonLabel="Adicionar Profissional" /></div>
+               <div className="pt-4"><ServiceTableActions buttonLabel="Adicionar Profissional" onAddClick={() => setIsAddProfessionalDialogOpen(true)} /></div>
             </CardHeader>
             <CardContent>
               <Table>
@@ -329,8 +336,12 @@ export default function ServicesPage() {
             </CardContent>
           </Card>
         </TabsContent>
-
       </Tabs>
+      <AddServiceDialog open={isAddExamDialogOpen} onOpenChange={setIsAddExamDialogOpen} title="Adicionar Novo Exame" description="Preencha os detalhes para adicionar um novo exame médico ao catálogo." />
+      <AddServiceDialog open={isAddProgramDialogOpen} onOpenChange={setIsAddProgramDialogOpen} title="Adicionar Novo Programa/Laudo" description="Preencha os detalhes para adicionar um novo serviço de programa ou laudo." />
+      <AddServiceDialog open={isAddContractDialogOpen} onOpenChange={setIsAddContractDialogOpen} title="Adicionar Novo Contrato de Assessoria" description="Preencha os detalhes para adicionar um novo modelo de contrato de assessoria." />
+      <AddServiceDialog open={isAddItemDialogOpen} onOpenChange={setIsAddItemDialogOpen} title="Adicionar Novo Item para Aluguel" description="Preencha os detalhes para adicionar um novo equipamento ou unidade para aluguel." />
+      <AddServiceDialog open={isAddProfessionalDialogOpen} onOpenChange={setIsAddProfessionalDialogOpen} title="Adicionar Novo Profissional para Terceirização" description="Preencha os detalhes para adicionar um novo tipo de profissional para terceirização." />
     </div>
   );
 }
