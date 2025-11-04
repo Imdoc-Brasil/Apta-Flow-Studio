@@ -33,6 +33,18 @@ export interface Checklist {
   items: ChecklistItem[]
 }
 
+export interface TextElement {
+  id: string
+  title: string
+  content: string
+  creator: string
+  creatorAvatar?: string
+  creatorFallback?: string
+  createdAt: string
+  dueDate?: string
+  assignedTo?: string[]
+}
+
 export const initialTicketsData = [
   {
     id: 'TKT-001',
@@ -47,6 +59,7 @@ export const initialTicketsData = [
     labels: [availableLabels[0], availableLabels[3]],
     checklists: [],
     attachments: [],
+    textElements: [],
   },
   {
     id: 'TKT-002',
@@ -95,6 +108,7 @@ export const initialTicketsData = [
         url: '#',
       },
     ],
+    textElements: [],
   },
   {
     id: 'TKT-003',
@@ -108,6 +122,7 @@ export const initialTicketsData = [
     labels: [],
     checklists: [],
     attachments: [],
+    textElements: [],
   },
   {
     id: 'TKT-004',
@@ -122,6 +137,7 @@ export const initialTicketsData = [
     labels: [availableLabels[0]],
     checklists: [],
     attachments: [],
+    textElements: [],
   },
   {
     id: 'TKT-005',
@@ -135,18 +151,20 @@ export const initialTicketsData = [
     labels: [availableLabels[2]],
     checklists: [],
     attachments: [],
+    textElements: [],
   },
 ] as const
 
 export type TicketStatus = 'Aberto' | 'Em Progresso' | 'Resolvido' | 'Fechado'
 export type Ticket = Omit<
   (typeof initialTicketsData)[0],
-  'assignedTo' | 'labels' | 'checklists' | 'attachments'
+  'assignedTo' | 'labels' | 'checklists' | 'attachments' | 'textElements'
 > & {
   assignedTo?: string[]
   labels?: Label[]
   checklists?: Checklist[]
   attachments?: Attachment[]
+  textElements?: TextElement[]
 }
 
 type TicketStore = {
@@ -154,7 +172,14 @@ type TicketStore = {
   addTicket: (
     newTicket: Omit<
       Ticket,
-      'id' | 'status' | 'updated' | 'assignedTo' | 'labels' | 'checklists' | 'attachments'
+      | 'id'
+      | 'status'
+      | 'updated'
+      | 'assignedTo'
+      | 'labels'
+      | 'checklists'
+      | 'attachments'
+      | 'textElements'
     >
   ) => void
   setTickets: (tickets: Ticket[]) => void
@@ -180,6 +205,10 @@ type TicketStore = {
     user: string
   ) => void
   addAttachment: (ticketId: string, name: string, file: File) => void
+  addTextElement: (
+    ticketId: string,
+    data: Omit<TextElement, 'id' | 'createdAt'>
+  ) => void
 }
 
 export const useTicketStore = create<TicketStore>((set) => ({
@@ -191,10 +220,14 @@ export const useTicketStore = create<TicketStore>((set) => ({
     checklists: ticket.checklists
       ? ticket.checklists.map((cl) => ({
           ...cl,
-          items: cl.items.map((item) => ({ ...item, assignedTo: item.assignedTo ? [...item.assignedTo] : [] })),
+          items: cl.items.map((item) => ({
+            ...item,
+            assignedTo: item.assignedTo ? [...item.assignedTo] : [],
+          })),
         }))
       : [],
     attachments: ticket.attachments ? [...ticket.attachments] : [],
+    textElements: ticket.textElements ? [...ticket.textElements] : [],
   })),
   addTicket: (newTicket) =>
     set((state) => ({
@@ -211,6 +244,7 @@ export const useTicketStore = create<TicketStore>((set) => ({
           labels: [],
           checklists: [],
           attachments: [],
+          textElements: [],
         },
         ...state.tickets,
       ],
@@ -314,13 +348,30 @@ export const useTicketStore = create<TicketStore>((set) => ({
             id: `att-${Date.now()}`,
             name,
             url: URL.createObjectURL(file), // Placeholder URL
-          };
+          }
           return {
             ...ticket,
             attachments: [...(ticket.attachments || []), newAttachment],
-          };
+          }
         }
-        return ticket;
+        return ticket
+      }),
+    })),
+  addTextElement: (ticketId, data) =>
+    set((state) => ({
+      tickets: state.tickets.map((ticket) => {
+        if (ticket.id === ticketId) {
+          const newTextElement: TextElement = {
+            ...data,
+            id: `txt-${Date.now()}`,
+            createdAt: new Date().toISOString(),
+          }
+          return {
+            ...ticket,
+            textElements: [...(ticket.textElements || []), newTextElement],
+          }
+        }
+        return ticket
       }),
     })),
 }))

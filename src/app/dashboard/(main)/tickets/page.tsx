@@ -34,6 +34,7 @@ import {
   X,
   File as FileIcon,
   Upload,
+  FileText,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -91,6 +92,7 @@ import {
   type Checklist,
   type ChecklistItem,
   type Attachment,
+  type TextElement,
 } from './tickets-store'
 import { format, formatDistanceToNow, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -99,7 +101,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { Calendar as CalendarComponent } from '@/components/ui/calendar'
 import {
   initialStaffsData,
   type Staff,
@@ -290,7 +291,7 @@ function AddAttachmentDialog({
     })
     setOpen(false)
     setFile(null)
-    e.currentTarget.reset()
+    ;(e.currentTarget as HTMLFormElement).reset()
   }
 
   return (
@@ -482,7 +483,7 @@ function AddChecklistItemForm({
       assignedTo && assignedTo !== 'unassigned' ? [assignedTo] : []
     )
     toast({ title: 'Tarefa adicionada!' })
-    e.currentTarget.reset()
+    ;(e.currentTarget as HTMLFormElement).reset()
     setShowForm(false)
   }
 
@@ -543,9 +544,122 @@ function AddChecklistItemForm({
   )
 }
 
+function AddTextElementDialog({
+  ticketId,
+  children,
+}: {
+  ticketId: string
+  children: React.ReactNode
+}) {
+  const [open, setOpen] = useState(false)
+  const { addTextElement } = useTicketStore()
+  const { toast } = useToast()
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    const title = formData.get('title') as string
+    const content = formData.get('content') as string
+    const dueDate = formData.get('dueDate') as string
+    const assignedTo = formData.get('assignedTo') as string
+
+    if (!title || !content) {
+      toast({
+        variant: 'destructive',
+        title: 'Campos obrigatórios',
+        description: 'Por favor, preencha o título e o conteúdo.',
+      })
+      return
+    }
+
+    // Mocking the creator for now
+    const creator = initialStaffsData[0]
+
+    addTextElement(ticketId, {
+      title,
+      content,
+      creator: creator.name,
+      creatorAvatar: creator.avatar,
+      creatorFallback: creator.fallback,
+      dueDate: dueDate || undefined,
+      assignedTo: assignedTo && assignedTo !== 'unassigned' ? [assignedTo] : [],
+    })
+
+    toast({
+      title: 'Elemento de Texto Adicionado!',
+      description: `O item "${title}" foi adicionado ao ticket.`,
+    })
+    setOpen(false)
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Adicionar Novo Elemento de Texto</DialogTitle>
+          <DialogDescription>
+            Crie uma nova nota, atualização ou outra informação textual para o
+            ticket.
+          </DialogDescription>
+        </DialogHeader>
+        <form id='add-text-element-form' onSubmit={handleSubmit}>
+          <div className='grid gap-4 py-4'>
+            <div className='space-y-2'>
+              <Label htmlFor='title'>Título</Label>
+              <Input
+                id='title'
+                name='title'
+                placeholder='Ex: Atualização de Status'
+                required
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='content'>Conteúdo</Label>
+              <Textarea
+                id='content'
+                name='content'
+                placeholder='Escreva seu parágrafo aqui...'
+                required
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='dueDate'>Prazo (Opcional)</Label>
+              <Input id='dueDate' name='dueDate' type='date' />
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='assignedTo'>Atribuir a (Opcional)</Label>
+              <Select name='assignedTo' defaultValue='unassigned'>
+                <SelectTrigger>
+                  <SelectValue placeholder='Selecione um membro' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='unassigned'>Ninguém</SelectItem>
+                  {initialStaffsData.map((staff) => (
+                    <SelectItem key={staff.email} value={staff.email}>
+                      {staff.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant='outline' onClick={() => setOpen(false)}>
+              Cancelar
+            </Button>
+            <Button type='submit' form='add-text-element-form'>
+              Adicionar
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
   const { setTickets, tickets, toggleChecklistItem } = useTicketStore()
-  const [date, setDate] = useState<Date>()
 
   const handleAssignMember = (ticketId: string, memberEmail: string) => {
     setTickets(
@@ -626,6 +740,57 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
               {ticket.description || 'Nenhuma descrição fornecida.'}
             </div>
           </div>
+
+          {ticket.textElements &&
+            ticket.textElements.map((element) => {
+              const assignedToMember = initialStaffsData.find((staff) =>
+                element.assignedTo?.includes(staff.email)
+              )
+              return (
+                <div key={element.id} className='space-y-2'>
+                  <div className='flex items-center justify-between'>
+                    <div className='flex items-center gap-2'>
+                      <FileText className='h-5 w-5 text-muted-foreground' />
+                      <Avatar className='h-6 w-6'>
+                        <AvatarImage src={element.creatorAvatar} />
+                        <AvatarFallback>{element.creatorFallback}</AvatarFallback>
+                      </Avatar>
+                      <h3 className='font-semibold'>{element.title}</h3>
+                    </div>
+                    <p className='text-xs text-muted-foreground'>
+                      <TimeAgo dateString={element.createdAt} />
+                    </p>
+                  </div>
+                  <div className='ml-7 space-y-2'>
+                    <p className='text-sm text-muted-foreground bg-gray-50 p-3 rounded-md border'>
+                      {element.content}
+                    </p>
+                    <div className='flex items-center gap-4 text-xs text-muted-foreground'>
+                      {element.dueDate && (
+                        <div className='flex items-center gap-1'>
+                          <Calendar className='h-3 w-3' />
+                          <span>
+                            Prazo:{' '}
+                            {format(parseISO(element.dueDate), 'dd/MM/yyyy')}
+                          </span>
+                        </div>
+                      )}
+                      {assignedToMember && (
+                        <div className='flex items-center gap-1'>
+                          <Avatar className='h-4 w-4'>
+                            <AvatarImage src={assignedToMember.avatar} />
+                            <AvatarFallback>
+                              {assignedToMember.fallback}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span>{assignedToMember.name}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
 
           {ticket.checklists && ticket.checklists.length > 0 && (
             <div className='space-y-4'>
@@ -876,6 +1041,11 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                   </div>
                 </PopoverContent>
               </Popover>
+              <AddTextElementDialog ticketId={ticket.id}>
+                <Button variant='secondary' className='justify-start'>
+                  <FileText className='mr-2 h-4 w-4' /> Texto
+                </Button>
+              </AddTextElementDialog>
               <AddChecklistDialog ticketId={ticket.id}>
                 <Button variant='secondary' className='justify-start'>
                   <CheckSquare className='mr-2 h-4 w-4' /> Checklist
