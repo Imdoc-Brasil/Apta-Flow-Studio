@@ -42,7 +42,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 export const initialStaffsData = [
   {
     name: 'Sarah Chen',
-    role: 'Gerente de Projeto Principal',
+    profile: 'Gerente de Projeto Principal',
     avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026701d',
     fallback: 'SC',
     email: 'sarah.chen@aptaflow.com',
@@ -51,7 +51,7 @@ export const initialStaffsData = [
   },
   {
     name: 'David Rodriguez',
-    role: 'Engenheiro de Software Sênior',
+    profile: 'Engenheiro de Software Sênior',
     avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026702d',
     fallback: 'DR',
     email: 'david.r@aptaflow.com',
@@ -60,7 +60,7 @@ export const initialStaffsData = [
   },
   {
     name: 'Emily White',
-    role: 'Especialista de Suporte',
+    profile: 'Especialista de Suporte',
     avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026703d',
     fallback: 'EW',
     email: 'emily.w@aptaflow.com',
@@ -69,7 +69,7 @@ export const initialStaffsData = [
   },
   {
     name: 'Michael Brown',
-    role: 'Engenheiro de DevOps',
+    profile: 'Engenheiro de DevOps',
     avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704d',
     fallback: 'MB',
     email: 'michael.b@aptaflow.com',
@@ -97,7 +97,7 @@ export default function StaffsPage() {
 
     const newStaff: Staff = {
       name,
-      role: formData.get('role') as string,
+      profile: formData.get('profile') as string,
       email: formData.get('email') as string,
       phone: formData.get('phone') as string,
       status: 'Ativo',
@@ -148,12 +148,12 @@ export default function StaffsPage() {
                     />
                   </div>
                   <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label htmlFor='role' className='text-right'>
-                      Cargo
+                    <Label htmlFor='profile' className='text-right'>
+                      Perfil
                     </Label>
                     <Input
-                      id='role'
-                      name='role'
+                      id='profile'
+                      name='profile'
                       className='col-span-3'
                       required
                     />
@@ -198,7 +198,7 @@ export default function StaffsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Staff</TableHead>
-              <TableHead className='hidden md:table-cell'>Cargo</TableHead>
+              <TableHead className='hidden md:table-cell'>Perfil</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>
                 <span className='sr-only'>Ações</span>
@@ -223,7 +223,7 @@ export default function StaffsPage() {
                   </div>
                 </TableCell>
                 <TableCell className='hidden md:table-cell'>
-                  {staff.role}
+                  {staff.profile}
                 </TableCell>
                 <TableCell>
                   <Badge
