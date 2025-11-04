@@ -11,6 +11,21 @@ export const availableLabels = [
 
 export type Label = (typeof availableLabels)[number]
 
+export interface ChecklistItem {
+  id: string
+  text: string
+  completed: boolean
+  dueDate: string
+  completedBy?: string
+  completedAt?: string
+}
+
+export interface Checklist {
+  id: string
+  title: string
+  items: ChecklistItem[]
+}
+
 export const initialTicketsData = [
   {
     id: 'TKT-001',
@@ -23,6 +38,7 @@ export const initialTicketsData = [
       'Ao tentar acessar o portal do cliente, recebo uma mensagem de "usuário ou senha inválida", mas minhas credenciais estão corretas. Já tentei limpar o cache e usar outro navegador.',
     assignedTo: ['sarah.chen@aptaflow.com'],
     labels: [availableLabels[0], availableLabels[3]],
+    checklists: [],
   },
   {
     id: 'TKT-002',
@@ -34,6 +50,34 @@ export const initialTicketsData = [
     description:
       'Gostaríamos de solicitar a implementação de um tema escuro na plataforma para melhorar o conforto visual durante o uso noturno.',
     labels: [availableLabels[1]],
+    checklists: [
+      {
+        id: 'cl-1',
+        title: 'Desenvolvimento Frontend',
+        items: [
+          {
+            id: 'item-1-1',
+            text: 'Criar variáveis de cor para o tema escuro',
+            completed: true,
+            dueDate: '2024-07-25',
+            completedBy: 'David Rodriguez',
+            completedAt: new Date('2024-07-22T14:00:00Z').toISOString(),
+          },
+          {
+            id: 'item-1-2',
+            text: 'Aplicar tema aos componentes principais',
+            completed: false,
+            dueDate: '2024-07-28',
+          },
+          {
+            id: 'item-1-3',
+            text: 'Testar em todos os navegadores',
+            completed: false,
+            dueDate: '2024-07-30',
+          },
+        ],
+      },
+    ],
   },
   {
     id: 'TKT-003',
@@ -45,6 +89,7 @@ export const initialTicketsData = [
     description:
       'Tenho uma dúvida sobre um item que apareceu na nossa última fatura. Podemos agendar uma chamada para esclarecer?',
     labels: [],
+    checklists: [],
   },
   {
     id: 'TKT-004',
@@ -57,6 +102,7 @@ export const initialTicketsData = [
       'O endpoint GET /api/v1/data está retornando um erro 500 Internal Server Error desde ontem. Isso está impactando nossa integração.',
     assignedTo: ['david.r@aptaflow.com', 'michael.b@aptaflow.com'],
     labels: [availableLabels[0]],
+    checklists: [],
   },
   {
     id: 'TKT-005',
@@ -68,16 +114,18 @@ export const initialTicketsData = [
     description:
       'Estamos tentando integrar nosso sistema com a API de vocês e precisamos de ajuda para entender o fluxo de autenticação OAuth2.',
     labels: [availableLabels[2]],
+    checklists: [],
   },
 ] as const
 
 export type TicketStatus = 'Aberto' | 'Em Progresso' | 'Resolvido' | 'Fechado'
 export type Ticket = Omit<
   (typeof initialTicketsData)[0],
-  'assignedTo' | 'labels'
+  'assignedTo' | 'labels' | 'checklists'
 > & {
   assignedTo?: string[]
   labels?: Label[]
+  checklists?: Checklist[]
 }
 
 type TicketStore = {
@@ -85,10 +133,12 @@ type TicketStore = {
   addTicket: (
     newTicket: Omit<
       Ticket,
-      'id' | 'status' | 'updated' | 'assignedTo' | 'labels'
+      'id' | 'status' | 'updated' | 'assignedTo' | 'labels' | 'checklists'
     >
   ) => void
   setTickets: (tickets: Ticket[]) => void
+  addChecklist: (ticketId: string, title: string, firstItemText: string, firstItemDueDate: string) => void
+  toggleChecklistItem: (ticketId: string, checklistId: string, itemId: string, completed: boolean, user: string) => void
 }
 
 export const useTicketStore = create<TicketStore>((set) => ({
@@ -97,6 +147,7 @@ export const useTicketStore = create<TicketStore>((set) => ({
     updated: new Date(ticket.updated).toISOString(),
     assignedTo: ticket.assignedTo || [],
     labels: ticket.labels || [],
+    checklists: ticket.checklists ? ticket.checklists.map(cl => ({...cl})) : [],
   })),
   addTicket: (newTicket) =>
     set((state) => ({
@@ -108,9 +159,66 @@ export const useTicketStore = create<TicketStore>((set) => ({
           updated: new Date().toISOString(),
           assignedTo: [],
           labels: [],
+          checklists: [],
         },
         ...state.tickets,
       ],
     })),
   setTickets: (tickets) => set({ tickets }),
+  addChecklist: (ticketId, title, firstItemText, firstItemDueDate) =>
+    set((state) => ({
+      tickets: state.tickets.map((ticket) => {
+        if (ticket.id === ticketId) {
+          const newChecklist: Checklist = {
+            id: `cl-${Date.now()}`,
+            title,
+            items: [
+              {
+                id: `item-${Date.now()}`,
+                text: firstItemText,
+                completed: false,
+                dueDate: firstItemDueDate,
+              },
+            ],
+          }
+          return {
+            ...ticket,
+            checklists: [...(ticket.checklists || []), newChecklist],
+          }
+        }
+        return ticket
+      }),
+    })),
+  toggleChecklistItem: (ticketId, checklistId, itemId, completed, user) =>
+    set((state) => ({
+      tickets: state.tickets.map((ticket) => {
+        if (ticket.id === ticketId) {
+          return {
+            ...ticket,
+            checklists: (ticket.checklists || []).map((checklist) => {
+              if (checklist.id === checklistId) {
+                return {
+                  ...checklist,
+                  items: checklist.items.map((item) => {
+                    if (item.id === itemId) {
+                      return {
+                        ...item,
+                        completed,
+                        completedBy: completed ? user : undefined,
+                        completedAt: completed
+                          ? new Date().toISOString()
+                          : undefined,
+                      }
+                    }
+                    return item
+                  }),
+                }
+              }
+              return checklist
+            }),
+          }
+        }
+        return ticket
+      }),
+    })),
 }))
