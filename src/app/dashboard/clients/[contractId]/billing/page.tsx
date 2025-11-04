@@ -21,9 +21,10 @@ import { Button } from '@/components/ui/button';
 import { Download, FileText, Landmark } from 'lucide-react';
 import { differenceInDays, format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useState } from 'react';
 
 
-const invoiceData = [
+const initialInvoiceData = [
   {
     refMonth: '2024-07',
     dueDate: '2024-08-10',
@@ -58,57 +59,57 @@ const invoiceData = [
   },
 ];
 
-const contractStatus = 'Ativo';
+export default function BillingPage() {
+    const [invoiceData, setInvoiceData] = useState(initialInvoiceData);
+    const [contractStatus, setContractStatus] = useState('Ativo');
 
-const getStatusBadge = (status: string, dueDate: string) => {
-  const daysOverdue = differenceInDays(new Date(), parseISO(dueDate));
-  
-  switch (status) {
-    case 'Paga':
-      return <Badge variant="secondary">Paga</Badge>;
-    case 'Em aberto':
-       if (daysOverdue > 0) {
-        return <Badge variant="destructive">{`${daysOverdue} dias de atraso`}</Badge>;
-      }
-      const daysUntilDue = differenceInDays(parseISO(dueDate), new Date());
-      return <Badge variant="default">{`Vence em ${daysUntilDue} dias`}</Badge>;
-    case 'Atrasada':
-       return <Badge variant="destructive">{`${daysOverdue} dias de atraso`}</Badge>;
-    default:
-      return <Badge variant="outline">{status}</Badge>;
-  }
-};
+    const getStatusBadge = (status: string, dueDate: string) => {
+        const daysOverdue = differenceInDays(new Date(), parseISO(dueDate));
+        
+        switch (status) {
+            case 'Paga':
+            return <Badge variant="secondary">Paga</Badge>;
+            case 'Em aberto':
+            if (daysOverdue > 0) {
+                return <Badge variant="destructive">{`${daysOverdue} dias de atraso`}</Badge>;
+            }
+            const daysUntilDue = differenceInDays(parseISO(dueDate), new Date());
+            return <Badge variant="default">{`Vence em ${daysUntilDue} dias`}</Badge>;
+            case 'Atrasada':
+            return <Badge variant="destructive">{`${daysOverdue} dias de atraso`}</Badge>;
+            default:
+            return <Badge variant="outline">{status}</Badge>;
+        }
+    };
 
-const getCardStatus = () => {
-    const openInvoice = invoiceData.find(inv => inv.status === 'Em aberto' || inv.status === 'Atrasada');
-    if (!openInvoice) return <p className="text-sm text-muted-foreground">Todas as faturas estão em dia.</p>;
+    const getCardStatus = () => {
+        const openInvoice = invoiceData.find(inv => inv.status === 'Em aberto' || inv.status === 'Atrasada');
+        if (!openInvoice) return <p className="text-sm text-muted-foreground">Todas as faturas estão em dia.</p>;
 
-    const days = differenceInDays(new Date(), parseISO(openInvoice.dueDate));
+        const days = differenceInDays(new Date(), parseISO(openInvoice.dueDate));
 
-    if (days > 0) {
+        if (days > 0) {
+            return (
+                <>
+                    <div className="text-2xl font-bold text-destructive">{days} dias de atraso</div>
+                    <p className="text-xs text-muted-foreground">
+                        Fatura de {format(parseISO(openInvoice.refMonth), "MMMM 'de' yyyy", { locale: ptBR })}
+                    </p>
+                </>
+            )
+        }
+
+        const daysUntilDue = differenceInDays(parseISO(openInvoice.dueDate), new Date());
         return (
             <>
-                <div className="text-2xl font-bold text-destructive">{days} dias de atraso</div>
+                <div className="text-2xl font-bold">Disponível para Pagamento</div>
                 <p className="text-xs text-muted-foreground">
-                    Fatura de {format(parseISO(openInvoice.refMonth), "MMMM 'de' yyyy", { locale: ptBR })}
+                    Vence em {daysUntilDue} dias ({format(parseISO(openInvoice.dueDate), "dd/MM/yyyy")})
                 </p>
             </>
         )
     }
 
-    const daysUntilDue = differenceInDays(parseISO(openInvoice.dueDate), new Date());
-     return (
-        <>
-            <div className="text-2xl font-bold">Disponível para Pagamento</div>
-            <p className="text-xs text-muted-foreground">
-                Vence em {daysUntilDue} dias ({format(parseISO(openInvoice.dueDate), "dd/MM/yyyy")})
-            </p>
-        </>
-    )
-}
-
-
-export default function BillingPage() {
   return (
     <div className="grid flex-1 auto-rows-max gap-4">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
