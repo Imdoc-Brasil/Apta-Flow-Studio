@@ -84,6 +84,15 @@ import {
 } from './tickets-store'
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import { Calendar as CalendarComponent } from '@/components/ui/calendar'
+import { initialEmployeesData } from '@/app/dashboard/(main)/employees/page'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Separator } from '@/components/ui/separator'
 
 const priorityVariant = {
   Alta: 'destructive',
@@ -139,6 +148,7 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
     transition,
     isDragging,
   } = useSortable({ id: ticket.id, data: { type: 'Ticket', ticket } })
+  const [date, setDate] = useState<Date | undefined>(undefined)
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -253,9 +263,47 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
           <div className='col-span-1 space-y-4'>
             <h3 className='text-sm font-semibold'>Adicionar ao cartão</h3>
             <div className='flex flex-col space-y-2'>
-              <Button variant='secondary' className='justify-start'>
-                <UserPlus className='mr-2 h-4 w-4' /> Membros
-              </Button>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant='secondary' className='justify-start'>
+                    <UserPlus className='mr-2 h-4 w-4' /> Membros
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className='w-80'>
+                  <div className='grid gap-4'>
+                    <div className='space-y-2'>
+                      <h4 className='font-medium leading-none'>Membros</h4>
+                      <p className='text-sm text-muted-foreground'>
+                        Atribua membros a este cartão.
+                      </p>
+                    </div>
+                    <Separator />
+                    <div className='flex flex-col gap-2'>
+                      {initialEmployeesData.map((employee) => (
+                        <div
+                          key={employee.email}
+                          className='flex items-center justify-between'
+                        >
+                          <div className='flex items-center gap-2'>
+                            <Avatar className='h-8 w-8'>
+                              <AvatarImage src={employee.avatar} />
+                              <AvatarFallback>
+                                {employee.fallback}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className='text-sm font-medium'>
+                              {employee.name}
+                            </span>
+                          </div>
+                          <Button variant='outline' size='sm'>
+                            Atribuir
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
               <Button variant='secondary' className='justify-start'>
                 <Tag className='mr-2 h-4 w-4' /> Etiquetas
               </Button>
