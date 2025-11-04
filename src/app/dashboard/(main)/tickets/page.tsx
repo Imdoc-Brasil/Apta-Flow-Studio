@@ -113,6 +113,7 @@ import { Separator } from '@/components/ui/separator'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Progress } from '@/components/ui/progress'
 import { useToast } from '@/hooks/use-toast'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 const priorityVariant = {
   Alta: 'destructive',
@@ -1119,6 +1120,8 @@ export default function TicketsPage() {
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null)
   const [priorityFilter, setPriorityFilter] = useState<string[]>([])
   const [labelFilter, setLabelFilter] = useState<string[]>([])
+  const [staffFilter, setStaffFilter] = useState<string[]>([])
+  const [clientFilter, setClientFilter] = useState<string[]>([])
 
   const filteredTickets = useMemo(() => {
     return tickets.filter((ticket) => {
@@ -1129,9 +1132,16 @@ export default function TicketsPage() {
         labelFilter.length === 0 ||
         ticket.labels?.some((label) => labelFilter.includes(label.id))
 
-      return priorityMatch && labelMatch
+      const staffMatch =
+        staffFilter.length === 0 ||
+        ticket.assignedTo?.some((staff) => staffFilter.includes(staff))
+
+      const clientMatch =
+        clientFilter.length === 0 || clientFilter.includes(ticket.client)
+
+      return priorityMatch && labelMatch && staffMatch && clientMatch
     })
-  }, [tickets, priorityFilter, labelFilter])
+  }, [tickets, priorityFilter, labelFilter, staffFilter, clientFilter])
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -1227,46 +1237,98 @@ export default function TicketsPage() {
                 <span>Filtrar</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align='end'>
-              <DropdownMenuLabel>Filtrar por Prioridade</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {(['Alta', 'Média', 'Baixa'] as const).map((priority) => (
-                <DropdownMenuCheckboxItem
-                  key={priority}
-                  checked={priorityFilter.includes(priority)}
-                  onCheckedChange={(checked) => {
-                    setPriorityFilter((prev) =>
-                      checked
-                        ? [...prev, priority]
-                        : prev.filter((p) => p !== priority)
-                    )
-                  }}
-                >
-                  {priority}
-                </DropdownMenuCheckboxItem>
-              ))}
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel>Filtrar por Etiqueta</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {availableLabels.map((label) => (
-                <DropdownMenuCheckboxItem
-                  key={label.id}
-                  checked={labelFilter.includes(label.id)}
-                  onCheckedChange={(checked) => {
-                    setLabelFilter((prev) =>
-                      checked
-                        ? [...prev, label.id]
-                        : prev.filter((l) => l !== label.id)
-                    )
-                  }}
-                >
-                  <span
-                    className={`mr-2 px-1.5 py-0.5 text-xs rounded-full text-white ${label.color}`}
-                  >
-                    {label.name}
-                  </span>
-                </DropdownMenuCheckboxItem>
-              ))}
+            <DropdownMenuContent align='end' className='w-56'>
+              <ScrollArea className='h-72'>
+                <div className='p-1'>
+                  <DropdownMenuLabel>Filtrar por Prioridade</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {(['Alta', 'Média', 'Baixa'] as const).map((priority) => (
+                    <DropdownMenuCheckboxItem
+                      key={priority}
+                      checked={priorityFilter.includes(priority)}
+                      onCheckedChange={(checked) => {
+                        setPriorityFilter((prev) =>
+                          checked
+                            ? [...prev, priority]
+                            : prev.filter((p) => p !== priority)
+                        )
+                      }}
+                    >
+                      {priority}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuLabel>Filtrar por Cliente</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {initialClientsData.map((client) => (
+                    <DropdownMenuCheckboxItem
+                      key={client.contractId}
+                      checked={clientFilter.includes(client.name)}
+                      onCheckedChange={(checked) => {
+                        setClientFilter((prev) =>
+                          checked
+                            ? [...prev, client.name]
+                            : prev.filter((c) => c !== client.name)
+                        )
+                      }}
+                    >
+                      {client.name}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuLabel>Filtrar por Membro</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {initialStaffsData.map((staff) => (
+                    <DropdownMenuCheckboxItem
+                      key={staff.email}
+                      checked={staffFilter.includes(staff.email)}
+                      onCheckedChange={(checked) => {
+                        setStaffFilter((prev) =>
+                          checked
+                            ? [...prev, staff.email]
+                            : prev.filter((s) => s !== staff.email)
+                        )
+                      }}
+                    >
+                      <div className='flex items-center gap-2'>
+                        <Avatar className='h-5 w-5'>
+                          <AvatarImage src={staff.avatar} />
+                          <AvatarFallback>{staff.fallback}</AvatarFallback>
+                        </Avatar>
+                        <span>{staff.name}</span>
+                      </div>
+                    </DropdownMenuCheckboxItem>
+                  ))}
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuLabel>Filtrar por Etiqueta</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {availableLabels.map((label) => (
+                    <DropdownMenuCheckboxItem
+                      key={label.id}
+                      checked={labelFilter.includes(label.id)}
+                      onCheckedChange={(checked) => {
+                        setLabelFilter((prev) =>
+                          checked
+                            ? [...prev, label.id]
+                            : prev.filter((l) => l !== label.id)
+                        )
+                      }}
+                    >
+                      <span
+                        className={`mr-2 px-1.5 py-0.5 text-xs rounded-full text-white ${label.color}`}
+                      >
+                        {label.name}
+                      </span>
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </div>
+              </ScrollArea>
             </DropdownMenuContent>
           </DropdownMenu>
 
