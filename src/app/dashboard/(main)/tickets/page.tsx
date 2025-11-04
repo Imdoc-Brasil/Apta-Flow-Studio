@@ -196,48 +196,55 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
                 </CardDescription>
               </CardHeader>
             </div>
-            <CardContent className='flex items-end justify-between p-4 pt-2'>
-              <Badge
-                variant={
-                  priorityVariant[
-                    ticket.priority as keyof typeof priorityVariant
-                  ]
-                }
-              >
-                {ticket.priority}
-              </Badge>
-              <div className='flex items-center gap-2'>
-                <p className='text-xs text-muted-foreground'>
-                  <TimeAgo dateString={ticket.updated} />
-                </p>
-                {assignedMembers.length > 0 && (
-                  <div className='flex -space-x-2'>
-                    {assignedMembers.map((member) => (
-                      <Avatar key={member.email} className='h-6 w-6 border-2'>
-                        <AvatarImage src={member.avatar} />
-                        <AvatarFallback>{member.fallback}</AvatarFallback>
-                      </Avatar>
-                    ))}
-                  </div>
-                )}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      variant='ghost'
-                      size='icon'
-                      className='h-6 w-6 shrink-0'
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <MoreHorizontal className='h-4 w-4' />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                    <DropdownMenuItem>Ver Detalhes</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+            <CardFooter className='p-4 pt-0'>
+              <div className='flex items-center justify-between w-full'>
+                <div className='flex items-center gap-2'>
+                  <Badge
+                    variant={
+                      priorityVariant[
+                        ticket.priority as keyof typeof priorityVariant
+                      ]
+                    }
+                  >
+                    {ticket.priority}
+                  </Badge>
+                  <p className='text-xs text-muted-foreground'>
+                    <TimeAgo dateString={ticket.updated} />
+                  </p>
+                </div>
+                <div className='flex items-center gap-2'>
+                  {assignedMembers.length > 0 && (
+                    <div className='flex -space-x-2'>
+                      {assignedMembers.map((member) => (
+                        <Avatar
+                          key={member.email}
+                          className='h-6 w-6 border-2'
+                        >
+                          <AvatarImage src={member.avatar} />
+                          <AvatarFallback>{member.fallback}</AvatarFallback>
+                        </Avatar>
+                      ))}
+                    </div>
+                  )}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant='ghost'
+                        size='icon'
+                        className='h-6 w-6 shrink-0'
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <MoreHorizontal className='h-4 w-4' />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
+                      <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                      <DropdownMenuItem>Ver Detalhes</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
-            </CardContent>
+            </CardFooter>
           </Card>
         </div>
       </DialogTrigger>
@@ -294,6 +301,27 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
           </div>
 
           <div className='col-span-1 space-y-4'>
+            {assignedMembers.length > 0 && (
+              <div className='space-y-2'>
+                <h3 className='text-sm font-semibold'>Membros</h3>
+                <div className='flex flex-col gap-2'>
+                  {assignedMembers.map((member) => (
+                    <div
+                      key={member.email}
+                      className='flex items-center gap-2'
+                    >
+                      <Avatar className='h-8 w-8'>
+                        <AvatarImage src={member.avatar} />
+                        <AvatarFallback>{member.fallback}</AvatarFallback>
+                      </Avatar>
+                      <span className='text-sm font-medium'>
+                        {member.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <h3 className='text-sm font-semibold'>Adicionar ao cartão</h3>
             <div className='flex flex-col space-y-2'>
               <Popover>
@@ -944,17 +972,19 @@ export default function TicketsPage() {
                         {activeTicket.client} - {activeTicket.id}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className='flex items-end justify-between p-4 pt-2'>
-                      <Badge
-                        variant={
-                          priorityVariant[
-                            activeTicket.priority as keyof typeof priorityVariant
-                          ]
-                        }
-                      >
-                        {activeTicket.priority}
-                      </Badge>
-                    </CardContent>
+                    <CardFooter className='p-4 pt-0'>
+                      <div className='flex items-center justify-between w-full'>
+                        <Badge
+                          variant={
+                            priorityVariant[
+                              activeTicket.priority as keyof typeof priorityVariant
+                            ]
+                          }
+                        >
+                          {activeTicket.priority}
+                        </Badge>
+                      </div>
+                    </CardFooter>
                   </Card>
                 ) : null}
               </DragOverlay>
