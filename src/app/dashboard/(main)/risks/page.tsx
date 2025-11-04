@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -26,8 +25,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const hazardData = [
+const initialHazardData = [
     { id: 'RF-001', name: 'Ruído Contínuo ou Intermitente', esocialCode: '01.01.001', method: 'Quantitativo', category: 'Físico'},
     { id: 'RF-002', name: 'Vibrações de Mãos e Braços (VMB)', esocialCode: '01.02.001', method: 'Quantitativo', category: 'Físico'},
     { id: 'RQ-001', name: 'Poeiras Minerais (Sílica)', esocialCode: '02.01.018', method: 'Quantitativo', category: 'Químico'},
@@ -47,8 +51,26 @@ const epiData = [
     { id: 'EPI-03', name: 'Respirador purificador de ar', ca: '11223', active: true},
 ];
 
+type Hazard = typeof initialHazardData[0];
 
 export default function RisksPage() {
+  const [hazardData, setHazardData] = useState(initialHazardData);
+  const [isHazardDialogOpen, setIsHazardDialogOpen] = useState(false);
+
+  const handleAddHazard = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const newHazard: Hazard = {
+      id: `RF-${(Math.random() * 1000).toFixed(0).padStart(3, '0')}`,
+      name: formData.get('name') as string,
+      esocialCode: formData.get('esocialCode') as string,
+      category: formData.get('category') as string,
+      method: formData.get('method') as string,
+    };
+    setHazardData(prev => [newHazard, ...prev]);
+    setIsHazardDialogOpen(false);
+  };
+
   return (
     <div className="grid flex-1 auto-rows-max gap-8">
       <div className="flex items-center gap-4">
@@ -61,12 +83,67 @@ export default function RisksPage() {
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
               Catálogo de Perigos/Fatores de Risco
-               <Button size="sm" className="h-8 gap-1">
-                <PlusCircle className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                  Adicionar Perigo
-                </span>
-              </Button>
+                <Dialog open={isHazardDialogOpen} onOpenChange={setIsHazardDialogOpen}>
+                    <DialogTrigger asChild>
+                        <Button size="sm" className="h-8 gap-1">
+                            <PlusCircle className="h-3.5 w-3.5" />
+                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                            Adicionar Perigo
+                            </span>
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Adicionar Novo Perigo/Fator de Risco</DialogTitle>
+                            <DialogDescription>
+                                Preencha os detalhes para adicionar um novo item ao catálogo.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <form id="add-hazard-form" onSubmit={handleAddHazard}>
+                            <div className="grid gap-4 py-4">
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="name" className="text-right">Agente/Risco</Label>
+                                    <Input id="name" name="name" className="col-span-3" required />
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="esocialCode" className="text-right">Cód. eSocial</Label>
+                                    <Input id="esocialCode" name="esocialCode" className="col-span-3" required />
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="category" className="text-right">Categoria</Label>
+                                    <Select name="category" required>
+                                        <SelectTrigger className="col-span-3">
+                                            <SelectValue placeholder="Selecione a categoria" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Físico">Físico</SelectItem>
+                                            <SelectItem value="Químico">Químico</SelectItem>
+                                            <SelectItem value="Biológico">Biológico</SelectItem>
+                                            <SelectItem value="Ergonômico">Ergonômico</SelectItem>
+                                            <SelectItem value="Acidente">Acidente</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <Label htmlFor="method" className="text-right">Método</Label>
+                                     <Select name="method" required>
+                                        <SelectTrigger className="col-span-3">
+                                            <SelectValue placeholder="Selecione o método" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Quantitativo">Quantitativo</SelectItem>
+                                            <SelectItem value="Qualitativo">Qualitativo</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                        </form>
+                         <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsHazardDialogOpen(false)}>Cancelar</Button>
+                            <Button type="submit" form="add-hazard-form">Salvar</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
             </CardTitle>
             <CardDescription>
               Base de dados central com todos os perigos e fatores de risco identificados, conforme a NR1 e Tabela 24 do eSocial.
