@@ -56,8 +56,7 @@ const columns: TaskStatus[] = ['Backlog', 'In Progress', 'Done'];
 export default function ProcessesPage() {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
-
+  
   const handleAddTask = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
@@ -126,9 +125,9 @@ export default function ProcessesPage() {
               {tasks
                 .filter(task => task.status === status)
                 .map(task => (
-                    <Dialog key={task.id} onOpenChange={(open) => !open && setSelectedTask(null)}>
+                    <Dialog key={task.id}>
                         <DialogTrigger asChild>
-                            <Card className="cursor-pointer" onClick={() => setSelectedTask(task)}>
+                            <Card className="cursor-pointer">
                                 <CardHeader className="p-4 flex flex-row items-start justify-between">
                                 <CardTitle className="text-base">{task.title}</CardTitle>
                                 <DropdownMenu>
@@ -153,19 +152,17 @@ export default function ProcessesPage() {
                                 </CardContent>
                             </Card>
                         </DialogTrigger>
-                        {selectedTask && selectedTask.id === task.id && (
-                             <DialogContent className="sm:max-w-3xl">
-                                <DialogHeader>
-                                    <DialogTitle>{selectedTask.title}</DialogTitle>
-                                    <DialogDescription>
-                                        Detalhes da tarefa, subtarefas e atividades.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="py-4">
-                                   <p>{selectedTask.description}</p>
-                                </div>
-                            </DialogContent>
-                        )}
+                        <DialogContent className="sm:max-w-3xl">
+                            <DialogHeader>
+                                <DialogTitle>{task.title}</DialogTitle>
+                                <DialogDescription>
+                                    Detalhes da tarefa, subtarefas e atividades.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="py-4">
+                                <p>{task.description}</p>
+                            </div>
+                        </DialogContent>
                    </Dialog>
                 ))}
                 {tasks.filter(task => task.status === status).length === 0 && (
