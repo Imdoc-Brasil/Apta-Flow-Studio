@@ -1,5 +1,12 @@
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+'use client';
+
+import { useState } from 'react';
+import {
+  MoreHorizontal,
+  PlusCircle,
+} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import {
   Card,
   CardContent,
@@ -7,11 +14,36 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Mail, Phone } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
-const employeesData = [
+const initialEmployeesData = [
   {
     name: 'Sarah Chen',
     role: 'Gerente de Projeto Principal',
@@ -19,7 +51,7 @@ const employeesData = [
     fallback: 'SC',
     email: 'sarah.chen@aptaflow.com',
     phone: '555-0101',
-    responsibilities: ['Integração de Clientes', 'Monitoramento de SLA', 'Conta Innovate Inc.'],
+    status: 'Ativo',
   },
   {
     name: 'David Rodriguez',
@@ -28,7 +60,7 @@ const employeesData = [
     fallback: 'DR',
     email: 'david.r@aptaflow.com',
     phone: '555-0102',
-    responsibilities: ['Desenvolvimento Backend', 'Manutenção de API', 'Líder do Projeto Phoenix'],
+    status: 'Ativo',
   },
   {
     name: 'Emily White',
@@ -37,7 +69,7 @@ const employeesData = [
     fallback: 'EW',
     email: 'emily.w@aptaflow.com',
     phone: '555-0103',
-    responsibilities: ['Suporte Nível 1', 'Triagem de Tickets', 'Comunicação com Cliente'],
+    status: 'Ativo',
   },
    {
     name: 'Michael Brown',
@@ -46,51 +78,141 @@ const employeesData = [
     fallback: 'MB',
     email: 'michael.b@aptaflow.com',
     phone: '555-0104',
-    responsibilities: ['Pipeline CI/CD', 'Infraestrutura', 'Auditorias de Segurança'],
+    status: 'Licença',
   },
 ];
 
+type Employee = typeof initialEmployeesData[0];
+
 export default function EmployeesPage() {
+    const [employees, setEmployees] = useState(initialEmployeesData);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+    const handleAddEmployee = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+        const formData = new FormData(event.currentTarget);
+        const name = formData.get('name') as string;
+        const fallback = name.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
+
+        const newEmployee: Employee = {
+            name,
+            role: formData.get('role') as string,
+            email: formData.get('email') as string,
+            phone: formData.get('phone') as string,
+            status: 'Ativo',
+            avatar: `https://i.pravatar.cc/150?u=${Math.random()}`,
+            fallback,
+        };
+        setEmployees(prev => [newEmployee, ...prev]);
+        setIsDialogOpen(false);
+    }
+
+
   return (
-    <div className="grid flex-1 auto-rows-max gap-4">
-      <h1 className="font-headline text-3xl font-bold">Hub de Funcionários</h1>
-       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
-        {employeesData.map((employee) => (
-          <Card key={employee.name}>
-            <CardHeader className="flex flex-row items-center gap-4">
-              <Avatar className="h-12 w-12">
-                <AvatarImage src={employee.avatar} alt={employee.name} />
-                <AvatarFallback>{employee.fallback}</AvatarFallback>
-              </Avatar>
-              <div>
-                <CardTitle>{employee.name}</CardTitle>
-                <CardDescription>{employee.role}</CardDescription>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-               <div>
-                <h4 className="text-sm font-medium mb-2">Informações de Contato</h4>
-                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Mail className="h-4 w-4" />
-                    <span>{employee.email}</span>
-                </div>
-                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Phone className="h-4 w-4" />
-                    <span>{employee.phone}</span>
-                </div>
-               </div>
-               <div>
-                 <h4 className="text-sm font-medium mb-2">Principais Responsabilidades</h4>
-                <div className="flex flex-wrap gap-1">
-                    {employee.responsibilities.map((resp) => (
-                        <Badge key={resp} variant="secondary">{resp}</Badge>
-                    ))}
-                </div>
-               </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+            <div>
+                <CardTitle>Hub de Funcionários</CardTitle>
+                <CardDescription>
+                Gerencie os funcionários da sua empresa.
+                </CardDescription>
+            </div>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                <Button size="sm" className="h-8 gap-1">
+                    <PlusCircle className="h-3.5 w-3.5" />
+                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                    Adicionar Funcionário
+                    </span>
+                </Button>
+                </DialogTrigger>
+                <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Adicionar Novo Funcionário</DialogTitle>
+                    <DialogDescription>
+                    Preencha os detalhes para adicionar um novo membro à equipe.
+                    </DialogDescription>
+                </DialogHeader>
+                <form id="add-employee-form" onSubmit={handleAddEmployee}>
+                    <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="name" className="text-right">Nome</Label>
+                            <Input id="name" name="name" className="col-span-3" required />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="role" className="text-right">Cargo</Label>
+                            <Input id="role" name="role" className="col-span-3" required />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="email" className="text-right">Email</Label>
+                            <Input id="email" name="email" type="email" className="col-span-3" required />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="phone" className="text-right">Telefone</Label>
+                            <Input id="phone" name="phone" className="col-span-3" />
+                        </div>
+                    </div>
+                </form>
+                <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+                    <Button type="submit" form="add-employee-form">Salvar Funcionário</Button>
+                </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Funcionário</TableHead>
+              <TableHead className="hidden md:table-cell">Cargo</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>
+                <span className="sr-only">Ações</span>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {employees.map((employee) => (
+              <TableRow key={employee.email}>
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-9 w-9">
+                      <AvatarImage src={employee.avatar} alt={employee.name} />
+                      <AvatarFallback>{employee.fallback}</AvatarFallback>
+                    </Avatar>
+                    <div className="grid gap-1">
+                      <p className="font-medium leading-none">{employee.name}</p>
+                      <p className="text-sm text-muted-foreground">{employee.email}</p>
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell className="hidden md:table-cell">{employee.role}</TableCell>
+                <TableCell>
+                  <Badge variant={employee.status === 'Ativo' ? 'secondary' : 'outline'}>{employee.status}</Badge>
+                </TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button aria-haspopup="true" size="icon" variant="ghost">
+                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="sr-only">Alternar menu</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                      <DropdownMenuItem>Ver Detalhes</DropdownMenuItem>
+                      <DropdownMenuItem>Editar</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
   );
 }
