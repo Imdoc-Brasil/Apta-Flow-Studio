@@ -338,7 +338,7 @@ function AddChecklistDialog({
                   <SelectValue placeholder='Selecione um membro' />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value=''>Ninguém</SelectItem>
+                  <SelectItem value='unassigned'>Ninguém</SelectItem>
                   {initialStaffsData.map((staff) => (
                     <SelectItem key={staff.email} value={staff.email}>
                       {staff.name}
@@ -394,7 +394,7 @@ function AddChecklistItemForm({
       checklistId,
       text,
       dueDate,
-      assignedTo ? [assignedTo] : []
+      assignedTo && assignedTo !== 'unassigned' ? [assignedTo] : []
     )
     toast({ title: 'Tarefa adicionada!' })
     e.currentTarget.reset()
@@ -431,12 +431,12 @@ function AddChecklistItemForm({
             className='border-none focus-visible:ring-0 text-xs h-auto p-1 w-auto'
             required
           />
-          <Select name='assignedTo'>
+          <Select name='assignedTo' defaultValue='unassigned'>
             <SelectTrigger className='text-xs h-auto p-1 border-none focus-visible:ring-0 w-auto'>
               <SelectValue placeholder='Atribuir...' />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value=''>Ninguém</SelectItem>
+              <SelectItem value='unassigned'>Ninguém</SelectItem>
               {initialStaffsData.map((staff) => (
                 <SelectItem key={staff.email} value={staff.email}>
                   {staff.fallback}

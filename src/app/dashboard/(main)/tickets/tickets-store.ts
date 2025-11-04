@@ -172,7 +172,7 @@ export const useTicketStore = create<TicketStore>((set) => ({
     checklists: ticket.checklists
       ? ticket.checklists.map((cl) => ({
           ...cl,
-          items: cl.items.map((item) => ({ ...item })),
+          items: cl.items.map((item) => ({ ...item, assignedTo: item.assignedTo ? [...item.assignedTo] : [] })),
         }))
       : [],
   })),
