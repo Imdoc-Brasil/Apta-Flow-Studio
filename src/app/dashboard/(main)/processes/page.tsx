@@ -33,6 +33,7 @@ import {
   UserPlus,
   Calendar,
   Paperclip,
+  Sparkles,
 } from 'lucide-react'
 import {
   Dialog,
@@ -46,6 +47,9 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { suggestProcessTool } from '@/app/actions'
+import type { SuggestProcessToolOutput } from '@/app/actions'
+import { useToast } from '@/hooks/use-toast'
 
 type TaskStatus = 'Backlog' | 'In Progress' | 'Done'
 
@@ -114,15 +118,15 @@ const TaskCard = ({ task }: { task: Task }) => {
         style={style}
         {...attributes}
         {...listeners}
-        className='cursor-grab active:cursor-grabbing touch-none'
+        className='touch-none cursor-grab active:cursor-grabbing'
       >
         <DialogTrigger asChild>
           <div>
-            <CardHeader className='p-4 flex flex-row items-start justify-between'>
+            <CardHeader className='flex flex-row items-start justify-between p-4'>
               <CardTitle className='text-base'>{task.title}</CardTitle>
             </CardHeader>
             <CardContent className='p-4 pt-0'>
-              <p className='text-sm text-muted-foreground line-clamp-2'>
+              <p className='line-clamp-2 text-sm text-muted-foreground'>
                 {task.description}
               </p>
             </CardContent>
@@ -152,7 +156,7 @@ const TaskCard = ({ task }: { task: Task }) => {
           </div>
 
           <div className='col-span-1 space-y-4'>
-            <h3 className='font-semibold text-sm'>Adicionar ao cartão</h3>
+            <h3 className='text-sm font-semibold'>Adicionar ao cartão</h3>
             <div className='flex flex-col space-y-2'>
               <Button variant='secondary' className='justify-start'>
                 <UserPlus className='mr-2 h-4 w-4' /> Membros
@@ -189,9 +193,9 @@ const KanbanColumn = ({
   return (
     <div
       ref={setNodeRef}
-      className='flex flex-col gap-4 bg-muted/50 p-4 rounded-lg h-full'
+      className='flex h-full flex-col gap-4 rounded-lg bg-muted/50 p-4'
     >
-      <h2 className='font-bold text-lg'>{statusLabels[status]}</h2>
+      <h2 className='text-lg font-bold'>{statusLabels[status]}</h2>
       <SortableContext
         items={tasks.map((t) => t.id)}
         strategy={verticalListSortingStrategy}
@@ -201,7 +205,7 @@ const KanbanColumn = ({
             <TaskCard key={task.id} task={task} />
           ))}
           {tasks.length === 0 && (
-            <div className='text-center text-sm text-muted-foreground py-8'>
+            <div className='py-8 text-center text-sm text-muted-foreground'>
               Nenhuma tarefa nesta coluna.
             </div>
           )}
@@ -215,6 +219,12 @@ export default function ProcessesPage() {
   const [tasks, setTasks] = useState<Task[]>(initialTasks)
   const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = useState(false)
   const [activeTask, setActiveTask] = useState<Task | null>(null)
+  const { toast } = useToast()
+
+  const [isSuggestingTool, setIsSuggestingTool] = useState(false)
+  const [suggestion, setSuggestion] =
+    useState<SuggestProcessToolOutput | null>(null)
+  const [projectDescriptionForAI, setProjectDescriptionForAI] = useState('')
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -223,6 +233,35 @@ export default function ProcessesPage() {
       },
     })
   )
+
+  const handleSuggestTool = async () => {
+    if (!projectDescriptionForAI) {
+      toast({
+        title: 'Descrição necessária',
+        description:
+          'Por favor, insira uma descrição para a IA sugerir uma ferramenta.',
+        variant: 'destructive',
+      })
+      return
+    }
+    setIsSuggestingTool(true)
+    setSuggestion(null)
+    try {
+      const result = await suggestProcessTool({
+        projectDescription: projectDescriptionForAI,
+      })
+      setSuggestion(result)
+    } catch (error) {
+      console.error('Error suggesting tool:', error)
+      toast({
+        title: 'Erro na Sugestão',
+        description: 'Não foi possível obter uma sugestão da IA.',
+        variant: 'destructive',
+      })
+    } finally {
+      setIsSuggestingTool(false)
+    }
+  }
 
   const handleAddTask = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -235,6 +274,8 @@ export default function ProcessesPage() {
     }
     setTasks((prevTasks) => [...prevTasks, newTask])
     setIsNewTaskDialogOpen(false)
+    setProjectDescriptionForAI('')
+    setSuggestion(null)
   }
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -300,7 +341,7 @@ export default function ProcessesPage() {
       onDragEnd={handleDragEnd}
       onDragOver={handleDragOver}
     >
-      <div className='flex flex-col gap-4 h-full'>
+      <div className='flex h-full flex-col gap-4'>
         <div className='flex items-center justify-between'>
           <h1 className='font-headline text-3xl font-bold'>Quadro Kanban</h1>
           <Dialog
@@ -328,11 +369,47 @@ export default function ProcessesPage() {
                   </div>
                   <div className='space-y-2'>
                     <Label htmlFor='description'>Descrição</Label>
-                    <Textarea id='description' name='description' />
+                    <Textarea
+                      id='description'
+                      name='description'
+                      value={projectDescriptionForAI}
+                      onChange={(e) =>
+                        setProjectDescriptionForAI(e.target.value)
+                      }
+                    />
                   </div>
+                  {isSuggestingTool && (
+                    <div className='flex items-center justify-center p-4'>
+                      <Sparkles className='mr-2 h-4 w-4 animate-spin' />
+                      <span>Analisando...</span>
+                    </div>
+                  )}
+                  {suggestion && (
+                    <div className='mt-4 rounded-lg border bg-secondary/50 p-4'>
+                      <h4 className='font-semibold'>Sugestão da IA ✨</h4>
+                      <p className='text-sm'>
+                        <span className='font-medium'>Ferramenta:</span>{' '}
+                        {suggestion.toolName}
+                      </p>
+                      <p className='text-sm'>
+                        <span className='font-medium'>Justificativa:</span>{' '}
+                        {suggestion.justification}
+                      </p>
+                    </div>
+                  )}
                 </div>
                 <DialogFooter>
                   <Button
+                    type='button'
+                    variant='outline'
+                    onClick={handleSuggestTool}
+                    disabled={isSuggestingTool}
+                  >
+                    <Sparkles className='mr-2 h-4 w-4' />
+                    Sugerir Ferramenta com IA
+                  </Button>
+                  <Button
+                    type='button'
                     variant='outline'
                     onClick={() => setIsNewTaskDialogOpen(false)}
                   >
@@ -347,7 +424,7 @@ export default function ProcessesPage() {
           </Dialog>
         </div>
 
-        <div className='flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 items-start'>
+        <div className='grid flex-1 grid-cols-1 items-start gap-6 md:grid-cols-3'>
           <SortableContext items={columns}>
             {columns.map((status) => (
               <KanbanColumn
@@ -362,11 +439,11 @@ export default function ProcessesPage() {
       <DragOverlay>
         {activeTask ? (
           <Card className='cursor-grabbing transform-gpu rotate-3 shadow-lg'>
-            <CardHeader className='p-4 flex flex-row items-start justify-between'>
+            <CardHeader className='flex flex-row items-start justify-between p-4'>
               <CardTitle className='text-base'>{activeTask.title}</CardTitle>
             </CardHeader>
             <CardContent className='p-4 pt-0'>
-              <p className='text-sm text-muted-foreground line-clamp-2'>
+              <p className='line-clamp-2 text-sm text-muted-foreground'>
                 {activeTask.description}
               </p>
             </CardContent>
