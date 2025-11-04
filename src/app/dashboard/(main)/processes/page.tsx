@@ -155,6 +155,9 @@ export default function ProcessesPage() {
                         <DialogContent className="sm:max-w-2xl">
                             <DialogHeader>
                                 <DialogTitle className="text-2xl font-bold">{task.title}</DialogTitle>
+                                <DialogDescription>
+                                    Na coluna {statusLabels[task.status]}
+                                </DialogDescription>
                             </DialogHeader>
                             <div className="grid grid-cols-3 gap-8 py-4">
                                 <div className="col-span-2 space-y-6">

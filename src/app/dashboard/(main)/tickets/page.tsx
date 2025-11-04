@@ -252,7 +252,7 @@ export default function TicketsPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="list">
+      <Tabs defaultValue="kanban">
         <TabsList>
           <TabsTrigger value="list">Lista</TabsTrigger>
           <TabsTrigger value="kanban">Quadro Kanban</TabsTrigger>
