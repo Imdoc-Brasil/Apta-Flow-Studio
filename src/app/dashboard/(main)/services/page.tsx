@@ -1,5 +1,4 @@
-
-'use client';
+'use client'
 
 import {
   Card,
@@ -7,7 +6,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
+} from '@/components/ui/card'
 import {
   Table,
   TableBody,
@@ -15,161 +14,317 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { File, PlusCircle, Percent } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+} from '@/components/ui/table'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Button } from '@/components/ui/button'
+import { File, PlusCircle, Percent } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { useToast } from '@/hooks/use-toast'
+import { useState } from 'react'
 
 // --- Mock Data ---
 
 const initialMedicalExams = [
-  { code: '0201', name: 'Avaliação Clínica Ocupacional', type: 'Profissional Agenda', price: 'R$ 50,00', periodicity: '12 meses' },
-  { code: '0211', name: 'Avaliação da acuidade visual', type: 'Laboratório', price: 'R$ 35,00', periodicity: '24 meses' },
-  { code: 'N/A', name: 'Avaliação Psicossocial', type: 'Terceirizado', price: 'R$ 150,00', periodicity: 'Conforme PCMSO' },
-  { code: '0212', name: 'Exame oftalmológico', type: 'Terceirizado', price: 'R$ 200,00', periodicity: 'Conforme PCMSO' },
-  { code: '0215', name: 'Glicemia', type: 'Laboratório', price: 'R$ 25,00', periodicity: 'Anual' },
-];
+  {
+    code: '0201',
+    name: 'Avaliação Clínica Ocupacional',
+    type: 'Profissional Agenda',
+    price: 'R$ 50,00',
+    periodicity: '12 meses',
+  },
+  {
+    code: '0211',
+    name: 'Avaliação da acuidade visual',
+    type: 'Laboratório',
+    price: 'R$ 35,00',
+    periodicity: '24 meses',
+  },
+  {
+    code: 'N/A',
+    name: 'Avaliação Psicossocial',
+    type: 'Terceirizado',
+    price: 'R$ 150,00',
+    periodicity: 'Conforme PCMSO',
+  },
+  {
+    code: '0212',
+    name: 'Exame oftalmológico',
+    type: 'Terceirizado',
+    price: 'R$ 200,00',
+    periodicity: 'Conforme PCMSO',
+  },
+  {
+    code: '0215',
+    name: 'Glicemia',
+    type: 'Laboratório',
+    price: 'R$ 25,00',
+    periodicity: 'Anual',
+  },
+]
 
 const sstPrograms = [
-  { code: 'SST-01', service: 'PCMSO', quantity: 1, unitPrice: 'R$ 800,00', total: 'R$ 800,00', validity: '12 meses', destination: 'Unidade/Setores/Cargos' },
-  { code: 'SST-02', service: 'PGR', quantity: 1, unitPrice: 'R$ 1.200,00', total: 'R$ 1.200,00', validity: '24 meses', destination: 'Unidade/Setores/Cargos' },
-  { code: 'SST-03', service: 'LTCAT', quantity: 1, unitPrice: 'R$ 1.500,00', total: 'R$ 1.500,00', validity: 'Indefinido', destination: 'Unidade/Setores/Cargos' },
-  { code: 'SST-04', service: 'AET', quantity: 1, unitPrice: 'R$ 2.000,00', total: 'R$ 2.000,00', validity: 'Indefinido', destination: 'Unidade/Setores/Cargos' },
-  { code: 'SST-05', service: 'Assistência Técnica a Perícia', quantity: 1, unitPrice: 'Sob Consulta', total: 'Sob Consulta', validity: '60 dias', destination: 'Processo Judicial' },
-];
+  {
+    code: 'SST-01',
+    service: 'PCMSO',
+    quantity: 1,
+    unitPrice: 'R$ 800,00',
+    total: 'R$ 800,00',
+    validity: '12 meses',
+    destination: 'Unidade/Setores/Cargos',
+  },
+  {
+    code: 'SST-02',
+    service: 'PGR',
+    quantity: 1,
+    unitPrice: 'R$ 1.200,00',
+    total: 'R$ 1.200,00',
+    validity: '24 meses',
+    destination: 'Unidade/Setores/Cargos',
+  },
+  {
+    code: 'SST-03',
+    service: 'LTCAT',
+    quantity: 1,
+    unitPrice: 'R$ 1.500,00',
+    total: 'R$ 1.500,00',
+    validity: 'Indefinido',
+    destination: 'Unidade/Setores/Cargos',
+  },
+  {
+    code: 'SST-04',
+    service: 'AET',
+    quantity: 1,
+    unitPrice: 'R$ 2.000,00',
+    total: 'R$ 2.000,00',
+    validity: 'Indefinido',
+    destination: 'Unidade/Setores/Cargos',
+  },
+  {
+    code: 'SST-05',
+    service: 'Assistência Técnica a Perícia',
+    quantity: 1,
+    unitPrice: 'Sob Consulta',
+    total: 'Sob Consulta',
+    validity: '60 dias',
+    destination: 'Processo Judicial',
+  },
+]
 
 const technicalAdvisory = [
-  { contractNumber: 'CT-MED-01', name: 'Assessoria em Medicina do Trabalho', hours: 10, hourValue: 'R$ 250,00', total: 'R$ 2.500,00', validity: '12 meses' },
-  { contractNumber: 'CT-SEG-01', name: 'Assessoria em Segurança do Trabalho', hours: 20, hourValue: 'R$ 200,00', total: 'R$ 4.000,00', validity: '12 meses' },
-];
+  {
+    contractNumber: 'CT-MED-01',
+    name: 'Assessoria em Medicina do Trabalho',
+    hours: 10,
+    hourValue: 'R$ 250,00',
+    total: 'R$ 2.500,00',
+    validity: '12 meses',
+  },
+  {
+    contractNumber: 'CT-SEG-01',
+    name: 'Assessoria em Segurança do Trabalho',
+    hours: 20,
+    hourValue: 'R$ 200,00',
+    total: 'R$ 4.000,00',
+    validity: '12 meses',
+  },
+]
 
 const rentals = [
-  { code: 'RENT-01', description: 'Unidade Móvel', dailyRate: 'R$ 1.500,00', insurance: 'R$ 300,00' },
-  { code: 'RENT-02', description: 'Eletrocardiograma', dailyRate: 'R$ 250,00', insurance: 'R$ 50,00' },
-];
+  {
+    code: 'RENT-01',
+    description: 'Unidade Móvel',
+    dailyRate: 'R$ 1.500,00',
+    insurance: 'R$ 300,00',
+  },
+  {
+    code: 'RENT-02',
+    description: 'Eletrocardiograma',
+    dailyRate: 'R$ 250,00',
+    insurance: 'R$ 50,00',
+  },
+]
 
 const outsourcing = [
-  { code: 'SESMT-01', professional: 'Médico do Trabalho', hourValue: 'R$ 300,00', hours: 40, professionals: 1, total: 'R$ 12.000,00' },
-  { code: 'SESMT-02', professional: 'Técnico de Segurança do Trabalho', hourValue: 'R$ 150,00', hours: 80, professionals: 2, total: 'R$ 24.000,00' },
-];
+  {
+    code: 'SESMT-01',
+    professional: 'Médico do Trabalho',
+    hourValue: 'R$ 300,00',
+    hours: 40,
+    professionals: 1,
+    total: 'R$ 12.000,00',
+  },
+  {
+    code: 'SESMT-02',
+    professional: 'Técnico de Segurança do Trabalho',
+    hourValue: 'R$ 150,00',
+    hours: 80,
+    professionals: 2,
+    total: 'R$ 24.000,00',
+  },
+]
 
+function ServiceTableActions({
+  buttonLabel,
+  onAddClick,
+}: {
+  buttonLabel: string
+  onAddClick: () => void
+}) {
+  return (
+    <div className='ml-auto flex items-center gap-2'>
+      <Button size='sm' variant='outline' className='h-8 gap-1'>
+        <File className='h-3.5 w-3.5' />
+        <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
+          Exportar
+        </span>
+      </Button>
+      <Button size='sm' className='h-8 gap-1' onClick={onAddClick}>
+        <PlusCircle className='h-3.5 w-3.5' />
+        <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
+          {buttonLabel}
+        </span>
+      </Button>
+    </div>
+  )
+}
 
-function ServiceTableActions({ buttonLabel, onAddClick }: { buttonLabel: string, onAddClick: () => void }) {
-    return (
-        <div className="ml-auto flex items-center gap-2">
-            <Button size="sm" variant="outline" className="h-8 gap-1">
-                <File className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Exportar</span>
-            </Button>
-            <Button size="sm" className="h-8 gap-1" onClick={onAddClick}>
-                <PlusCircle className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">{buttonLabel}</span>
-            </Button>
+function AddServiceDialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  title: string
+  description: string
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
+        </DialogHeader>
+        <div className='py-4 text-center text-muted-foreground'>
+          O formulário para adicionar este serviço apareceria aqui.
         </div>
-    )
+        <DialogFooter>
+          <Button variant='outline' onClick={() => onOpenChange(false)}>
+            Fechar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
 }
-
-function AddServiceDialog({ open, onOpenChange, title, description }: { open: boolean, onOpenChange: (open: boolean) => void, title: string, description: string }) {
-    return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>{title}</DialogTitle>
-                    <DialogDescription>{description}</DialogDescription>
-                </DialogHeader>
-                <div className="py-4 text-center text-muted-foreground">
-                    O formulário para adicionar este serviço apareceria aqui.
-                </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    )
-}
-
 
 export default function ServicesPage() {
-    const { toast } = useToast();
-    const [isAdjustmentDialogOpen, setIsAdjustmentDialogOpen] = useState(false);
-    const [isAddExamDialogOpen, setIsAddExamDialogOpen] = useState(false);
-    const [isAddProgramDialogOpen, setIsAddProgramDialogOpen] = useState(false);
-    const [isAddContractDialogOpen, setIsAddContractDialogOpen] = useState(false);
-    const [isAddItemDialogOpen, setIsAddItemDialogOpen] = useState(false);
-    const [isAddProfessionalDialogOpen, setIsAddProfessionalDialogOpen] = useState(false);
+  const { toast } = useToast()
+  const [isAdjustmentDialogOpen, setIsAdjustmentDialogOpen] = useState(false)
+  const [isAddExamDialogOpen, setIsAddExamDialogOpen] = useState(false)
+  const [isAddProgramDialogOpen, setIsAddProgramDialogOpen] = useState(false)
+  const [isAddContractDialogOpen, setIsAddContractDialogOpen] = useState(false)
+  const [isAddItemDialogOpen, setIsAddItemDialogOpen] = useState(false)
+  const [isAddProfessionalDialogOpen, setIsAddProfessionalDialogOpen] =
+    useState(false)
 
+  const handleAdjustment = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const formData = new FormData(event.currentTarget)
+    const adjustment = formData.get('adjustment') as string
 
-    const handleAdjustment = (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        const formData = new FormData(event.currentTarget);
-        const adjustment = formData.get('adjustment') as string;
+    toast({
+      title: 'Reajuste Aplicado!',
+      description: `O reajuste de ${adjustment}% foi aplicado a todos os exames.`,
+    })
 
-        toast({
-            title: "Reajuste Aplicado!",
-            description: `O reajuste de ${adjustment}% foi aplicado a todos os exames.`,
-        });
-        
-        setIsAdjustmentDialogOpen(false);
-    };
+    setIsAdjustmentDialogOpen(false)
+  }
 
   return (
-    <div className="grid flex-1 auto-rows-max gap-4">
-        <div className="flex items-center gap-4">
-            <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
-                Catálogo de Serviços
-            </h1>
-        </div>
-      <Tabs defaultValue="exams">
-        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-          <TabsTrigger value="exams">Exames Médicos</TabsTrigger>
-          <TabsTrigger value="programs">Programas e Laudos</TabsTrigger>
-          <TabsTrigger value="advisory">Assessoria Técnica</TabsTrigger>
-          <TabsTrigger value="rentals">Aluguéis</TabsTrigger>
-          <TabsTrigger value="outsourcing">Terceirização SESMT</TabsTrigger>
+    <div className='grid flex-1 auto-rows-max gap-4'>
+      <div className='flex items-center gap-4'>
+        <h1 className='flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0'>
+          Catálogo de Serviços
+        </h1>
+      </div>
+      <Tabs defaultValue='exams'>
+        <TabsList className='grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5'>
+          <TabsTrigger value='exams'>Exames Médicos</TabsTrigger>
+          <TabsTrigger value='programs'>Programas e Laudos</TabsTrigger>
+          <TabsTrigger value='advisory'>Assessoria Técnica</TabsTrigger>
+          <TabsTrigger value='rentals'>Aluguéis</TabsTrigger>
+          <TabsTrigger value='outsourcing'>Terceirização SESMT</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="exams">
+        <TabsContent value='exams'>
           <Card>
             <CardHeader>
               <CardTitle>Exames Médicos Ocupacionais</CardTitle>
-              <CardDescription>Tabela de preços e configurações para exames médicos conforme NR7.</CardDescription>
-              <div className="pt-4 flex items-center gap-2 ml-auto">
-                    <Dialog open={isAdjustmentDialogOpen} onOpenChange={setIsAdjustmentDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button size="sm" variant="outline" className="h-8 gap-1">
-                                <Percent className="h-3.5 w-3.5" />
-                                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Aplicar Reajuste Anual</span>
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-md">
-                            <form onSubmit={handleAdjustment}>
-                                <DialogHeader>
-                                    <DialogTitle>Reajuste Anual de Preços</DialogTitle>
-                                    <DialogDescription>
-                                        Aplique um reajuste percentual a todos os exames médicos. Os novos preços serão refletidos em todos os novos contratos.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="grid gap-4 py-4">
-                                    <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label htmlFor="adjustment" className="text-right">
-                                            Percentual (%)
-                                        </Label>
-                                        <Input id="adjustment" name="adjustment" type="number" placeholder="Ex: 10" className="col-span-3" required/>
-                                    </div>
-                                </div>
-                                <DialogFooter>
-                                    <Button type="submit">Aplicar Reajuste</Button>
-                                </DialogFooter>
-                            </form>
-                        </DialogContent>
-                    </Dialog>
-                    <ServiceTableActions buttonLabel="Adicionar Exame" onAddClick={() => setIsAddExamDialogOpen(true)} />
+              <CardDescription>
+                Tabela de preços e configurações para exames médicos conforme
+                NR7.
+              </CardDescription>
+              <div className='pt-4 flex items-center gap-2 ml-auto'>
+                <Dialog
+                  open={isAdjustmentDialogOpen}
+                  onOpenChange={setIsAdjustmentDialogOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button size='sm' variant='outline' className='h-8 gap-1'>
+                      <Percent className='h-3.5 w-3.5' />
+                      <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
+                        Aplicar Reajuste Anual
+                      </span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className='sm:max-w-md'>
+                    <form onSubmit={handleAdjustment}>
+                      <DialogHeader>
+                        <DialogTitle>Reajuste Anual de Preços</DialogTitle>
+                        <DialogDescription>
+                          Aplique um reajuste percentual a todos os exames
+                          médicos. Os novos preços serão refletidos em todos os
+                          novos contratos.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className='grid gap-4 py-4'>
+                        <div className='grid grid-cols-4 items-center gap-4'>
+                          <Label htmlFor='adjustment' className='text-right'>
+                            Percentual (%)
+                          </Label>
+                          <Input
+                            id='adjustment'
+                            name='adjustment'
+                            type='number'
+                            placeholder='Ex: 10'
+                            className='col-span-3'
+                            required
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button type='submit'>Aplicar Reajuste</Button>
+                      </DialogFooter>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+                <ServiceTableActions
+                  buttonLabel='Adicionar Exame'
+                  onAddClick={() => setIsAddExamDialogOpen(true)}
+                />
               </div>
             </CardHeader>
             <CardContent>
@@ -186,9 +341,11 @@ export default function ServicesPage() {
                 <TableBody>
                   {initialMedicalExams.map((exam) => (
                     <TableRow key={exam.code}>
-                      <TableCell className="font-medium">{exam.code}</TableCell>
+                      <TableCell className='font-medium'>{exam.code}</TableCell>
                       <TableCell>{exam.name}</TableCell>
-                      <TableCell><Badge variant="outline">{exam.type}</Badge></TableCell>
+                      <TableCell>
+                        <Badge variant='outline'>{exam.type}</Badge>
+                      </TableCell>
                       <TableCell>{exam.price}</TableCell>
                       <TableCell>{exam.periodicity}</TableCell>
                     </TableRow>
@@ -199,12 +356,20 @@ export default function ServicesPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="programs">
-           <Card>
+        <TabsContent value='programs'>
+          <Card>
             <CardHeader>
               <CardTitle>Programas e Laudos de SST</CardTitle>
-              <CardDescription>Serviços cobrados por demanda para emissão de programas e laudos de segurança do trabalho.</CardDescription>
-               <div className="pt-4"><ServiceTableActions buttonLabel="Adicionar Programa" onAddClick={() => setIsAddProgramDialogOpen(true)} /></div>
+              <CardDescription>
+                Serviços cobrados por demanda para emissão de programas e laudos
+                de segurança do trabalho.
+              </CardDescription>
+              <div className='pt-4'>
+                <ServiceTableActions
+                  buttonLabel='Adicionar Programa'
+                  onAddClick={() => setIsAddProgramDialogOpen(true)}
+                />
+              </div>
             </CardHeader>
             <CardContent>
               <Table>
@@ -220,7 +385,9 @@ export default function ServicesPage() {
                 <TableBody>
                   {sstPrograms.map((program) => (
                     <TableRow key={program.code}>
-                      <TableCell className="font-medium">{program.code}</TableCell>
+                      <TableCell className='font-medium'>
+                        {program.code}
+                      </TableCell>
                       <TableCell>{program.service}</TableCell>
                       <TableCell>{program.unitPrice}</TableCell>
                       <TableCell>{program.validity}</TableCell>
@@ -233,12 +400,20 @@ export default function ServicesPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="advisory">
-            <Card>
+        <TabsContent value='advisory'>
+          <Card>
             <CardHeader>
               <CardTitle>Assessoria Técnica</CardTitle>
-              <CardDescription>Contratos de recorrência mensal para assessoria técnica especializada.</CardDescription>
-               <div className="pt-4"><ServiceTableActions buttonLabel="Adicionar Contrato" onAddClick={() => setIsAddContractDialogOpen(true)} /></div>
+              <CardDescription>
+                Contratos de recorrência mensal para assessoria técnica
+                especializada.
+              </CardDescription>
+              <div className='pt-4'>
+                <ServiceTableActions
+                  buttonLabel='Adicionar Contrato'
+                  onAddClick={() => setIsAddContractDialogOpen(true)}
+                />
+              </div>
             </CardHeader>
             <CardContent>
               <Table>
@@ -255,7 +430,9 @@ export default function ServicesPage() {
                 <TableBody>
                   {technicalAdvisory.map((item) => (
                     <TableRow key={item.contractNumber}>
-                      <TableCell className="font-medium">{item.contractNumber}</TableCell>
+                      <TableCell className='font-medium'>
+                        {item.contractNumber}
+                      </TableCell>
                       <TableCell>{item.name}</TableCell>
                       <TableCell>{item.hours}</TableCell>
                       <TableCell>{item.hourValue}</TableCell>
@@ -268,13 +445,21 @@ export default function ServicesPage() {
             </CardContent>
           </Card>
         </TabsContent>
-        
-        <TabsContent value="rentals">
-             <Card>
+
+        <TabsContent value='rentals'>
+          <Card>
             <CardHeader>
               <CardTitle>Aluguel de Unidade Móvel e Equipamentos</CardTitle>
-              <CardDescription>Disponibilização de equipamentos e unidades móveis para atendimento in-company.</CardDescription>
-               <div className="pt-4"><ServiceTableActions buttonLabel="Adicionar Item" onAddClick={() => setIsAddItemDialogOpen(true)} /></div>
+              <CardDescription>
+                Disponibilização de equipamentos e unidades móveis para
+                atendimento in-company.
+              </CardDescription>
+              <div className='pt-4'>
+                <ServiceTableActions
+                  buttonLabel='Adicionar Item'
+                  onAddClick={() => setIsAddItemDialogOpen(true)}
+                />
+              </div>
             </CardHeader>
             <CardContent>
               <Table>
@@ -289,7 +474,7 @@ export default function ServicesPage() {
                 <TableBody>
                   {rentals.map((item) => (
                     <TableRow key={item.code}>
-                      <TableCell className="font-medium">{item.code}</TableCell>
+                      <TableCell className='font-medium'>{item.code}</TableCell>
                       <TableCell>{item.description}</TableCell>
                       <TableCell>{item.dailyRate}</TableCell>
                       <TableCell>{item.insurance}</TableCell>
@@ -301,12 +486,20 @@ export default function ServicesPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="outsourcing">
-            <Card>
+        <TabsContent value='outsourcing'>
+          <Card>
             <CardHeader>
               <CardTitle>Terceirização de SESMT</CardTitle>
-              <CardDescription>Alocação de profissionais de Saúde e Segurança do Trabalho para compor o SESMT do cliente.</CardDescription>
-               <div className="pt-4"><ServiceTableActions buttonLabel="Adicionar Profissional" onAddClick={() => setIsAddProfessionalDialogOpen(true)} /></div>
+              <CardDescription>
+                Alocação de profissionais de Saúde e Segurança do Trabalho para
+                compor o SESMT do cliente.
+              </CardDescription>
+              <div className='pt-4'>
+                <ServiceTableActions
+                  buttonLabel='Adicionar Profissional'
+                  onAddClick={() => setIsAddProfessionalDialogOpen(true)}
+                />
+              </div>
             </CardHeader>
             <CardContent>
               <Table>
@@ -323,7 +516,7 @@ export default function ServicesPage() {
                 <TableBody>
                   {outsourcing.map((item) => (
                     <TableRow key={item.code}>
-                      <TableCell className="font-medium">{item.code}</TableCell>
+                      <TableCell className='font-medium'>{item.code}</TableCell>
                       <TableCell>{item.professional}</TableCell>
                       <TableCell>{item.hourValue}</TableCell>
                       <TableCell>{item.hours}</TableCell>
@@ -337,11 +530,36 @@ export default function ServicesPage() {
           </Card>
         </TabsContent>
       </Tabs>
-      <AddServiceDialog open={isAddExamDialogOpen} onOpenChange={setIsAddExamDialogOpen} title="Adicionar Novo Exame" description="Preencha os detalhes para adicionar um novo exame médico ao catálogo." />
-      <AddServiceDialog open={isAddProgramDialogOpen} onOpenChange={setIsAddProgramDialogOpen} title="Adicionar Novo Programa/Laudo" description="Preencha os detalhes para adicionar um novo serviço de programa ou laudo." />
-      <AddServiceDialog open={isAddContractDialogOpen} onOpenChange={setIsAddContractDialogOpen} title="Adicionar Novo Contrato de Assessoria" description="Preencha os detalhes para adicionar um novo modelo de contrato de assessoria." />
-      <AddServiceDialog open={isAddItemDialogOpen} onOpenChange={setIsAddItemDialogOpen} title="Adicionar Novo Item para Aluguel" description="Preencha os detalhes para adicionar um novo equipamento ou unidade para aluguel." />
-      <AddServiceDialog open={isAddProfessionalDialogOpen} onOpenChange={setIsAddProfessionalDialogOpen} title="Adicionar Novo Profissional para Terceirização" description="Preencha os detalhes para adicionar um novo tipo de profissional para terceirização." />
+      <AddServiceDialog
+        open={isAddExamDialogOpen}
+        onOpenChange={setIsAddExamDialogOpen}
+        title='Adicionar Novo Exame'
+        description='Preencha os detalhes para adicionar um novo exame médico ao catálogo.'
+      />
+      <AddServiceDialog
+        open={isAddProgramDialogOpen}
+        onOpenChange={setIsAddProgramDialogOpen}
+        title='Adicionar Novo Programa/Laudo'
+        description='Preencha os detalhes para adicionar um novo serviço de programa ou laudo.'
+      />
+      <AddServiceDialog
+        open={isAddContractDialogOpen}
+        onOpenChange={setIsAddContractDialogOpen}
+        title='Adicionar Novo Contrato de Assessoria'
+        description='Preencha os detalhes para adicionar um novo modelo de contrato de assessoria.'
+      />
+      <AddServiceDialog
+        open={isAddItemDialogOpen}
+        onOpenChange={setIsAddItemDialogOpen}
+        title='Adicionar Novo Item para Aluguel'
+        description='Preencha os detalhes para adicionar um novo equipamento ou unidade para aluguel.'
+      />
+      <AddServiceDialog
+        open={isAddProfessionalDialogOpen}
+        onOpenChange={setIsAddProfessionalDialogOpen}
+        title='Adicionar Novo Profissional para Terceirização'
+        description='Preencha os detalhes para adicionar um novo tipo de profissional para terceirização.'
+      />
     </div>
-  );
+  )
 }

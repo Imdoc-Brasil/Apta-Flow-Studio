@@ -1,6 +1,10 @@
-'use server';
+'use server'
 
-import { suggestProcessTool, SuggestProcessToolInput, SuggestProcessToolOutput } from './ai-actions';
+import {
+  suggestProcessTool,
+  SuggestProcessToolInput,
+  SuggestProcessToolOutput,
+} from './ai-actions'
 
-export { suggestProcessTool };
-export type { SuggestProcessToolInput, SuggestProcessToolOutput };
+export { suggestProcessTool }
+export type { SuggestProcessToolInput, SuggestProcessToolOutput }
