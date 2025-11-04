@@ -123,22 +123,27 @@ export default function StaffsPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [currentStaff, setCurrentStaff] = useState<Staff | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string[]>(['Ativo', 'Licença', 'Suspenso'])
+  const [statusFilter, setStatusFilter] = useState<string[]>([
+    'Ativo',
+    'Licença',
+    'Suspenso',
+  ])
 
   const filteredStaffs = useMemo(() => {
     return staffs
       .filter((staff) => {
         const term = searchTerm.toLowerCase()
+        if (!term) return true
         return (
           staff.name.toLowerCase().includes(term) ||
           staff.email.toLowerCase().includes(term)
         )
       })
       .filter((staff) => {
-        return statusFilter.length === 0 || statusFilter.includes(staff.status)
+        if (statusFilter.length === 0) return false // Hide all if nothing is selected
+        return statusFilter.includes(staff.status)
       })
   }, [staffs, searchTerm, statusFilter])
-
 
   const handleAddStaff = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -232,7 +237,7 @@ export default function StaffsPage() {
   const getProfileName = (perfilId: string) => {
     return initialProfiles.find((p) => p.id === perfilId)?.name || 'N/A'
   }
-  
+
   const getStatusBadgeVariant = (status: StaffStatus) => {
     switch (status) {
       case 'Ativo':
@@ -341,7 +346,7 @@ export default function StaffsPage() {
           </CardDescription>
           <div className='flex items-center justify-between pt-4'>
             <div className='flex items-center gap-2'>
-               <div className='relative w-full max-w-sm'>
+              <div className='relative w-full max-w-sm'>
                 <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
                 <Input
                   type='search'
@@ -353,7 +358,11 @@ export default function StaffsPage() {
               </div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant='outline' size='sm' className='h-10 gap-1 text-sm'>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    className='h-10 gap-1 text-sm'
+                  >
                     <Filter className='h-3.5 w-3.5' />
                     <span className='sr-only sm:not-sr-only'>Filtro</span>
                   </Button>
@@ -367,7 +376,9 @@ export default function StaffsPage() {
                       checked={statusFilter.includes(status)}
                       onCheckedChange={(checked) => {
                         setStatusFilter((prev) =>
-                          checked ? [...prev, status] : prev.filter((s) => s !== status)
+                          checked
+                            ? [...prev, status]
+                            : prev.filter((s) => s !== status)
                         )
                       }}
                     >
@@ -484,7 +495,9 @@ export default function StaffsPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align='end'>
                         <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => openDetailDialog(staff)}>
+                        <DropdownMenuItem
+                          onClick={() => openDetailDialog(staff)}
+                        >
                           Ver Detalhes
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => openEditDialog(staff)}>
@@ -492,14 +505,34 @@ export default function StaffsPage() {
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuSub>
-                           <DropdownMenuSubTrigger>Alterar Status</DropdownMenuSubTrigger>
-                           <DropdownMenuPortal>
-                             <DropdownMenuSubContent>
-                               <DropdownMenuItem onClick={() => handleChangeStatus(staff.email, 'Ativo')}>Ativo</DropdownMenuItem>
-                               <DropdownMenuItem onClick={() => handleChangeStatus(staff.email, 'Licença')}>Licença</DropdownMenuItem>
-                               <DropdownMenuItem onClick={() => handleChangeStatus(staff.email, 'Suspenso')}>Suspenso</DropdownMenuItem>
-                             </DropdownMenuSubContent>
-                           </DropdownMenuPortal>
+                          <DropdownMenuSubTrigger>
+                            Alterar Status
+                          </DropdownMenuSubTrigger>
+                          <DropdownMenuPortal>
+                            <DropdownMenuSubContent>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  handleChangeStatus(staff.email, 'Ativo')
+                                }
+                              >
+                                Ativo
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  handleChangeStatus(staff.email, 'Licença')
+                                }
+                              >
+                                Licença
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() =>
+                                  handleChangeStatus(staff.email, 'Suspenso')
+                                }
+                              >
+                                Suspenso
+                              </DropdownMenuItem>
+                            </DropdownMenuSubContent>
+                          </DropdownMenuPortal>
                         </DropdownMenuSub>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
@@ -543,7 +576,7 @@ export default function StaffsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
+
       {/* Detail Dialog */}
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
         <DialogContent>
@@ -552,46 +585,55 @@ export default function StaffsPage() {
           </DialogHeader>
           {currentStaff && (
             <div className='grid gap-4 py-4'>
-                <div className='flex items-center gap-4'>
-                     <Avatar className='h-16 w-16'>
-                        <AvatarImage src={currentStaff.avatar} alt={currentStaff.name} />
-                        <AvatarFallback>{currentStaff.fallback}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className='font-bold text-lg'>{currentStaff.name}</p>
-                        <p className='text-sm text-muted-foreground'>{currentStaff.email}</p>
-                         <p className='text-sm text-muted-foreground'>{currentStaff.phone}</p>
-                      </div>
+              <div className='flex items-center gap-4'>
+                <Avatar className='h-16 w-16'>
+                  <AvatarImage
+                    src={currentStaff.avatar}
+                    alt={currentStaff.name}
+                  />
+                  <AvatarFallback>{currentStaff.fallback}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className='font-bold text-lg'>{currentStaff.name}</p>
+                  <p className='text-sm text-muted-foreground'>
+                    {currentStaff.email}
+                  </p>
+                  <p className='text-sm text-muted-foreground'>
+                    {currentStaff.phone}
+                  </p>
                 </div>
-                <div className='space-y-2'>
-                    <p className='text-sm font-medium'>Perfil</p>
-                    <p className='text-muted-foreground'>{getProfileName(currentStaff.perfilId)}</p>
+              </div>
+              <div className='space-y-2'>
+                <p className='text-sm font-medium'>Perfil</p>
+                <p className='text-muted-foreground'>
+                  {getProfileName(currentStaff.perfilId)}
+                </p>
+              </div>
+              <div className='space-y-2'>
+                <p className='text-sm font-medium'>Assinatura</p>
+                <p className='text-muted-foreground'>
+                  {currentStaff.assinatura}
+                </p>
+              </div>
+              <div className='space-y-2'>
+                <p className='text-sm font-medium'>Status</p>
+                <Badge variant={getStatusBadgeVariant(currentStaff.status)}>
+                  {currentStaff.status}
+                </Badge>
+              </div>
+              <div className='space-y-2'>
+                <p className='text-sm font-medium'>Situação</p>
+                <div className='flex items-center gap-2'>
+                  <span
+                    className={`h-2 w-2 rounded-full ${
+                      currentStaff.situacao === 'Online'
+                        ? 'bg-green-500'
+                        : 'bg-gray-400'
+                    }`}
+                  ></span>
+                  <span>{currentStaff.situacao}</span>
                 </div>
-                 <div className='space-y-2'>
-                    <p className='text-sm font-medium'>Assinatura</p>
-                    <p className='text-muted-foreground'>{currentStaff.assinatura}</p>
-                </div>
-                 <div className='space-y-2'>
-                    <p className='text-sm font-medium'>Status</p>
-                     <Badge
-                      variant={getStatusBadgeVariant(currentStaff.status)}
-                    >
-                      {currentStaff.status}
-                    </Badge>
-                </div>
-                 <div className='space-y-2'>
-                    <p className='text-sm font-medium'>Situação</p>
-                      <div className='flex items-center gap-2'>
-                        <span
-                          className={`h-2 w-2 rounded-full ${
-                            currentStaff.situacao === 'Online'
-                              ? 'bg-green-500'
-                              : 'bg-gray-400'
-                          }`}
-                        ></span>
-                        <span>{currentStaff.situacao}</span>
-                      </div>
-                </div>
+              </div>
             </div>
           )}
           <DialogFooter>
@@ -599,20 +641,28 @@ export default function StaffsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
+
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação não pode ser desfeita. Isso irá excluir permanentemente o staff{' '}
+              Esta ação não pode ser desfeita. Isso irá excluir
+              permanentemente o staff{' '}
               <span className='font-semibold'>{currentStaff?.name}</span>.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setCurrentStaff(null)}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteStaff}>Excluir</AlertDialogAction>
+            <AlertDialogCancel onClick={() => setCurrentStaff(null)}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteStaff}>
+              Excluir
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
