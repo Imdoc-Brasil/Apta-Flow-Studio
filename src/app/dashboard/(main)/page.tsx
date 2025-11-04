@@ -1,9 +1,10 @@
+'use client'
+
 import {
   Activity,
   ArrowUpRight,
   Briefcase,
   CreditCard,
-  DollarSign,
   Users,
 } from 'lucide-react'
 
@@ -26,20 +27,11 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import Link from 'next/link'
+import { useTicketStore } from './tickets/tickets-store'
+import { initialClientsData } from './clients/page'
+import { initialStaffsData } from './employees/page'
 
-const kpiData = [
-  {
-    title: 'Clientes Ativos',
-    value: '+45',
-    description: '+12% do último mês',
-    icon: <Briefcase className='h-4 w-4 text-muted-foreground' />,
-  },
-  {
-    title: 'Tickets Abertos',
-    value: '127',
-    description: '+5 desde a última hora',
-    icon: <Users className='h-4 w-4 text-muted-foreground' />,
-  },
+const kpiDataStatic = [
   {
     title: 'Conformidade de SLA',
     value: '98.2%',
@@ -54,40 +46,38 @@ const kpiData = [
   },
 ]
 
-const recentActivity = [
-  {
-    name: 'Olivia Martin',
-    email: 'olivia.martin@email.com',
-    action: 'Novo Ticket',
-    details: '#TKT-2024-078',
-  },
-  {
-    name: 'Jackson Lee',
-    email: 'jackson.lee@email.com',
-    action: 'Contrato Assinado',
-    details: 'Innovate Inc.',
-  },
-  {
-    name: 'Isabella Nguyen',
-    email: 'isabella.nguyen@email.com',
-    action: 'SLA Cumprido',
-    details: 'Projeto Phoenix',
-  },
-  {
-    name: 'William Kim',
-    email: 'will@email.com',
-    action: 'Novo Cliente',
-    details: 'Acme Corp',
-  },
-  {
-    name: 'Sofia Davis',
-    email: 'sofia.davis@email.com',
-    action: 'Ticket Fechado',
-    details: '#TKT-2024-075',
-  },
-]
-
 export default function Dashboard() {
+  const { tickets } = useTicketStore()
+  const activeClientsCount = initialClientsData.filter(
+    (c) => c.status === 'Ativo'
+  ).length
+  const openTicketsCount = tickets.filter((t) => t.status === 'Aberto').length
+
+  const recentTickets = [...tickets]
+    .sort((a, b) => new Date(b.updated).getTime() - new Date(a.updated).getTime())
+    .slice(0, 5)
+
+  const newStaffs = initialStaffsData.slice(0, 2)
+
+  const kpiDataDynamic = [
+    {
+      title: 'Clientes Ativos',
+      value: `+${activeClientsCount}`,
+      description: `Total de ${initialClientsData.length} clientes`,
+      icon: <Briefcase className='h-4 w-4 text-muted-foreground' />,
+    },
+    {
+      title: 'Tickets Abertos',
+      value: `${openTicketsCount}`,
+      description: `${
+        tickets.filter((t) => t.status === 'Em Progresso').length
+      } em progresso`,
+      icon: <Users className='h-4 w-4 text-muted-foreground' />,
+    },
+  ]
+
+  const kpiData = [...kpiDataDynamic, ...kpiDataStatic]
+
   return (
     <>
       <div className='grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4'>
@@ -110,14 +100,14 @@ export default function Dashboard() {
         <Card className='xl:col-span-2'>
           <CardHeader className='flex flex-row items-center'>
             <div className='grid gap-2'>
-              <CardTitle>Atividade Recente</CardTitle>
+              <CardTitle>Tickets Recentes</CardTitle>
               <CardDescription>
-                Um registro de atividades recentes em toda a plataforma.
+                As solicitações de serviço mais recentes.
               </CardDescription>
             </div>
             <Button asChild size='sm' className='ml-auto gap-1'>
-              <Link href='#'>
-                Ver Tudo
+              <Link href='/dashboard/tickets'>
+                Ver Todos
                 <ArrowUpRight className='h-4 w-4' />
               </Link>
             </Button>
@@ -126,33 +116,31 @@ export default function Dashboard() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Usuário</TableHead>
-                  <TableHead>Ação</TableHead>
-                  <TableHead className='text-right'>Detalhes</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead className='hidden sm:table-cell'>Status</TableHead>
+                  <TableHead>Assunto</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recentActivity.map((activity, index) => (
-                  <TableRow key={index}>
+                {recentTickets.map((ticket) => (
+                  <TableRow key={ticket.id}>
                     <TableCell>
-                      <div className='font-medium'>{activity.name}</div>
+                      <div className='font-medium'>{ticket.client}</div>
                       <div className='hidden text-sm text-muted-foreground md:inline'>
-                        {activity.email}
+                        {ticket.id}
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className='hidden sm:table-cell'>
                       <Badge
-                        variant={
-                          activity.action.includes('Novo') ? 'default' : 'secondary'
-                        }
                         className='text-xs'
+                        variant={
+                          ticket.status === 'Aberto' ? 'default' : 'secondary'
+                        }
                       >
-                        {activity.action}
+                        {ticket.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className='text-right'>
-                      {activity.details}
-                    </TableCell>
+                    <TableCell>{ticket.subject}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -161,46 +149,31 @@ export default function Dashboard() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Novos Staffs</CardTitle>
+            <CardTitle>Staffs Recentes</CardTitle>
             <CardDescription>
               Dando as boas-vindas aos mais novos membros da nossa equipe.
             </CardDescription>
           </CardHeader>
           <CardContent className='grid gap-8'>
-            <div className='flex items-center gap-4'>
-              <Avatar className='hidden h-9 w-9 sm:flex'>
-                <AvatarImage
-                  src='https://i.pravatar.cc/150?u=a042581f4e29026704a'
-                  alt='Avatar'
-                />
-                <AvatarFallback>OM</AvatarFallback>
-              </Avatar>
-              <div className='grid gap-1'>
-                <p className='text-sm font-medium leading-none'>
-                  Olivia Martin
-                </p>
-                <p className='text-sm text-muted-foreground'>
-                  Gerente de Projeto
-                </p>
+            {newStaffs.map((staff, index) => (
+              <div key={staff.email} className='flex items-center gap-4'>
+                <Avatar className='hidden h-9 w-9 sm:flex'>
+                  <AvatarImage src={staff.avatar} alt='Avatar' />
+                  <AvatarFallback>{staff.fallback}</AvatarFallback>
+                </Avatar>
+                <div className='grid gap-1'>
+                  <p className='text-sm font-medium leading-none'>
+                    {staff.name}
+                  </p>
+                  <p className='text-sm text-muted-foreground'>
+                    {staff.assinatura}
+                  </p>
+                </div>
+                <div className='ml-auto font-medium'>
+                  {index === 0 ? 'Entrou Hoje' : 'Entrou Ontem'}
+                </div>
               </div>
-              <div className='ml-auto font-medium'>Entrou Hoje</div>
-            </div>
-            <div className='flex items-center gap-4'>
-              <Avatar className='hidden h-9 w-9 sm:flex'>
-                <AvatarImage
-                  src='https://i.pravatar.cc/150?u=a042581f4e29026704b'
-                  alt='Avatar'
-                />
-                <AvatarFallback>JL</AvatarFallback>
-              </Avatar>
-              <div className='grid gap-1'>
-                <p className='text-sm font-medium leading-none'>Jackson Lee</p>
-                <p className='text-sm text-muted-foreground'>
-                  Engenheiro de Software
-                </p>
-              </div>
-              <div className='ml-auto font-medium'>Entrou Ontem</div>
-            </div>
+            ))}
           </CardContent>
         </Card>
       </div>
