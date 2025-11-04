@@ -39,6 +39,7 @@ export interface Checklist {
 
 export interface TextElement {
   id: string
+  type: 'note' | 'question' | 'comment'
   title: string
   content: string
   creator: string
@@ -235,7 +236,9 @@ export const useTicketStore = create<TicketStore>((set) => ({
         }))
       : [],
     attachments: ticket.attachments ? [...ticket.attachments] : [],
-    textElements: ticket.textElements ? [...ticket.textElements] : [],
+    textElements: ticket.textElements
+      ? ticket.textElements.map((te) => ({ ...te }))
+      : [],
   })),
   addTicket: (newTicket) =>
     set((state) => ({

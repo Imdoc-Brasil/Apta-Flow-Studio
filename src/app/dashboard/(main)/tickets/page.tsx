@@ -35,6 +35,8 @@ import {
   File as FileIcon,
   Upload,
   FileText,
+  MessageSquare,
+  HelpCircle,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -546,9 +548,15 @@ function AddChecklistItemForm({
 function AddTextElementDialog({
   ticketId,
   children,
+  elementType,
+  dialogTitle,
+  dialogDescription,
 }: {
   ticketId: string
   children: React.ReactNode
+  elementType: 'question' | 'comment'
+  dialogTitle: string
+  dialogDescription: string
 }) {
   const [open, setOpen] = useState(false)
   const { addTextElement } = useTicketStore()
@@ -557,16 +565,13 @@ function AddTextElementDialog({
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
-    const title = formData.get('title') as string
     const content = formData.get('content') as string
-    const dueDate = formData.get('dueDate') as string
-    const assignedTo = formData.get('assignedTo') as string
 
-    if (!title || !content) {
+    if (!content) {
       toast({
         variant: 'destructive',
-        title: 'Campos obrigatórios',
-        description: 'Por favor, preencha o título e o conteúdo.',
+        title: 'Campo obrigatório',
+        description: 'Por favor, preencha o conteúdo.',
       })
       return
     }
@@ -575,18 +580,17 @@ function AddTextElementDialog({
     const creator = initialStaffsData[0]
 
     addTextElement(ticketId, {
-      title,
+      type: elementType,
+      title: elementType === 'question' ? 'Pergunta' : 'Comentário', // Simplified title
       content,
       creator: creator.name,
       creatorAvatar: creator.avatar,
       creatorFallback: creator.fallback,
-      dueDate: dueDate || undefined,
-      assignedTo: assignedTo && assignedTo !== 'unassigned' ? [assignedTo] : [],
     })
 
     toast({
-      title: 'Elemento de Texto Adicionado!',
-      description: `O item "${title}" foi adicionado ao ticket.`,
+      title: `${dialogTitle} adicionado!`,
+      description: `Sua contribuição foi adicionada ao ticket.`,
     })
     setOpen(false)
   }
@@ -596,51 +600,19 @@ function AddTextElementDialog({
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Adicionar Novo Elemento de Texto</DialogTitle>
-          <DialogDescription>
-            Crie uma nova nota, atualização ou outra informação textual para o
-            ticket.
-          </DialogDescription>
+          <DialogTitle>{dialogTitle}</DialogTitle>
+          <DialogDescription>{dialogDescription}</DialogDescription>
         </DialogHeader>
         <form id='add-text-element-form' onSubmit={handleSubmit}>
           <div className='grid gap-4 py-4'>
             <div className='space-y-2'>
-              <Label htmlFor='title'>Título</Label>
-              <Input
-                id='title'
-                name='title'
-                placeholder='Ex: Atualização de Status'
-                required
-              />
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='content'>Conteúdo</Label>
+              <Label htmlFor='content'>{dialogTitle}</Label>
               <Textarea
                 id='content'
                 name='content'
-                placeholder='Escreva seu parágrafo aqui...'
+                placeholder='Escreva aqui...'
                 required
               />
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='dueDate'>Prazo (Opcional)</Label>
-              <Input id='dueDate' name='dueDate' type='date' />
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='assignedTo'>Atribuir a (Opcional)</Label>
-              <Select name='assignedTo' defaultValue='unassigned'>
-                <SelectTrigger>
-                  <SelectValue placeholder='Selecione um membro' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='unassigned'>Ninguém</SelectItem>
-                  {initialStaffsData.map((staff) => (
-                    <SelectItem key={staff.email} value={staff.email}>
-                      {staff.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
           </div>
           <DialogFooter>
@@ -712,21 +684,23 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
         <DialogTitle className='text-2xl font-bold'>
           {ticket.subject}
         </DialogTitle>
-        {ticket.labels && ticket.labels.length > 0 && (
-          <div className='flex flex-wrap gap-1 pt-2'>
-            {ticket.labels.map((label) => (
-              <span
-                key={label.id}
-                className={`px-2 py-0.5 text-xs rounded-full text-white ${label.color}`}
-              >
-                {label.name}
-              </span>
-            ))}
-          </div>
-        )}
-        <DialogDescription>
-          Na coluna {ticket.status} | Cliente: {ticket.client} ({ticket.id})
-        </DialogDescription>
+        <div className='flex items-center justify-between'>
+          <DialogDescription>
+            Na coluna {ticket.status} | Cliente: {ticket.client} ({ticket.id})
+          </DialogDescription>
+          {ticket.labels && ticket.labels.length > 0 && (
+            <div className='flex flex-wrap gap-1 pt-2'>
+              {ticket.labels.map((label) => (
+                <span
+                  key={label.id}
+                  className={`px-2 py-0.5 text-xs rounded-full text-white ${label.color}`}
+                >
+                  {label.name}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
       </DialogHeader>
       <div className='grid grid-cols-3 gap-8 py-4'>
         <div className='col-span-2 space-y-6'>
@@ -741,55 +715,32 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
           </div>
 
           {ticket.textElements &&
-            ticket.textElements.map((element) => {
-              const assignedToMember = initialStaffsData.find((staff) =>
-                element.assignedTo?.includes(staff.email)
-              )
-              return (
-                <div key={element.id} className='space-y-2'>
+            ticket.textElements.map((element) => (
+              <div key={element.id} className='flex items-start gap-3'>
+                <Avatar className='h-8 w-8 mt-1'>
+                  <AvatarImage src={element.creatorAvatar} />
+                  <AvatarFallback>{element.creatorFallback}</AvatarFallback>
+                </Avatar>
+                <div className='flex-1'>
                   <div className='flex items-center justify-between'>
                     <div className='flex items-center gap-2'>
-                      <FileText className='h-5 w-5 text-muted-foreground' />
-                      <Avatar className='h-6 w-6'>
-                        <AvatarImage src={element.creatorAvatar} />
-                        <AvatarFallback>{element.creatorFallback}</AvatarFallback>
-                      </Avatar>
-                      <h3 className='font-semibold'>{element.title}</h3>
+                      <p className='font-semibold'>{element.creator}</p>
+                      <p className='text-xs text-muted-foreground font-medium'>
+                        {element.type === 'question'
+                          ? 'fez uma pergunta'
+                          : 'adicionou um comentário'}
+                      </p>
                     </div>
                     <p className='text-xs text-muted-foreground'>
                       <TimeAgo dateString={element.createdAt} />
                     </p>
                   </div>
-                  <div className='ml-7 space-y-2'>
-                    <p className='text-sm text-muted-foreground bg-gray-50 p-3 rounded-md border'>
-                      {element.content}
-                    </p>
-                    <div className='flex items-center gap-4 text-xs text-muted-foreground'>
-                      {element.dueDate && (
-                        <div className='flex items-center gap-1'>
-                          <Calendar className='h-3 w-3' />
-                          <span>
-                            Prazo:{' '}
-                            {format(parseISO(element.dueDate), 'dd/MM/yyyy')}
-                          </span>
-                        </div>
-                      )}
-                      {assignedToMember && (
-                        <div className='flex items-center gap-1'>
-                          <Avatar className='h-4 w-4'>
-                            <AvatarImage src={assignedToMember.avatar} />
-                            <AvatarFallback>
-                              {assignedToMember.fallback}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span>{assignedToMember.name}</span>
-                        </div>
-                      )}
-                    </div>
+                  <div className='mt-1 text-sm text-muted-foreground bg-gray-50 p-3 rounded-md border'>
+                    {element.content}
                   </div>
                 </div>
-              )
-            })}
+              </div>
+            ))}
 
           {ticket.checklists && ticket.checklists.length > 0 && (
             <div className='space-y-4'>
@@ -1052,9 +1003,25 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                   </div>
                 </PopoverContent>
               </Popover>
-              <AddTextElementDialog ticketId={ticket.id}>
+              <AddTextElementDialog
+                ticketId={ticket.id}
+                elementType='question'
+                dialogTitle='Fazer Pergunta'
+                dialogDescription='Faça uma pergunta clara para a equipe ou cliente.'
+              >
                 <Button variant='secondary' className='justify-start'>
-                  <FileText className='mr-2 h-4 w-4' /> Texto
+                  <HelpCircle className='mr-2 h-4 w-4' /> Fazer Pergunta
+                </Button>
+              </AddTextElementDialog>
+              <AddTextElementDialog
+                ticketId={ticket.id}
+                elementType='comment'
+                dialogTitle='Adicionar Comentário'
+                dialogDescription='Adicione uma atualização, nota ou qualquer outra informação.'
+              >
+                <Button variant='secondary' className='justify-start'>
+                  <MessageSquare className='mr-2 h-4 w-4' /> Adicionar
+                  Comentário
                 </Button>
               </AddTextElementDialog>
               <AddChecklistDialog ticketId={ticket.id}>
