@@ -18,6 +18,7 @@ export interface ChecklistItem {
   dueDate: string
   completedBy?: string
   completedAt?: string
+  assignedTo?: string[]
 }
 
 export interface Checklist {
@@ -62,12 +63,14 @@ export const initialTicketsData = [
             dueDate: '2024-07-25',
             completedBy: 'David Rodriguez',
             completedAt: new Date('2024-07-22T14:00:00Z').toISOString(),
+            assignedTo: ['david.r@aptaflow.com'],
           },
           {
             id: 'item-1-2',
             text: 'Aplicar tema aos componentes principais',
             completed: false,
             dueDate: '2024-07-28',
+            assignedTo: ['david.r@aptaflow.com'],
           },
           {
             id: 'item-1-3',
@@ -141,13 +144,15 @@ type TicketStore = {
     ticketId: string,
     title: string,
     firstItemText: string,
-    firstItemDueDate: string
+    firstItemDueDate: string,
+    firstItemAssignedTo?: string[]
   ) => void
   addChecklistItem: (
     ticketId: string,
     checklistId: string,
     text: string,
-    dueDate: string
+    dueDate: string,
+    assignedTo?: string[]
   ) => void
   toggleChecklistItem: (
     ticketId: string,
@@ -162,10 +167,13 @@ export const useTicketStore = create<TicketStore>((set) => ({
   tickets: [...initialTicketsData].map((ticket) => ({
     ...ticket,
     updated: new Date(ticket.updated).toISOString(),
-    assignedTo: ticket.assignedTo || [],
-    labels: ticket.labels || [],
+    assignedTo: ticket.assignedTo ? [...ticket.assignedTo] : [],
+    labels: ticket.labels ? [...ticket.labels] : [],
     checklists: ticket.checklists
-      ? ticket.checklists.map((cl) => ({ ...cl }))
+      ? ticket.checklists.map((cl) => ({
+          ...cl,
+          items: cl.items.map((item) => ({ ...item })),
+        }))
       : [],
   })),
   addTicket: (newTicket) =>
@@ -187,7 +195,13 @@ export const useTicketStore = create<TicketStore>((set) => ({
       ],
     })),
   setTickets: (tickets) => set({ tickets }),
-  addChecklist: (ticketId, title, firstItemText, firstItemDueDate) =>
+  addChecklist: (
+    ticketId,
+    title,
+    firstItemText,
+    firstItemDueDate,
+    firstItemAssignedTo
+  ) =>
     set((state) => ({
       tickets: state.tickets.map((ticket) => {
         if (ticket.id === ticketId) {
@@ -200,6 +214,7 @@ export const useTicketStore = create<TicketStore>((set) => ({
                 text: firstItemText,
                 completed: false,
                 dueDate: firstItemDueDate,
+                assignedTo: firstItemAssignedTo || [],
               },
             ],
           }
@@ -211,7 +226,7 @@ export const useTicketStore = create<TicketStore>((set) => ({
         return ticket
       }),
     })),
-  addChecklistItem: (ticketId, checklistId, text, dueDate) =>
+  addChecklistItem: (ticketId, checklistId, text, dueDate, assignedTo) =>
     set((state) => ({
       tickets: state.tickets.map((ticket) => {
         if (ticket.id === ticketId) {
@@ -224,6 +239,7 @@ export const useTicketStore = create<TicketStore>((set) => ({
                   text,
                   completed: false,
                   dueDate,
+                  assignedTo: assignedTo || [],
                 }
                 return {
                   ...checklist,

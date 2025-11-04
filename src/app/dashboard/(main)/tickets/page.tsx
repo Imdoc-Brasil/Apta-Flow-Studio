@@ -271,6 +271,7 @@ function AddChecklistDialog({
     const title = formData.get('title') as string
     const itemText = formData.get('itemText') as string
     const dueDate = formData.get('dueDate') as string
+    const assignedTo = formData.get('assignedTo') as string
 
     if (!title || !itemText || !dueDate) {
       toast({
@@ -282,7 +283,13 @@ function AddChecklistDialog({
       return
     }
 
-    addChecklist(ticketId, title, itemText, dueDate)
+    addChecklist(
+      ticketId,
+      title,
+      itemText,
+      dueDate,
+      assignedTo ? [assignedTo] : []
+    )
     toast({
       title: 'Checklist Adicionado!',
       description: `O checklist "${title}" foi adicionado ao ticket.`,
@@ -324,6 +331,22 @@ function AddChecklistDialog({
               <Label htmlFor='dueDate'>Prazo da Primeira Tarefa</Label>
               <Input id='dueDate' name='dueDate' type='date' required />
             </div>
+            <div className='space-y-2'>
+              <Label htmlFor='assignedTo'>Atribuir a (Opcional)</Label>
+              <Select name='assignedTo'>
+                <SelectTrigger>
+                  <SelectValue placeholder='Selecione um membro' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value=''>Ninguém</SelectItem>
+                  {initialStaffsData.map((staff) => (
+                    <SelectItem key={staff.email} value={staff.email}>
+                      {staff.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <DialogFooter>
             <Button variant='outline' onClick={() => setOpen(false)}>
@@ -339,7 +362,13 @@ function AddChecklistDialog({
   )
 }
 
-function AddChecklistItemForm({ checklistId, ticketId }: { checklistId: string; ticketId: string }) {
+function AddChecklistItemForm({
+  checklistId,
+  ticketId,
+}: {
+  checklistId: string
+  ticketId: string
+}) {
   const { addChecklistItem } = useTicketStore()
   const { toast } = useToast()
   const [showForm, setShowForm] = useState(false)
@@ -349,6 +378,7 @@ function AddChecklistItemForm({ checklistId, ticketId }: { checklistId: string; 
     const formData = new FormData(e.currentTarget)
     const text = formData.get('itemText') as string
     const dueDate = formData.get('dueDate') as string
+    const assignedTo = formData.get('assignedTo') as string
 
     if (!text || !dueDate) {
       toast({
@@ -359,7 +389,13 @@ function AddChecklistItemForm({ checklistId, ticketId }: { checklistId: string; 
       return
     }
 
-    addChecklistItem(ticketId, checklistId, text, dueDate)
+    addChecklistItem(
+      ticketId,
+      checklistId,
+      text,
+      dueDate,
+      assignedTo ? [assignedTo] : []
+    )
     toast({ title: 'Tarefa adicionada!' })
     e.currentTarget.reset()
     setShowForm(false)
@@ -367,7 +403,12 @@ function AddChecklistItemForm({ checklistId, ticketId }: { checklistId: string; 
 
   if (!showForm) {
     return (
-      <Button variant='ghost' size='sm' onClick={() => setShowForm(true)} className='mt-2 justify-start p-1 h-auto'>
+      <Button
+        variant='ghost'
+        size='sm'
+        onClick={() => setShowForm(true)}
+        className='mt-2 justify-start p-1 h-auto'
+      >
         <Plus className='h-4 w-4 mr-2' />
         Adicionar uma tarefa
       </Button>
@@ -375,17 +416,42 @@ function AddChecklistItemForm({ checklistId, ticketId }: { checklistId: string; 
   }
 
   return (
-     <form onSubmit={handleSubmit} className='mt-2 space-y-2'>
+    <form onSubmit={handleSubmit} className='mt-2 space-y-2'>
       <div className='p-2 border rounded-md'>
-        <Input name='itemText' placeholder='Adicionar uma tarefa...' className='border-none focus-visible:ring-0 px-1' required />
-        <div className='flex items-center justify-between mt-1'>
-            <Input name='dueDate' type='date' className='border-none focus-visible:ring-0 text-xs h-auto p-1 w-auto' required />
+        <Input
+          name='itemText'
+          placeholder='Adicionar uma tarefa...'
+          className='border-none focus-visible:ring-0 px-1'
+          required
+        />
+        <div className='flex items-center justify-between mt-1 gap-2'>
+          <Input
+            name='dueDate'
+            type='date'
+            className='border-none focus-visible:ring-0 text-xs h-auto p-1 w-auto'
+            required
+          />
+          <Select name='assignedTo'>
+            <SelectTrigger className='text-xs h-auto p-1 border-none focus-visible:ring-0 w-auto'>
+              <SelectValue placeholder='Atribuir...' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value=''>Ninguém</SelectItem>
+              {initialStaffsData.map((staff) => (
+                <SelectItem key={staff.email} value={staff.email}>
+                  {staff.fallback}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
       <div className='flex items-center gap-2'>
-        <Button type='submit' size='sm'>Salvar</Button>
+        <Button type='submit' size='sm'>
+          Salvar
+        </Button>
         <Button variant='ghost' size='icon' onClick={() => setShowForm(false)}>
-            <X className='h-4 w-4' />
+          <X className='h-4 w-4' />
         </Button>
       </div>
     </form>
@@ -494,59 +560,83 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                     </div>
                     <div className='ml-7 space-y-2'>
                       <Progress value={progress} className='h-2' />
-                      {checklist.items.map((item) => (
-                        <div
-                          key={item.id}
-                          className='flex items-start gap-2 group'
-                        >
-                          <Checkbox
-                            id={`item-${item.id}`}
-                            checked={item.completed}
-                            onCheckedChange={(checked) =>
-                              handleChecklistItemToggle(
-                                checklist.id,
-                                item.id,
-                                !!checked
-                              )
-                            }
-                            className='mt-1'
-                          />
-                          <div className='grid gap-1 text-sm'>
-                            <label
-                              htmlFor={`item-${item.id}`}
-                              className={`font-medium ${
-                                item.completed
-                                  ? 'line-through text-muted-foreground'
-                                  : ''
-                              }`}
-                            >
-                              {item.text}
-                            </label>
-                            <div className='text-xs text-muted-foreground flex items-center gap-2'>
-                              {item.completed &&
-                              item.completedBy &&
-                              item.completedAt ? (
-                                <span>
-                                  Concluído por {item.completedBy}{' '}
-                                  <TimeAgo dateString={item.completedAt} />
-                                </span>
-                              ) : (
-                                <>
-                                  <Calendar className='h-3 w-3' />
+                      {checklist.items.map((item) => {
+                        const itemAssignedMembers =
+                          initialStaffsData.filter((staff) =>
+                            item.assignedTo?.includes(staff.email)
+                          ) ?? []
+                        return (
+                          <div
+                            key={item.id}
+                            className='flex items-start gap-2 group'
+                          >
+                            <Checkbox
+                              id={`item-${item.id}`}
+                              checked={item.completed}
+                              onCheckedChange={(checked) =>
+                                handleChecklistItemToggle(
+                                  checklist.id,
+                                  item.id,
+                                  !!checked
+                                )
+                              }
+                              className='mt-1'
+                            />
+                            <div className='grid gap-1 text-sm flex-1'>
+                              <label
+                                htmlFor={`item-${item.id}`}
+                                className={`font-medium ${
+                                  item.completed
+                                    ? 'line-through text-muted-foreground'
+                                    : ''
+                                }`}
+                              >
+                                {item.text}
+                              </label>
+                              <div className='text-xs text-muted-foreground flex items-center gap-2'>
+                                {item.completed &&
+                                item.completedBy &&
+                                item.completedAt ? (
                                   <span>
-                                    Vence em{' '}
-                                    {format(
-                                      parseISO(item.dueDate),
-                                      'dd/MM/yyyy'
-                                    )}
+                                    Concluído por {item.completedBy}{' '}
+                                    <TimeAgo dateString={item.completedAt} />
                                   </span>
-                                </>
-                              )}
+                                ) : (
+                                  <>
+                                    <Calendar className='h-3 w-3' />
+                                    <span>
+                                      Vence em{' '}
+                                      {format(
+                                        parseISO(item.dueDate),
+                                        'dd/MM/yyyy'
+                                      )}
+                                    </span>
+                                  </>
+                                )}
+                              </div>
                             </div>
+                             {itemAssignedMembers.length > 0 && (
+                              <div className='flex -space-x-1 self-center'>
+                                {itemAssignedMembers.map((member) => (
+                                  <Avatar
+                                    key={member.email}
+                                    className='h-5 w-5 border'
+                                  >
+                                    <AvatarImage src={member.avatar} />
+                                    <AvatarFallback>
+                                      {member.fallback}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                ))}
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      ))}
-                       <AddChecklistItemForm checklistId={checklist.id} ticketId={ticket.id} />
+                        )
+                      })}
+                      <AddChecklistItemForm
+                        checklistId={checklist.id}
+                        ticketId={ticket.id}
+                      />
                     </div>
                   </div>
                 )
