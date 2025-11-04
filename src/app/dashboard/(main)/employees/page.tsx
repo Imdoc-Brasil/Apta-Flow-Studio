@@ -260,6 +260,9 @@ export default function StaffsPage() {
                       <p className='text-sm text-muted-foreground'>
                         {staff.email}
                       </p>
+                      <p className='text-sm text-muted-foreground'>
+                        {staff.phone}
+                      </p>
                     </div>
                   </div>
                 </TableCell>
