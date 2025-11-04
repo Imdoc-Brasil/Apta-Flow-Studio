@@ -108,7 +108,7 @@ export default function PerformancePage() {
             <CardHeader>
                 <CardTitle>Progresso OKR - Q3 2024</CardTitle>
                 <CardDescription>Progresso atual em direção aos resultados-chave.</CardDescription>
-            </Header>
+            </CardHeader>
             <CardContent>
                 <ChartContainer config={okrConfig} className="h-[250px] w-full">
                     <BarChart accessibilityLayer data={okrData} layout="vertical" margin={{left: 10}}>
