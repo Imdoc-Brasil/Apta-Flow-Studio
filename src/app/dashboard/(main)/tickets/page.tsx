@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MoreHorizontal, PlusCircle, Filter } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -117,6 +117,18 @@ const kanbanColumns: TicketStatus[] = [
   'Resolvido',
   'Fechado',
 ];
+
+// Component to render date on the client side to avoid hydration mismatch
+function ClientSideDate({ dateString }: { dateString: string }) {
+    const [formattedDate, setFormattedDate] = useState('');
+  
+    useEffect(() => {
+      setFormattedDate(new Date(dateString).toLocaleDateString());
+    }, [dateString]);
+  
+    return <>{formattedDate}</>;
+}
+
 
 export default function TicketsPage() {
   const [tickets, setTickets] = useState<Ticket[]>(initialTicketsData as Ticket[]);
@@ -383,7 +395,7 @@ export default function TicketsPage() {
                                             {ticket.priority}
                                         </Badge>
                                         <p className="text-xs text-muted-foreground">
-                                            {new Date(ticket.updated).toLocaleDateString()}
+                                           <ClientSideDate dateString={ticket.updated} />
                                         </p>
                                     </div>
                                 </CardContent>
