@@ -50,6 +50,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { suggestProcessTool } from '@/app/ai-actions'
 import type { SuggestProcessToolOutput } from '@/app/ai-actions'
 import { useToast } from '@/hooks/use-toast'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Calendar as CalendarComponent } from '@/components/ui/calendar'
 
 type TaskStatus = 'Backlog' | 'In Progress' | 'Done'
 
@@ -104,6 +106,7 @@ const TaskCard = ({ task }: { task: Task }) => {
     transition,
     isDragging,
   } = useSortable({ id: task.id, data: { type: 'Task', task } })
+  const [date, setDate] = useState<Date | undefined>(undefined)
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -167,9 +170,21 @@ const TaskCard = ({ task }: { task: Task }) => {
               <Button variant='secondary' className='justify-start'>
                 <CheckSquare className='mr-2 h-4 w-4' /> Checklist
               </Button>
-              <Button variant='secondary' className='justify-start'>
-                <Calendar className='mr-2 h-4 w-4' /> Datas
-              </Button>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant='secondary' className='justify-start'>
+                    <Calendar className='mr-2 h-4 w-4' /> Datas
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className='w-auto p-0'>
+                  <CalendarComponent
+                    mode='single'
+                    selected={date}
+                    onSelect={setDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
               <Button variant='secondary' className='justify-start'>
                 <Paperclip className='mr-2 h-4 w-4' /> Anexo
               </Button>
