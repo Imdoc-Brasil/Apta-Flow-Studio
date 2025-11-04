@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { MoreHorizontal, PlusCircle } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { MoreHorizontal, PlusCircle, Search, Filter } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
   Card,
@@ -21,6 +21,7 @@ import {
   DropdownMenuPortal,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu'
 import {
   Table,
@@ -121,6 +122,23 @@ export default function StaffsPage() {
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [currentStaff, setCurrentStaff] = useState<Staff | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState<string[]>(['Ativo', 'Licença', 'Suspenso'])
+
+  const filteredStaffs = useMemo(() => {
+    return staffs
+      .filter((staff) => {
+        const term = searchTerm.toLowerCase()
+        return (
+          staff.name.toLowerCase().includes(term) ||
+          staff.email.toLowerCase().includes(term)
+        )
+      })
+      .filter((staff) => {
+        return statusFilter.length === 0 || statusFilter.includes(staff.status)
+      })
+  }, [staffs, searchTerm, statusFilter])
+
 
   const handleAddStaff = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -317,12 +335,47 @@ export default function StaffsPage() {
     <>
       <Card>
         <CardHeader>
-          <div className='flex items-center justify-between'>
-            <div>
-              <CardTitle>Hub de Staffs</CardTitle>
-              <CardDescription>
-                Gerencie os staffs da sua empresa.
-              </CardDescription>
+          <CardTitle>Hub de Staffs</CardTitle>
+          <CardDescription>
+            Gerencie os staffs da sua empresa.
+          </CardDescription>
+          <div className='flex items-center justify-between pt-4'>
+            <div className='flex items-center gap-2'>
+               <div className='relative w-full max-w-sm'>
+                <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
+                <Input
+                  type='search'
+                  placeholder='Buscar por nome ou email...'
+                  className='pl-8'
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant='outline' size='sm' className='h-10 gap-1 text-sm'>
+                    <Filter className='h-3.5 w-3.5' />
+                    <span className='sr-only sm:not-sr-only'>Filtro</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align='end'>
+                  <DropdownMenuLabel>Filtrar por Status</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {['Ativo', 'Licença', 'Suspenso'].map((status) => (
+                    <DropdownMenuCheckboxItem
+                      key={status}
+                      checked={statusFilter.includes(status)}
+                      onCheckedChange={(checked) => {
+                        setStatusFilter((prev) =>
+                          checked ? [...prev, status] : prev.filter((s) => s !== status)
+                        )
+                      }}
+                    >
+                      {status}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
@@ -375,7 +428,7 @@ export default function StaffsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {staffs.map((staff) => (
+              {filteredStaffs.map((staff) => (
                 <TableRow key={staff.email}>
                   <TableCell>
                     <div className='flex items-center gap-3'>
