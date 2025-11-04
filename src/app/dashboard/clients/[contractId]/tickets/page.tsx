@@ -41,50 +41,17 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
 import { initialClientsData } from '@/app/dashboard/(main)/clients/page'
-
-const allTicketsData = [
-  {
-    id: 'TKT-001',
-    subject: 'Não consigo fazer login no portal',
-    client: 'Innovate Inc.',
-    priority: 'Alta',
-    status: 'Aberto',
-    updated: '2024-07-21 10:30',
-  },
-  {
-    id: 'TKT-002',
-    subject: 'Pedido de recurso: Modo Escuro',
-    client: 'Solutions Co.',
-    priority: 'Média',
-    status: 'Em Progresso',
-    updated: '2024-07-21 09:15',
-  },
-  {
-    id: 'TKT-003',
-    subject: 'Consulta de faturamento',
-    client: 'Stellar Tech',
-    priority: 'Baixa',
-    status: 'Aberto',
-    updated: '2024-07-20 16:00',
-  },
-  {
-    id: 'TKT-004',
-    subject: 'Endpoint da API retornando erro 500',
-    client: 'Quantum Dynamics',
-    priority: 'Alta',
-    status: 'Resolvido',
-    updated: '2024-07-19 11:00',
-  },
-  { id: 'TKT-005', subject: 'Dúvida sobre integração', client: 'Apex Innovations', priority: 'Fechado', updated: '2024-07-18 14:45' },
-  {
-    id: 'TKT-006',
-    subject: 'Atualização de Contrato',
-    client: 'Innovate Inc.',
-    priority: 'Baixa',
-    status: 'Resolvido',
-    updated: '2024-07-22 11:00',
-  },
-]
+import {
+  useTicketStore,
+  type Ticket,
+} from '@/app/dashboard/(main)/tickets/tickets-store'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 const statusVariant = {
   Aberto: 'default',
@@ -102,15 +69,23 @@ export default function ClientTicketsPage() {
   const contractId = params.contractId as string
   const client = getClientById(contractId)
 
-  const clientTickets = allTicketsData.filter(
-    (ticket) => ticket.client === client?.name
-  )
+  const { tickets, addTicket } = useTicketStore()
+  const clientTickets = tickets.filter((ticket) => ticket.client === client?.name)
 
   const { toast } = useToast()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   const handleNewTicket = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    const formData = new FormData(event.currentTarget)
+
+    addTicket({
+      subject: formData.get('subject') as string,
+      client: client?.name || 'Cliente Desconhecido',
+      priority: formData.get('priority') as Ticket['priority'],
+      description: formData.get('description') as string,
+    })
+
     toast({
       title: 'Chamado Enviado com Sucesso!',
       description:
@@ -146,37 +121,6 @@ export default function ClientTicketsPage() {
               </DialogHeader>
               <form id='new-ticket-form' onSubmit={handleNewTicket}>
                 <div className='grid gap-4 py-4'>
-                  <div className='grid grid-cols-2 gap-4'>
-                    <div className='space-y-2'>
-                      <Label htmlFor='datetime'>Data e Hora</Label>
-                      <Input
-                        id='datetime'
-                        name='datetime'
-                        defaultValue={new Date().toLocaleString('pt-BR')}
-                        disabled
-                      />
-                    </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='unit'>Unidade</Label>
-                      <Input
-                        id='unit'
-                        name='unit'
-                        defaultValue={client?.name}
-                        disabled
-                      />
-                    </div>
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='responsible'>
-                      Responsável pela Abertura
-                    </Label>
-                    <Input
-                      id='responsible'
-                      name='responsible'
-                      defaultValue={client?.responsibleName}
-                      disabled
-                    />
-                  </div>
                   <div className='space-y-2'>
                     <Label htmlFor='subject'>Assunto</Label>
                     <Input
@@ -185,6 +129,19 @@ export default function ClientTicketsPage() {
                       placeholder='Ex: Problema com login'
                       required
                     />
+                  </div>
+                  <div className='space-y-2'>
+                    <Label htmlFor='priority'>Prioridade</Label>
+                    <Select name='priority' required defaultValue='Baixa'>
+                      <SelectTrigger>
+                        <SelectValue placeholder='Selecione a prioridade' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='Baixa'>Baixa</SelectItem>
+                        <SelectItem value='Média'>Média</SelectItem>
+                        <SelectItem value='Alta'>Alta</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className='space-y-2'>
                     <Label htmlFor='description'>Descrição</Label>

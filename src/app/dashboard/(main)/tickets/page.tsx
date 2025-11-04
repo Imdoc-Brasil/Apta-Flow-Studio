@@ -25,7 +25,6 @@ import {
   AlignLeft,
   UserPlus,
   Tag,
-  CheckSquare,
   Calendar,
   Paperclip,
 } from 'lucide-react'
@@ -75,62 +74,11 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { initialClientsData } from '@/app/dashboard/(main)/clients/page'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-
-const initialTicketsData = [
-  {
-    id: 'TKT-001',
-    subject: 'Não consigo fazer login no portal',
-    client: 'Innovate Inc.',
-    priority: 'Alta',
-    status: 'Aberto',
-    updated: '2024-07-21 10:30',
-    description:
-      'Ao tentar acessar o portal do cliente, recebo uma mensagem de "usuário ou senha inválida", mas minhas credenciais estão corretas. Já tentei limpar o cache e usar outro navegador.',
-  },
-  {
-    id: 'TKT-002',
-    subject: 'Pedido de recurso: Modo Escuro',
-    client: 'Solutions Co.',
-    priority: 'Média',
-    status: 'Em Progresso',
-    updated: '2024-07-21 09:15',
-    description:
-      'Gostaríamos de solicitar a implementação de um tema escuro na plataforma para melhorar o conforto visual durante o uso noturno.',
-  },
-  {
-    id: 'TKT-003',
-    subject: 'Consulta de faturamento',
-    client: 'Stellar Tech',
-    priority: 'Baixa',
-    status: 'Aberto',
-    updated: '2024-07-20 16:00',
-    description:
-      'Tenho uma dúvida sobre um item que apareceu na nossa última fatura. Podemos agendar uma chamada para esclarecer?',
-  },
-  {
-    id: 'TKT-004',
-    subject: 'Endpoint da API retornando erro 500',
-    client: 'Quantum Dynamics',
-    priority: 'Alta',
-    status: 'Resolvido',
-    updated: '2024-07-19 11:00',
-    description:
-      'O endpoint GET /api/v1/data está retornando um erro 500 Internal Server Error desde ontem. Isso está impactando nossa integração.',
-  },
-  {
-    id: 'TKT-005',
-    subject: 'Dúvida sobre integração',
-    client: 'Apex Innovations',
-    priority: 'Baixa',
-    status: 'Fechado',
-    updated: '2024-07-18 14:45',
-    description:
-      'Estamos tentando integrar nosso sistema com a API de vocês e precisamos de ajuda para entender o fluxo de autenticação OAuth2.',
-  },
-]
-
-type TicketStatus = 'Aberto' | 'Em Progresso' | 'Resolvido' | 'Fechado'
-export type Ticket = (typeof initialTicketsData)[0]
+import {
+  useTicketStore,
+  type Ticket,
+  type TicketStatus,
+} from './tickets-store'
 
 const priorityVariant = {
   Alta: 'destructive',
@@ -152,7 +100,6 @@ export const kanbanColumns: TicketStatus[] = [
   'Fechado',
 ]
 
-// Component to render date on the client side to avoid hydration mismatch
 function ClientSideDate({ dateString }: { dateString: string }) {
   const [formattedDate, setFormattedDate] = useState('')
 
@@ -182,20 +129,20 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <Dialog>
-        <Card className='cursor-grab active:cursor-grabbing touch-none'>
+        <Card className='touch-none cursor-grab active:cursor-grabbing'>
           <DialogTrigger asChild>
-            <div className='flex flex-col h-full'>
+            <div className='flex h-full flex-col'>
               <div className='flex-grow cursor-pointer'>
                 <CardHeader className='p-4 pb-2'>
-                  <CardTitle className='text-base font-semibold leading-tight hover:underline'>
+                  <CardTitle className='leading-tight hover:underline'>
                     {ticket.subject}
                   </CardTitle>
-                  <CardDescription className='text-xs pt-1'>
+                  <CardDescription className='pt-1 text-xs'>
                     {ticket.client} - {ticket.id}
                   </CardDescription>
                 </CardHeader>
               </div>
-              <CardContent className='p-4 pt-2 flex items-end justify-between'>
+              <CardContent className='flex items-end justify-between p-4 pt-2'>
                 <Badge
                   variant={
                     priorityVariant[
@@ -256,7 +203,7 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
             </div>
 
             <div className='col-span-1 space-y-4'>
-              <h3 className='font-semibold text-sm'>Adicionar ao cartão</h3>
+              <h3 className='text-sm font-semibold'>Adicionar ao cartão</h3>
               <div className='flex flex-col space-y-2'>
                 <Button variant='secondary' className='justify-start'>
                   <UserPlus className='mr-2 h-4 w-4' /> Membros
@@ -294,9 +241,9 @@ const KanbanColumn = ({
   return (
     <div
       ref={setNodeRef}
-      className='flex flex-col gap-4 bg-muted/50 p-4 rounded-lg h-full'
+      className='flex h-full flex-col gap-4 rounded-lg bg-muted/50 p-4'
     >
-      <h2 className='font-bold text-lg'>{status}</h2>
+      <h2 className='text-lg font-bold'>{status}</h2>
       <SortableContext
         items={tickets.map((t) => t.id)}
         strategy={verticalListSortingStrategy}
@@ -306,7 +253,7 @@ const KanbanColumn = ({
             <TicketCard key={ticket.id} ticket={ticket} />
           ))}
           {tickets.length === 0 && (
-            <div className='text-center text-sm text-muted-foreground py-8'>
+            <div className='py-8 text-center text-sm text-muted-foreground'>
               Nenhuma tarefa nesta coluna.
             </div>
           )}
@@ -328,7 +275,7 @@ function ClientOnly({ children }: { children: React.ReactNode }) {
 }
 
 export default function TicketsPage() {
-  const [tickets, setTickets] = useState<Ticket[]>(initialTicketsData as Ticket[])
+  const { tickets, addTicket, setTickets } = useTicketStore()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null)
 
@@ -343,16 +290,12 @@ export default function TicketsPage() {
   const handleAddTicket = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
-    const newTicket: Ticket = {
-      id: `TKT-${Math.random().toString(36).substring(2, 5).toUpperCase()}`,
+    addTicket({
       subject: formData.get('subject') as string,
       client: formData.get('client') as string,
-      priority: formData.get('priority') as string,
-      status: 'Aberto',
-      updated: new Date().toISOString().replace('T', ' ').substring(0, 16),
+      priority: formData.get('priority') as Ticket['priority'],
       description: (formData.get('description') as string) || '',
-    }
-    setTickets((prev) => [newTicket, ...prev])
+    })
     setIsDialogOpen(false)
   }
 
@@ -375,14 +318,11 @@ export default function TicketsPage() {
     const isOverAColumn = over.data.current?.type === 'Column'
 
     if (isActiveATicket && isOverAColumn) {
-      setTickets((tickets) => {
-        const activeIndex = tickets.findIndex((t) => t.id === activeId)
-        if (tickets[activeIndex].status !== overId) {
-          tickets[activeIndex].status = overId as TicketStatus
-          return [...tickets]
-        }
-        return tickets
-      })
+      setTickets(
+        tickets.map((t) =>
+          t.id === activeId ? { ...t, status: overId as TicketStatus } : t
+        )
+      )
     }
   }
 
@@ -394,28 +334,28 @@ export default function TicketsPage() {
     const activeId = active.id
     const overId = over.id
 
-    if (activeId === overId) return
+    if (activeId !== overId) {
+      const activeIndex = tickets.findIndex((t) => t.id === activeId)
+      const overIndex = tickets.findIndex((t) => t.id === overId)
 
-    const isActiveATicket = active.data.current?.type === 'Ticket'
-    const isOverATicket = over.data.current?.type === 'Ticket'
+      const isActiveATask = active.data.current?.type === 'Ticket'
+      const isOverATask = over.data.current?.type === 'Ticket'
 
-    if (isActiveATicket && isOverATicket) {
-      setTickets((tickets) => {
-        const activeIndex = tickets.findIndex((t) => t.id === activeId)
-        const overIndex = tickets.findIndex((t) => t.id === overId)
-
+      if (isActiveATask && isOverATask) {
         if (tickets[activeIndex].status !== tickets[overIndex].status) {
-          tickets[activeIndex].status = tickets[overIndex].status
+          const updatedTickets = [...tickets]
+          updatedTickets[activeIndex] = {
+            ...updatedTickets[activeIndex],
+            status: tickets[overIndex].status,
+          }
+          setTickets(updatedTickets)
         }
-        // Note: this is a simplified reordering logic.
-        // A full implementation would use arrayMove from @dnd-kit/sortable.
-        return [...tickets]
-      })
+      }
     }
   }
 
   return (
-    <div className='flex flex-col gap-4 h-full'>
+    <div className='flex h-full flex-col gap-4'>
       <div className='flex items-center justify-between'>
         <div>
           <h1 className='font-headline text-3xl font-bold'>
@@ -620,7 +560,7 @@ export default function TicketsPage() {
               onDragEnd={handleDragEnd}
               onDragOver={handleDragOver}
             >
-              <div className='flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-start'>
+              <div className='grid flex-1 grid-cols-1 items-start gap-6 md:grid-cols-2 lg:grid-cols-4'>
                 <SortableContext items={kanbanColumns}>
                   {kanbanColumns.map((status) => {
                     const columnTickets = tickets.filter(
@@ -640,14 +580,14 @@ export default function TicketsPage() {
                 {activeTicket ? (
                   <Card className='cursor-grabbing transform-gpu rotate-3 shadow-lg'>
                     <CardHeader className='p-4 pb-2'>
-                      <CardTitle className='text-base font-semibold leading-tight'>
+                      <CardTitle className='leading-tight'>
                         {activeTicket.subject}
                       </CardTitle>
-                      <CardDescription className='text-xs pt-1'>
+                      <CardDescription className='pt-1 text-xs'>
                         {activeTicket.client} - {activeTicket.id}
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className='p-4 pt-2 flex items-end justify-between'>
+                    <CardContent className='flex items-end justify-between p-4 pt-2'>
                       <Badge
                         variant={
                           priorityVariant[
