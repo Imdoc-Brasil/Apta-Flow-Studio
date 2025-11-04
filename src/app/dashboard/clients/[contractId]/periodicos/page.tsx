@@ -97,11 +97,12 @@ export default function PeriodicosPage() {
                             <Input id="scheduledDate" name="scheduledDate" type="date" className="col-span-3" required/>
                         </div>
                     </div>
-                 </form>
+                 
                 <DialogFooter>
                     <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
                     <Button type="submit" form="add-schedule-form">Salvar Agendamento</Button>
                 </DialogFooter>
+                </form>
             </DialogContent>
           </Dialog>
         </CardTitle>

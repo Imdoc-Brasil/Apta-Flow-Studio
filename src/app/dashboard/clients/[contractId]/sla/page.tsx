@@ -107,11 +107,12 @@ export default function SlaPage() {
                                 <Input id="service" name="service" className="col-span-3" placeholder="Ex: Correção de ASO" required />
                             </div>
                         </div>
-                    </form>
+                    
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
                         <Button type="submit" form="add-ticket-form">Abrir Chamado</Button>
                     </DialogFooter>
+                    </form>
                 </DialogContent>
              </Dialog>
             </CardTitle>

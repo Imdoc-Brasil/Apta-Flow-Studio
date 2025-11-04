@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -84,11 +85,12 @@ export default function TrainingsPage() {
                                 <Input id="nextDueDate" name="nextDueDate" type="date" className="col-span-3" required/>
                             </div>
                         </div>
-                    </form>
+                    
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
                         <Button type="submit" form="add-training-form">Salvar</Button>
                     </DialogFooter>
+                    </form>
                 </DialogContent>
             </Dialog>
         </CardTitle>

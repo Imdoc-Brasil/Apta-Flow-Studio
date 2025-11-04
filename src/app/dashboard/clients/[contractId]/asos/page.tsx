@@ -126,11 +126,12 @@ export default function AsosPage() {
                             </Select>
                         </div>
                     </div>
-                 </form>
+                 
                 <DialogFooter>
                     <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
                     <Button type="submit" form="add-aso-form">Salvar e Emitir</Button>
                 </DialogFooter>
+                </form>
             </DialogContent>
           </Dialog>
         </CardTitle>
