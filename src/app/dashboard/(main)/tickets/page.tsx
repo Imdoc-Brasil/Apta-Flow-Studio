@@ -18,7 +18,17 @@ import {
   useSortable,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { MoreHorizontal, PlusCircle, Filter } from 'lucide-react'
+import {
+  MoreHorizontal,
+  PlusCircle,
+  Filter,
+  AlignLeft,
+  UserPlus,
+  Tag,
+  CheckSquare,
+  Calendar,
+  Paperclip,
+} from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
   Card,
@@ -74,6 +84,8 @@ const initialTicketsData = [
     priority: 'Alta',
     status: 'Aberto',
     updated: '2024-07-21 10:30',
+    description:
+      'Ao tentar acessar o portal do cliente, recebo uma mensagem de "usuário ou senha inválida", mas minhas credenciais estão corretas. Já tentei limpar o cache e usar outro navegador.',
   },
   {
     id: 'TKT-002',
@@ -82,6 +94,8 @@ const initialTicketsData = [
     priority: 'Média',
     status: 'Em Progresso',
     updated: '2024-07-21 09:15',
+    description:
+      'Gostaríamos de solicitar a implementação de um tema escuro na plataforma para melhorar o conforto visual durante o uso noturno.',
   },
   {
     id: 'TKT-003',
@@ -90,6 +104,8 @@ const initialTicketsData = [
     priority: 'Baixa',
     status: 'Aberto',
     updated: '2024-07-20 16:00',
+    description:
+      'Tenho uma dúvida sobre um item que apareceu na nossa última fatura. Podemos agendar uma chamada para esclarecer?',
   },
   {
     id: 'TKT-004',
@@ -98,6 +114,8 @@ const initialTicketsData = [
     priority: 'Alta',
     status: 'Resolvido',
     updated: '2024-07-19 11:00',
+    description:
+      'O endpoint GET /api/v1/data está retornando um erro 500 Internal Server Error desde ontem. Isso está impactando nossa integração.',
   },
   {
     id: 'TKT-005',
@@ -106,13 +124,13 @@ const initialTicketsData = [
     priority: 'Baixa',
     status: 'Fechado',
     updated: '2024-07-18 14:45',
+    description:
+      'Estamos tentando integrar nosso sistema com a API de vocês e precisamos de ajuda para entender o fluxo de autenticação OAuth2.',
   },
 ]
 
 type TicketStatus = 'Aberto' | 'Em Progresso' | 'Resolvido' | 'Fechado'
-export type Ticket = Omit<(typeof initialTicketsData)[0], 'status'> & {
-  status: TicketStatus
-}
+export type Ticket = (typeof initialTicketsData)[0]
 
 const priorityVariant = {
   Alta: 'destructive',
@@ -212,18 +230,48 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
             </div>
           </DialogTrigger>
         </Card>
-        <DialogContent>
+        <DialogContent className='sm:max-w-2xl'>
           <DialogHeader>
-            <DialogTitle>{ticket.subject}</DialogTitle>
+            <DialogTitle className='text-2xl font-bold'>
+              {ticket.subject}
+            </DialogTitle>
             <DialogDescription>
-              {ticket.client} - {ticket.id}
+              Na coluna {ticket.status} | Cliente: {ticket.client} ({ticket.id})
             </DialogDescription>
           </DialogHeader>
-          <div className='py-4'>
-            <p>
-              Aqui irão os detalhes completos do ticket, como a descrição,
-              histórico de comentários, anexos, etc.
-            </p>
+          <div className='grid grid-cols-3 gap-8 py-4'>
+            <div className='col-span-2 space-y-6'>
+              <div className='space-y-2'>
+                <div className='flex items-center gap-2'>
+                  <AlignLeft className='h-5 w-5 text-muted-foreground' />
+                  <h3 className='font-semibold'>Descrição</h3>
+                </div>
+                <Textarea
+                  placeholder='Adicione uma descrição mais detalhada...'
+                  defaultValue={ticket.description}
+                  className='ml-7 h-24'
+                  readOnly
+                />
+              </div>
+            </div>
+
+            <div className='col-span-1 space-y-4'>
+              <h3 className='font-semibold text-sm'>Adicionar ao cartão</h3>
+              <div className='flex flex-col space-y-2'>
+                <Button variant='secondary' className='justify-start'>
+                  <UserPlus className='mr-2 h-4 w-4' /> Membros
+                </Button>
+                <Button variant='secondary' className='justify-start'>
+                  <Tag className='mr-2 h-4 w-4' /> Etiquetas
+                </Button>
+                <Button variant='secondary' className='justify-start'>
+                  <Calendar className='mr-2 h-4 w-4' /> Datas
+                </Button>
+                <Button variant='secondary' className='justify-start'>
+                  <Paperclip className='mr-2 h-4 w-4' /> Anexo
+                </Button>
+              </div>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
@@ -280,9 +328,7 @@ function ClientOnly({ children }: { children: React.ReactNode }) {
 }
 
 export default function TicketsPage() {
-  const [tickets, setTickets] = useState<Ticket[]>(
-    initialTicketsData as Ticket[]
-  )
+  const [tickets, setTickets] = useState<Ticket[]>(initialTicketsData as Ticket[])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null)
 
@@ -304,6 +350,7 @@ export default function TicketsPage() {
       priority: formData.get('priority') as string,
       status: 'Aberto',
       updated: new Date().toISOString().replace('T', ' ').substring(0, 16),
+      description: (formData.get('description') as string) || '',
     }
     setTickets((prev) => [newTicket, ...prev])
     setIsDialogOpen(false)
