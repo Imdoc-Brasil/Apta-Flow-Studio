@@ -404,7 +404,7 @@ export default function TicketsPage() {
                         ))}
                         {tickets.filter(ticket => ticket.status === status).length === 0 && (
                             <div className="text-center text-sm text-muted-foreground py-8">
-                                Nenhum ticket nesta coluna.
+                                Nenhuma tarefa nesta coluna.
                             </div>
                         )}
                     </div>
@@ -416,5 +416,3 @@ export default function TicketsPage() {
     </div>
   );
 }
-
-    
