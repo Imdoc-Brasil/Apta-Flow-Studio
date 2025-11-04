@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState } from 'react';
 import {
   Card,
   CardContent,
@@ -13,18 +14,24 @@ import { MoreHorizontal, PlusCircle, ShieldCheck, Clock } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const slaKpis = [
     { title: "Conformidade de SLA (Mês)", value: "99.2%", icon: <ShieldCheck className="h-4 w-4 text-muted-foreground" /> },
     { title: "Tempo Médio de 1ª Resposta", value: "2.1 horas", icon: <Clock className="h-4 w-4 text-muted-foreground" /> },
 ];
 
-const ticketData = [
+const initialTicketData = [
     { id: 'SLA-001', service: 'Atualização de PGR', status: 'Em Andamento', sla: 'Dentro do Prazo' },
     { id: 'SLA-002', service: 'Validação de Atestado', status: 'Aguardando Cliente', sla: 'Pausado' },
     { id: 'SLA-003', service: 'Correção de ASO', status: 'Concluído', sla: 'Cumprido' },
     { id: 'SLA-004', service: 'Inclusão de Função', status: 'Em Andamento', sla: 'Risco de Violação' },
 ];
+
+type Ticket = typeof initialTicketData[0];
 
 const getSlaBadgeVariant = (sla: string) => {
     switch (sla) {
@@ -42,6 +49,22 @@ const getSlaBadgeVariant = (sla: string) => {
 
 
 export default function SlaPage() {
+  const [tickets, setTickets] = useState(initialTicketData);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const handleAddTicket = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const newTicket: Ticket = {
+      id: `SLA-${(Math.random() * 1000).toFixed(0).padStart(3, '0')}`,
+      service: formData.get('service') as string,
+      status: 'Em Andamento',
+      sla: 'Dentro do Prazo',
+    };
+    setTickets(prev => [newTicket, ...prev]);
+    setIsDialogOpen(false);
+  }
+
   return (
     <div className="grid flex-1 auto-rows-max gap-4">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -61,12 +84,36 @@ export default function SlaPage() {
         <CardHeader>
             <CardTitle className="flex items-center justify-between">
             Acompanhamento de Chamados
-            <Button size="sm" className="h-8 gap-1">
-                <PlusCircle className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                Abrir Novo Chamado
-                </span>
-            </Button>
+             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                    <Button size="sm" className="h-8 gap-1">
+                        <PlusCircle className="h-3.5 w-3.5" />
+                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                        Abrir Novo Chamado
+                        </span>
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Abrir Novo Chamado de Serviço</DialogTitle>
+                        <DialogDescription>
+                            Descreva o serviço solicitado para rastreio do SLA.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form id="add-ticket-form" onSubmit={handleAddTicket}>
+                        <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="service" className="text-right">Serviço</Label>
+                                <Input id="service" name="service" className="col-span-3" placeholder="Ex: Correção de ASO" required />
+                            </div>
+                        </div>
+                    </form>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+                        <Button type="submit" form="add-ticket-form">Abrir Chamado</Button>
+                    </DialogFooter>
+                </DialogContent>
+             </Dialog>
             </CardTitle>
             <CardDescription>
             Rastreie todos os chamados e o cumprimento do SLA correspondente.
@@ -86,7 +133,7 @@ export default function SlaPage() {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {ticketData.map((ticket) => (
+                    {tickets.map((ticket) => (
                         <TableRow key={ticket.id}>
                             <TableCell className="font-medium">{ticket.id}</TableCell>
                             <TableCell>{ticket.service}</TableCell>
