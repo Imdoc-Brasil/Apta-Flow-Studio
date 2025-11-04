@@ -30,6 +30,8 @@ import {
   Clock,
   Flag,
   CheckSquare,
+  Plus,
+  X,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -157,48 +159,16 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
     transition,
     isDragging,
   } = useSortable({ id: ticket.id, data: { type: 'Ticket', ticket } })
-  const [date, setDate] = useState<Date | undefined>(undefined)
-  const { setTickets, tickets } = useTicketStore()
-
-  const handleAssignMember = (ticketId: string, memberEmail: string) => {
-    setTickets(
-      tickets.map((t) => {
-        if (t.id === ticketId) {
-          const isAssigned = t.assignedTo?.includes(memberEmail)
-          const newAssignedTo = isAssigned
-            ? t.assignedTo?.filter((email) => email !== memberEmail)
-            : [...(t.assignedTo || []), memberEmail]
-          return { ...t, assignedTo: newAssignedTo }
-        }
-        return t
-      })
-    )
-  }
-
-  const handleLabelChange = (labelId: string, checked: boolean) => {
-    setTickets(
-      tickets.map((t) => {
-        if (t.id === ticket.id) {
-          const newLabels = checked
-            ? [...(t.labels || []), availableLabels.find((l) => l.id === labelId)!]
-            : t.labels?.filter((l) => l.id !== labelId)
-          return { ...t, labels: newLabels }
-        }
-        return t
-      })
-    )
-  }
-
-  const assignedMembers =
-    initialStaffsData.filter((emp) =>
-      ticket.assignedTo?.includes(emp.email)
-    ) ?? []
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
   }
+  const assignedMembers =
+    initialStaffsData.filter((emp) =>
+      ticket.assignedTo?.includes(emp.email)
+    ) ?? []
 
   return (
     <Dialog>
@@ -306,7 +276,8 @@ function AddChecklistDialog({
       toast({
         variant: 'destructive',
         title: 'Campos obrigatórios',
-        description: 'Por favor, preencha todos os campos para criar o checklist.',
+        description:
+          'Por favor, preencha todos os campos para criar o checklist.',
       })
       return
     }
@@ -354,20 +325,72 @@ function AddChecklistDialog({
               <Input id='dueDate' name='dueDate' type='date' required />
             </div>
           </div>
+          <DialogFooter>
+            <Button variant='outline' onClick={() => setOpen(false)}>
+              Cancelar
+            </Button>
+            <Button type='submit' form='add-checklist-form'>
+              Adicionar
+            </Button>
+          </DialogFooter>
         </form>
-        <DialogFooter>
-          <Button variant='outline' onClick={() => setOpen(false)}>
-            Cancelar
-          </Button>
-          <Button type='submit' form='add-checklist-form'>
-            Adicionar
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
 }
 
+function AddChecklistItemForm({ checklistId, ticketId }: { checklistId: string; ticketId: string }) {
+  const { addChecklistItem } = useTicketStore()
+  const { toast } = useToast()
+  const [showForm, setShowForm] = useState(false)
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    const text = formData.get('itemText') as string
+    const dueDate = formData.get('dueDate') as string
+
+    if (!text || !dueDate) {
+      toast({
+        variant: 'destructive',
+        title: 'Campos obrigatórios',
+        description: 'Por favor, preencha a tarefa e o prazo.',
+      })
+      return
+    }
+
+    addChecklistItem(ticketId, checklistId, text, dueDate)
+    toast({ title: 'Tarefa adicionada!' })
+    e.currentTarget.reset()
+    setShowForm(false)
+  }
+
+  if (!showForm) {
+    return (
+      <Button variant='ghost' size='sm' onClick={() => setShowForm(true)} className='mt-2 justify-start p-1 h-auto'>
+        <Plus className='h-4 w-4 mr-2' />
+        Adicionar uma tarefa
+      </Button>
+    )
+  }
+
+  return (
+     <form onSubmit={handleSubmit} className='mt-2 space-y-2'>
+      <div className='p-2 border rounded-md'>
+        <Input name='itemText' placeholder='Adicionar uma tarefa...' className='border-none focus-visible:ring-0 px-1' required />
+        <div className='flex items-center justify-between mt-1'>
+            <Input name='dueDate' type='date' className='border-none focus-visible:ring-0 text-xs h-auto p-1 w-auto' required />
+        </div>
+      </div>
+      <div className='flex items-center gap-2'>
+        <Button type='submit' size='sm'>Salvar</Button>
+        <Button variant='ghost' size='icon' onClick={() => setShowForm(false)}>
+            <X className='h-4 w-4' />
+        </Button>
+      </div>
+    </form>
+  )
+}
 
 function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
   const { setTickets, tickets, toggleChecklistItem } = useTicketStore()
@@ -393,7 +416,10 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
       tickets.map((t) => {
         if (t.id === ticket.id) {
           const newLabels = checked
-            ? [...(t.labels || []), availableLabels.find((l) => l.id === labelId)!]
+            ? [
+                ...(t.labels || []),
+                availableLabels.find((l) => l.id === labelId)!,
+              ]
             : t.labels?.filter((l) => l.id !== labelId)
           return { ...t, labels: newLabels }
         }
@@ -401,8 +427,12 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
       })
     )
   }
-  
-  const handleChecklistItemToggle = (checklistId: string, itemId: string, checked: boolean) => {
+
+  const handleChecklistItemToggle = (
+    checklistId: string,
+    itemId: string,
+    checked: boolean
+  ) => {
     // Assuming a logged-in user of "John Doe" for the log
     toggleChecklistItem(ticket.id, checklistId, itemId, checked, 'John Doe')
   }
@@ -415,7 +445,9 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
   return (
     <DialogContent className='sm:max-w-4xl'>
       <DialogHeader>
-        <DialogTitle className='text-2xl font-bold'>{ticket.subject}</DialogTitle>
+        <DialogTitle className='text-2xl font-bold'>
+          {ticket.subject}
+        </DialogTitle>
         {ticket.labels && ticket.labels.length > 0 && (
           <div className='flex flex-wrap gap-1 pt-2'>
             {ticket.labels.map((label) => (
@@ -443,13 +475,16 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
               {ticket.description || 'Nenhuma descrição fornecida.'}
             </div>
           </div>
-          
+
           {ticket.checklists && ticket.checklists.length > 0 && (
-            <div className="space-y-4">
+            <div className='space-y-4'>
               {ticket.checklists.map((checklist) => {
-                 const completedItems = checklist.items.filter(item => item.completed).length
-                 const totalItems = checklist.items.length
-                 const progress = totalItems > 0 ? (completedItems / totalItems) * 100 : 0
+                const completedItems = checklist.items.filter(
+                  (item) => item.completed
+                ).length
+                const totalItems = checklist.items.length
+                const progress =
+                  totalItems > 0 ? (completedItems / totalItems) * 100 : 0
 
                 return (
                   <div key={checklist.id} className='space-y-2'>
@@ -457,32 +492,62 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                       <CheckSquare className='h-5 w-5 text-muted-foreground' />
                       <h3 className='font-semibold'>{checklist.title}</h3>
                     </div>
-                     <div className='ml-7 space-y-2'>
-                        <Progress value={progress} className="h-2" />
-                        {checklist.items.map(item => (
-                          <div key={item.id} className="flex items-start gap-2 group">
-                             <Checkbox 
-                                id={`item-${item.id}`}
-                                checked={item.completed}
-                                onCheckedChange={(checked) => handleChecklistItemToggle(checklist.id, item.id, !!checked)}
-                                className="mt-1"
-                              />
-                              <div className="grid gap-1 text-sm">
-                                <label htmlFor={`item-${item.id}`} className={`font-medium ${item.completed ? 'line-through text-muted-foreground' : ''}`}>{item.text}</label>
-                                 <div className="text-xs text-muted-foreground flex items-center gap-2">
-                                  {item.completed && item.completedBy && item.completedAt ? (
-                                    <span>Concluído por {item.completedBy} <TimeAgo dateString={item.completedAt} /></span>
-                                  ) : (
-                                    <>
-                                      <Calendar className="h-3 w-3" />
-                                      <span>Vence em {format(parseISO(item.dueDate), "dd/MM/yyyy")}</span>
-                                    </>
-                                  )}
-                                 </div>
-                              </div>
+                    <div className='ml-7 space-y-2'>
+                      <Progress value={progress} className='h-2' />
+                      {checklist.items.map((item) => (
+                        <div
+                          key={item.id}
+                          className='flex items-start gap-2 group'
+                        >
+                          <Checkbox
+                            id={`item-${item.id}`}
+                            checked={item.completed}
+                            onCheckedChange={(checked) =>
+                              handleChecklistItemToggle(
+                                checklist.id,
+                                item.id,
+                                !!checked
+                              )
+                            }
+                            className='mt-1'
+                          />
+                          <div className='grid gap-1 text-sm'>
+                            <label
+                              htmlFor={`item-${item.id}`}
+                              className={`font-medium ${
+                                item.completed
+                                  ? 'line-through text-muted-foreground'
+                                  : ''
+                              }`}
+                            >
+                              {item.text}
+                            </label>
+                            <div className='text-xs text-muted-foreground flex items-center gap-2'>
+                              {item.completed &&
+                              item.completedBy &&
+                              item.completedAt ? (
+                                <span>
+                                  Concluído por {item.completedBy}{' '}
+                                  <TimeAgo dateString={item.completedAt} />
+                                </span>
+                              ) : (
+                                <>
+                                  <Calendar className='h-3 w-3' />
+                                  <span>
+                                    Vence em{' '}
+                                    {format(
+                                      parseISO(item.dueDate),
+                                      'dd/MM/yyyy'
+                                    )}
+                                  </span>
+                                </>
+                              )}
+                            </div>
                           </div>
-                        ))}
-                     </div>
+                        </div>
+                      ))}
+                       <AddChecklistItemForm checklistId={checklist.id} ticketId={ticket.id} />
+                    </div>
                   </div>
                 )
               })}
@@ -635,7 +700,7 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                 </div>
               </PopoverContent>
             </Popover>
-             <AddChecklistDialog ticketId={ticket.id}>
+            <AddChecklistDialog ticketId={ticket.id}>
               <Button variant='secondary' className='justify-start'>
                 <CheckSquare className='mr-2 h-4 w-4' /> Checklist
               </Button>
@@ -717,7 +782,7 @@ export default function TicketsPage() {
   const { tickets, addTicket, setTickets } = useTicketStore()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null)
-  
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {

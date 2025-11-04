@@ -143,6 +143,12 @@ type TicketStore = {
     firstItemText: string,
     firstItemDueDate: string
   ) => void
+  addChecklistItem: (
+    ticketId: string,
+    checklistId: string,
+    text: string,
+    dueDate: string
+  ) => void
   toggleChecklistItem: (
     ticketId: string,
     checklistId: string,
@@ -200,6 +206,32 @@ export const useTicketStore = create<TicketStore>((set) => ({
           return {
             ...ticket,
             checklists: [...(ticket.checklists || []), newChecklist],
+          }
+        }
+        return ticket
+      }),
+    })),
+  addChecklistItem: (ticketId, checklistId, text, dueDate) =>
+    set((state) => ({
+      tickets: state.tickets.map((ticket) => {
+        if (ticket.id === ticketId) {
+          return {
+            ...ticket,
+            checklists: (ticket.checklists || []).map((checklist) => {
+              if (checklist.id === checklistId) {
+                const newItem: ChecklistItem = {
+                  id: `item-${Date.now()}`,
+                  text,
+                  completed: false,
+                  dueDate,
+                }
+                return {
+                  ...checklist,
+                  items: [...checklist.items, newItem],
+                }
+              }
+              return checklist
+            }),
           }
         }
         return ticket
