@@ -5,12 +5,11 @@ import { useState } from 'react';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, AlignLeft, Tag, CheckSquare, UserPlus, Calendar, Paperclip } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -105,15 +104,15 @@ export default function ProcessesPage() {
                     <Textarea id="description" name="description" />
                     </div>
                 </div>
-                </form>
                 <DialogFooter>
-                <Button variant="outline" onClick={() => setIsNewTaskDialogOpen(false)}>
-                    Cancelar
-                </Button>
-                <Button type="submit" form="add-task-form">
-                    Salvar
-                </Button>
+                    <Button variant="outline" onClick={() => setIsNewTaskDialogOpen(false)}>
+                        Cancelar
+                    </Button>
+                    <Button type="submit" form="add-task-form">
+                        Salvar
+                    </Button>
                 </DialogFooter>
+                </form>
             </DialogContent>
             </Dialog>
         </div>
@@ -153,15 +152,46 @@ export default function ProcessesPage() {
                                 </CardContent>
                             </Card>
                         </DialogTrigger>
-                        <DialogContent>
+                        <DialogContent className="sm:max-w-2xl">
                             <DialogHeader>
-                                <DialogTitle>{task.title}</DialogTitle>
-                                <DialogDescription>
-                                    Detalhes da tarefa, subtarefas e atividades.
-                                </DialogDescription>
+                                <DialogTitle className="text-2xl font-bold">{task.title}</DialogTitle>
                             </DialogHeader>
-                            <div className="py-4">
-                                <p>{task.description}</p>
+                            <div className="grid grid-cols-3 gap-8 py-4">
+                                <div className="col-span-2 space-y-6">
+                                    {/* Description Section */}
+                                    <div className="space-y-2">
+                                        <div className="flex items-center gap-2">
+                                            <AlignLeft className="h-5 w-5 text-muted-foreground" />
+                                            <h3 className="font-semibold">Descrição</h3>
+                                        </div>
+                                        <Textarea 
+                                            placeholder="Adicione uma descrição mais detalhada..." 
+                                            defaultValue={task.description} 
+                                            className="ml-7 h-24"
+                                        />
+                                    </div>
+                                </div>
+                                
+                                <div className="col-span-1 space-y-4">
+                                    <h3 className="font-semibold text-sm">Adicionar ao cartão</h3>
+                                    <div className="flex flex-col space-y-2">
+                                        <Button variant="secondary" className="justify-start">
+                                            <UserPlus className="mr-2 h-4 w-4"/> Membros
+                                        </Button>
+                                        <Button variant="secondary" className="justify-start">
+                                            <Tag className="mr-2 h-4 w-4"/> Etiquetas
+                                        </Button>
+                                        <Button variant="secondary" className="justify-start">
+                                            <CheckSquare className="mr-2 h-4 w-4"/> Checklist
+                                        </Button>
+                                        <Button variant="secondary" className="justify-start">
+                                            <Calendar className="mr-2 h-4 w-4"/> Datas
+                                        </Button>
+                                        <Button variant="secondary" className="justify-start">
+                                            <Paperclip className="mr-2 h-4 w-4"/> Anexo
+                                        </Button>
+                                    </div>
+                                </div>
                             </div>
                         </DialogContent>
                    </Dialog>
