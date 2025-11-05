@@ -1,16 +1,17 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { MoreHorizontal, PlusCircle, Search, Filter } from 'lucide-react'
+import { MoreHorizontal, PlusCircle, Search, Filter, ArrowRight } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -22,14 +23,6 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import {
   DropdownMenu,
@@ -43,6 +36,7 @@ import {
 import { initialClientsData } from '@/app/dashboard/(main)/clients/page'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Textarea } from '@/components/ui/textarea'
+import Link from 'next/link'
 
 export const initialUnitsData = [
   {
@@ -146,7 +140,7 @@ export default function UnitsPage() {
     <Card>
       <CardHeader>
         <CardTitle className='flex items-center justify-between'>
-          Unidades
+          Mapa de Unidades
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button size='sm' className='h-8 gap-1'>
@@ -262,115 +256,31 @@ export default function UnitsPage() {
           </Dialog>
         </CardTitle>
         <CardDescription>
-          Gerencie as unidades, plantas ou locais de trabalho do cliente.
+          Selecione uma unidade para visualizar seus setores.
         </CardDescription>
-        <div className='flex items-center gap-2 pt-4'>
-          <div className='relative w-full'>
-            <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
-            <Input
-              type='search'
-              placeholder='Buscar por nome...'
-              className='pl-8 sm:w-1/2 md:w-1/3'
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant='outline'
-                size='sm'
-                className='h-10 gap-1 text-sm'
-              >
-                <Filter className='h-3.5 w-3.5' />
-                <span>Status ({statusFilter.length})</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align='end'>
-              <DropdownMenuLabel>Filtrar por Status</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuCheckboxItem
-                checked={statusFilter.includes('Ativa')}
-                onCheckedChange={(checked) => {
-                  setStatusFilter((prev) =>
-                    checked ? [...prev, 'Ativa'] : prev.filter((s) => s !== 'Ativa')
-                  )
-                }}
-              >
-                Ativa
-              </DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem
-                checked={statusFilter.includes('Inativa')}
-                onCheckedChange={(checked) => {
-                  setStatusFilter((prev) =>
-                    checked
-                      ? [...prev, 'Inativa']
-                      : prev.filter((s) => s !== 'Inativa')
-                  )
-                }}
-              >
-                Inativa
-              </DropdownMenuCheckboxItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
       </CardHeader>
       <CardContent>
         {filteredUnits.length > 0 ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead className='hidden sm:table-cell'>Descrição</TableHead>
-                <TableHead className='hidden md:table-cell'>Endereço</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>
-                  <span className='sr-only'>Ações</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredUnits.map((unit) => (
-                <TableRow key={unit.id}>
-                  <TableCell className='font-medium'>{unit.name}</TableCell>
-                  <TableCell className='hidden sm:table-cell'>
-                    {unit.description}
-                  </TableCell>
-                  <TableCell className='hidden md:table-cell'>
-                    {unit.address}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={unit.status === 'Ativa' ? 'secondary' : 'outline'}
-                    >
-                      {unit.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          aria-haspopup='true'
-                          size='icon'
-                          variant='ghost'
-                        >
-                          <MoreHorizontal className='h-4 w-4' />
-                          <span className='sr-only'>Alternar menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align='end'>
-                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                        <DropdownMenuItem>Editar</DropdownMenuItem>
-                        <DropdownMenuItem className='text-destructive'>
-                          Inativar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+           <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
+           {filteredUnits.map((unit) => (
+             <Card key={unit.id} className='flex flex-col'>
+               <CardHeader>
+                 <CardTitle>{unit.name}</CardTitle>
+                 <CardDescription>{unit.address}</CardDescription>
+               </CardHeader>
+               <CardContent className='flex-grow'>
+                <p className='text-sm text-muted-foreground'>{unit.description}</p>
+               </CardContent>
+               <CardFooter>
+                  <Button asChild className='w-full'>
+                    <Link href={`/dashboard/clients/${contractId}/sectors?unitId=${unit.id}`}>
+                      Ver Setores <ArrowRight className='ml-2 h-4 w-4' />
+                    </Link>
+                  </Button>
+               </CardFooter>
+             </Card>
+           ))}
+         </div>
         ) : (
           <div className='flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm h-96'>
             <div className='flex flex-col items-center gap-1 text-center'>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import {
   Card,
   CardContent,
@@ -10,7 +11,7 @@ import {
   CardFooter,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { MoreHorizontal, PlusCircle, Users } from 'lucide-react'
+import { MoreHorizontal, PlusCircle, Users, ArrowRight } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -27,11 +28,15 @@ import { Badge } from '@/components/ui/badge'
 import { useRolesStore, type Role } from '../roles/page'
 import { initialEmployeesData } from '../employees/page'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { initialUnitsData } from '../units/page'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import Link from 'next/link'
 
 export interface Sector {
   id: string
   name: string
   description: string
+  unitId: string
   roles: string[] // Array of role IDs
 }
 
@@ -40,18 +45,21 @@ export const initialSectorsData: Sector[] = [
     id: 'SEC-001',
     name: 'Administrativo',
     description: 'Atividades de escritório e gestão.',
+    unitId: 'UNIT-001',
     roles: ['ROLE-001'],
   },
   {
     id: 'SEC-002',
     name: 'Produção',
     description: 'Linha de montagem e fabricação.',
+    unitId: 'UNIT-001',
     roles: ['ROLE-002'],
   },
   {
     id: 'SEC-003',
     name: 'Logística',
     description: 'Armazenamento e expedição.',
+    unitId: 'UNIT-002',
     roles: ['ROLE-003'],
   },
 ]
@@ -279,49 +287,70 @@ function ManageSectorDialog({
 }
 
 export default function SectorsPage() {
-  const [sectors, setSectors] = useState(initialSectorsData)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const { roles, addRole } = useRolesStore()
+  const searchParams = useSearchParams();
+  const unitId = searchParams.get('unitId');
+  const unit = initialUnitsData.find(u => u.id === unitId);
+
+  const [sectors, setSectors] = useState(initialSectorsData);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { roles, addRole } = useRolesStore();
+  
+  const unitSectors = sectors.filter(s => s.unitId === unitId);
 
   const handleAddSector = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const formData = new FormData(event.currentTarget)
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
     const newSector: Sector = {
       id: `SEC-${Math.random().toString(36).substring(2, 5).toUpperCase()}`,
       name: formData.get('name') as string,
       description: formData.get('description') as string,
+      unitId: formData.get('unitId') as string,
       roles: [],
-    }
-    setSectors((prev) => [newSector, ...prev])
-    setIsDialogOpen(false)
-    ;(event.target as HTMLFormElement).reset()
-  }
+    };
+    setSectors((prev) => [newSector, ...prev]);
+    setIsDialogOpen(false);
+    (event.target as HTMLFormElement).reset();
+  };
 
   const handleUpdateSectorRoles = (sectorId: string, roleId: string) => {
     setSectors((prevSectors) =>
       prevSectors.map((sector) => {
         if (sector.id === sectorId) {
-          const isRoleInSector = sector.roles.includes(roleId)
+          const isRoleInSector = sector.roles.includes(roleId);
           if (isRoleInSector) {
-            return { ...sector, roles: sector.roles.filter((r) => r !== roleId) }
+            return { ...sector, roles: sector.roles.filter((r) => r !== roleId) };
           } else {
-            return { ...sector, roles: [...sector.roles, roleId] }
+            return { ...sector, roles: [...sector.roles, roleId] };
           }
         }
-        return sector
+        return sector;
       })
-    )
-  }
+    );
+  };
 
   const getEmployeeCountForRole = (roleName: string) => {
-    return initialEmployeesData.filter((emp) => emp.role === roleName).length
+    return initialEmployeesData.filter((emp) => emp.role === roleName).length;
+  };
+
+  if (!unit) {
+    return (
+      <div className='text-center p-8'>
+        <h2 className='text-2xl font-bold'>Unidade não encontrada</h2>
+        <p className='text-muted-foreground'>Selecione uma unidade para ver seus setores.</p>
+        <Button asChild className='mt-4'>
+            <Link href={`/dashboard/clients/${searchParams.get('contractId')}/units`}>
+                Voltar para Unidades
+            </Link>
+        </Button>
+      </div>
+    )
   }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className='flex items-center justify-between'>
-          Setores
+          <span>Mapa de Setores: {unit.name}</span>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button size='sm' className='h-8 gap-1'>
@@ -340,6 +369,21 @@ export default function SectorsPage() {
               </DialogHeader>
               <form id='add-sector-form' onSubmit={handleAddSector}>
                 <div className='grid gap-4 py-4'>
+                 <div className='grid grid-cols-4 items-center gap-4'>
+                    <Label htmlFor='unitId' className='text-right'>
+                      Unidade
+                    </Label>
+                     <Select name='unitId' required defaultValue={unitId || undefined}>
+                      <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Selecione a unidade" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {initialUnitsData.map((u) => (
+                           <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div className='grid grid-cols-4 items-center gap-4'>
                     <Label htmlFor='name' className='text-right'>
                       Nome
@@ -377,13 +421,13 @@ export default function SectorsPage() {
           </Dialog>
         </CardTitle>
         <CardDescription>
-          Gerencie os setores ou departamentos de cada unidade do cliente e seus cargos.
+          Selecione um setor para visualizar seus cargos.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {sectors.length > 0 ? (
+        {unitSectors.length > 0 ? (
           <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
-            {sectors.map((sector) => (
+            {unitSectors.map((sector) => (
               <Card key={sector.id} className='flex flex-col'>
                 <CardHeader>
                   <CardTitle className='flex items-center justify-between'>
@@ -399,10 +443,10 @@ export default function SectorsPage() {
                   {sector.roles.length > 0 ? (
                     <div className='space-y-2'>
                       {sector.roles.map((roleId) => {
-                        const role = roles.find((r) => r.id === roleId)
+                        const role = roles.find((r) => r.id === roleId);
                         const employeeCount = role
                           ? getEmployeeCountForRole(role.name)
-                          : 0
+                          : 0;
                         return (
                           <div key={roleId} className='text-sm'>
                             {role?.name || 'Cargo desconhecido'}{' '}
@@ -410,7 +454,7 @@ export default function SectorsPage() {
                               ({employeeCount})
                             </span>
                           </div>
-                        )
+                        );
                       })}
                     </div>
                   ) : (
@@ -419,7 +463,12 @@ export default function SectorsPage() {
                     </p>
                   )}
                 </CardContent>
-                <CardFooter>
+                <CardFooter className='flex-col items-stretch gap-2'>
+                   <Button asChild className='w-full'>
+                    <Link href={`/dashboard/clients/${unitId}/roles?unitId=${unitId}&sectorId=${sector.id}`}>
+                      Ver Cargos <ArrowRight className='ml-2 h-4 w-4' />
+                    </Link>
+                  </Button>
                   <ManageSectorDialog
                     sector={sector}
                     onUpdateRoles={handleUpdateSectorRoles}
@@ -432,10 +481,10 @@ export default function SectorsPage() {
           <div className='flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm h-96'>
             <div className='flex flex-col items-center gap-1 text-center'>
               <h3 className='text-2xl font-bold tracking-tight'>
-                Nenhum setor cadastrado
+                Nenhum setor cadastrado para esta unidade
               </h3>
               <p className='text-sm text-muted-foreground'>
-                Comece adicionando o primeiro setor para este cliente.
+                Comece adicionando o primeiro setor para esta unidade.
               </p>
               <Button className='mt-4' onClick={() => setIsDialogOpen(true)}>
                 Adicionar Setor
@@ -445,5 +494,5 @@ export default function SectorsPage() {
         )}
       </CardContent>
     </Card>
-  )
+  );
 }

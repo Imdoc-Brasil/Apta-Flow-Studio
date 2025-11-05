@@ -36,6 +36,11 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { initialUnitsData } from '../units/page'
+import { initialSectorsData } from '../sectors/page'
+import { useRolesStore } from '../roles/page'
+
 
 export const initialEmployeesData = [
   {
@@ -45,6 +50,7 @@ export const initialEmployeesData = [
     birthDate: '1990-05-15',
     role: 'Operador de Máquinas',
     sector: 'Produção',
+    unit: 'Matriz São Paulo',
   },
   {
     id: 'COL-002',
@@ -53,30 +59,42 @@ export const initialEmployeesData = [
     birthDate: '1988-11-22',
     role: 'Analista Administrativo',
     sector: 'Administrativo',
+    unit: 'Matriz São Paulo',
   },
 ]
 
-type Employee = (typeof initialEmployeesData)[0]
+export type Employee = (typeof initialEmployeesData)[0]
 
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState(initialEmployeesData)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const { roles } = useRolesStore();
+  const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
 
   const handleAddEmployee = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
+    
+    const unitName = initialUnitsData.find(u => u.id === formData.get('unitId'))?.name || ''
+    const sectorName = initialSectorsData.find(s => s.id === formData.get('sectorId'))?.name || ''
+    const roleName = roles.find(r => r.id === formData.get('roleId'))?.name || ''
+
     const newEmployee: Employee = {
       id: `COL-${Math.random().toString(36).substring(2, 5).toUpperCase()}`,
       name: formData.get('name') as string,
       cpf: formData.get('cpf') as string,
       birthDate: formData.get('birthDate') as string,
-      role: formData.get('role') as string,
-      sector: formData.get('sector') as string,
+      role: roleName,
+      sector: sectorName,
+      unit: unitName,
     }
     setEmployees((prev) => [newEmployee, ...prev])
     setIsDialogOpen(false)
     ;(event.target as HTMLFormElement).reset()
+    setSelectedUnit(null)
   }
+  
+  const filteredSectors = selectedUnit ? initialSectorsData.filter(s => s.unitId === selectedUnit) : [];
 
   return (
     <Card>
@@ -136,32 +154,58 @@ export default function EmployeesPage() {
                     />
                   </div>
                   <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label htmlFor='role' className='text-right'>
-                      Cargo
+                    <Label htmlFor='unitId' className='text-right'>
+                      Unidade
                     </Label>
-                    <Input
-                      id='role'
-                      name='role'
-                      className='col-span-3'
-                      required
-                    />
+                     <Select name='unitId' required onValueChange={setSelectedUnit}>
+                      <SelectTrigger className='col-span-3'>
+                        <SelectValue placeholder='Selecione a unidade' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {initialUnitsData.map((u) => (
+                          <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label htmlFor='sector' className='text-right'>
+                    <Label htmlFor='sectorId' className='text-right'>
                       Setor
                     </Label>
-                    <Input
-                      id='sector'
-                      name='sector'
-                      className='col-span-3'
-                      required
-                    />
+                     <Select name='sectorId' required disabled={!selectedUnit}>
+                      <SelectTrigger className='col-span-3'>
+                        <SelectValue placeholder='Selecione o setor' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {filteredSectors.map((s) => (
+                           <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className='grid grid-cols-4 items-center gap-4'>
+                    <Label htmlFor='roleId' className='text-right'>
+                      Cargo
+                    </Label>
+                    <Select name='roleId' required>
+                      <SelectTrigger className='col-span-3'>
+                        <SelectValue placeholder='Selecione o cargo' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {roles.map((r) => (
+                           <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
                 <DialogFooter>
                   <Button
                     variant='outline'
-                    onClick={() => setIsDialogOpen(false)}
+                    onClick={() => {
+                        setIsDialogOpen(false)
+                        setSelectedUnit(null)
+                    }}
                   >
                     Cancelar
                   </Button>
