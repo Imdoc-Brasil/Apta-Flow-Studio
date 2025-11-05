@@ -20,6 +20,12 @@ import {
   View,
   GraduationCap,
   Ticket,
+  Siren,
+  FileWarning,
+  Plus,
+  CalendarPlus,
+  HeartPulse,
+  HardHat,
 } from 'lucide-react'
 import {
   Table,
@@ -61,6 +67,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
+import { Separator } from '@/components/ui/separator'
 
 export const initialEmployeesData = [
   {
@@ -180,7 +187,7 @@ export default function EmployeesPage() {
 
   const renderDetailDialog = () => (
     <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-      <DialogContent className='sm:max-w-2xl'>
+      <DialogContent className='sm:max-w-3xl'>
         <DialogHeader>
           <DialogTitle>{currentEmployee?.name}</DialogTitle>
           <DialogDescription>
@@ -219,68 +226,86 @@ export default function EmployeesPage() {
                 </Badge>
               </div>
             </div>
-            <Card>
-              <CardHeader>
-                <CardTitle className='text-lg'>Resumo de SST</CardTitle>
-              </CardHeader>
-              <CardContent className='grid grid-cols-2 gap-x-4 gap-y-2'>
-                <div className='flex justify-between items-center'>
-                  <span>ASO</span>
-                  <StatusIndicator status={currentEmployee.asoStatus} />
-                </div>
-                <div className='flex justify-between items-center'>
-                  <span>Periódico</span>
-                  <StatusIndicator status={currentEmployee.periodicStatus} />
-                </div>
-                <div className='flex justify-between items-center'>
-                  <span>Vacinas</span>
-                  <StatusIndicator status={currentEmployee.vaccineStatus} />
-                </div>
-                <div className='flex justify-between items-center'>
-                  <span>EPI</span>
-                  <StatusIndicator status={currentEmployee.epiStatus} />
-                </div>
-                <div className='flex justify-between items-center'>
-                  <span>Treinamentos</span>
-                  <StatusIndicator status={currentEmployee.trainingStatus} />
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardTitle className='text-lg'>Indicadores</CardTitle>
-              </CardHeader>
-              <CardContent className='grid grid-cols-2 md:grid-cols-4 gap-4 text-center'>
-                <div className='p-2 rounded-lg bg-muted'>
-                  <p className='text-xs text-muted-foreground'>
-                    Atestados (Dias)
-                  </p>
-                  <p className='text-lg font-bold'>
-                    {currentEmployee.medicalLeaves} ({currentEmployee.leaveDays})
-                  </p>
-                </div>
-                <div className='p-2 rounded-lg bg-muted'>
-                  <p className='text-xs text-muted-foreground'>Incidentes</p>
-                  <p className='text-lg font-bold'>
-                    {currentEmployee.incidents}
-                  </p>
-                </div>
-                <div className='p-2 rounded-lg bg-muted'>
-                  <p className='text-xs text-muted-foreground'>
-                    Não Conformidades
-                  </p>
-                  <p className='text-lg font-bold'>
-                    {currentEmployee.nonConformities}
-                  </p>
-                </div>
-                <div className='p-2 rounded-lg bg-muted'>
-                  <p className='text-xs text-muted-foreground'>Acidentes</p>
-                  <p className='text-lg font-bold'>
-                    {currentEmployee.accidents}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
+
+            <Separator />
+            
+            <div>
+              <h4 className='font-semibold text-base mb-4'>Ações Rápidas</h4>
+              <div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2'>
+                <Button variant='outline' size='sm' className='justify-start'><Siren className='mr-2' />Registrar Incidente</Button>
+                <Button variant='outline' size='sm' className='justify-start'><FileWarning className='mr-2' />Registrar NC</Button>
+                <Button variant='outline' size='sm' className='justify-start'><Plus className='mr-2' />Gerar Pedido Exame</Button>
+                <Button variant='outline' size='sm' className='justify-start'><CalendarPlus className='mr-2' />Agendar Atendimento</Button>
+                <Button variant='outline' size='sm' className='justify-start'><GraduationCap className='mr-2' />Agendar Treinamento</Button>
+                <Button variant='outline' size='sm' className='justify-start'><FileSpreadsheet className='mr-2' />Registrar Advertência</Button>
+                <Button variant='outline' size='sm' className='justify-start'><HardHat className='mr-2' />Entregar EPI</Button>
+              </div>
+            </div>
+
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-6'>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className='text-lg'>Resumo de SST</CardTitle>
+                  </CardHeader>
+                  <CardContent className='grid grid-cols-2 gap-x-4 gap-y-2 text-sm'>
+                    <div className='flex justify-between items-center'>
+                      <span>ASO</span>
+                      <StatusIndicator status={currentEmployee.asoStatus} />
+                    </div>
+                    <div className='flex justify-between items-center'>
+                      <span>Periódico</span>
+                      <StatusIndicator status={currentEmployee.periodicStatus} />
+                    </div>
+                    <div className='flex justify-between items-center'>
+                      <span>Vacinas</span>
+                      <StatusIndicator status={currentEmployee.vaccineStatus} />
+                    </div>
+                    <div className='flex justify-between items-center'>
+                      <span>EPI</span>
+                      <StatusIndicator status={currentEmployee.epiStatus} />
+                    </div>
+                    <div className='flex justify-between items-center'>
+                      <span>Treinamentos</span>
+                      <StatusIndicator status={currentEmployee.trainingStatus} />
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className='text-lg'>Indicadores</CardTitle>
+                  </CardHeader>
+                  <CardContent className='grid grid-cols-2 gap-4 text-center'>
+                    <div className='p-2 rounded-lg bg-muted'>
+                      <p className='text-xs text-muted-foreground'>
+                        Atestados (Dias)
+                      </p>
+                      <p className='text-lg font-bold'>
+                        {currentEmployee.medicalLeaves} ({currentEmployee.leaveDays})
+                      </p>
+                    </div>
+                    <div className='p-2 rounded-lg bg-muted'>
+                      <p className='text-xs text-muted-foreground'>Incidentes</p>
+                      <p className='text-lg font-bold'>
+                        {currentEmployee.incidents}
+                      </p>
+                    </div>
+                    <div className='p-2 rounded-lg bg-muted'>
+                      <p className='text-xs text-muted-foreground'>
+                        Não Conformidades
+                      </p>
+                      <p className='text-lg font-bold'>
+                        {currentEmployee.nonConformities}
+                      </p>
+                    </div>
+                    <div className='p-2 rounded-lg bg-muted'>
+                      <p className='text-xs text-muted-foreground'>Acidentes</p>
+                      <p className='text-lg font-bold'>
+                        {currentEmployee.accidents}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+            </div>
           </div>
         )}
         <DialogFooter>
