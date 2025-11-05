@@ -41,13 +41,6 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 
 const initialEpiData = [
   {
@@ -100,7 +93,7 @@ export default function EpiInventoryPage() {
     <Card>
       <CardHeader>
         <CardTitle className='flex items-center justify-between'>
-          Inventário de EPIs
+          Catálogo e Estoque de EPIs
           <Dialog open={isEpiDialogOpen} onOpenChange={setIsEpiDialogOpen}>
             <DialogTrigger asChild>
               <Button size='sm' className='h-8 gap-1'>
@@ -112,7 +105,7 @@ export default function EpiInventoryPage() {
             </DialogTrigger>
             <DialogContent className='sm:max-w-3xl'>
               <DialogHeader>
-                <DialogTitle>Adicionar Novo EPI ao Inventário</DialogTitle>
+                <DialogTitle>Adicionar Novo EPI ao Catálogo</DialogTitle>
                 <DialogDescription>
                   Preencha todos os detalhes do Equipamento de Proteção
                   Individual.
@@ -232,54 +225,6 @@ export default function EpiInventoryPage() {
 
                     <Separator />
 
-                    {/* Seção 04: Vinculação */}
-                    <div className='space-y-4'>
-                      <h4 className='font-semibold text-lg'>
-                        Seção 04: Vinculação
-                      </h4>
-                      <p className='text-sm text-muted-foreground'>
-                        Associe este EPI a riscos, GHEs, setores, etc. para
-                        automatizar a gestão.
-                      </p>
-                      <div className='grid grid-cols-2 gap-4'>
-                        <div className='space-y-1.5'>
-                          <Label htmlFor='vincular_tipo'>Vincular a</Label>
-                          <Select name='vincular_tipo'>
-                            <SelectTrigger>
-                              <SelectValue placeholder='Selecione o tipo...' />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value='risco'>Risco</SelectItem>
-                              <SelectItem value='ghe'>GHE</SelectItem>
-                              <SelectItem value='setor'>Setor</SelectItem>
-                              <SelectItem value='cargo'>Cargo</SelectItem>
-                              <SelectItem value='colaborador'>
-                                Colaborador
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className='space-y-1.5'>
-                          <Label htmlFor='vincular_item'>Item</Label>
-                          <Select name='vincular_item' disabled>
-                            <SelectTrigger>
-                              <SelectValue placeholder='Selecione o item...' />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {/* Options will be populated dynamically */}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      <div className='p-2 border rounded-md min-h-[50px]'>
-                        <p className='text-xs text-muted-foreground'>
-                          Vinculações aparecerão aqui...
-                        </p>
-                      </div>
-                    </div>
-
-                    <Separator />
-
                     {/* Seção 05: Estoque */}
                     <div className='space-y-4'>
                       <h4 className='font-semibold text-lg'>
@@ -380,7 +325,7 @@ export default function EpiInventoryPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align='end'>
                       <DropdownMenuItem>Editar</DropdownMenuItem>
-                      <DropdownMenuItem>Associar a Risco/GHE</DropdownMenuItem>
+                      <DropdownMenuItem>Ver Estoque</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
