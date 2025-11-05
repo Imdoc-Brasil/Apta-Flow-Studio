@@ -45,65 +45,145 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { initialHazardData as riskCatalog } from '@/app/dashboard/(main)/risks/page'
+import { initialSectorsData as sectors } from '@/app/dashboard/clients/[contractId]/sectors/page'
+import { initialRolesData as roles } from '@/app/dashboard/clients/[contractId]/roles/page'
+import { initialEmployeesData as employees } from '@/app/dashboard/clients/[contractId]/employees/page'
+import { initialUnitsData as units } from '@/app/dashboard/clients/[contractId]/units/page'
 
-const initialInventory = [
+type ExposureType =
+  | 'unit'
+  | 'sector'
+  | 'role'
+  | 'ghe'
+  | 'employee'
+  | ''
+
+type RiskLevel = 'Baixo' | 'Médio' | 'Alto' | 'Crítico' | 'N/A'
+
+interface RiskInventoryItem {
+  id: string
+  exposureType: ExposureType
+  exposureTarget: string
+  risk: string
+  riskEsocialCode: string
+  probability: string
+  severity: string
+  level: RiskLevel
+}
+
+const initialInventory: RiskInventoryItem[] = [
   {
     id: 'INV-001',
-    sector: 'Produção',
-    gho: 'Operadores de Máquina',
+    exposureType: 'sector',
+    exposureTarget: 'Produção',
     risk: 'Ruído Contínuo',
+    riskEsocialCode: '01.01.001',
     probability: '3',
     severity: '2',
     level: 'Médio',
   },
   {
     id: 'INV-002',
-    sector: 'Logística',
-    gho: 'Estoquistas',
+    exposureType: 'role',
+    exposureTarget: 'Estoquistas',
     risk: 'Levantamento de Peso',
+    riskEsocialCode: '04.01.001',
     probability: '2',
     severity: '3',
     level: 'Médio',
   },
   {
     id: 'INV-003',
-    sector: 'Administrativo',
-    gho: 'Toda a equipe',
+    exposureType: 'unit',
+    exposureTarget: 'Matriz São Paulo',
     risk: 'Iluminamento Inadequado',
+    riskEsocialCode: 'N/A',
     probability: '1',
     severity: '1',
     level: 'Baixo',
   },
 ]
 
-type RiskInventoryItem = (typeof initialInventory)[0]
+const exposureTypeLabels: Record<Exclude<ExposureType, ''>, string> = {
+  unit: 'Unidade',
+  sector: 'Setor',
+  role: 'Cargo',
+  ghe: 'GHE',
+  employee: 'Colaborador',
+}
+
+const getRiskLevel = (prob: number, sev: number): RiskLevel => {
+  const product = prob * sev
+  if (product >= 9) return 'Crítico'
+  if (product >= 5) return 'Alto'
+  if (product >= 3) return 'Médio'
+  return 'Baixo'
+}
 
 export default function PgrInventoryPage() {
   const [inventory, setInventory] = useState(initialInventory)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [exposureType, setExposureType] = useState<ExposureType>('')
+
+  const getTargetData = () => {
+    switch (exposureType) {
+      case 'unit':
+        return units
+      case 'sector':
+        return sectors
+      case 'role':
+        return roles
+      case 'employee':
+        return employees
+      case 'ghe': // Placeholder for GHE data
+        return [{ id: 'ghe-1', name: 'GHE - Soldadores' }]
+      default:
+        return []
+    }
+  }
 
   const handleAddRisk = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
     const prob = parseInt(formData.get('probability') as string, 10)
     const sev = parseInt(formData.get('severity') as string, 10)
-    const riskProduct = prob * sev
-    let level = 'Baixo'
-    if (riskProduct > 4) level = 'Alto'
-    else if (riskProduct > 2) level = 'Médio'
+    const level = getRiskLevel(prob, sev)
+
+    const selectedRiskCode = formData.get('risk') as string
+    const selectedRisk = riskCatalog.find(
+      (r) => r.esocialCode === selectedRiskCode
+    )
 
     const newItem: RiskInventoryItem = {
       id: `INV-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
-      sector: formData.get('sector') as string,
-      gho: formData.get('gho') as string,
-      risk: formData.get('risk') as string,
+      exposureType: formData.get('exposureType') as ExposureType,
+      exposureTarget: formData.get('exposureTarget') as string,
+      risk: selectedRisk?.name || 'N/A',
+      riskEsocialCode: selectedRisk?.esocialCode || 'N/A',
       probability: formData.get('probability') as string,
       severity: formData.get('severity') as string,
       level,
     }
     setInventory((prev) => [newItem, ...prev])
     setIsDialogOpen(false)
+    setExposureType('')
     ;(event.target as HTMLFormElement).reset()
+  }
+
+  const getLevelBadgeVariant = (level: RiskLevel) => {
+    switch (level) {
+      case 'Crítico':
+        return 'destructive'
+      case 'Alto':
+        return 'destructive'
+      case 'Médio':
+        return 'default'
+      case 'Baixo':
+        return 'secondary'
+      default:
+        return 'outline'
+    }
   }
 
   return (
@@ -132,17 +212,56 @@ export default function PgrInventoryPage() {
                 <div className='grid gap-4 py-4'>
                   <div className='grid grid-cols-2 gap-4'>
                     <div className='space-y-2'>
-                      <Label htmlFor='sector'>Setor</Label>
-                      <Input id='sector' name='sector' required />
+                      <Label htmlFor='exposureType'>Tipo de Exposição</Label>
+                      <Select
+                        name='exposureType'
+                        required
+                        onValueChange={(value) =>
+                          setExposureType(value as ExposureType)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder='Selecione...' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value='unit'>Unidade</SelectItem>
+                          <SelectItem value='sector'>Setor</SelectItem>
+                          <SelectItem value='role'>Cargo</SelectItem>
+                          <SelectItem value='ghe'>GHE</SelectItem>
+                          <SelectItem value='employee'>Colaborador</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className='space-y-2'>
-                      <Label htmlFor='gho'>GHO (Grupo Homogêneo)</Label>
-                      <Input id='gho' name='gho' required />
+                      <Label htmlFor='exposureTarget'>Alvo da Exposição</Label>
+                      <Select name='exposureTarget' required disabled={!exposureType}>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Selecione...' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {getTargetData().map((item) => (
+                            <SelectItem key={item.id} value={item.name}>
+                              {item.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                   <div className='space-y-2'>
                     <Label htmlFor='risk'>Perigo / Agente de Risco</Label>
-                    <Input id='risk' name='risk' required />
+                    <Select name='risk' required>
+                      <SelectTrigger>
+                        <SelectValue placeholder='Selecione a partir do catálogo...' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {riskCatalog.map((risk) => (
+                          <SelectItem key={risk.id} value={risk.esocialCode}>
+                            {risk.name} ({risk.esocialCode})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className='grid grid-cols-2 gap-4'>
                     <div className='space-y-2'>
@@ -155,6 +274,8 @@ export default function PgrInventoryPage() {
                           <SelectItem value='1'>1 - Baixa</SelectItem>
                           <SelectItem value='2'>2 - Média</SelectItem>
                           <SelectItem value='3'>3 - Alta</SelectItem>
+                          <SelectItem value='4'>4 - Muito Alta</SelectItem>
+                          <SelectItem value='5'>5 - Extrema</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -165,9 +286,11 @@ export default function PgrInventoryPage() {
                           <SelectValue placeholder='Selecione...' />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value='1'>1 - Baixa</SelectItem>
-                          <SelectItem value='2'>2 - Média</SelectItem>
-                          <SelectItem value='3'>3 - Alta</SelectItem>
+                          <SelectItem value='1'>1 - Leve</SelectItem>
+                          <SelectItem value='2'>2 - Moderada</SelectItem>
+                          <SelectItem value='3'>3 - Séria</SelectItem>
+                          <SelectItem value='4'>4 - Muito Séria</SelectItem>
+                          <SelectItem value='5'>5 - Catastrófica</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -176,7 +299,10 @@ export default function PgrInventoryPage() {
                 <DialogFooter>
                   <Button
                     variant='outline'
-                    onClick={() => setIsDialogOpen(false)}
+                    onClick={() => {
+                      setIsDialogOpen(false)
+                      setExposureType('')
+                    }}
                   >
                     Cancelar
                   </Button>
@@ -195,7 +321,7 @@ export default function PgrInventoryPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Setor / GHO</TableHead>
+                <TableHead>Alvo da Exposição</TableHead>
                 <TableHead>Risco</TableHead>
                 <TableHead>Prob.</TableHead>
                 <TableHead>Sev.</TableHead>
@@ -209,24 +335,16 @@ export default function PgrInventoryPage() {
               {inventory.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell>
-                    <div className='font-medium'>{item.sector}</div>
+                    <div className='font-medium'>{item.exposureTarget}</div>
                     <div className='text-sm text-muted-foreground'>
-                      {item.gho}
+                      {exposureTypeLabels[item.exposureType as Exclude<ExposureType, ''>]}
                     </div>
                   </TableCell>
                   <TableCell>{item.risk}</TableCell>
                   <TableCell>{item.probability}</TableCell>
                   <TableCell>{item.severity}</TableCell>
                   <TableCell>
-                    <Badge
-                      variant={
-                        item.level === 'Baixo'
-                          ? 'secondary'
-                          : item.level === 'Médio'
-                            ? 'default'
-                            : 'destructive'
-                      }
-                    >
+                    <Badge variant={getLevelBadgeVariant(item.level)}>
                       {item.level}
                     </Badge>
                   </TableCell>
