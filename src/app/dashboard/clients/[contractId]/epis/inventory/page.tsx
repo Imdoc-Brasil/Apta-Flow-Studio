@@ -37,6 +37,17 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Separator } from '@/components/ui/separator'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 const initialEpiData = [
   {
@@ -57,8 +68,8 @@ const initialEpiData = [
     ca: '11223',
     active: true,
   },
-   { 
-    ca: '98765', 
+  {
+    ca: '98765',
     name: 'Óculos de proteção',
     id: 'EPI-04',
     active: true,
@@ -66,7 +77,6 @@ const initialEpiData = [
 ]
 
 type Epi = (typeof initialEpiData)[0]
-
 
 export default function EpiInventoryPage() {
   const [epiData, setEpiData] = useState(initialEpiData)
@@ -87,111 +97,298 @@ export default function EpiInventoryPage() {
   }
 
   return (
-     <Card>
-          <CardHeader>
-            <CardTitle className='flex items-center justify-between'>
-              Inventário de EPIs
-              <Dialog open={isEpiDialogOpen} onOpenChange={setIsEpiDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button size='sm' className='h-8 gap-1'>
-                    <PlusCircle className='h-3.5 w-3.5' />
-                    <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
-                      Adicionar EPI
-                    </span>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Adicionar Novo EPI</DialogTitle>
-                    <DialogDescription>
-                      Preencha os detalhes do Equipamento de Proteção
-                      Individual.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <form id='add-epi-form' onSubmit={handleAddEpi}>
-                    <div className='grid gap-4 py-4'>
-                      <div className='grid grid-cols-4 items-center gap-4'>
-                        <Label htmlFor='name' className='text-right'>
-                          Nome
-                        </Label>
-                        <Input
-                          id='name'
-                          name='name'
-                          className='col-span-3'
-                          required
-                        />
+    <Card>
+      <CardHeader>
+        <CardTitle className='flex items-center justify-between'>
+          Inventário de EPIs
+          <Dialog open={isEpiDialogOpen} onOpenChange={setIsEpiDialogOpen}>
+            <DialogTrigger asChild>
+              <Button size='sm' className='h-8 gap-1'>
+                <PlusCircle className='h-3.5 w-3.5' />
+                <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
+                  Adicionar EPI
+                </span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className='sm:max-w-3xl'>
+              <DialogHeader>
+                <DialogTitle>Adicionar Novo EPI ao Inventário</DialogTitle>
+                <DialogDescription>
+                  Preencha todos os detalhes do Equipamento de Proteção
+                  Individual.
+                </DialogDescription>
+              </DialogHeader>
+              <form id='add-epi-form' onSubmit={handleAddEpi}>
+                <ScrollArea className='h-[70vh]'>
+                  <div className='space-y-6 px-4 py-6'>
+                    {/* Seção 01: Informações */}
+                    <div className='space-y-4'>
+                      <h4 className='font-semibold text-lg'>
+                        Seção 01: Informações
+                      </h4>
+                      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                        <div className='space-y-1.5'>
+                          <Label htmlFor='codigo'>Código</Label>
+                          <Input id='codigo' name='codigo' />
+                        </div>
+                        <div className='space-y-1.5'>
+                          <Label htmlFor='ca'>CCA (eSocial)</Label>
+                          <Input id='ca' name='ca' required />
+                        </div>
                       </div>
-                      <div className='grid grid-cols-4 items-center gap-4'>
-                        <Label htmlFor='ca' className='text-right'>
-                          Nº do CA
-                        </Label>
-                        <Input
-                          id='ca'
-                          name='ca'
-                          className='col-span-3'
-                          required
-                        />
+                      <div className='space-y-1.5'>
+                        <Label htmlFor='name'>Nome (eSocial)</Label>
+                        <Input id='name' name='name' required />
                       </div>
                     </div>
-                  </form>
-                  <DialogFooter>
-                    <Button
-                      variant='outline'
-                      onClick={() => setIsEpiDialogOpen(false)}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button type='submit' form='add-epi-form'>
-                      Salvar
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </CardTitle>
-            <CardDescription>
-              Gerencie todos os Equipamentos de Proteção Individual e seus CAs.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>CA</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>
-                    <span className='sr-only'>Ações</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {epiData.map((epi) => (
-                  <TableRow key={epi.id}>
-                    <TableCell className='font-medium'>{epi.name}</TableCell>
-                    <TableCell>{epi.ca}</TableCell>
-                    <TableCell>
-                      <Badge variant={epi.active ? 'secondary' : 'outline'}>
-                        {epi.active ? 'Ativo' : 'Inativo'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup='true' size='icon' variant='ghost'>
-                            <MoreHorizontal className='h-4 w-4' />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align='end'>
-                          <DropdownMenuItem>Editar</DropdownMenuItem>
-                           <DropdownMenuItem>Associar a Risco/GHE</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+
+                    <Separator />
+
+                    {/* Seção 02: Atenuação */}
+                    <div className='space-y-4'>
+                      <h4 className='font-semibold text-lg'>
+                        Seção 02: Atenuação
+                      </h4>
+                      <div className='grid grid-cols-2 gap-4'>
+                        <div className='space-y-1.5'>
+                          <Label htmlFor='atenuacao_valor'>Valor</Label>
+                          <Input
+                            id='atenuacao_valor'
+                            name='atenuacao_valor'
+                            type='number'
+                          />
+                        </div>
+                        <div className='space-y-1.5'>
+                          <Label htmlFor='atenuacao_unidade'>
+                            Unidade de Medida
+                          </Label>
+                          <Input
+                            id='atenuacao_unidade'
+                            name='atenuacao_unidade'
+                            placeholder='Ex: dB, %'
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Seção 03: Treinamento e Uso */}
+                    <div className='space-y-4'>
+                      <h4 className='font-semibold text-lg'>
+                        Seção 03: Treinamento e Uso
+                      </h4>
+                      <div className='grid grid-cols-1 md:grid-cols-2 gap-4 items-start'>
+                        <div className='space-y-1.5'>
+                          <Label htmlFor='especificacoes'>Especificações</Label>
+                          <Textarea
+                            id='especificacoes'
+                            name='especificacoes'
+                            rows={3}
+                          />
+                        </div>
+                        <div className='space-y-1.5'>
+                          <Label htmlFor='higienizacao'>Higienização</Label>
+                          <Textarea
+                            id='higienizacao'
+                            name='higienizacao'
+                            rows={3}
+                          />
+                        </div>
+                        <div className='space-y-1.5'>
+                          <Label htmlFor='uso'>Uso</Label>
+                          <Textarea id='uso' name='uso' rows={3} />
+                        </div>
+                        <div className='space-y-1.5'>
+                          <Label htmlFor='conservacao'>Conservação</Label>
+                          <Textarea
+                            id='conservacao'
+                            name='conservacao'
+                            rows={3}
+                          />
+                        </div>
+                      </div>
+                      <div className='flex flex-col gap-4 mt-4'>
+                        <div className='flex items-center space-x-2'>
+                          <Checkbox
+                            id='possui_devolucao'
+                            name='possui_devolucao'
+                          />
+                          <Label htmlFor='possui_devolucao'>
+                            Possui Devolução?
+                          </Label>
+                        </div>
+                        <div className='flex items-center space-x-2'>
+                          <Checkbox
+                            id='possui_validade'
+                            name='possui_validade'
+                          />
+                          <Label htmlFor='possui_validade'>
+                            Possui prazo de validade?
+                          </Label>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Seção 04: Vinculação */}
+                    <div className='space-y-4'>
+                      <h4 className='font-semibold text-lg'>
+                        Seção 04: Vinculação
+                      </h4>
+                      <p className='text-sm text-muted-foreground'>
+                        Associe este EPI a riscos, GHEs, setores, etc. para
+                        automatizar a gestão.
+                      </p>
+                      <div className='grid grid-cols-2 gap-4'>
+                        <div className='space-y-1.5'>
+                          <Label htmlFor='vincular_tipo'>Vincular a</Label>
+                          <Select name='vincular_tipo'>
+                            <SelectTrigger>
+                              <SelectValue placeholder='Selecione o tipo...' />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value='risco'>Risco</SelectItem>
+                              <SelectItem value='ghe'>GHE</SelectItem>
+                              <SelectItem value='setor'>Setor</SelectItem>
+                              <SelectItem value='cargo'>Cargo</SelectItem>
+                              <SelectItem value='colaborador'>
+                                Colaborador
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className='space-y-1.5'>
+                          <Label htmlFor='vincular_item'>Item</Label>
+                          <Select name='vincular_item' disabled>
+                            <SelectTrigger>
+                              <SelectValue placeholder='Selecione o item...' />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {/* Options will be populated dynamically */}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className='p-2 border rounded-md min-h-[50px]'>
+                        <p className='text-xs text-muted-foreground'>
+                          Vinculações aparecerão aqui...
+                        </p>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Seção 05: Estoque */}
+                    <div className='space-y-4'>
+                      <h4 className='font-semibold text-lg'>
+                        Seção 05: Estoque
+                      </h4>
+                      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                        <div className='space-y-1.5'>
+                          <Label htmlFor='fabricante'>Fabricante</Label>
+                          <Input id='fabricante' name='fabricante' />
+                        </div>
+                        <div className='space-y-1.5'>
+                          <Label htmlFor='custo'>Custo (R$)</Label>
+                          <Input id='custo' name='custo' type='number' />
+                        </div>
+                        <div className='space-y-1.5'>
+                          <Label htmlFor='data_fabricacao'>
+                            Data de Fabricação
+                          </Label>
+                          <Input
+                            id='data_fabricacao'
+                            name='data_fabricacao'
+                            type='date'
+                          />
+                        </div>
+                        <div className='space-y-1.5'>
+                          <Label htmlFor='data_validade'>
+                            Data de Validade
+                          </Label>
+                          <Input
+                            id='data_validade'
+                            name='data_validade'
+                            type='date'
+                          />
+                        </div>
+                        <div className='space-y-1.5'>
+                          <Label htmlFor='lote'>Lote</Label>
+                          <Input id='lote' name='lote' />
+                        </div>
+                        <div className='space-y-1.5'>
+                          <Label htmlFor='inmetro'>Selo Inmetro</Label>
+                          <Input id='inmetro' name='inmetro' />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </ScrollArea>
+              </form>
+              <DialogFooter className='pt-4 border-t'>
+                <Button
+                  variant='outline'
+                  onClick={() => setIsEpiDialogOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button type='submit' form='add-epi-form'>
+                  Salvar EPI
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </CardTitle>
+        <CardDescription>
+          Gerencie todos os Equipamentos de Proteção Individual e seus CAs.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nome</TableHead>
+              <TableHead>CA</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>
+                <span className='sr-only'>Ações</span>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {epiData.map((epi) => (
+              <TableRow key={epi.id}>
+                <TableCell className='font-medium'>{epi.name}</TableCell>
+                <TableCell>{epi.ca}</TableCell>
+                <TableCell>
+                  <Badge variant={epi.active ? 'secondary' : 'outline'}>
+                    {epi.active ? 'Ativo' : 'Inativo'}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        aria-haspopup='true'
+                        size='icon'
+                        variant='ghost'
+                      >
+                        <MoreHorizontal className='h-4 w-4' />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align='end'>
+                      <DropdownMenuItem>Editar</DropdownMenuItem>
+                      <DropdownMenuItem>Associar a Risco/GHE</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
   )
 }
