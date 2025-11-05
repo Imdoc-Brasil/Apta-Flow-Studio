@@ -51,7 +51,7 @@ export default function ClientDetailsPage({
         </Badge>
       </div>
 
-      <div>{children}</div>
+      {children}
     </div>
   )
 }
