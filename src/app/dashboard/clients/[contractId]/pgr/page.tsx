@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/select'
 import { Label } from '@/components/ui/label'
 import { initialUnitsData } from '../units/page'
+import Link from 'next/link'
 
 interface Pgr {
   id: string
@@ -207,18 +208,10 @@ export default function PgrListPage() {
               </CardHeader>
               <CardContent className='flex-grow'></CardContent>
               <CardFooter>
-                <Button
-                  asChild
-                  className='w-full'
-                  onClick={() =>
-                    router.push(
-                      `/dashboard/clients/${contractId}/pgr/${pgr.id}/inventory`
-                    )
-                  }
-                >
-                  <a href='#'>
+                <Button asChild className='w-full'>
+                  <Link href={`/dashboard/clients/${contractId}/pgr/${pgr.id}/inventory`}>
                     Gerenciar PGR <ArrowRight className='ml-2 h-4 w-4' />
-                  </a>
+                  </Link>
                 </Button>
               </CardFooter>
             </Card>

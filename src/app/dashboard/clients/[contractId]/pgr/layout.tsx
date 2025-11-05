@@ -17,10 +17,15 @@ export default function PgrLayout({ children }: { children: React.ReactNode }) {
   const params = useParams()
   const pathname = usePathname()
   const contractId = params.contractId as string
-  const pgrId = params.pgrId as string // Assuming the dynamic route is [pgrId]
+
+  // The dynamic route for a specific PGR is `/dashboard/clients/[contractId]/pgr/[pgrId]`
+  // The list page is `/dashboard/clients/[contractId]/pgr`
+  // We can check if the path has more segments after 'pgr' to determine if it's a detail page.
+  const pathSegments = pathname.split('/')
+  const pgrId = pathSegments[pathSegments.indexOf('pgr') + 1]
 
   // If there is no pgrId, it means we are on the list page, so we render children directly.
-  if (!pgrId) {
+  if (!pgrId || pathname.endsWith('/pgr')) {
     return <>{children}</>
   }
 
