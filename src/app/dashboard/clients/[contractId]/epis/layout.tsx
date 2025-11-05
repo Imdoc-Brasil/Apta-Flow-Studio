@@ -20,6 +20,7 @@ export default function EpisLayout({ children }: { children: React.ReactNode }) 
 
   const tabs = [
     { name: 'Inventário de EPIs', href: `${basePath}/inventory` },
+    { name: 'Matriz de Recomendação', href: `${basePath}/recommendation` },
     { name: 'Histórico de Entregas', href: `${basePath}/deliveries` },
   ]
 
