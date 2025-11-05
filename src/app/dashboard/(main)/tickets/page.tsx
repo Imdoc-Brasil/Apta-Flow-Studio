@@ -167,6 +167,9 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
     transition,
     isDragging,
   } = useSortable({ id: ticket.id, data: { type: 'Ticket', ticket } })
+  const { startWorkOnTicket } = useTicketStore()
+  // Simulate the current user is Sarah Chen
+  const currentUserEmail = 'sarah.chen@aptaflow.com'
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -178,10 +181,22 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
       ticket.assignedTo?.includes(emp.email)
     ) ?? []
 
+  const handleCardClick = () => {
+    if (ticket.status === 'Aberto') {
+      startWorkOnTicket(ticket.id, currentUserEmail)
+    }
+  }
+
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+        <div
+          ref={setNodeRef}
+          style={style}
+          {...attributes}
+          {...listeners}
+          onClick={handleCardClick}
+        >
           <Card className='touch-none cursor-grab active:cursor-grabbing flex flex-col'>
             <div className='flex-grow cursor-pointer'>
               <CardHeader className='p-4 pb-2'>
@@ -1117,15 +1132,18 @@ function ClientOnly({ children }: { children: React.ReactNode }) {
 }
 
 export default function TicketsPage() {
-  const { tickets, addTicket, setTickets } = useTicketStore()
+  const { tickets, addTicket, setTickets, startWorkOnTicket } =
+    useTicketStore()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null)
   const [priorityFilter, setPriorityFilter] = useState<string[]>([])
   const [labelFilter, setLabelFilter] = useState<string[]>([])
   const [staffFilter, setStaffFilter] = useState<string[]>([])
   const [clientFilter, setClientFilter] = useState<string[]>([])
-  const [selectedLabels, setSelectedLabels] = useState<Label[]>([])
+  const [selectedLabels, setSelectedLabels] = useState<LabelType[]>([])
   const [assignedTo, setAssignedTo] = useState<string[]>([])
+  // Simulate the current user is Sarah Chen
+  const currentUserEmail = 'sarah.chen@aptaflow.com'
 
   const filteredTickets = useMemo(() => {
     return tickets.filter((ticket) => {
@@ -1223,6 +1241,12 @@ export default function TicketsPage() {
           setTickets(updatedTickets)
         }
       }
+    }
+  }
+
+  const handleRowClick = (ticket: Ticket) => {
+    if (ticket.status === 'Aberto') {
+      startWorkOnTicket(ticket.id, currentUserEmail)
     }
   }
 
@@ -1399,27 +1423,47 @@ export default function TicketsPage() {
                       <Label>Atribuir a</Label>
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant='outline' className='w-full justify-start font-normal'>
+                          <Button
+                            variant='outline'
+                            className='w-full justify-start font-normal'
+                          >
                             <UserPlus className='mr-2' />
-                            {assignedTo.length > 0 ? `${assignedTo.length} membro(s) selecionado(s)`: "Selecione membros"}
+                            {assignedTo.length > 0
+                              ? `${assignedTo.length} membro(s) selecionado(s)`
+                              : 'Selecione membros'}
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className='w-80'>
                           <div className='grid gap-4'>
-                            <h4 className='font-medium leading-none'>Membros</h4>
+                            <h4 className='font-medium leading-none'>
+                              Membros
+                            </h4>
                             <ScrollArea className='h-48'>
                               <div className='flex flex-col gap-2 p-1'>
                                 {initialStaffsData.map((staff) => (
-                                  <Label key={staff.email} className='flex items-center gap-2 font-normal'>
+                                  <Label
+                                    key={staff.email}
+                                    className='flex items-center gap-2 font-normal'
+                                  >
                                     <Checkbox
-                                      checked={assignedTo.includes(staff.email)}
+                                      checked={assignedTo.includes(
+                                        staff.email
+                                      )}
                                       onCheckedChange={(checked) => {
-                                        setAssignedTo(prev => checked ? [...prev, staff.email] : prev.filter(email => email !== staff.email))
+                                        setAssignedTo((prev) =>
+                                          checked
+                                            ? [...prev, staff.email]
+                                            : prev.filter(
+                                                (email) => email !== staff.email
+                                              )
+                                        )
                                       }}
                                     />
                                     <Avatar className='h-6 w-6'>
                                       <AvatarImage src={staff.avatar} />
-                                      <AvatarFallback>{staff.fallback}</AvatarFallback>
+                                      <AvatarFallback>
+                                        {staff.fallback}
+                                      </AvatarFallback>
                                     </Avatar>
                                     {staff.name}
                                   </Label>
@@ -1430,38 +1474,56 @@ export default function TicketsPage() {
                         </PopoverContent>
                       </Popover>
                     </div>
-                     <div className='space-y-2'>
+                    <div className='space-y-2'>
                       <Label>Etiquetas</Label>
-                       <Popover>
+                      <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant='outline' className='w-full justify-start font-normal'>
-                             <Tag className='mr-2' />
-                             {selectedLabels.length > 0 ? `${selectedLabels.length} etiqueta(s) selecionada(s)`: "Selecione etiquetas"}
+                          <Button
+                            variant='outline'
+                            className='w-full justify-start font-normal'
+                          >
+                            <Tag className='mr-2' />
+                            {selectedLabels.length > 0
+                              ? `${selectedLabels.length} etiqueta(s) selecionada(s)`
+                              : 'Selecione etiquetas'}
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className='w-64'>
                           <div className='grid gap-4'>
-                             <h4 className='font-medium leading-none'>Etiquetas</h4>
-                              <div className='flex flex-col gap-2'>
-                                {availableLabels.map((label) => {
-                                  const isChecked = selectedLabels.some((l) => l.id === label.id)
-                                  return (
-                                    <Label key={label.id} className='flex items-center gap-2 font-normal'>
-                                      <Checkbox
-                                        checked={isChecked}
-                                        onCheckedChange={(checked) =>
-                                          setSelectedLabels(prev => checked ? [...prev, label] : prev.filter(l => l.id !== label.id))
-                                        }
-                                      />
-                                      <span
-                                        className={`px-2 py-0.5 text-xs rounded-full text-white ${label.color}`}
-                                      >
-                                        {label.name}
-                                      </span>
-                                    </Label>
-                                  )
-                                })}
-                              </div>
+                            <h4 className='font-medium leading-none'>
+                              Etiquetas
+                            </h4>
+                            <div className='flex flex-col gap-2'>
+                              {availableLabels.map((label) => {
+                                const isChecked = selectedLabels.some(
+                                  (l) => l.id === label.id
+                                )
+                                return (
+                                  <Label
+                                    key={label.id}
+                                    className='flex items-center gap-2 font-normal'
+                                  >
+                                    <Checkbox
+                                      checked={isChecked}
+                                      onCheckedChange={(checked) =>
+                                        setSelectedLabels((prev) =>
+                                          checked
+                                            ? [...prev, label]
+                                            : prev.filter(
+                                                (l) => l.id !== label.id
+                                              )
+                                        )
+                                      }
+                                    />
+                                    <span
+                                      className={`px-2 py-0.5 text-xs rounded-full text-white ${label.color}`}
+                                    >
+                                      {label.name}
+                                    </span>
+                                  </Label>
+                                )
+                              })}
+                            </div>
                           </div>
                         </PopoverContent>
                       </Popover>
@@ -1523,7 +1585,10 @@ export default function TicketsPage() {
                   {filteredTickets.map((ticket) => (
                     <Dialog key={ticket.id}>
                       <DialogTrigger asChild>
-                        <TableRow className='cursor-pointer'>
+                        <TableRow
+                          className='cursor-pointer'
+                          onClick={() => handleRowClick(ticket)}
+                        >
                           <TableCell className='font-medium'>
                             {ticket.id}
                           </TableCell>

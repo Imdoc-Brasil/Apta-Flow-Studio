@@ -60,7 +60,7 @@ export const initialTicketsData = [
     updated: new Date('2024-07-21T10:30:00').toISOString(),
     description:
       'Ao tentar acessar o portal do cliente, recebo uma mensagem de "usuário ou senha inválida", mas minhas credenciais estão corretas. Já tentei limpar o cache e usar outro navegador.',
-    assignedTo: ['sarah.chen@aptaflow.com'],
+    assignedTo: [],
     labels: [availableLabels[0], availableLabels[3]],
     checklists: [],
     attachments: [],
@@ -75,6 +75,7 @@ export const initialTicketsData = [
     updated: new Date('2024-07-21T09:15:00').toISOString(),
     description:
       'Gostaríamos de solicitar a implementação de um tema escuro na plataforma para melhorar o conforto visual durante o uso noturno.',
+    assignedTo: ['sarah.chen@aptaflow.com'],
     labels: [availableLabels[1]],
     checklists: [
       {
@@ -149,6 +150,7 @@ export const initialTicketsData = [
     updated: new Date('2024-07-20T16:00:00').toISOString(),
     description:
       'Tenho uma dúvida sobre um item que apareceu na nossa última fatura. Podemos agendar uma chamada para esclarecer?',
+    assignedTo: [],
     labels: [],
     checklists: [],
     attachments: [],
@@ -178,6 +180,7 @@ export const initialTicketsData = [
     updated: new Date('2024-07-18T14:45:00').toISOString(),
     description:
       'Estamos tentando integrar nosso sistema com a API de vocês e precisamos de ajuda para entender o fluxo de autenticação OAuth2.',
+    assignedTo: ['emily.w@aptaflow.com'],
     labels: [availableLabels[2]],
     checklists: [],
     attachments: [],
@@ -211,6 +214,7 @@ type TicketStore = {
   tickets: Ticket[]
   addTicket: (newTicket: NewTicketData) => void
   setTickets: (tickets: Ticket[]) => void
+  startWorkOnTicket: (ticketId: string, userEmail: string) => void
   addChecklist: (
     ticketId: string,
     title: string,
@@ -280,6 +284,24 @@ export const useTicketStore = create<TicketStore>((set) => ({
       ],
     })),
   setTickets: (tickets) => set({ tickets }),
+  startWorkOnTicket: (ticketId, userEmail) =>
+    set((state) => ({
+      tickets: state.tickets.map((ticket) => {
+        if (
+          ticket.id === ticketId &&
+          ticket.status === 'Aberto' &&
+          !ticket.assignedTo?.includes(userEmail)
+        ) {
+          return {
+            ...ticket,
+            status: 'Em Progresso',
+            assignedTo: [...(ticket.assignedTo || []), userEmail],
+            updated: new Date().toISOString(),
+          }
+        }
+        return ticket
+      }),
+    })),
   addChecklist: (
     ticketId,
     title,
