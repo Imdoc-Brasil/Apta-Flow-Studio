@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/table'
 import Link from 'next/link'
 import { useTicketStore } from './tickets/tickets-store'
-import { initialClientsData } from '@/app/dashboard/clients/page'
+import { initialClientsData } from '@/app/dashboard/clients/data'
 import { initialStaffsData } from './employees/page'
 
 const kpiDataStatic = [

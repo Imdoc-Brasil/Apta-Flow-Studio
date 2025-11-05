@@ -33,7 +33,7 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
-import { initialClientsData } from '@/app/dashboard/clients/page'
+import { initialClientsData } from '@/app/dashboard/clients/data'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Textarea } from '@/components/ui/textarea'
 import Link from 'next/link'
