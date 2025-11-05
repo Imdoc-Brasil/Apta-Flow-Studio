@@ -44,7 +44,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import {
   Dialog,
   DialogContent,
@@ -80,6 +80,10 @@ import { format, formatDistanceToNow, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { initialStaffsData } from '@/app/dashboard/(main)/employees/page'
+import {
+  initialEmployeesData,
+  type Employee,
+} from '../employees/page'
 import { Separator } from '@/components/ui/separator'
 import { Progress } from '@/components/ui/progress'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -525,24 +529,43 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
 
 export default function ClientTicketsPage() {
   const params = useParams()
+  const searchParams = useSearchParams()
+  const employeeId = searchParams.get('employee')
+
   const contractId = params.contractId as string
   const client = getClientById(contractId)
 
   const { tickets, addTicket } = useTicketStore()
-  const clientTickets = tickets.filter((ticket) => ticket.client === client?.name)
+  const clientTickets = tickets.filter(
+    (ticket) => ticket.client === client?.name
+  )
 
   const { toast } = useToast()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [defaultEmployee, setDefaultEmployee] = useState<string | undefined>(
+    employeeId || undefined
+  )
+
+  useEffect(() => {
+    if (employeeId) {
+      setDefaultEmployee(employeeId)
+      setIsDialogOpen(true)
+    }
+  }, [employeeId])
 
   const handleNewTicket = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
+    const employeeId = formData.get('employee') as string
+    const employeeName =
+      initialEmployeesData.find((e) => e.id === employeeId)?.name || undefined
 
     addTicket({
       subject: formData.get('subject') as string,
       client: client?.name || 'Cliente Desconhecido',
       priority: formData.get('priority') as Ticket['priority'],
       description: formData.get('description') as string,
+      relatedEmployee: employeeName,
     })
 
     toast({
@@ -551,6 +574,7 @@ export default function ClientTicketsPage() {
         'Sua solicitação foi registrada e nossa equipe entrará em contato em breve.',
     })
     setIsDialogOpen(false)
+    setDefaultEmployee(undefined)
   }
 
   return (
@@ -588,6 +612,22 @@ export default function ClientTicketsPage() {
                       placeholder='Ex: Problema com login'
                       required
                     />
+                  </div>
+                  <div className='space-y-2'>
+                    <Label htmlFor='employee'>Colaborador (Opcional)</Label>
+                    <Select name='employee' defaultValue={defaultEmployee}>
+                      <SelectTrigger>
+                        <SelectValue placeholder='Selecione um colaborador' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value=''>Nenhum</SelectItem>
+                        {initialEmployeesData.map((emp) => (
+                          <SelectItem key={emp.id} value={emp.id}>
+                            {emp.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className='space-y-2'>
                     <Label htmlFor='priority'>Prioridade</Label>

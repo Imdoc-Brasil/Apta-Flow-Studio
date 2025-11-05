@@ -19,6 +19,7 @@ import {
   FileSpreadsheet,
   View,
   GraduationCap,
+  Ticket,
 } from 'lucide-react'
 import {
   Table,
@@ -58,6 +59,8 @@ import { initialSectorsData } from '../sectors/page'
 import { useRolesStore } from '../roles/page'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
+import Link from 'next/link'
+import { useParams } from 'next/navigation'
 
 export const initialEmployeesData = [
   {
@@ -117,6 +120,9 @@ const StatusIndicator = ({ status }: { status: string }) => {
 }
 
 export default function EmployeesPage() {
+  const params = useParams()
+  const contractId = params.contractId as string
+
   const [employees, setEmployees] = useState(initialEmployeesData)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
@@ -280,6 +286,14 @@ export default function EmployeesPage() {
         <DialogFooter>
           <Button variant='outline' onClick={() => setIsDetailOpen(false)}>
             Fechar
+          </Button>
+          <Button asChild variant='secondary'>
+            <Link
+              href={`/dashboard/clients/${contractId}/tickets?employee=${currentEmployee?.id}`}
+            >
+              <Ticket className='mr-2 h-4 w-4' />
+              Abrir Chamado
+            </Link>
           </Button>
           <Button>Ver Prontuário Completo</Button>
         </DialogFooter>

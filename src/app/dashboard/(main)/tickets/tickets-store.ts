@@ -65,6 +65,7 @@ export const initialTicketsData = [
     checklists: [],
     attachments: [],
     textElements: [],
+    relatedEmployee: 'João da Silva',
   },
   {
     id: 'TKT-002',
@@ -191,13 +192,19 @@ export const initialTicketsData = [
 export type TicketStatus = 'Aberto' | 'Em Progresso' | 'Resolvido' | 'Fechado'
 export type Ticket = Omit<
   (typeof initialTicketsData)[0],
-  'assignedTo' | 'labels' | 'checklists' | 'attachments' | 'textElements'
+  | 'assignedTo'
+  | 'labels'
+  | 'checklists'
+  | 'attachments'
+  | 'textElements'
+  | 'relatedEmployee'
 > & {
   assignedTo?: string[]
   labels?: Label[]
   checklists?: Checklist[]
   attachments?: Attachment[]
   textElements?: TextElement[]
+  relatedEmployee?: string
 }
 
 type NewTicketData = Omit<
@@ -262,6 +269,7 @@ export const useTicketStore = create<TicketStore>((set) => ({
     textElements: ticket.textElements
       ? ticket.textElements.map((te) => ({ ...te }))
       : [],
+    relatedEmployee: ticket.relatedEmployee,
   })),
   addTicket: (newTicket) =>
     set((state) => ({
