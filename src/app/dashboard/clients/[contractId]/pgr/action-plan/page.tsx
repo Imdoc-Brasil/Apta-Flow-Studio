@@ -45,6 +45,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { initialInventory } from '../inventory/page'
 
 const initialActionPlan = [
   {
@@ -120,15 +121,20 @@ export default function PgrActionPlanPage() {
                 <div className='grid gap-4 py-4'>
                   <div className='grid grid-cols-4 items-center gap-4'>
                     <Label htmlFor='riskId' className='text-right'>
-                      ID do Risco
+                      Risco Associado
                     </Label>
-                    <Input
-                      id='riskId'
-                      name='riskId'
-                      placeholder='Ex: INV-001'
-                      className='col-span-3'
-                      required
-                    />
+                    <Select name='riskId' required>
+                      <SelectTrigger className='col-span-3'>
+                        <SelectValue placeholder='Selecione o risco do inventário...' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {initialInventory.map((item) => (
+                          <SelectItem key={item.id} value={item.id}>
+                            {item.id} - {item.risk} ({item.exposureTarget})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className='grid grid-cols-4 items-center gap-4'>
                     <Label htmlFor='action' className='text-right'>
@@ -216,8 +222,8 @@ export default function PgrActionPlanPage() {
                         item.status === 'Concluída'
                           ? 'secondary'
                           : item.status === 'Em Andamento'
-                            ? 'default'
-                            : 'outline'
+                          ? 'default'
+                          : 'outline'
                       }
                     >
                       {item.status}
