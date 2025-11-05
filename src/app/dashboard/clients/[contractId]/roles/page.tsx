@@ -38,7 +38,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
-const initialRolesData = [
+export const initialRolesData = [
   {
     id: 'ROLE-001',
     name: 'Analista Administrativo',

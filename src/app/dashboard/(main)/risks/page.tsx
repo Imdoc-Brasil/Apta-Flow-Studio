@@ -45,7 +45,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 
-const initialHazardData = [
+export const initialHazardData = [
   {
     id: 'RF-001',
     name: 'Ruído Contínuo ou Intermitente',

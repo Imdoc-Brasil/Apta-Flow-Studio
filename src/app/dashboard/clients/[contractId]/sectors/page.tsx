@@ -38,7 +38,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
-const initialSectorsData = [
+export const initialSectorsData = [
   {
     id: 'SEC-001',
     name: 'Administrativo',
