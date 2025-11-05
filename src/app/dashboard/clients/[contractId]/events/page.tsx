@@ -313,27 +313,27 @@ function AccidentDetailsDialog({
           </DialogDescription>
         </DialogHeader>
         <div className='py-4 grid gap-4'>
-          <p>
+          <div>
             <span className='font-semibold'>Colaborador:</span>{' '}
             {event.collaborator}
-          </p>
-          <p>
+          </div>
+          <div>
             <span className='font-semibold'>Descrição:</span> {event.description}
-          </p>
-          <p>
+          </div>
+          <div>
             <span className='font-semibold'>CAT Emitida:</span>{' '}
             <Badge
               variant={event.catEmitted === 'Sim' ? 'secondary' : 'outline'}
             >
               {event.catEmitted}
             </Badge>
-          </p>
-          <p>
+          </div>
+          <div>
             <span className='font-semibold'>Status:</span>{' '}
             <Badge variant={getStatusVariant(event.status)}>
               {event.status}
             </Badge>
-          </p>
+          </div>
         </div>
         <DialogFooter>
           <Button variant='outline' onClick={() => onOpenChange(false)}>
