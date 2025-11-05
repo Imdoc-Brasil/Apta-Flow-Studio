@@ -42,7 +42,7 @@ import { Separator } from '@/components/ui/separator'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Textarea } from '@/components/ui/textarea'
 
-const initialEpiData = [
+export const initialEpiData = [
   {
     id: 'EPI-01',
     name: 'Protetor auricular tipo concha',
