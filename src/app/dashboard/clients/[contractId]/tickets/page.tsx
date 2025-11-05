@@ -620,7 +620,7 @@ export default function ClientTicketsPage() {
                         <SelectValue placeholder='Selecione um colaborador' />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value=''>Nenhum</SelectItem>
+                        <SelectItem value='none'>Nenhum</SelectItem>
                         {initialEmployeesData.map((emp) => (
                           <SelectItem key={emp.id} value={emp.id}>
                             {emp.name}
