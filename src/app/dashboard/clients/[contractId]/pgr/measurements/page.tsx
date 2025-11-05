@@ -46,6 +46,10 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { initialInventory } from '@/app/dashboard/clients/[contractId]/pgr/inventory/page'
 import { initialHazardData } from '@/app/dashboard/(main)/risks/page'
+import { initialSectorsData } from '../../sectors/page'
+import { useRolesStore } from '../../roles/page'
+import { initialEmployeesData } from '../../employees/page'
+import { initialUnitsData } from '../../units/page'
 
 const initialMeasurements = [
   {
@@ -56,6 +60,7 @@ const initialMeasurements = [
     equipment: 'Dosímetro de ruído Marca-X, Mod-Y',
     result: '87.5 dB(A)',
     toleranceLimit: '85 dB(A)',
+    actionLevel: '80 dB(A)',
     date: '2024-07-10',
     status: 'Acima do Limite',
   },
@@ -67,6 +72,7 @@ const initialMeasurements = [
     equipment: 'Luxímetro Marca-A, Mod-B',
     result: '450 lux',
     toleranceLimit: '500 lux (Mínimo)',
+    actionLevel: 'N/A',
     date: '2024-07-12',
     status: 'Abaixo do Limite',
   },
@@ -78,6 +84,7 @@ export default function PgrMeasurementsPage() {
   const [measurements, setMeasurements] = useState(initialMeasurements)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedRiskId, setSelectedRiskId] = useState<string>('')
+  const { roles } = useRolesStore()
 
   const selectedInventoryItem = useMemo(
     () => initialInventory.find((item) => item.id === selectedRiskId),
@@ -106,7 +113,8 @@ export default function PgrMeasurementsPage() {
       technique: formData.get('technique') as string,
       equipment: formData.get('equipment') as string,
       result: formData.get('result') as string,
-      toleranceLimit: formData.get('toleranceLimit') as string,
+      toleranceLimit: (formData.get('toleranceLimit') as string) || 'N/A',
+      actionLevel: (formData.get('actionLevel') as string) || 'N/A',
       date: formData.get('date') as string,
       status: 'Conforme', // Simplified status
     }
@@ -132,10 +140,76 @@ export default function PgrMeasurementsPage() {
     }
 
     switch (selectedRiskCatalogItem.category) {
-      case 'Físico': // Assuming Noise is 'Físico'
+      case 'Físico':
         return (
           <>
-            <div className='space-y-2'>
+            <div className='border-t col-span-2 my-2' />
+            <h4 className='font-semibold col-span-2'>Local da Medição</h4>
+            <div className='grid grid-cols-2 gap-4 col-span-2'>
+              <div className='space-y-2'>
+                <Label htmlFor='unit'>Unidade</Label>
+                <Select name='unit'>
+                  <SelectTrigger>
+                    <SelectValue placeholder='Selecione a unidade' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {initialUnitsData.map((unit) => (
+                      <SelectItem key={unit.id} value={unit.name}>
+                        {unit.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='sector'>Setor</Label>
+                <Select name='sector'>
+                  <SelectTrigger>
+                    <SelectValue placeholder='Selecione o setor' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {initialSectorsData.map((sector) => (
+                      <SelectItem key={sector.id} value={sector.name}>
+                        {sector.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='role'>Cargo</Label>
+                <Select name='role'>
+                  <SelectTrigger>
+                    <SelectValue placeholder='Selecione o cargo' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {roles.map((role) => (
+                      <SelectItem key={role.id} value={role.name}>
+                        {role.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='employee'>Colaborador (se individual)</Label>
+                <Select name='employee'>
+                  <SelectTrigger>
+                    <SelectValue placeholder='Selecione o colaborador' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {initialEmployeesData.map((employee) => (
+                      <SelectItem key={employee.id} value={employee.name}>
+                        {employee.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className='border-t col-span-2 my-2' />
+            <div className='space-y-2 col-span-2'>
               <Label htmlFor='technique'>Técnica/Norma</Label>
               <Input
                 id='technique'
@@ -144,18 +218,36 @@ export default function PgrMeasurementsPage() {
                 required
               />
             </div>
-            <div className='space-y-2'>
+            <div className='space-y-2 col-span-2'>
               <Label htmlFor='equipment'>Equipamento Utilizado</Label>
               <Input
                 id='equipment'
                 name='equipment'
-                placeholder='Ex: Dosímetro de ruído Marca, Modelo, Série'
+                placeholder='Marca, Modelo, Série, Última Calibração (dd/mm/aaaa)'
                 required
               />
             </div>
-            <div className='grid grid-cols-2 gap-4'>
+            <div className='grid grid-cols-2 md:grid-cols-3 gap-4 col-span-2'>
               <div className='space-y-2'>
-                <Label htmlFor='result'>Resultado (NE)</Label>
+                <Label htmlFor='toleranceLimit'>Limite de Tolerância</Label>
+                <Input
+                  id='toleranceLimit'
+                  name='toleranceLimit'
+                  readOnly
+                  value={selectedRiskCatalogItem.toleranceLimit || 'N/A'}
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='actionLevel'>Nível de Ação</Label>
+                <Input
+                  id='actionLevel'
+                  name='actionLevel'
+                  readOnly
+                  value={selectedRiskCatalogItem.actionLevel || 'N/A'}
+                />
+              </div>
+               <div className='space-y-2'>
+                <Label htmlFor='result'>Valor Encontrado</Label>
                 <Input
                   id='result'
                   name='result'
@@ -163,22 +255,27 @@ export default function PgrMeasurementsPage() {
                   required
                 />
               </div>
-              <div className='space-y-2'>
-                <Label htmlFor='toleranceLimit'>Limite de Tolerância</Label>
-                <Input
-                  id='toleranceLimit'
-                  name='toleranceLimit'
-                  defaultValue='85 dB(A)'
-                  required
-                />
-              </div>
             </div>
+             <div className='grid grid-cols-2 gap-4 col-span-2'>
+                 <div className='space-y-2'>
+                    <Label htmlFor='date'>Data da Medição</Label>
+                    <Input id='date' name='date' type='date' required />
+                </div>
+                 <div className='space-y-2'>
+                    <Label htmlFor='exposureTime'>Tempo de Exposição</Label>
+                    <Input
+                    id='exposureTime'
+                    name='exposureTime'
+                    placeholder='00:00 horas'
+                    />
+                </div>
+             </div>
           </>
         )
       case 'Químico':
         return (
           <>
-            <div className='grid grid-cols-2 gap-4'>
+            <div className='grid grid-cols-2 gap-4 col-span-2'>
               <div className='space-y-2'>
                 <Label htmlFor='collectionTechnique'>Técnica de Coleta</Label>
                 <Input
@@ -190,46 +287,80 @@ export default function PgrMeasurementsPage() {
               </div>
               <div className='space-y-2'>
                 <Label htmlFor='lab'>Laboratório Responsável</Label>
-                <Input id='lab' name='lab' placeholder='Nome do Laboratório' required />
+                <Input
+                  id='lab'
+                  name='lab'
+                  placeholder='Nome do Laboratório'
+                  required
+                />
               </div>
             </div>
-            <div className='grid grid-cols-3 gap-4'>
+            <div className='grid grid-cols-3 gap-4 col-span-2'>
               <div className='space-y-2'>
                 <Label htmlFor='flowRate'>Vazão (L/min)</Label>
-                <Input id='flowRate' name='flowRate' type='number' step='0.01' required />
+                <Input
+                  id='flowRate'
+                  name='flowRate'
+                  type='number'
+                  step='0.01'
+                  required
+                />
               </div>
               <div className='space-y-2'>
                 <Label htmlFor='collectionTime'>Tempo (min)</Label>
-                <Input id='collectionTime' name='collectionTime' type='number' required />
+                <Input
+                  id='collectionTime'
+                  name='collectionTime'
+                  type='number'
+                  required
+                />
               </div>
               <div className='space-y-2'>
                 <Label htmlFor='volume'>Volume (L)</Label>
-                <Input id='volume' name='volume' type='number' step='0.01' readOnly />
+                <Input
+                  id='volume'
+                  name='volume'
+                  type='number'
+                  step='0.01'
+                  readOnly
+                  // Logic to calculate volume would be here in a real app
+                />
               </div>
             </div>
-            <div className='grid grid-cols-2 gap-4'>
-               <div className='space-y-2'>
+            <div className='grid grid-cols-2 gap-4 col-span-2'>
+              <div className='space-y-2'>
                 <Label htmlFor='result'>Resultado</Label>
-                <Input id='result' name='result' placeholder='Ex: 0.025 mg/m³' required />
+                <Input
+                  id='result'
+                  name='result'
+                  placeholder='Ex: 0.025 mg/m³'
+                  required
+                />
               </div>
-               <div className='space-y-2'>
+              <div className='space-y-2'>
                 <Label htmlFor='toleranceLimit'>Limite de Tolerância</Label>
-                <Input id='toleranceLimit' name='toleranceLimit' placeholder='Ex: 0.05 mg/m³' required />
+                <Input
+                  id='toleranceLimit'
+                  name='toleranceLimit'
+                  placeholder='Ex: 0.05 mg/m³'
+                  required
+                  defaultValue={selectedRiskCatalogItem.toleranceLimit}
+                />
               </div>
             </div>
           </>
         )
       default:
         return (
-           <div className='space-y-2 col-span-2'>
-              <Label htmlFor='result'>Resultado</Label>
-              <Textarea
-                id='result'
-                name='result'
-                placeholder='Descreva o resultado da avaliação...'
-                required
-              />
-            </div>
+          <div className='space-y-2 col-span-2'>
+            <Label htmlFor='result'>Resultado</Label>
+            <Textarea
+              id='result'
+              name='result'
+              placeholder='Descreva o resultado da avaliação...'
+              required
+            />
+          </div>
         )
     }
   }
@@ -254,7 +385,7 @@ export default function PgrMeasurementsPage() {
                 </span>
               </Button>
             </DialogTrigger>
-            <DialogContent className='sm:max-w-2xl'>
+            <DialogContent className='sm:max-w-3xl'>
               <DialogHeader>
                 <DialogTitle>Registrar Avaliação Quantitativa</DialogTitle>
                 <DialogDescription>
@@ -262,41 +393,30 @@ export default function PgrMeasurementsPage() {
                 </DialogDescription>
               </DialogHeader>
               <form id='add-measurement-form' onSubmit={handleAddMeasurement}>
-                <div className='grid gap-4 py-4'>
-                  <div className='grid grid-cols-2 gap-4'>
-                    <div className='space-y-2'>
-                      <Label htmlFor='riskId'>
-                        Risco Associado (do Inventário)
-                      </Label>
-                      <Select
-                        name='riskId'
-                        required
-                        value={selectedRiskId}
-                        onValueChange={setSelectedRiskId}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder='Selecione o risco...' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {initialInventory.map((item) => (
-                            <SelectItem key={item.id} value={item.id}>
-                              {item.id} - {item.risk} ({item.exposureTarget})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                     <div className='space-y-2'>
-                      <Label htmlFor='date'>Data da Coleta</Label>
-                      <Input
-                        id='date'
-                        name='date'
-                        type='date'
-                        required
-                      />
-                    </div>
+                <div className='grid grid-cols-2 gap-x-6 gap-y-4 py-4'>
+                  <div className='space-y-2 col-span-2'>
+                    <Label htmlFor='riskId'>
+                      Risco Associado (do Inventário)
+                    </Label>
+                    <Select
+                      name='riskId'
+                      required
+                      value={selectedRiskId}
+                      onValueChange={setSelectedRiskId}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder='Selecione o risco...' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {initialInventory.map((item) => (
+                          <SelectItem key={item.id} value={item.id}>
+                            {item.id} - {item.risk} ({item.exposureTarget})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className='border-t my-4' />
+
                   {renderDynamicFormFields()}
                 </div>
                 <DialogFooter>

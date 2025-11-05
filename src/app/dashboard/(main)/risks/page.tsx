@@ -53,7 +53,9 @@ export const initialHazardData = [
     method: 'Quantitativo',
     category: 'Físico',
     legalBasis: 'NR-15, Anexo 1',
-    potentialEffects: 'Perda auditiva (PAIR), estresse, problemas cardiovasculares.'
+    potentialEffects: 'Perda auditiva (PAIR), estresse, problemas cardiovasculares.',
+    toleranceLimit: '85 dB(A)',
+    actionLevel: '80 dB(A)',
   },
   {
     id: 'RF-002',
@@ -62,7 +64,7 @@ export const initialHazardData = [
     method: 'Quantitativo',
     category: 'Físico',
     legalBasis: 'NR-15, Anexo 8',
-    potentialEffects: 'Doença de Raynaud, problemas articulares, formigamento.'
+    potentialEffects: 'Doença de Raynaud, problemas articulares, formigamento.',
   },
   {
     id: 'RQ-001',
@@ -71,7 +73,8 @@ export const initialHazardData = [
     method: 'Quantitativo',
     category: 'Químico',
     legalBasis: 'NR-15, Anexo 12',
-    potentialEffects: 'Silicose, câncer de pulmão, doenças renais.'
+    potentialEffects: 'Silicose, câncer de pulmão, doenças renais.',
+    toleranceLimit: '0.05 mg/m³',
   },
   {
     id: 'RE-001',
