@@ -23,15 +23,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
-import { useRolesStore } from '../roles/page'
+import { useRolesStore, type Role } from '../roles/page'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
@@ -57,6 +50,68 @@ export const initialGheData: Ghe[] = [
     roles: ['ROLE-001'],
   },
 ]
+
+function RoleEditDialog({
+  role,
+  trigger,
+}: {
+  role: Role
+  trigger: React.ReactNode
+}) {
+  const { updateRole } = useRolesStore()
+  const [isOpen, setIsOpen] = useState(false)
+  const [name, setName] = useState(role.name)
+  const [description, setDescription] = useState(role.description)
+
+  const handleSave = () => {
+    updateRole({ ...role, name, description })
+    setIsOpen(false)
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Editar Cargo</DialogTitle>
+          <DialogDescription>
+            Atualize as informações do cargo abaixo.
+          </DialogDescription>
+        </DialogHeader>
+        <div className='grid gap-4 py-4'>
+          <div className='grid grid-cols-4 items-center gap-4'>
+            <Label htmlFor='edit-role-name' className='text-right'>
+              Nome
+            </Label>
+            <Input
+              id='edit-role-name'
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className='col-span-3'
+            />
+          </div>
+          <div className='grid grid-cols-4 items-center gap-4'>
+            <Label htmlFor='edit-role-desc' className='text-right'>
+              Descrição
+            </Label>
+            <Textarea
+              id='edit-role-desc'
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className='col-span-3'
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant='outline' onClick={() => setIsOpen(false)}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSave}>Salvar Alterações</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 function AddRoleDialog({
   onRoleAdded,
@@ -139,10 +194,6 @@ function ManageGheDialog({
   const { roles, addRole } = useRolesStore()
   const [isOpen, setIsOpen] = useState(false)
 
-  const getRoleName = (roleId: string) => {
-    return roles.find((r) => r.id === roleId)?.name || 'Cargo desconhecido'
-  }
-
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -158,21 +209,34 @@ function ManageGheDialog({
             <h4 className='font-semibold mb-2'>Cargos no GHE</h4>
             <ScrollArea className='h-60 w-full rounded-md border p-4'>
               {ghe.roles.length > 0 ? (
-                ghe.roles.map((roleId) => (
-                  <div
-                    key={roleId}
-                    className='flex items-center justify-between'
-                  >
-                    <span>{getRoleName(roleId)}</span>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={() => onUpdateRoles(ghe.id, roleId)}
+                ghe.roles.map((roleId) => {
+                  const role = roles.find((r) => r.id === roleId)
+                  if (!role) return null
+
+                  return (
+                    <div
+                      key={roleId}
+                      className='flex items-center justify-between'
                     >
-                      Remover
-                    </Button>
-                  </div>
-                ))
+                      <RoleEditDialog
+                        role={role}
+                        trigger={
+                          <span className='cursor-pointer hover:underline'>
+                            {role.name}
+                          </span>
+                        }
+                      />
+
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        onClick={() => onUpdateRoles(ghe.id, roleId)}
+                      >
+                        Remover
+                      </Button>
+                    </div>
+                  )
+                })
               ) : (
                 <p className='text-sm text-muted-foreground'>
                   Nenhum cargo neste GHE.
@@ -355,11 +419,22 @@ export default function GhePage() {
                 <CardContent className='flex-grow'>
                   <h4 className='font-semibold text-sm mb-2'>Cargos:</h4>
                   <div className='flex flex-wrap gap-2'>
-                    {ghe.roles.map((roleId) => (
-                      <Badge key={roleId} variant='secondary'>
-                        {roles.find((r) => r.id === roleId)?.name || '?'}
-                      </Badge>
-                    ))}
+                    {ghe.roles.map((roleId) => {
+                      const role = roles.find((r) => r.id === roleId)
+                      if (!role) return null
+                      return (
+                        <Badge key={roleId} variant='secondary'>
+                          <RoleEditDialog
+                            role={role}
+                            trigger={
+                              <span className='cursor-pointer'>
+                                {role.name}
+                              </span>
+                            }
+                          />
+                        </Badge>
+                      )
+                    })}
                     {ghe.roles.length === 0 && (
                       <p className='text-xs text-muted-foreground'>
                         Nenhum cargo adicionado.

@@ -67,17 +67,86 @@ type RolesStore = {
   roles: Role[]
   setRoles: (roles: Role[]) => void
   addRole: (role: Role) => void
+  updateRole: (role: Role) => void
 }
 
 export const useRolesStore = create<RolesStore>((set) => ({
   roles: initialRolesData,
   setRoles: (roles) => set({ roles }),
   addRole: (role) => set((state) => ({ roles: [role, ...state.roles] })),
+  updateRole: (updatedRole) =>
+    set((state) => ({
+      roles: state.roles.map((role) =>
+        role.id === updatedRole.id ? updatedRole : role
+      ),
+    })),
 }))
+
+function RoleEditDialog({
+  role,
+  trigger,
+}: {
+  role: Role
+  trigger: React.ReactNode
+}) {
+  const { updateRole } = useRolesStore()
+  const [isOpen, setIsOpen] = useState(false)
+  const [name, setName] = useState(role.name)
+  const [description, setDescription] = useState(role.description)
+
+  const handleSave = () => {
+    updateRole({ ...role, name, description })
+    setIsOpen(false)
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Editar Cargo</DialogTitle>
+          <DialogDescription>
+            Atualize as informações do cargo abaixo.
+          </DialogDescription>
+        </DialogHeader>
+        <div className='grid gap-4 py-4'>
+          <div className='grid grid-cols-4 items-center gap-4'>
+            <Label htmlFor='edit-role-name' className='text-right'>
+              Nome
+            </Label>
+            <Input
+              id='edit-role-name'
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className='col-span-3'
+            />
+          </div>
+          <div className='grid grid-cols-4 items-center gap-4'>
+            <Label htmlFor='edit-role-desc' className='text-right'>
+              Descrição
+            </Label>
+            <Textarea
+              id='edit-role-desc'
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className='col-span-3'
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant='outline' onClick={() => setIsOpen(false)}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSave}>Salvar Alterações</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 export default function RolesPage() {
   const { roles, addRole } = useRolesStore()
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
 
   const handleAddRole = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -88,7 +157,7 @@ export default function RolesPage() {
       description: formData.get('description') as string,
     }
     addRole(newRole)
-    setIsDialogOpen(false)
+    setIsAddDialogOpen(false)
     ;(event.target as HTMLFormElement).reset()
   }
 
@@ -97,7 +166,7 @@ export default function RolesPage() {
       <CardHeader>
         <CardTitle className='flex items-center justify-between'>
           Cargos
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button size='sm' className='h-8 gap-1'>
                 <PlusCircle className='h-3.5 w-3.5' />
@@ -141,7 +210,7 @@ export default function RolesPage() {
                 <DialogFooter>
                   <Button
                     variant='outline'
-                    onClick={() => setIsDialogOpen(false)}
+                    onClick={() => setIsAddDialogOpen(false)}
                   >
                     Cancelar
                   </Button>
@@ -170,7 +239,16 @@ export default function RolesPage() {
             <TableBody>
               {roles.map((role) => (
                 <TableRow key={role.id}>
-                  <TableCell className='font-medium'>{role.name}</TableCell>
+                  <TableCell className='font-medium'>
+                    <RoleEditDialog
+                      role={role}
+                      trigger={
+                        <span className='cursor-pointer hover:underline'>
+                          {role.name}
+                        </span>
+                      }
+                    />
+                  </TableCell>
                   <TableCell>{role.description}</TableCell>
                   <TableCell className='text-right'>
                     <DropdownMenu>
@@ -181,7 +259,6 @@ export default function RolesPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
                         <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                        <DropdownMenuItem>Editar</DropdownMenuItem>
                         <DropdownMenuItem className='text-destructive'>
                           Excluir
                         </DropdownMenuItem>
@@ -201,7 +278,7 @@ export default function RolesPage() {
               <p className='text-sm text-muted-foreground'>
                 Comece adicionando o primeiro cargo para este cliente.
               </p>
-              <Button className='mt-4' onClick={() => setIsDialogOpen(true)}>
+              <Button className='mt-4' onClick={() => setIsAddDialogOpen(true)}>
                 Adicionar Cargo
               </Button>
             </div>

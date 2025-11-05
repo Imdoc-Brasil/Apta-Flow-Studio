@@ -56,6 +56,68 @@ export const initialSectorsData: Sector[] = [
   },
 ]
 
+function RoleEditDialog({
+  role,
+  trigger,
+}: {
+  role: Role
+  trigger: React.ReactNode
+}) {
+  const { updateRole } = useRolesStore()
+  const [isOpen, setIsOpen] = useState(false)
+  const [name, setName] = useState(role.name)
+  const [description, setDescription] = useState(role.description)
+
+  const handleSave = () => {
+    updateRole({ ...role, name, description })
+    setIsOpen(false)
+  }
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Editar Cargo</DialogTitle>
+          <DialogDescription>
+            Atualize as informações do cargo abaixo.
+          </DialogDescription>
+        </DialogHeader>
+        <div className='grid gap-4 py-4'>
+          <div className='grid grid-cols-4 items-center gap-4'>
+            <Label htmlFor='edit-role-name' className='text-right'>
+              Nome
+            </Label>
+            <Input
+              id='edit-role-name'
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className='col-span-3'
+            />
+          </div>
+          <div className='grid grid-cols-4 items-center gap-4'>
+            <Label htmlFor='edit-role-desc' className='text-right'>
+              Descrição
+            </Label>
+            <Textarea
+              id='edit-role-desc'
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className='col-span-3'
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant='outline' onClick={() => setIsOpen(false)}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSave}>Salvar Alterações</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 function AddRoleDialog({
   onRoleAdded,
 }: {
@@ -137,10 +199,6 @@ function ManageSectorDialog({
   const { roles, addRole } = useRolesStore()
   const [isOpen, setIsOpen] = useState(false)
 
-  const getRoleName = (roleId: string) => {
-    return roles.find((r) => r.id === roleId)?.name || 'Cargo desconhecido'
-  }
-
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
@@ -156,21 +214,32 @@ function ManageSectorDialog({
             <h4 className='font-semibold mb-2'>Cargos no Setor</h4>
             <ScrollArea className='h-60 w-full rounded-md border p-4'>
               {sector.roles.length > 0 ? (
-                sector.roles.map((roleId) => (
-                  <div
-                    key={roleId}
-                    className='flex items-center justify-between'
-                  >
-                    <span>{getRoleName(roleId)}</span>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={() => onUpdateRoles(sector.id, roleId)}
+                sector.roles.map((roleId) => {
+                  const role = roles.find((r) => r.id === roleId)
+                  if (!role) return null
+                  return (
+                    <div
+                      key={roleId}
+                      className='flex items-center justify-between'
                     >
-                      Remover
-                    </Button>
-                  </div>
-                ))
+                      <RoleEditDialog
+                        role={role}
+                        trigger={
+                          <span className='cursor-pointer hover:underline'>
+                            {role.name}
+                          </span>
+                        }
+                      />
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        onClick={() => onUpdateRoles(sector.id, roleId)}
+                      >
+                        Remover
+                      </Button>
+                    </div>
+                  )
+                })
               ) : (
                 <p className='text-sm text-muted-foreground'>
                   Nenhum cargo neste setor.
