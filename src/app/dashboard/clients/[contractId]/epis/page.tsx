@@ -34,7 +34,7 @@ import {
 } from '@/components/ui/popover'
 import { Calendar } from '@/components/ui/calendar'
 import { Calendar as CalendarIcon } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
@@ -141,6 +141,16 @@ const getStatusVariant = (status: string) => {
 
 type EpiDelivery = (typeof initialEpiDeliveries)[0]
 
+function FormattedDate({ dateString }: { dateString: string }) {
+  const [formatted, setFormatted] = useState('')
+  useEffect(() => {
+    // The `new Date()` constructor can be inconsistent based on the string format and timezone.
+    // Adding 'T00:00:00' makes it parse as local time, avoiding timezone shifts.
+    setFormatted(format(new Date(`${dateString}T00:00:00`), 'dd/MM/yyyy'))
+  }, [dateString])
+  return <>{formatted}</>
+}
+
 export default function EpisPage() {
   const [date, setDate] = useState<Date | undefined>(new Date())
   const [deliveries, setDeliveries] = useState(initialEpiDeliveries)
@@ -157,14 +167,8 @@ export default function EpisPage() {
       collaborator: formData.get('collaborator') as string,
       client: 'Innovate Inc.', // Mock client
       epi: `${selectedEpi?.name} (CA: ${selectedEpi?.ca})`,
-      deliveryDate: format(
-        new Date(formData.get('deliveryDate') as string),
-        'yyyy-MM-dd'
-      ),
-      validity: format(
-        new Date(formData.get('validity') as string),
-        'yyyy-MM-dd'
-      ),
+      deliveryDate: formData.get('deliveryDate') as string,
+      validity: formData.get('validity') as string,
       deliveryFormId: formData.get('deliveryFormId') as string,
       status: 'Válido', // Simplified status for new entries
     }
@@ -355,10 +359,10 @@ export default function EpisPage() {
                   </TableCell>
                   <TableCell>{delivery.epi}</TableCell>
                   <TableCell>
-                    {format(new Date(delivery.deliveryDate), 'dd/MM/yyyy')}
+                    <FormattedDate dateString={delivery.deliveryDate} />
                   </TableCell>
                   <TableCell>
-                    {format(new Date(delivery.validity), 'dd/MM/yyyy')}
+                    <FormattedDate dateString={delivery.validity} />
                   </TableCell>
                   <TableCell>
                     <Badge variant={getStatusVariant(delivery.status)}>
