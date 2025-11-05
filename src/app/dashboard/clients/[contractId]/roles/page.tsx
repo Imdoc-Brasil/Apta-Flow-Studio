@@ -106,6 +106,10 @@ function RoleEditDialog({
     setIsOpen(false)
   }
 
+  const filteredSectors = useMemo(() => {
+    return initialSectorsData.filter((s) => s.unitId === unitId)
+  }, [unitId])
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
@@ -125,7 +129,10 @@ function RoleEditDialog({
               name='unitId-edit'
               required
               value={unitId}
-              onValueChange={setUnitId}
+              onValueChange={(value) => {
+                setUnitId(value)
+                setSectorId('') // Reset sector when unit changes
+              }}
             >
               <SelectTrigger className='col-span-3'>
                 <SelectValue placeholder='Selecione a unidade' />
@@ -154,13 +161,11 @@ function RoleEditDialog({
                 <SelectValue placeholder='Selecione o setor' />
               </SelectTrigger>
               <SelectContent>
-                {initialSectorsData
-                  .filter((s) => s.unitId === unitId)
-                  .map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.name}
-                    </SelectItem>
-                  ))}
+                {filteredSectors.map((s) => (
+                  <SelectItem key={s.id} value={s.id}>
+                    {s.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -201,18 +206,28 @@ function RoleEditDialog({
 export default function RolesPage() {
   const { roles, addRole } = useRolesStore()
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [selectedUnit, setSelectedUnit] = useState<string | null>(null)
-  const [selectedSector, setSelectedSector] = useState<string | null>(null)
+  const [selectedUnit, setSelectedUnit] = useState<string>('all')
+  const [selectedSector, setSelectedSector] = useState<string>('all')
 
   const [formUnitId, setFormUnitId] = useState('')
 
   const filteredRoles = useMemo(() => {
     return roles.filter((role) => {
-      const unitMatch = !selectedUnit || role.unitId === selectedUnit
-      const sectorMatch = !selectedSector || role.sectorId === selectedSector
+      const unitMatch = selectedUnit === 'all' || role.unitId === selectedUnit
+      const sectorMatch =
+        selectedSector === 'all' || role.sectorId === selectedSector
       return unitMatch && sectorMatch
     })
   }, [roles, selectedUnit, selectedSector])
+
+  const filteredSectorsForFilter = useMemo(() => {
+    if (selectedUnit === 'all') return initialSectorsData
+    return initialSectorsData.filter((s) => s.unitId === selectedUnit)
+  }, [selectedUnit])
+
+  const filteredSectorsForForm = useMemo(() => {
+    return initialSectorsData.filter((s) => s.unitId === formUnitId)
+  }, [formUnitId])
 
   const handleAddRole = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -245,12 +260,18 @@ export default function RolesPage() {
             </CardDescription>
           </div>
           <div className='flex items-center gap-2'>
-            <Select onValueChange={setSelectedUnit}>
+            <Select
+              value={selectedUnit}
+              onValueChange={(value) => {
+                setSelectedUnit(value)
+                setSelectedSector('all') // Reset sector filter when unit changes
+              }}
+            >
               <SelectTrigger className='w-full sm:w-[180px]'>
                 <SelectValue placeholder='Filtrar por Unidade' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value=''>Todas as Unidades</SelectItem>
+                <SelectItem value='all'>Todas as Unidades</SelectItem>
                 {initialUnitsData.map((unit) => (
                   <SelectItem key={unit.id} value={unit.id}>
                     {unit.name}
@@ -258,19 +279,21 @@ export default function RolesPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Select onValueChange={setSelectedSector} disabled={!selectedUnit}>
+            <Select
+              value={selectedSector}
+              onValueChange={setSelectedSector}
+              disabled={selectedUnit === 'all'}
+            >
               <SelectTrigger className='w-full sm:w-[180px]'>
                 <SelectValue placeholder='Filtrar por Setor' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value=''>Todos os Setores</SelectItem>
-                {initialSectorsData
-                  .filter((s) => s.unitId === selectedUnit)
-                  .map((sector) => (
-                    <SelectItem key={sector.id} value={sector.id}>
-                      {sector.name}
-                    </SelectItem>
-                  ))}
+                <SelectItem value='all'>Todos os Setores</SelectItem>
+                {filteredSectorsForFilter.map((sector) => (
+                  <SelectItem key={sector.id} value={sector.id}>
+                    {sector.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
@@ -298,7 +321,9 @@ export default function RolesPage() {
                       <Select
                         name='unitId'
                         required
-                        onValueChange={setFormUnitId}
+                        onValueChange={(value) => {
+                          setFormUnitId(value)
+                        }}
                       >
                         <SelectTrigger className='col-span-3'>
                           <SelectValue placeholder='Selecione a unidade' />
@@ -321,13 +346,11 @@ export default function RolesPage() {
                           <SelectValue placeholder='Selecione o setor' />
                         </SelectTrigger>
                         <SelectContent>
-                          {initialSectorsData
-                            .filter((s) => s.unitId === formUnitId)
-                            .map((s) => (
-                              <SelectItem key={s.id} value={s.id}>
-                                {s.name}
-                              </SelectItem>
-                            ))}
+                          {filteredSectorsForForm.map((s) => (
+                            <SelectItem key={s.id} value={s.id}>
+                              {s.name}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
