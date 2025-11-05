@@ -27,6 +27,7 @@ import {
   HeartPulse,
   HardHat,
   FileText,
+  Upload,
 } from 'lucide-react'
 import {
   Table,
@@ -69,6 +70,12 @@ import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { Separator } from '@/components/ui/separator'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
 
 export const initialEmployeesData = [
   {
@@ -116,6 +123,20 @@ export const initialEmployeesData = [
 ]
 
 export type Employee = (typeof initialEmployeesData)[0]
+type DocumentTopic =
+  | 'ASOs'
+  | 'Atestados Médicos'
+  | 'Certificados'
+  | 'Comprovantes de EPI'
+  | 'Advertências'
+  | 'Ordem de Serviço'
+export type EmployeeDocument = {
+  id: string
+  name: string
+  topic: DocumentTopic
+  uploadDate: string
+  file: File
+}
 
 const StatusIndicator = ({ status }: { status: string }) => {
   if (status === 'Em dia') {
@@ -135,8 +156,10 @@ export default function EmployeesPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const [currentEmployee, setCurrentEmployee] = useState<Employee | null>(null)
+  const [employeeDocs, setEmployeeDocs] = useState<EmployeeDocument[]>([])
   const { roles } = useRolesStore()
   const [selectedUnit, setSelectedUnit] = useState<string | null>(null)
+  const [isAddDocOpen, setIsAddDocOpen] = useState(false)
 
   const handleAddEmployee = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -177,6 +200,26 @@ export default function EmployeesPage() {
     setSelectedUnit(null)
   }
 
+  const handleAddDocument = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const formData = new FormData(event.currentTarget)
+    const fileInput = event.currentTarget.elements.namedItem('file') as HTMLInputElement
+    const file = fileInput?.files?.[0]
+  
+    if (!file) return;
+  
+    const newDoc: EmployeeDocument = {
+      id: `DOC-${Date.now()}`,
+      name: formData.get('name') as string,
+      topic: formData.get('topic') as DocumentTopic,
+      uploadDate: new Date().toISOString().split('T')[0],
+      file,
+    };
+  
+    setEmployeeDocs(prev => [...prev, newDoc]);
+    setIsAddDocOpen(false);
+  }
+
   const filteredSectors = selectedUnit
     ? initialSectorsData.filter((s) => s.unitId === selectedUnit)
     : []
@@ -186,7 +229,17 @@ export default function EmployeesPage() {
     setIsDetailOpen(true)
   }
 
-  const renderDetailDialog = () => (
+  const renderDetailDialog = () => {
+    const documentTopics: DocumentTopic[] = [
+      'ASOs',
+      'Atestados Médicos',
+      'Certificados',
+      'Comprovantes de EPI',
+      'Advertências',
+      'Ordem de Serviço',
+    ]
+    
+    return (
     <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
       <DialogContent className='sm:max-w-4xl'>
         <DialogHeader>
@@ -332,16 +385,82 @@ export default function EmployeesPage() {
                 </CardContent>
               </Card>
                <Card>
-                <CardHeader>
+                <CardHeader className='flex-row items-center justify-between'>
                     <CardTitle className='text-lg'>Documentos</CardTitle>
+                    <Dialog open={isAddDocOpen} onOpenChange={setIsAddDocOpen}>
+                      <DialogTrigger asChild>
+                         <Button variant='outline' size='sm' className='h-8'>
+                           <Upload className='mr-2 h-4 w-4' />
+                           Adicionar
+                         </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                         <DialogHeader>
+                            <DialogTitle>Adicionar Documento</DialogTitle>
+                            <DialogDescription>
+                              Selecione o tópico, dê um nome e anexe o arquivo.
+                            </DialogDescription>
+                         </DialogHeader>
+                         <form id="add-doc-form" onSubmit={handleAddDocument}>
+                            <div className='grid gap-4 py-4'>
+                                <div className='space-y-2'>
+                                  <Label htmlFor='topic'>Tópico</Label>
+                                  <Select name='topic' required>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder="Selecione um tópico" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {documentTopics.map(topic => (
+                                          <SelectItem key={topic} value={topic}>{topic}</SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                  </Select>
+                                </div>
+                                <div className='space-y-2'>
+                                  <Label htmlFor='name'>Nome do Documento</Label>
+                                  <Input id='name' name='name' placeholder='Ex: ASO Periódico de Março' required />
+                                </div>
+                                <div className='space-y-2'>
+                                  <Label htmlFor='file'>Arquivo</Label>
+                                  <Input id='file' name='file' type='file' required />
+                                </div>
+                            </div>
+                         </form>
+                         <DialogFooter>
+                            <Button variant='outline' onClick={() => setIsAddDocOpen(false)}>Cancelar</Button>
+                            <Button type='submit' form='add-doc-form'>Salvar Documento</Button>
+                         </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
                 </CardHeader>
                 <CardContent className='flex flex-col gap-2'>
-                    <Button variant='ghost' className='justify-start'><FileText className='mr-2' /> ASOs</Button>
-                    <Button variant='ghost' className='justify-start'><FileText className='mr-2' /> Atestados Médicos</Button>
-                    <Button variant='ghost' className='justify-start'><GraduationCap className='mr-2' /> Certificados</Button>
-                    <Button variant='ghost' className='justify-start'><HardHat className='mr-2' /> Comprovantes de EPI</Button>
-                    <Button variant='ghost' className='justify-start'><FileWarning className='mr-2' /> Advertências</Button>
-                    <Button variant='ghost' className='justify-start'><FileSpreadsheet className='mr-2' /> Ordem de Serviço</Button>
+                  <Accordion type="single" collapsible className="w-full">
+                    {documentTopics.map(topic => {
+                      const docsForTopic = employeeDocs.filter(d => d.topic === topic);
+                      return (
+                        <AccordionItem value={topic} key={topic}>
+                          <AccordionTrigger>{topic}</AccordionTrigger>
+                          <AccordionContent>
+                           {docsForTopic.length > 0 ? (
+                              <ul className='space-y-2'>
+                                {docsForTopic.map(doc => (
+                                  <li key={doc.id} className='flex items-center justify-between text-sm'>
+                                    <Link href={URL.createObjectURL(doc.file)} target='_blank' className='hover:underline flex items-center gap-2'>
+                                      <FileText className='h-4 w-4' />
+                                      {doc.name}
+                                    </Link>
+                                    <span className='text-xs text-muted-foreground'>{doc.uploadDate}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <p className='text-sm text-muted-foreground'>Nenhum documento encontrado.</p>
+                            )}
+                          </AccordionContent>
+                        </AccordionItem>
+                      )
+                    })}
+                  </Accordion>
                 </CardContent>
                </Card>
             </div>
@@ -363,7 +482,7 @@ export default function EmployeesPage() {
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  )}
 
   return (
     <>
