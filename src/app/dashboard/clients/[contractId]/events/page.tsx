@@ -77,6 +77,7 @@ import { initialUnitsData } from '../units/page'
 import { initialSectorsData } from '../sectors/page'
 import { useRolesStore } from '../roles/page'
 import { initialEmployeesData } from '../employees/page'
+import { cn } from '@/lib/utils'
 
 type EventStatus = 'Abertura' | 'Em Investigação' | 'Concluído'
 type EventType = 'Incidente' | 'Não Conformidade' | 'Acidente de Trabalho'
