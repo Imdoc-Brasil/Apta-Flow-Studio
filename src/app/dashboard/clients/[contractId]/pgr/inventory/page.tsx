@@ -190,6 +190,7 @@ export default function PgrInventoryPage() {
   const [selectedRiskCode, setSelectedRiskCode] = useState<string>('')
   const [frequency, setFrequency] = useState('0')
   const [effect, setEffect] = useState('0')
+  const [showStcwAgentField, setShowStcwAgentField] = useState(false)
 
   const { roles } = useRolesStore()
 
@@ -226,6 +227,7 @@ export default function PgrInventoryPage() {
     setFrequency('0')
     setEffect('0')
     setSelectedItem(null)
+    setShowStcwAgentField(false)
   }
 
   const handleOpenDialog = (item?: RiskInventoryItem | null) => {
@@ -459,16 +461,15 @@ export default function PgrInventoryPage() {
                 <Label htmlFor='evaluationCriteria'>Critério de Avaliação</Label>
                 <Select
                   name='evaluationCriteria'
-                  defaultValue={isEditMode ? 'Quantitativo' : 'Qualitativo'}
+                  defaultValue={isEditMode ? 'Qualitativo' : 'Qualitativo'}
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='Qualitativo'>Qualitativo</SelectItem>
-                    <SelectItem value='Quantitativo'>Quantitativo</SelectItem>
-                    <SelectItem value='Semi-quantitativo'>
-                      Semi-quantitativo
+                    <SelectItem value='Avaliação Qualitativa'>Avaliação Qualitativa</SelectItem>
+                    <SelectItem value='Avaliação Quantitativa de Risco (AQR)'>
+                        Avaliação Quantitativa de Risco (AQR)
                     </SelectItem>
                   </SelectContent>
                 </Select>
@@ -480,31 +481,58 @@ export default function PgrInventoryPage() {
                 <div className='flex items-center gap-2'>
                   <Checkbox id='method-1' defaultChecked={isEditMode} />
                   <Label htmlFor='method-1' className='font-normal'>
-                    Aplicação questionário de avaliação preliminar de risco
+                    Avaliação preliminar de risco: com entrevistas e coleta de dados e informações
                   </Label>
                 </div>
                 <div className='flex items-center gap-2'>
                   <Checkbox id='method-2' defaultChecked={isEditMode} />
                   <Label htmlFor='method-2' className='font-normal'>
-                    Entrevista presencial
+                    Analise Ergonômica Preliminar - Aplicação de checklist Hudson Couto
                   </Label>
                 </div>
                 <div className='flex items-center gap-2'>
-                  <Checkbox id='method-3' />
+                  <Checkbox 
+                    id='method-3'
+                    onCheckedChange={(checked) => setShowStcwAgentField(!!checked)}
+                  />
                   <Label htmlFor='method-3' className='font-normal'>
-                    Informações fornecidas pelo representante da empresa
+                    Aplicação do Formulário STCW - NR30 - Aquaviário
                   </Label>
                 </div>
+                {showStcwAgentField && (
+                    <div className='pl-6 pt-2'>
+                        <Label htmlFor='stcwAgentName'>Nome do agente (STCW):</Label>
+                        <Input id='stcwAgentName' name='stcwAgentName' placeholder='Insira o nome do agente' />
+                    </div>
+                )}
                 <div className='flex items-center gap-2'>
                   <Checkbox id='method-4' />
                   <Label htmlFor='method-4' className='font-normal'>
-                    Uso de equipamentos e protocolo de medições
+                    Coleta de dados: Medição ou amostragem dos agentes de risco no ambiente.
                   </Label>
                 </div>
                 <div className='flex items-center gap-2'>
                   <Checkbox id='method-5' />
                   <Label htmlFor='method-5' className='font-normal'>
-                    Aplicação de ferramenta de avaliação preliminar de fatores de rico
+                    Análise laboratorial: Determinação da concentração ou intensidade.
+                  </Label>
+                </div>
+                 <div className='flex items-center gap-2'>
+                  <Checkbox id='method-6' />
+                  <Label htmlFor='method-6' className='font-normal'>
+                    Comparação: Confronto dos resultados com os limites de referência.
+                  </Label>
+                </div>
+                 <div className='flex items-center gap-2'>
+                  <Checkbox id='method-7' />
+                  <Label htmlFor='method-7' className='font-normal'>
+                    Cálculo do risco: Uso de modelos para estimar a probabilidade e o impacto numérico.
+                  </Label>
+                </div>
+                 <div className='flex items-center gap-2'>
+                  <Checkbox id='method-8' />
+                  <Label htmlFor='method-8' className='font-normal'>
+                    Aplicação de ferramenta de avaliação preliminar de fatores de risco psicossociais
                   </Label>
                 </div>
               </div>
