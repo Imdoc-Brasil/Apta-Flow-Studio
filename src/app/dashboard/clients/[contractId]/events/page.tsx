@@ -1,7 +1,15 @@
 'use client'
 
-import { useState } from 'react'
-import { MoreHorizontal, PlusCircle, File } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import {
+  MoreHorizontal,
+  PlusCircle,
+  File,
+  Filter,
+  Siren,
+  FileWarning,
+  HeartPulse,
+} from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
   Card,
@@ -16,6 +24,8 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
 import {
   Table,
@@ -46,14 +56,65 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  DndContext,
+  closestCenter,
+  DragEndEvent,
+  DragStartEvent,
+  DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragOverEvent,
+} from '@dnd-kit/core'
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import { initialUnitsData } from '../units/page'
+import { initialSectorsData } from '../sectors/page'
+import { useRolesStore } from '../roles/page'
+import { initialEmployeesData } from '../employees/page'
 
-const initialIncidentData = [
+type EventStatus = 'Abertura' | 'Em Investigação' | 'Concluído'
+type EventType = 'Incidente' | 'Não Conformidade' | 'Acidente de Trabalho'
+
+interface BaseEvent {
+  id: string
+  client: string
+  date: string
+  description: string
+  status: EventStatus
+  type: EventType
+}
+
+interface Incident extends BaseEvent {
+  type: 'Incidente'
+}
+
+interface NonConformity extends BaseEvent {
+  type: 'Não Conformidade'
+  origin: string
+}
+
+interface Accident extends BaseEvent {
+  type: 'Acidente de Trabalho'
+  collaborator: string
+  catEmitted: string
+}
+
+type AnyEvent = Incident | NonConformity | Accident
+
+const initialIncidentData: Incident[] = [
   {
     id: 'INC-001',
     client: 'Innovate Inc.',
     date: '2024-07-20',
     description: 'Quase acidente com empilhadeira no armazém.',
     status: 'Em Investigação',
+    type: 'Incidente',
   },
   {
     id: 'INC-002',
@@ -61,17 +122,19 @@ const initialIncidentData = [
     date: '2024-07-18',
     description: 'Vazamento de produto químico de baixo risco.',
     status: 'Concluído',
+    type: 'Incidente',
   },
 ]
 
-const initialNonConformityData = [
+const initialNonConformityData: NonConformity[] = [
   {
     id: 'NC-001',
     client: 'Stellar Tech',
     date: '2024-07-15',
     description: 'Falta de sinalização em área de risco.',
     origin: 'Auditoria Interna',
-    status: 'Plano de Ação Pendente',
+    status: 'Abertura',
+    type: 'Não Conformidade',
   },
   {
     id: 'NC-002',
@@ -79,11 +142,12 @@ const initialNonConformityData = [
     date: '2024-07-10',
     description: 'EPI com validade vencida encontrado em uso.',
     origin: 'Inspeção de Segurança',
-    status: 'Resolvida',
+    status: 'Concluído',
+    type: 'Não Conformidade',
   },
 ]
 
-const initialAccidentData = [
+const initialAccidentData: Accident[] = [
   {
     id: 'CAT-001',
     client: 'Apex Innovations',
@@ -91,19 +155,17 @@ const initialAccidentData = [
     description: 'Corte superficial na mão durante manuseio de ferramenta.',
     collaborator: 'Carlos Souza',
     catEmitted: 'Sim',
-    status: 'Aguardando INSS',
+    status: 'Em Investigação',
+    type: 'Acidente de Trabalho',
   },
 ]
-
-type Incident = (typeof initialIncidentData)[0]
-type NonConformity = (typeof initialNonConformityData)[0]
-type Accident = (typeof initialAccidentData)[0]
 
 const getStatusVariant = (status: string) => {
   if (
     status.includes('Pendente') ||
     status.includes('Investigação') ||
-    status.includes('Aguardando')
+    status.includes('Aguardando') ||
+    status.includes('Abertura')
   )
     return 'default'
   if (status.includes('Concluído') || status.includes('Resolvida'))
@@ -171,6 +233,7 @@ function EventTable({
                   {dialogContent}
                   <DialogFooter>
                     <Button
+                      type='button'
                       variant='outline'
                       onClick={() => setIsDialogOpen(false)}
                     >
@@ -196,19 +259,154 @@ function EventTable({
               </TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>{data.map((item, index) => renderRow(item))}</TableBody>
+          <TableBody>{data.map((item) => renderRow(item))}</TableBody>
         </Table>
       </CardContent>
     </Card>
   )
 }
 
-export default function EventsPage() {
-  const [incidentData, setIncidentData] = useState(initialIncidentData)
-  const [nonConformityData, setNonConformityData] = useState(
-    initialNonConformityData
+const EventCard = ({ event }: { event: AnyEvent }) => {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: event.id, data: { type: 'Event', event } })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  }
+
+  const eventTypeMap: Record<
+    EventType,
+    { icon: React.ElementType; color: string }
+  > = {
+    Incidente: { icon: Siren, color: 'text-yellow-500' },
+    'Não Conformidade': { icon: FileWarning, color: 'text-orange-500' },
+    'Acidente de Trabalho': { icon: HeartPulse, color: 'text-red-500' },
+  }
+
+  const Icon = eventTypeMap[event.type].icon
+  const color = eventTypeMap[event.type].color
+
+  return (
+    <Card
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className='touch-none cursor-grab active:cursor-grabbing'
+    >
+      <CardHeader className='flex flex-row items-start justify-between p-3'>
+        <div className='flex items-start gap-2'>
+          <Icon className={cn('h-5 w-5 mt-0.5', color)} />
+          <div className='space-y-1'>
+            <CardTitle className='text-sm font-medium leading-tight'>
+              {event.description}
+            </CardTitle>
+            <CardDescription className='text-xs'>
+              {event.date}
+            </CardDescription>
+          </div>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant='ghost' size='icon' className='h-6 w-6 shrink-0'>
+              <MoreHorizontal className='h-4 w-4' />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem>Ver Detalhes</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </CardHeader>
+    </Card>
   )
-  const [accidentData, setAccidentData] = useState(initialAccidentData)
+}
+
+const kanbanColumns: EventStatus[] = [
+  'Abertura',
+  'Em Investigação',
+  'Concluído',
+]
+
+const KanbanColumn = ({
+  status,
+  events,
+}: {
+  status: EventStatus
+  events: AnyEvent[]
+}) => {
+  const { setNodeRef } = useSortable({
+    id: status,
+    data: { type: 'Column' },
+  })
+
+  return (
+    <div
+      ref={setNodeRef}
+      className='flex h-full flex-col gap-4 rounded-lg bg-muted/50 p-4'
+    >
+      <h2 className='text-lg font-bold'>{status}</h2>
+      <SortableContext
+        items={events.map((e) => e.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        <div className='flex flex-col gap-4 overflow-y-auto'>
+          {events.map((event) => (
+            <EventCard key={event.id} event={event} />
+          ))}
+          {events.length === 0 && (
+            <div className='py-8 text-center text-sm text-muted-foreground'>
+              Nenhum evento aqui.
+            </div>
+          )}
+        </div>
+      </SortableContext>
+    </div>
+  )
+}
+
+export default function EventsPage() {
+  const [incidentData, setIncidentData] = useState<Incident[]>(initialIncidentData)
+  const [nonConformityData, setNonConformityData] =
+    useState<NonConformity[]>(initialNonConformityData)
+  const [accidentData, setAccidentData] = useState<Accident[]>(initialAccidentData)
+
+  // Combined state for Kanban
+  const [events, setEvents] = useState<AnyEvent[]>([
+    ...initialIncidentData,
+    ...initialNonConformityData,
+    ...initialAccidentData,
+  ])
+  const [activeEvent, setActiveEvent] = useState<AnyEvent | null>(null)
+  
+  // Filters for Kanban
+  const [unitFilter, setUnitFilter] = useState<string>('all');
+  const [sectorFilter, setSectorFilter] = useState<string>('all');
+  const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [employeeFilter, setEmployeeFilter] = useState<string>('all');
+  const [eventTypeFilter, setEventTypeFilter] = useState<string>('all');
+
+  const { roles } = useRolesStore()
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  )
+  
+  const filteredEvents = useMemo(() => {
+    return events.filter(event => {
+        // This is a placeholder for actual filtering logic as we don't have these properties on the event objects yet.
+        const typeMatch = eventTypeFilter === 'all' || event.type === eventTypeFilter;
+        // const unitMatch = unitFilter === 'all' // || event.unitId === unitFilter
+        // ... and so on for other filters
+        return typeMatch
+    })
+  }, [events, eventTypeFilter, unitFilter, sectorFilter, roleFilter, employeeFilter])
+
 
   const handleAddIncident = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -218,9 +416,11 @@ export default function EventsPage() {
       client: 'Innovate Inc.',
       date: formData.get('date') as string,
       description: formData.get('description') as string,
-      status: 'Em Investigação',
+      status: 'Abertura',
+      type: 'Incidente',
     }
     setIncidentData((prev) => [newIncident, ...prev])
+    setEvents(prev => [newIncident, ...prev])
     e.currentTarget.reset()
   }
 
@@ -233,9 +433,11 @@ export default function EventsPage() {
       date: formData.get('date') as string,
       description: formData.get('description') as string,
       origin: formData.get('origin') as string,
-      status: 'Plano de Ação Pendente',
+      status: 'Abertura',
+      type: 'Não Conformidade',
     }
     setNonConformityData((prev) => [newNC, ...prev])
+    setEvents(prev => [newNC, ...prev])
     e.currentTarget.reset()
   }
 
@@ -249,21 +451,149 @@ export default function EventsPage() {
       description: formData.get('description') as string,
       collaborator: formData.get('collaborator') as string,
       catEmitted: formData.get('catEmitted') as string,
-      status: 'Aguardando INSS',
+      status: 'Abertura',
+      type: 'Acidente de Trabalho',
     }
     setAccidentData((prev) => [newAccident, ...prev])
+    setEvents(prev => [newAccident, ...prev])
     e.currentTarget.reset()
+  }
+
+  const handleDragStart = (event: DragStartEvent) => {
+    if (event.active.data.current?.type === 'Event') {
+      setActiveEvent(event.active.data.current.event)
+    }
+  }
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event
+    if (!over) return
+
+    const activeId = active.id
+    const overId = over.id
+
+    if (activeId === overId) return
+
+    const isActiveAnEvent = active.data.current?.type === 'Event'
+    const isOverAColumn = over.data.current?.type === 'Column'
+
+    if (isActiveAnEvent && isOverAColumn) {
+      setEvents((events) => {
+        const activeIndex = events.findIndex((e) => e.id === activeId)
+        events[activeIndex].status = overId as EventStatus
+        return [...events]
+      })
+    }
+  }
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    setActiveEvent(null)
   }
 
   return (
     <div className='grid flex-1 auto-rows-max gap-4'>
       <h1 className='font-headline text-3xl font-bold'>Gestão de Eventos</h1>
-      <Tabs defaultValue='incidents'>
+      <Tabs defaultValue='kanban'>
         <TabsList>
+          <TabsTrigger value='kanban'>Kanban</TabsTrigger>
           <TabsTrigger value='incidents'>Incidentes</TabsTrigger>
           <TabsTrigger value='nonconformities'>Não Conformidades</TabsTrigger>
           <TabsTrigger value='accidents'>Acidentes de Trabalho</TabsTrigger>
         </TabsList>
+        <TabsContent value='kanban' className='flex h-full flex-col gap-4'>
+          <div className='flex items-center gap-2 flex-wrap'>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant='outline' size='sm' className='h-8 gap-1'>
+                  <Filter className='h-3.5 w-3.5' />
+                  <span>Filtros</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='start' className='w-56'>
+                <DropdownMenuLabel>Filtrar Por</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <Select value={eventTypeFilter} onValueChange={setEventTypeFilter}>
+                    <SelectTrigger className="mx-1 my-1 h-8">
+                        <SelectValue placeholder="Tipo de Evento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Todos os Tipos</SelectItem>
+                        <SelectItem value="Incidente">Incidente</SelectItem>
+                        <SelectItem value="Não Conformidade">Não Conformidade</SelectItem>
+                        <SelectItem value="Acidente de Trabalho">Acidente de Trabalho</SelectItem>
+                    </SelectContent>
+                </Select>
+                 <Select value={unitFilter} onValueChange={setUnitFilter}>
+                    <SelectTrigger className="mx-1 my-1 h-8">
+                        <SelectValue placeholder="Unidade" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Todas as Unidades</SelectItem>
+                        {initialUnitsData.map(u => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                 <Select value={sectorFilter} onValueChange={setSectorFilter}>
+                    <SelectTrigger className="mx-1 my-1 h-8">
+                        <SelectValue placeholder="Setor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Todos os Setores</SelectItem>
+                        {initialSectorsData.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                 <Select value={roleFilter} onValueChange={setRoleFilter}>
+                    <SelectTrigger className="mx-1 my-1 h-8">
+                        <SelectValue placeholder="Cargo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Todos os Cargos</SelectItem>
+                        {roles.map(r => <SelectItem key={r.id} value={r.id}>{r.name}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                 <Select value={employeeFilter} onValueChange={setEmployeeFilter}>
+                    <SelectTrigger className="mx-1 my-1 h-8">
+                        <SelectValue placeholder="Colaborador" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Todos os Colaboradores</SelectItem>
+                        {initialEmployeesData.map(e => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            onDragOver={handleDragOver}
+          >
+            <div className='grid flex-1 grid-cols-1 items-start gap-6 md:grid-cols-3'>
+              <SortableContext items={kanbanColumns}>
+                {kanbanColumns.map((status) => {
+                  const columnEvents = filteredEvents.filter(
+                    (event) => event.status === status
+                  )
+                  return (
+                    <KanbanColumn
+                      key={status}
+                      status={status}
+                      events={columnEvents}
+                    />
+                  )
+                })}
+              </SortableContext>
+            </div>
+            <DragOverlay>
+              {activeEvent ? (
+                <div className='transform-gpu rotate-3'>
+                  <EventCard event={activeEvent} />
+                </div>
+              ) : null}
+            </DragOverlay>
+          </DndContext>
+        </TabsContent>
         <TabsContent value='incidents'>
           <EventTable
             title='Registros de Incidentes'
