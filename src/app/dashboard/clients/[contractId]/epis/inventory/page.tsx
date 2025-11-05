@@ -222,9 +222,7 @@ export default function EpiInventoryPage() {
                         </div>
                       </div>
                     </div>
-
                     <Separator />
-
                     {/* Seção 05: Estoque */}
                     <div className='space-y-4'>
                       <h4 className='font-semibold text-lg'>
@@ -238,6 +236,15 @@ export default function EpiInventoryPage() {
                         <div className='space-y-1.5'>
                           <Label htmlFor='custo'>Custo (R$)</Label>
                           <Input id='custo' name='custo' type='number' />
+                        </div>
+                        <div className='space-y-1.5'>
+                          <Label htmlFor='quantidade'>Quantidade</Label>
+                          <Input
+                            id='quantidade'
+                            name='quantidade'
+                            type='number'
+                            required
+                          />
                         </div>
                         <div className='space-y-1.5'>
                           <Label htmlFor='data_fabricacao'>
