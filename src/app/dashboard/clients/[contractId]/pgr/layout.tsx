@@ -22,7 +22,9 @@ export default function PgrLayout({ children }: { children: React.ReactNode }) {
   // The list page is `/dashboard/clients/[contractId]/pgr`
   // We can check if the path has more segments after 'pgr' to determine if it's a detail page.
   const pathSegments = pathname.split('/')
-  const pgrId = pathSegments[pathSegments.indexOf('pgr') + 1]
+  const pgrIndex = pathSegments.indexOf('pgr')
+  const pgrId = pgrIndex !== -1 && pathSegments.length > pgrIndex + 1 ? pathSegments[pgrIndex + 1] : null
+
 
   // If there is no pgrId, it means we are on the list page, so we render children directly.
   if (!pgrId || pathname.endsWith('/pgr')) {
