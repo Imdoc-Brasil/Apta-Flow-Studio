@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useParams } from 'next/navigation'
 import {
   Card,
   CardContent,
@@ -26,11 +26,18 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { useRolesStore, type Role } from '../roles/page'
-import { initialEmployeesData } from '../employees/page'
+import { Checkbox } from '@/components/ui/checkbox'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { initialUnitsData } from '../units/page'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import Link from 'next/link'
+import { initialEmployeesData } from '../employees/page'
 
 export interface Sector {
   id: string
@@ -77,7 +84,7 @@ function RoleEditDialog({
   const [description, setDescription] = useState(role.description)
 
   const handleSave = () => {
-    updateRole({ ...role, name, description })
+    // updateRole({ ...role, name, description })
     setIsOpen(false)
   }
 
@@ -126,11 +133,7 @@ function RoleEditDialog({
   )
 }
 
-function AddRoleDialog({
-  onRoleAdded,
-}: {
-  onRoleAdded: (newRole: Role) => void
-}) {
+function AddRoleDialog({ onRoleAdded }: { onRoleAdded: (newRole: any) => void }) {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
@@ -261,7 +264,10 @@ function ManageSectorDialog({
               {roles
                 .filter((role) => !sector.roles.includes(role.id))
                 .map((role) => (
-                  <div key={role.id} className='flex items-center justify-between'>
+                  <div
+                    key={role.id}
+                    className='flex items-center justify-between'
+                  >
                     <span>{role.name}</span>
                     <Button
                       variant='outline'
@@ -287,60 +293,67 @@ function ManageSectorDialog({
 }
 
 export default function SectorsPage() {
-  const searchParams = useSearchParams();
-  const unitId = searchParams.get('unitId');
-  const unit = initialUnitsData.find(u => u.id === unitId);
+  const params = useParams()
+  const contractId = params.contractId as string
+  const searchParams = useSearchParams()
+  const unitId = searchParams.get('unitId')
+  const unit = initialUnitsData.find((u) => u.id === unitId)
 
-  const [sectors, setSectors] = useState(initialSectorsData);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const { roles, addRole } = useRolesStore();
-  
-  const unitSectors = sectors.filter(s => s.unitId === unitId);
+  const [sectors, setSectors] = useState(initialSectorsData)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const { roles, addRole } = useRolesStore()
+
+  const unitSectors = sectors.filter((s) => s.unitId === unitId)
 
   const handleAddSector = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+    event.preventDefault()
+    const formData = new FormData(event.currentTarget)
     const newSector: Sector = {
       id: `SEC-${Math.random().toString(36).substring(2, 5).toUpperCase()}`,
       name: formData.get('name') as string,
       description: formData.get('description') as string,
       unitId: formData.get('unitId') as string,
       roles: [],
-    };
-    setSectors((prev) => [newSector, ...prev]);
-    setIsDialogOpen(false);
-    (event.target as HTMLFormElement).reset();
-  };
+    }
+    setSectors((prev) => [newSector, ...prev])
+    setIsDialogOpen(false)
+    ;(event.target as HTMLFormElement).reset()
+  }
 
   const handleUpdateSectorRoles = (sectorId: string, roleId: string) => {
     setSectors((prevSectors) =>
       prevSectors.map((sector) => {
         if (sector.id === sectorId) {
-          const isRoleInSector = sector.roles.includes(roleId);
+          const isRoleInSector = sector.roles.includes(roleId)
           if (isRoleInSector) {
-            return { ...sector, roles: sector.roles.filter((r) => r !== roleId) };
+            return {
+              ...sector,
+              roles: sector.roles.filter((r) => r !== roleId),
+            }
           } else {
-            return { ...sector, roles: [...sector.roles, roleId] };
+            return { ...sector, roles: [...sector.roles, roleId] }
           }
         }
-        return sector;
+        return sector
       })
-    );
-  };
+    )
+  }
 
   const getEmployeeCountForRole = (roleName: string) => {
-    return initialEmployeesData.filter((emp) => emp.role === roleName).length;
-  };
+    return initialEmployeesData.filter((emp) => emp.role === roleName).length
+  }
 
   if (!unit) {
     return (
       <div className='text-center p-8'>
         <h2 className='text-2xl font-bold'>Unidade não encontrada</h2>
-        <p className='text-muted-foreground'>Selecione uma unidade para ver seus setores.</p>
+        <p className='text-muted-foreground'>
+          Selecione uma unidade para ver seus setores.
+        </p>
         <Button asChild className='mt-4'>
-            <Link href={`/dashboard/clients/${searchParams.get('contractId')}/units`}>
-                Voltar para Unidades
-            </Link>
+          <Link href={`/dashboard/clients/${contractId}/units`}>
+            Voltar para Unidades
+          </Link>
         </Button>
       </div>
     )
@@ -369,17 +382,23 @@ export default function SectorsPage() {
               </DialogHeader>
               <form id='add-sector-form' onSubmit={handleAddSector}>
                 <div className='grid gap-4 py-4'>
-                 <div className='grid grid-cols-4 items-center gap-4'>
+                  <div className='grid grid-cols-4 items-center gap-4'>
                     <Label htmlFor='unitId' className='text-right'>
                       Unidade
                     </Label>
-                     <Select name='unitId' required defaultValue={unitId || undefined}>
-                      <SelectTrigger className="col-span-3">
-                        <SelectValue placeholder="Selecione a unidade" />
+                    <Select
+                      name='unitId'
+                      required
+                      defaultValue={unitId || undefined}
+                    >
+                      <SelectTrigger className='col-span-3'>
+                        <SelectValue placeholder='Selecione a unidade' />
                       </SelectTrigger>
                       <SelectContent>
                         {initialUnitsData.map((u) => (
-                           <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
+                          <SelectItem key={u.id} value={u.id}>
+                            {u.name}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -409,6 +428,7 @@ export default function SectorsPage() {
                 </div>
                 <DialogFooter>
                   <Button
+                    type='button'
                     variant='outline'
                     onClick={() => setIsDialogOpen(false)}
                   >
@@ -443,10 +463,10 @@ export default function SectorsPage() {
                   {sector.roles.length > 0 ? (
                     <div className='space-y-2'>
                       {sector.roles.map((roleId) => {
-                        const role = roles.find((r) => r.id === roleId);
+                        const role = roles.find((r) => r.id === roleId)
                         const employeeCount = role
                           ? getEmployeeCountForRole(role.name)
-                          : 0;
+                          : 0
                         return (
                           <div key={roleId} className='text-sm'>
                             {role?.name || 'Cargo desconhecido'}{' '}
@@ -454,7 +474,7 @@ export default function SectorsPage() {
                               ({employeeCount})
                             </span>
                           </div>
-                        );
+                        )
                       })}
                     </div>
                   ) : (
@@ -464,8 +484,10 @@ export default function SectorsPage() {
                   )}
                 </CardContent>
                 <CardFooter className='flex-col items-stretch gap-2'>
-                   <Button asChild className='w-full'>
-                    <Link href={`/dashboard/clients/${unitId}/roles?unitId=${unitId}&sectorId=${sector.id}`}>
+                  <Button asChild className='w-full'>
+                    <Link
+                      href={`/dashboard/clients/${contractId}/roles?unitId=${unitId}&sectorId=${sector.id}`}
+                    >
                       Ver Cargos <ArrowRight className='ml-2 h-4 w-4' />
                     </Link>
                   </Button>
@@ -494,5 +516,5 @@ export default function SectorsPage() {
         )}
       </CardContent>
     </Card>
-  );
+  )
 }

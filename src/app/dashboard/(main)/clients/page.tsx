@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { File, ListFilter, MoreHorizontal, PlusCircle } from 'lucide-react'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
@@ -50,6 +50,16 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 export const initialClientsData = [
   {
@@ -119,6 +129,18 @@ type Client = Omit<(typeof initialClientsData)[0], 'plan'>
 export default function ClientsPage() {
   const [clientsData, setClientsData] = useState(initialClientsData)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [clientToDelete, setClientToDelete] = useState<Client | null>(null)
+  const [statusFilter, setStatusFilter] = useState<string[]>([
+    'Ativo',
+    'Integração',
+    'Inativo',
+  ])
+
+  const filteredClients = useMemo(() => {
+    if (statusFilter.length === 3) return clientsData
+    return clientsData.filter((client) => statusFilter.includes(client.status))
+  }, [clientsData, statusFilter])
 
   const handleAddClient = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -143,267 +165,324 @@ export default function ClientsPage() {
     setIsDialogOpen(false)
   }
 
+  const handleDeleteClient = () => {
+    if (clientToDelete) {
+      setClientsData((prev) =>
+        prev.filter((client) => client.contractId !== clientToDelete.contractId)
+      )
+      setIsDeleteDialogOpen(false)
+      setClientToDelete(null)
+    }
+  }
+
+  const openDeleteDialog = (client: Client) => {
+    setClientToDelete(client)
+    setIsDeleteDialogOpen(true)
+  }
+
   return (
-    <Tabs defaultValue='all'>
-      <div className='flex items-center'>
-        <TabsList>
-          <TabsTrigger value='all'>Todos</TabsTrigger>
-          <TabsTrigger value='active'>Ativo</TabsTrigger>
-          <TabsTrigger value='onboarding'>Integração</TabsTrigger>
-          <TabsTrigger value='inactive' className='hidden sm:flex'>
-            Inativo
-          </TabsTrigger>
-        </TabsList>
-        <div className='ml-auto flex items-center gap-2'>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant='outline' size='sm' className='h-8 gap-1'>
-                <ListFilter className='h-3.5 w-3.5' />
-                <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
-                  Filtrar
-                </span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align='end'>
-              <DropdownMenuLabel>Filtrar por</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuCheckboxItem checked>Ativo</DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem>Integração</DropdownMenuCheckboxItem>
-              <DropdownMenuCheckboxItem>Inativo</DropdownMenuCheckboxItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size='sm' className='h-8 gap-1'>
-                <PlusCircle className='h-3.5 w-3.5' />
-                <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
-                  Adicionar Cliente
-                </span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className='sm:max-w-md'>
-              <DialogHeader>
-                <DialogTitle>Adicionar Novo Cliente</DialogTitle>
-                <DialogDescription>
-                  Preencha os detalhes abaixo para adicionar um novo cliente.
-                </DialogDescription>
-              </DialogHeader>
-              <form id='add-client-form' onSubmit={handleAddClient}>
-                <ScrollArea className='h-96 w-full'>
-                  <div className='grid gap-4 py-4 px-6'>
-                    <div className='grid grid-cols-4 items-center gap-4'>
-                      <Label htmlFor='name' className='text-right'>
-                        Empresa
-                      </Label>
-                      <Input
-                        id='name'
-                        name='name'
-                        className='col-span-3'
-                        required
-                      />
-                    </div>
-                    <div className='grid grid-cols-4 items-center gap-4'>
-                      <Label htmlFor='cnpj' className='text-right'>
-                        CNPJ
-                      </Label>
-                      <Input
-                        id='cnpj'
-                        name='cnpj'
-                        className='col-span-3'
-                        required
-                      />
-                    </div>
-                    <div className='grid grid-cols-4 items-center gap-4'>
-                      <Label htmlFor='contact' className='text-right'>
-                        Email
-                      </Label>
-                      <Input
-                        id='contact'
-                        name='contact'
-                        type='email'
-                        className='col-span-3'
-                        required
-                      />
-                    </div>
-                    <div className='grid grid-cols-4 items-center gap-4'>
-                      <Label htmlFor='address' className='text-right'>
-                        Endereço
-                      </Label>
-                      <Input
-                        id='address'
-                        name='address'
-                        className='col-span-3'
-                      />
-                    </div>
-                    <div className='grid grid-cols-4 items-center gap-4'>
-                      <Label htmlFor='responsibleName' className='text-right'>
-                        Responsável
-                      </Label>
-                      <Input
-                        id='responsibleName'
-                        name='responsibleName'
-                        className='col-span-3'
-                        required
-                      />
-                    </div>
-                    <div className='grid grid-cols-4 items-center gap-4'>
-                      <Label
-                        htmlFor='responsibleContact'
-                        className='text-right'
-                      >
-                        Contato
-                      </Label>
-                      <Input
-                        id='responsibleContact'
-                        name='responsibleContact'
-                        className='col-span-3'
-                      />
-                    </div>
-                    <div className='grid grid-cols-4 items-center gap-4'>
-                      <Label htmlFor='cnae' className='text-right'>
-                        CNAE
-                      </Label>
-                      <Input id='cnae' name='cnae' className='col-span-3' />
-                    </div>
-                    <div className='grid grid-cols-4 items-center gap-4'>
-                      <Label htmlFor='riskLevel' className='text-right'>
-                        Grau de Risco
-                      </Label>
-                      <Input
-                        id='riskLevel'
-                        name='riskLevel'
-                        className='col-span-3'
-                      />
-                    </div>
-                    <div className='grid grid-cols-4 items-center gap-4'>
-                      <Label htmlFor='status' className='text-right'>
-                        Status
-                      </Label>
-                      <Select name='status' defaultValue='Integração'>
-                        <SelectTrigger className='col-span-3'>
-                          <SelectValue placeholder='Selecione o status' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value='Ativo'>Ativo</SelectItem>
-                          <SelectItem value='Integração'>Integração</SelectItem>
-                          <SelectItem value='Inativo'>Inativo</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </ScrollArea>
-              </form>
-              <DialogFooter>
-                <Button type='submit' form='add-client-form'>
-                  Salvar Cliente
+    <>
+      <Tabs defaultValue='all'>
+        <div className='flex items-center'>
+          <TabsList>
+            <TabsTrigger value='all'>Todos</TabsTrigger>
+            <TabsTrigger value='active'>Ativo</TabsTrigger>
+            <TabsTrigger value='onboarding'>Integração</TabsTrigger>
+            <TabsTrigger value='inactive' className='hidden sm:flex'>
+              Inativo
+            </TabsTrigger>
+          </TabsList>
+          <div className='ml-auto flex items-center gap-2'>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant='outline' size='sm' className='h-8 gap-1'>
+                  <ListFilter className='h-3.5 w-3.5' />
+                  <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
+                    Filtrar
+                  </span>
                 </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
-      <TabsContent value='all'>
-        <Card>
-          <CardHeader>
-            <CardTitle>Clientes</CardTitle>
-            <CardDescription>
-              Gerencie seus clientes e seus contratos de serviço.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Empresa</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className='hidden md:table-cell'>
-                    Responsável
-                  </TableHead>
-                  <TableHead className='hidden lg:table-cell'>CNPJ</TableHead>
-                  <TableHead>
-                    <span className='sr-only'>Ações</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {clientsData.map((client) => (
-                  <TableRow key={client.contractId}>
-                    <TableCell className='font-medium'>
-                      <Link
-                        href={`/dashboard/clients/${client.contractId}/info`}
-                        className='hover:underline'
-                      >
-                        {client.name}
-                      </Link>
-                      <div className='text-sm text-muted-foreground md:hidden'>
-                        {client.contact}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end'>
+                <DropdownMenuLabel>Filtrar por status</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {['Ativo', 'Integração', 'Inativo'].map((status) => (
+                  <DropdownMenuCheckboxItem
+                    key={status}
+                    checked={statusFilter.includes(status)}
+                    onCheckedChange={(checked) => {
+                      setStatusFilter((prev) =>
+                        checked
+                          ? [...prev, status]
+                          : prev.filter((s) => s !== status)
+                      )
+                    }}
+                  >
+                    {status}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size='sm' className='h-8 gap-1'>
+                  <PlusCircle className='h-3.5 w-3.5' />
+                  <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
+                    Adicionar Cliente
+                  </span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className='sm:max-w-md'>
+                <DialogHeader>
+                  <DialogTitle>Adicionar Novo Cliente</DialogTitle>
+                  <DialogDescription>
+                    Preencha os detalhes abaixo para adicionar um novo cliente.
+                  </DialogDescription>
+                </DialogHeader>
+                <form id='add-client-form' onSubmit={handleAddClient}>
+                  <ScrollArea className='h-96 w-full'>
+                    <div className='grid gap-4 py-4 px-6'>
+                      <div className='grid grid-cols-4 items-center gap-4'>
+                        <Label htmlFor='name' className='text-right'>
+                          Empresa
+                        </Label>
+                        <Input
+                          id='name'
+                          name='name'
+                          className='col-span-3'
+                          required
+                        />
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          client.status === 'Ativo'
-                            ? 'secondary'
-                            : client.status === 'Integração'
+                      <div className='grid grid-cols-4 items-center gap-4'>
+                        <Label htmlFor='cnpj' className='text-right'>
+                          CNPJ
+                        </Label>
+                        <Input
+                          id='cnpj'
+                          name='cnpj'
+                          className='col-span-3'
+                          required
+                        />
+                      </div>
+                      <div className='grid grid-cols-4 items-center gap-4'>
+                        <Label htmlFor='contact' className='text-right'>
+                          Email
+                        </Label>
+                        <Input
+                          id='contact'
+                          name='contact'
+                          type='email'
+                          className='col-span-3'
+                          required
+                        />
+                      </div>
+                      <div className='grid grid-cols-4 items-center gap-4'>
+                        <Label htmlFor='address' className='text-right'>
+                          Endereço
+                        </Label>
+                        <Input
+                          id='address'
+                          name='address'
+                          className='col-span-3'
+                        />
+                      </div>
+                      <div className='grid grid-cols-4 items-center gap-4'>
+                        <Label htmlFor='responsibleName' className='text-right'>
+                          Responsável
+                        </Label>
+                        <Input
+                          id='responsibleName'
+                          name='responsibleName'
+                          className='col-span-3'
+                          required
+                        />
+                      </div>
+                      <div className='grid grid-cols-4 items-center gap-4'>
+                        <Label
+                          htmlFor='responsibleContact'
+                          className='text-right'
+                        >
+                          Contato
+                        </Label>
+                        <Input
+                          id='responsibleContact'
+                          name='responsibleContact'
+                          className='col-span-3'
+                        />
+                      </div>
+                      <div className='grid grid-cols-4 items-center gap-4'>
+                        <Label htmlFor='cnae' className='text-right'>
+                          CNAE
+                        </Label>
+                        <Input id='cnae' name='cnae' className='col-span-3' />
+                      </div>
+                      <div className='grid grid-cols-4 items-center gap-4'>
+                        <Label htmlFor='riskLevel' className='text-right'>
+                          Grau de Risco
+                        </Label>
+                        <Input
+                          id='riskLevel'
+                          name='riskLevel'
+                          className='col-span-3'
+                        />
+                      </div>
+                      <div className='grid grid-cols-4 items-center gap-4'>
+                        <Label htmlFor='status' className='text-right'>
+                          Status
+                        </Label>
+                        <Select name='status' defaultValue='Integração'>
+                          <SelectTrigger className='col-span-3'>
+                            <SelectValue placeholder='Selecione o status' />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value='Ativo'>Ativo</SelectItem>
+                            <SelectItem value='Integração'>
+                              Integração
+                            </SelectItem>
+                            <SelectItem value='Inativo'>Inativo</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </ScrollArea>
+                </form>
+                <DialogFooter>
+                  <Button type='submit' form='add-client-form'>
+                    Salvar Cliente
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+        <TabsContent value='all'>
+          <Card>
+            <CardHeader>
+              <CardTitle>Clientes</CardTitle>
+              <CardDescription>
+                Gerencie seus clientes e seus contratos de serviço.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Empresa</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className='hidden md:table-cell'>
+                      Responsável
+                    </TableHead>
+                    <TableHead className='hidden lg:table-cell'>CNPJ</TableHead>
+                    <TableHead>
+                      <span className='sr-only'>Ações</span>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredClients.map((client) => (
+                    <TableRow key={client.contractId}>
+                      <TableCell className='font-medium'>
+                        <Link
+                          href={`/dashboard/clients/${client.contractId}/info`}
+                          className='hover:underline'
+                        >
+                          {client.name}
+                        </Link>
+                        <div className='text-sm text-muted-foreground md:hidden'>
+                          {client.contact}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            client.status === 'Ativo'
+                              ? 'secondary'
+                              : client.status === 'Integração'
                               ? 'default'
                               : 'outline'
-                        }
-                      >
-                        {client.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className='hidden md:table-cell'>
-                      {client.responsibleName}
-                    </TableCell>
-                    <TableCell className='hidden lg:table-cell'>
-                      {client.cnpj}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            aria-haspopup='true'
-                            size='icon'
-                            variant='ghost'
-                          >
-                            <MoreHorizontal className='h-4 w-4' />
-                            <span className='sr-only'>Alternar menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align='end'>
-                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                          <DropdownMenuItem asChild>
-                            <Link
-                              href={`/dashboard/clients/${client.contractId}/info`}
+                          }
+                        >
+                          {client.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className='hidden md:table-cell'>
+                        {client.responsibleName}
+                      </TableCell>
+                      <TableCell className='hidden lg:table-cell'>
+                        {client.cnpj}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              aria-haspopup='true'
+                              size='icon'
+                              variant='ghost'
                             >
-                              Ver Detalhes
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>Editar</DropdownMenuItem>
-                          <DropdownMenuItem>Ver Contratos</DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className='text-destructive'>
-                            Excluir
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-          <CardFooter>
-            <div className='text-xs text-muted-foreground'>
-              Mostrando{' '}
-              <strong>
-                1-{clientsData.length}
-              </strong>{' '}
-              de <strong>{clientsData.length}</strong> clientes
-            </div>
-          </CardFooter>
-        </Card>
-      </TabsContent>
-    </Tabs>
+                              <MoreHorizontal className='h-4 w-4' />
+                              <span className='sr-only'>Alternar menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align='end'>
+                            <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                            <DropdownMenuItem asChild>
+                              <Link
+                                href={`/dashboard/clients/${client.contractId}/info`}
+                              >
+                                Ver Detalhes
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>Editar</DropdownMenuItem>
+                            <DropdownMenuItem>Ver Contratos</DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              className='text-destructive'
+                              onClick={() => openDeleteDialog(client)}
+                            >
+                              Excluir
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+            <CardFooter>
+              <div className='text-xs text-muted-foreground'>
+                Mostrando{' '}
+                <strong>
+                  1-{filteredClients.length}
+                </strong>{' '}
+                de <strong>{clientsData.length}</strong> clientes
+              </div>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+      </Tabs>
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Isso irá excluir
+              permanentemente o cliente{' '}
+              <span className='font-bold'>{clientToDelete?.name}</span>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setClientToDelete(null)}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteClient}>
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }
