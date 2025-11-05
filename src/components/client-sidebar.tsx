@@ -131,9 +131,6 @@ export function ClientSidebar() {
     if (href.endsWith('/info')) {
       return pathname === href || pathname === basePath
     }
-    if (href.endsWith('/pgr')) {
-      return pathname === href || pathname.startsWith(`${href}-`)
-    }
     // For other items, check if the path starts with the href.
     // This handles nested routes like /pgr/inventory correctly.
     if (href !== basePath && href !== `${basePath}/info`) {
@@ -355,11 +352,6 @@ export function ClientSidebar() {
           <CollapsibleContent asChild>
             <ul className='pl-6 pt-1 space-y-1'>
               {sstNavItems
-                .filter(
-                  (item) =>
-                    !item.href.includes('pgr-inventory') &&
-                    !item.href.includes('pgr-action-plan')
-                )
                 .map((item) => (
                   <SidebarMenuItem key={item.label}>
                     <Link href={item.href}>
