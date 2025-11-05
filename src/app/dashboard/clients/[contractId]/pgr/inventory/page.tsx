@@ -82,7 +82,7 @@ interface RiskInventoryItem {
   level: RiskLevel
 }
 
-const initialInventory: RiskInventoryItem[] = [
+export const initialInventory: RiskInventoryItem[] = [
   {
     id: 'INV-001',
     exposureType: 'sector',
