@@ -113,6 +113,16 @@ const initialInventory: RiskInventoryItem[] = [
     severity: '1',
     level: 'Leve',
   },
+  {
+    id: 'INV-004',
+    exposureType: 'sector',
+    exposureTarget: 'Logística',
+    risk: 'Poeiras Minerais (Sílica)',
+    riskEsocialCode: '02.01.018',
+    probability: '3',
+    severity: '4',
+    level: 'Alto',
+  },
 ]
 
 const exposureTypeLabels: Record<Exclude<ExposureType, ''>, string> = {
