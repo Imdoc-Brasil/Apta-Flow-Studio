@@ -282,7 +282,7 @@ export default function RolesPage() {
             <Select
               value={selectedSector}
               onValueChange={setSelectedSector}
-              disabled={selectedUnit === 'all'}
+              disabled={selectedUnit === 'all' && filteredSectorsForFilter.length === initialSectorsData.length}
             >
               <SelectTrigger className='w-full sm:w-[180px]'>
                 <SelectValue placeholder='Filtrar por Setor' />

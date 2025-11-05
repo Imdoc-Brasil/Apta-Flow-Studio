@@ -52,6 +52,8 @@ export const initialHazardData = [
     esocialCode: '01.01.001',
     method: 'Quantitativo',
     category: 'Físico',
+    legalBasis: 'NR-15, Anexo 1',
+    potentialEffects: 'Perda auditiva (PAIR), estresse, problemas cardiovasculares.'
   },
   {
     id: 'RF-002',
@@ -59,6 +61,8 @@ export const initialHazardData = [
     esocialCode: '01.02.001',
     method: 'Quantitativo',
     category: 'Físico',
+    legalBasis: 'NR-15, Anexo 8',
+    potentialEffects: 'Doença de Raynaud, problemas articulares, formigamento.'
   },
   {
     id: 'RQ-001',
@@ -66,6 +70,8 @@ export const initialHazardData = [
     esocialCode: '02.01.018',
     method: 'Quantitativo',
     category: 'Químico',
+    legalBasis: 'NR-15, Anexo 12',
+    potentialEffects: 'Silicose, câncer de pulmão, doenças renais.'
   },
   {
     id: 'RE-001',
@@ -73,6 +79,8 @@ export const initialHazardData = [
     esocialCode: '04.01.001',
     method: 'Qualitativo',
     category: 'Ergonômico',
+    legalBasis: 'NR-17',
+    potentialEffects: 'Lesões na coluna (lombalgia), hérnias, dores musculares.'
   },
   {
     id: 'RA-001',
@@ -80,6 +88,8 @@ export const initialHazardData = [
     esocialCode: '05.01.001',
     method: 'Qualitativo',
     category: 'Acidente',
+    legalBasis: 'NR-12',
+    potentialEffects: 'Quedas, batidas, tropeços, lesões por esforço.'
   },
 ]
 
@@ -147,6 +157,8 @@ export default function RisksPage() {
       esocialCode: formData.get('esocialCode') as string,
       category: formData.get('category') as string,
       method: formData.get('method') as string,
+      legalBasis: '', // Should be added to form
+      potentialEffects: '', // Should be added to form
     }
     setHazardData((prev) => [newHazard, ...prev])
     setIsHazardDialogOpen(false)
