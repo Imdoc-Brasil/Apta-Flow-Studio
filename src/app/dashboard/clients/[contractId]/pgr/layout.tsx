@@ -20,6 +20,7 @@ export default function PgrLayout({ children }: { children: React.ReactNode }) {
 
   const tabs = [
     { name: 'Inventário de Riscos', href: `${basePath}/inventory` },
+    { name: 'Avaliações Quantitativas', href: `${basePath}/measurements` },
     { name: 'Plano de Ação', href: `${basePath}/action-plan` },
   ]
 
