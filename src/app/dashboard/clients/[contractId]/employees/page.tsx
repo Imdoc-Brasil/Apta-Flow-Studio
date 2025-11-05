@@ -76,6 +76,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
+import { Checkbox } from '@/components/ui/checkbox'
 
 export const initialEmployeesData = [
   {
@@ -135,7 +136,15 @@ export type EmployeeDocument = {
   name: string
   topic: DocumentTopic
   uploadDate: string
-  file: File
+  file?: File
+  // Fields for Atestado
+  institution?: string
+  doctorName?: string
+  doctorCrm?: string
+  issueDate?: string
+  daysOff?: number
+  cid?: string
+  isWorkAccident?: boolean
 }
 
 const StatusIndicator = ({ status }: { status: string }) => {
@@ -156,10 +165,13 @@ export default function EmployeesPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
   const [currentEmployee, setCurrentEmployee] = useState<Employee | null>(null)
-  const [employeeDocs, setEmployeeDocs] = useState<EmployeeDocument[]>([])
+  const [employeeDocs, setEmployeeDocs] = useState<
+    Record<string, EmployeeDocument[]>
+  >({})
   const { roles } = useRolesStore()
   const [selectedUnit, setSelectedUnit] = useState<string | null>(null)
   const [isAddDocOpen, setIsAddDocOpen] = useState(false)
+  const [isAtestadoDocOpen, setIsAtestadoDocOpen] = useState(false)
 
   const handleAddEmployee = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -200,25 +212,90 @@ export default function EmployeesPage() {
     setSelectedUnit(null)
   }
 
-  const handleAddDocument = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleAddDocument = (
+    employeeId: string,
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
-    const fileInput = event.currentTarget.elements.namedItem('file') as HTMLInputElement
+    const fileInput = event.currentTarget.elements.namedItem(
+      'file'
+    ) as HTMLInputElement
     const file = fileInput?.files?.[0]
-  
-    if (!file) return;
-  
+
+    if (!file) return
+
     const newDoc: EmployeeDocument = {
       id: `DOC-${Date.now()}`,
       name: formData.get('name') as string,
       topic: formData.get('topic') as DocumentTopic,
       uploadDate: new Date().toISOString().split('T')[0],
       file,
-    };
-  
-    setEmployeeDocs(prev => [...prev, newDoc]);
-    setIsAddDocOpen(false);
+    }
+
+    setEmployeeDocs((prev) => ({
+      ...prev,
+      [employeeId]: [...(prev[employeeId] || []), newDoc],
+    }))
+    setIsAddDocOpen(false)
   }
+
+  const handleAddAtestado = (
+    employeeId: string,
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const fileInput = event.currentTarget.elements.namedItem('atestado-file') as HTMLInputElement;
+    const file = fileInput?.files?.[0];
+
+    const daysOff = parseInt(formData.get('daysOff') as string, 10) || 0;
+
+    const newAtestado: EmployeeDocument = {
+      id: `DOC-A-${Date.now()}`,
+      topic: 'Atestados Médicos',
+      name: `Atestado - ${formData.get('issueDate')} (${daysOff} dias)`,
+      uploadDate: new Date().toISOString().split('T')[0],
+      file,
+      institution: formData.get('institution') as string,
+      doctorName: formData.get('doctorName') as string,
+      doctorCrm: formData.get('doctorCrm') as string,
+      issueDate: formData.get('issueDate') as string,
+      daysOff: daysOff,
+      cid: formData.get('cid') as string,
+      isWorkAccident: !!formData.get('isWorkAccident'),
+    };
+
+    setEmployeeDocs((prev) => ({
+      ...prev,
+      [employeeId]: [...(prev[employeeId] || []), newAtestado],
+    }));
+
+    setEmployees(prev => prev.map(emp => {
+      if (emp.id === employeeId) {
+        return {
+          ...emp,
+          medicalLeaves: emp.medicalLeaves + 1,
+          leaveDays: emp.leaveDays + daysOff,
+        }
+      }
+      return emp;
+    }));
+    
+    // Update currentEmployee state as well to reflect changes immediately in the dialog
+    setCurrentEmployee(prev => {
+        if (prev && prev.id === employeeId) {
+            return {
+                ...prev,
+                medicalLeaves: prev.medicalLeaves + 1,
+                leaveDays: prev.leaveDays + daysOff,
+            }
+        }
+        return prev;
+    });
+
+    setIsAtestadoDocOpen(false);
+  };
 
   const filteredSectors = selectedUnit
     ? initialSectorsData.filter((s) => s.unitId === selectedUnit)
@@ -238,251 +315,288 @@ export default function EmployeesPage() {
       'Advertências',
       'Ordem de Serviço',
     ]
-    
+
+    const employeeId = currentEmployee?.id || ''
+    const currentDocs = employeeDocs[employeeId] || []
+
     return (
-    <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-      <DialogContent className='sm:max-w-4xl'>
-        <DialogHeader>
-          <DialogTitle>{currentEmployee?.name}</DialogTitle>
-          <DialogDescription>
-            {currentEmployee?.role} - {currentEmployee?.sector}
-          </DialogDescription>
-        </DialogHeader>
-        {currentEmployee && (
-          <div className='grid gap-6 py-4'>
-            <div className='grid grid-cols-2 md:grid-cols-4 gap-4 text-sm'>
-              <div>
-                <p className='text-muted-foreground'>CPF</p>
-                <p>{currentEmployee.cpf}</p>
+      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <DialogContent className='sm:max-w-4xl'>
+          <DialogHeader>
+            <DialogTitle>{currentEmployee?.name}</DialogTitle>
+            <DialogDescription>
+              {currentEmployee?.role} - {currentEmployee?.sector}
+            </DialogDescription>
+          </DialogHeader>
+          {currentEmployee && (
+            <div className='grid gap-6 py-4'>
+              <div className='grid grid-cols-2 md:grid-cols-4 gap-4 text-sm'>
+                <div>
+                  <p className='text-muted-foreground'>CPF</p>
+                  <p>{currentEmployee.cpf}</p>
+                </div>
+                <div>
+                  <p className='text-muted-foreground'>Data Nasc.</p>
+                  <p>{currentEmployee.birthDate}</p>
+                </div>
+                <div>
+                  <p className='text-muted-foreground'>Unidade</p>
+                  <p>{currentEmployee.unit}</p>
+                </div>
+                <div>
+                  <p className='text-muted-foreground'>Situação</p>
+                  <Badge
+                    variant={
+                      currentEmployee.vacation || currentEmployee.inssLeave
+                        ? 'destructive'
+                        : 'secondary'
+                    }
+                  >
+                    {currentEmployee.vacation
+                      ? 'Férias'
+                      : currentEmployee.inssLeave
+                        ? 'Afastado'
+                        : 'Ativo'}
+                  </Badge>
+                </div>
               </div>
-              <div>
-                <p className='text-muted-foreground'>Data Nasc.</p>
-                <p>{currentEmployee.birthDate}</p>
-              </div>
-              <div>
-                <p className='text-muted-foreground'>Unidade</p>
-                <p>{currentEmployee.unit}</p>
-              </div>
-              <div>
-                <p className='text-muted-foreground'>Situação</p>
-                <Badge
-                  variant={
-                    currentEmployee.vacation || currentEmployee.inssLeave
-                      ? 'destructive'
-                      : 'secondary'
-                  }
-                >
-                  {currentEmployee.vacation
-                    ? 'Férias'
-                    : currentEmployee.inssLeave
-                      ? 'Afastado'
-                      : 'Ativo'}
-                </Badge>
-              </div>
-            </div>
 
-            <Separator />
+              <Separator />
 
-            <div>
-              <h4 className='font-semibold text-base mb-4'>Ações Rápidas</h4>
-              <div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2'>
-                <Button variant='outline' size='sm' className='justify-start'>
-                  <Siren className='mr-2' />
-                  Registrar Incidente
-                </Button>
-                <Button variant='outline' size='sm' className='justify-start'>
-                  <FileWarning className='mr-2' />
-                  Registrar NC
-                </Button>
-                <Button variant='outline' size='sm' className='justify-start'>
-                  <Plus className='mr-2' />
-                  Gerar Pedido Exame
-                </Button>
-                <Button variant='outline' size='sm' className='justify-start'>
-                  <CalendarPlus className='mr-2' />
-                  Agendar Atendimento
-                </Button>
-                <Button variant='outline' size='sm' className='justify-start'>
-                  <GraduationCap className='mr-2' />
-                  Agendar Treinamento
-                </Button>
-                <Button variant='outline' size='sm' className='justify-start'>
-                  <FileSpreadsheet className='mr-2' />
-                  Registrar Advertência
-                </Button>
-                <Button variant='outline' size='sm' className='justify-start'>
-                  <HardHat className='mr-2' />
-                  Entregar EPI
-                </Button>
+              <div>
+                <h4 className='font-semibold text-base mb-4'>Ações Rápidas</h4>
+                <div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2'>
+                  <Button variant='outline' size='sm' className='justify-start'>
+                    <Siren className='mr-2' />
+                    Registrar Incidente
+                  </Button>
+                  <Button variant='outline' size='sm' className='justify-start'>
+                    <FileWarning className='mr-2' />
+                    Registrar NC
+                  </Button>
+                  <Button variant='outline' size='sm' className='justify-start'>
+                    <Plus className='mr-2' />
+                    Gerar Pedido Exame
+                  </Button>
+                  <Button variant='outline' size='sm' className='justify-start'>
+                    <CalendarPlus className='mr-2' />
+                    Agendar Atendimento
+                  </Button>
+                  <Button variant='outline' size='sm' className='justify-start'>
+                    <GraduationCap className='mr-2' />
+                    Agendar Treinamento
+                  </Button>
+                  <Button variant='outline' size='sm' className='justify-start'>
+                    <FileSpreadsheet className='mr-2' />
+                    Registrar Advertência
+                  </Button>
+                  <Button variant='outline' size='sm' className='justify-start'>
+                    <HardHat className='mr-2' />
+                    Entregar EPI
+                  </Button>
+                </div>
               </div>
-            </div>
 
-            <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
-              <Card>
-                <CardHeader>
-                  <CardTitle className='text-lg'>Resumo de SST</CardTitle>
-                </CardHeader>
-                <CardContent className='grid grid-cols-2 gap-x-4 gap-y-2 text-sm'>
-                  <div className='flex justify-between items-center'>
-                    <span>ASO</span>
-                    <StatusIndicator status={currentEmployee.asoStatus} />
-                  </div>
-                  <div className='flex justify-between items-center'>
-                    <span>Periódico</span>
-                    <StatusIndicator
-                      status={currentEmployee.periodicStatus}
-                    />
-                  </div>
-                  <div className='flex justify-between items-center'>
-                    <span>Vacinas</span>
-                    <StatusIndicator status={currentEmployee.vaccineStatus} />
-                  </div>
-                  <div className='flex justify-between items-center'>
-                    <span>EPI</span>
-                    <StatusIndicator status={currentEmployee.epiStatus} />
-                  </div>
-                  <div className='flex justify-between items-center'>
-                    <span>Treinamentos</span>
-                    <StatusIndicator
-                      status={currentEmployee.trainingStatus}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className='text-lg'>Indicadores</CardTitle>
-                </CardHeader>
-                <CardContent className='grid grid-cols-2 gap-4 text-center'>
-                  <div className='p-2 rounded-lg bg-muted'>
-                    <p className='text-xs text-muted-foreground'>
-                      Atestados (Dias)
-                    </p>
-                    <p className='text-lg font-bold'>
-                      {currentEmployee.medicalLeaves} ({currentEmployee.leaveDays})
-                    </p>
-                  </div>
-                  <div className='p-2 rounded-lg bg-muted'>
-                    <p className='text-xs text-muted-foreground'>Incidentes</p>
-                    <p className='text-lg font-bold'>
-                      {currentEmployee.incidents}
-                    </p>
-                  </div>
-                  <div className='p-2 rounded-lg bg-muted'>
-                    <p className='text-xs text-muted-foreground'>
-                      Não Conformidades
-                    </p>
-                    <p className='text-lg font-bold'>
-                      {currentEmployee.nonConformities}
-                    </p>
-                  </div>
-                  <div className='p-2 rounded-lg bg-muted'>
-                    <p className='text-xs text-muted-foreground'>Acidentes</p>
-                    <p className='text-lg font-bold'>
-                      {currentEmployee.accidents}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-               <Card>
-                <CardHeader className='flex-row items-center justify-between'>
+              <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className='text-lg'>Resumo de SST</CardTitle>
+                  </CardHeader>
+                  <CardContent className='grid grid-cols-2 gap-x-4 gap-y-2 text-sm'>
+                    <div className='flex justify-between items-center'>
+                      <span>ASO</span>
+                      <StatusIndicator status={currentEmployee.asoStatus} />
+                    </div>
+                    <div className='flex justify-between items-center'>
+                      <span>Periódico</span>
+                      <StatusIndicator
+                        status={currentEmployee.periodicStatus}
+                      />
+                    </div>
+                    <div className='flex justify-between items-center'>
+                      <span>Vacinas</span>
+                      <StatusIndicator status={currentEmployee.vaccineStatus} />
+                    </div>
+                    <div className='flex justify-between items-center'>
+                      <span>EPI</span>
+                      <StatusIndicator status={currentEmployee.epiStatus} />
+                    </div>
+                    <div className='flex justify-between items-center'>
+                      <span>Treinamentos</span>
+                      <StatusIndicator
+                        status={currentEmployee.trainingStatus}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className='text-lg'>Indicadores</CardTitle>
+                  </CardHeader>
+                  <CardContent className='grid grid-cols-2 gap-4 text-center'>
+                    <div className='p-2 rounded-lg bg-muted'>
+                      <p className='text-xs text-muted-foreground'>
+                        Atestados (Dias)
+                      </p>
+                      <p className='text-lg font-bold'>
+                        {currentEmployee.medicalLeaves} ({currentEmployee.leaveDays})
+                      </p>
+                    </div>
+                    <div className='p-2 rounded-lg bg-muted'>
+                      <p className='text-xs text-muted-foreground'>Incidentes</p>
+                      <p className='text-lg font-bold'>
+                        {currentEmployee.incidents}
+                      </p>
+                    </div>
+                    <div className='p-2 rounded-lg bg-muted'>
+                      <p className='text-xs text-muted-foreground'>
+                        Não Conformidades
+                      </p>
+                      <p className='text-lg font-bold'>
+                        {currentEmployee.nonConformities}
+                      </p>
+                    </div>
+                    <div className='p-2 rounded-lg bg-muted'>
+                      <p className='text-xs text-muted-foreground'>Acidentes</p>
+                      <p className='text-lg font-bold'>
+                        {currentEmployee.accidents}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
                     <CardTitle className='text-lg'>Documentos</CardTitle>
-                    <Dialog open={isAddDocOpen} onOpenChange={setIsAddDocOpen}>
-                      <DialogTrigger asChild>
-                         <Button variant='outline' size='sm' className='h-8'>
-                           <Upload className='mr-2 h-4 w-4' />
-                           Adicionar
-                         </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                         <DialogHeader>
-                            <DialogTitle>Adicionar Documento</DialogTitle>
-                            <DialogDescription>
-                              Selecione o tópico, dê um nome e anexe o arquivo.
-                            </DialogDescription>
-                         </DialogHeader>
-                         <form id="add-doc-form" onSubmit={handleAddDocument}>
-                            <div className='grid gap-4 py-4'>
-                                <div className='space-y-2'>
-                                  <Label htmlFor='topic'>Tópico</Label>
-                                  <Select name='topic' required>
-                                      <SelectTrigger>
-                                        <SelectValue placeholder="Selecione um tópico" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {documentTopics.map(topic => (
-                                          <SelectItem key={topic} value={topic}>{topic}</SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                  </Select>
-                                </div>
-                                <div className='space-y-2'>
-                                  <Label htmlFor='name'>Nome do Documento</Label>
-                                  <Input id='name' name='name' placeholder='Ex: ASO Periódico de Março' required />
-                                </div>
-                                <div className='space-y-2'>
-                                  <Label htmlFor='file'>Arquivo</Label>
-                                  <Input id='file' name='file' type='file' required />
-                                </div>
-                            </div>
-                         </form>
-                         <DialogFooter>
-                            <Button variant='outline' onClick={() => setIsAddDocOpen(false)}>Cancelar</Button>
-                            <Button type='submit' form='add-doc-form'>Salvar Documento</Button>
-                         </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                </CardHeader>
-                <CardContent className='flex flex-col gap-2'>
-                  <Accordion type="single" collapsible className="w-full">
-                    {documentTopics.map(topic => {
-                      const docsForTopic = employeeDocs.filter(d => d.topic === topic);
-                      return (
-                        <AccordionItem value={topic} key={topic}>
-                          <AccordionTrigger>{topic}</AccordionTrigger>
-                          <AccordionContent>
-                           {docsForTopic.length > 0 ? (
-                              <ul className='space-y-2'>
-                                {docsForTopic.map(doc => (
-                                  <li key={doc.id} className='flex items-center justify-between text-sm'>
-                                    <Link href={URL.createObjectURL(doc.file)} target='_blank' className='hover:underline flex items-center gap-2'>
-                                      <FileText className='h-4 w-4' />
-                                      {doc.name}
-                                    </Link>
-                                    <span className='text-xs text-muted-foreground'>{doc.uploadDate}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : (
-                              <p className='text-sm text-muted-foreground'>Nenhum documento encontrado.</p>
-                            )}
-                          </AccordionContent>
-                        </AccordionItem>
-                      )
-                    })}
-                  </Accordion>
-                </CardContent>
-               </Card>
+                  </CardHeader>
+                  <CardContent className='flex flex-col gap-2'>
+                    <Accordion type='single' collapsible className='w-full'>
+                      {documentTopics.map((topic) => {
+                        const docsForTopic = currentDocs.filter(
+                          (d) => d.topic === topic
+                        )
+                        return (
+                          <AccordionItem value={topic} key={topic}>
+                            <AccordionTrigger>{topic}</AccordionTrigger>
+                            <AccordionContent>
+                              {topic === 'Atestados Médicos' && (
+                                <Dialog open={isAtestadoDocOpen} onOpenChange={setIsAtestadoDocOpen}>
+                                  <DialogTrigger asChild>
+                                    <Button variant='outline' size='sm' className='w-full mb-2'>
+                                      <Upload className='mr-2 h-4 w-4' />
+                                      Registrar Atestado
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent className='sm:max-w-2xl'>
+                                    <DialogHeader>
+                                      <DialogTitle>Registrar Atestado Médico</DialogTitle>
+                                      <DialogDescription>
+                                        Preencha os detalhes do atestado médico para{' '}
+                                        <span className='font-semibold'>{currentEmployee.name}</span>.
+                                      </DialogDescription>
+                                    </DialogHeader>
+                                    <form id="add-atestado-form" onSubmit={(e) => handleAddAtestado(employeeId, e)}>
+                                      <div className='grid gap-3 py-4'>
+                                          <div className='grid grid-cols-2 gap-4'>
+                                            <div className='space-y-1.5'>
+                                              <Label htmlFor='institution'>Instituição/Unidade de Saúde</Label>
+                                              <Input id='institution' name='institution' required />
+                                            </div>
+                                            <div className='space-y-1.5'>
+                                              <Label htmlFor='issueDate'>Data de Emissão</Label>
+                                              <Input id='issueDate' name='issueDate' type='date' required />
+                                            </div>
+                                          </div>
+                                           <div className='grid grid-cols-2 gap-4'>
+                                             <div className='space-y-1.5'>
+                                                <Label htmlFor='doctorName'>Nome do Médico Emissor</Label>
+                                                <Input id='doctorName' name='doctorName' required />
+                                             </div>
+                                             <div className='space-y-1.5'>
+                                                <Label htmlFor='doctorCrm'>CRM</Label>
+                                                <Input id='doctorCrm' name='doctorCrm' required />
+                                             </div>
+                                           </div>
+                                            <div className='grid grid-cols-2 gap-4'>
+                                              <div className='space-y-1.5'>
+                                                <Label htmlFor='daysOff'>Total de Dias</Label>
+                                                <Input id='daysOff' name='daysOff' type='number' required min="0" />
+                                              </div>
+                                              <div className='space-y-1.5'>
+                                                <Label htmlFor='cid'>CID</Label>
+                                                <Input id='cid' name='cid' />
+                                              </div>
+                                            </div>
+                                            <div className='space-y-1.5'>
+                                               <Label htmlFor='atestado-file'>Arquivo do Atestado</Label>
+                                               <Input id='atestado-file' name='atestado-file' type='file' required />
+                                            </div>
+                                            <div className='flex items-center space-x-2'>
+                                               <Checkbox id='isWorkAccident' name='isWorkAccident' />
+                                               <Label htmlFor='isWorkAccident'>Relacionado a Acidente de Trabalho</Label>
+                                            </div>
+                                      </div>
+                                    </form>
+                                    <DialogFooter>
+                                      <Button variant='outline' onClick={() => setIsAtestadoDocOpen(false)}>Cancelar</Button>
+                                      <Button type='submit' form='add-atestado-form'>Salvar Atestado</Button>
+                                    </DialogFooter>
+                                  </DialogContent>
+                                </Dialog>
+                              )}
+                              {docsForTopic.length > 0 ? (
+                                <ul className='space-y-2'>
+                                  {docsForTopic.map((doc) => (
+                                    <li
+                                      key={doc.id}
+                                      className='flex items-center justify-between text-sm'
+                                    >
+                                      <Link
+                                        href={doc.file ? URL.createObjectURL(doc.file) : '#'}
+                                        target='_blank'
+                                        className='hover:underline flex items-center gap-2'
+                                      >
+                                        <FileText className='h-4 w-4' />
+                                        {doc.name}
+                                      </Link>
+                                      <span className='text-xs text-muted-foreground'>
+                                        {doc.uploadDate}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className='text-sm text-muted-foreground text-center py-2'>
+                                  Nenhum documento encontrado.
+                                </p>
+                              )}
+                            </AccordionContent>
+                          </AccordionItem>
+                        )
+                      })}
+                    </Accordion>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
-          </div>
-        )}
-        <DialogFooter>
-          <Button variant='outline' onClick={() => setIsDetailOpen(false)}>
-            Fechar
-          </Button>
-          <Button asChild variant='secondary'>
-            <Link
-              href={`/dashboard/clients/${contractId}/tickets?employee=${currentEmployee?.id}`}
-            >
-              <Ticket className='mr-2 h-4 w-4' />
-              Abrir Chamado
-            </Link>
-          </Button>
-          <Button>Ver Prontuário Completo</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )}
+          )}
+          <DialogFooter>
+            <Button variant='outline' onClick={() => setIsDetailOpen(false)}>
+              Fechar
+            </Button>
+            <Button asChild variant='secondary'>
+              <Link
+                href={`/dashboard/clients/${contractId}/tickets?employee=${currentEmployee?.id}`}
+              >
+                <Ticket className='mr-2 h-4 w-4' />
+                Abrir Chamado
+              </Link>
+            </Button>
+            <Button>Ver Prontuário Completo</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    )
+  }
 
   return (
     <>
