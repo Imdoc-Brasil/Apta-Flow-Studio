@@ -145,6 +145,9 @@ export type EmployeeDocument = {
   daysOff?: number
   cid?: string
   isWorkAccident?: boolean
+  // Fields for ASO
+  asoType?: string
+  asoResult?: string
 }
 
 const StatusIndicator = ({ status }: { status: string }) => {
@@ -170,8 +173,8 @@ export default function EmployeesPage() {
   >({})
   const { roles } = useRolesStore()
   const [selectedUnit, setSelectedUnit] = useState<string | null>(null)
-  const [isAddDocOpen, setIsAddDocOpen] = useState(false)
   const [isAtestadoDocOpen, setIsAtestadoDocOpen] = useState(false)
+  const [isAsoDocOpen, setIsAsoDocOpen] = useState(false)
 
   const handleAddEmployee = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -212,44 +215,18 @@ export default function EmployeesPage() {
     setSelectedUnit(null)
   }
 
-  const handleAddDocument = (
+  const handleAddAtestado = (
     employeeId: string,
     event: React.FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
     const fileInput = event.currentTarget.elements.namedItem(
-      'file'
+      'atestado-file'
     ) as HTMLInputElement
     const file = fileInput?.files?.[0]
 
-    if (!file) return
-
-    const newDoc: EmployeeDocument = {
-      id: `DOC-${Date.now()}`,
-      name: formData.get('name') as string,
-      topic: formData.get('topic') as DocumentTopic,
-      uploadDate: new Date().toISOString().split('T')[0],
-      file,
-    }
-
-    setEmployeeDocs((prev) => ({
-      ...prev,
-      [employeeId]: [...(prev[employeeId] || []), newDoc],
-    }))
-    setIsAddDocOpen(false)
-  }
-
-  const handleAddAtestado = (
-    employeeId: string,
-    event: React.FormEvent<HTMLFormElement>
-  ) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const fileInput = event.currentTarget.elements.namedItem('atestado-file') as HTMLInputElement;
-    const file = fileInput?.files?.[0];
-
-    const daysOff = parseInt(formData.get('daysOff') as string, 10) || 0;
+    const daysOff = parseInt(formData.get('daysOff') as string, 10) || 0
 
     const newAtestado: EmployeeDocument = {
       id: `DOC-A-${Date.now()}`,
@@ -264,38 +241,82 @@ export default function EmployeesPage() {
       daysOff: daysOff,
       cid: formData.get('cid') as string,
       isWorkAccident: !!formData.get('isWorkAccident'),
-    };
+    }
 
     setEmployeeDocs((prev) => ({
       ...prev,
       [employeeId]: [...(prev[employeeId] || []), newAtestado],
-    }));
+    }))
 
-    setEmployees(prev => prev.map(emp => {
-      if (emp.id === employeeId) {
+    setEmployees((prev) =>
+      prev.map((emp) => {
+        if (emp.id === employeeId) {
+          return {
+            ...emp,
+            medicalLeaves: emp.medicalLeaves + 1,
+            leaveDays: emp.leaveDays + daysOff,
+          }
+        }
+        return emp
+      })
+    )
+
+    // Update currentEmployee state as well to reflect changes immediately in the dialog
+    setCurrentEmployee((prev) => {
+      if (prev && prev.id === employeeId) {
         return {
-          ...emp,
-          medicalLeaves: emp.medicalLeaves + 1,
-          leaveDays: emp.leaveDays + daysOff,
+          ...prev,
+          medicalLeaves: prev.medicalLeaves + 1,
+          leaveDays: prev.leaveDays + daysOff,
         }
       }
-      return emp;
-    }));
-    
-    // Update currentEmployee state as well to reflect changes immediately in the dialog
-    setCurrentEmployee(prev => {
-        if (prev && prev.id === employeeId) {
-            return {
-                ...prev,
-                medicalLeaves: prev.medicalLeaves + 1,
-                leaveDays: prev.leaveDays + daysOff,
-            }
-        }
-        return prev;
-    });
+      return prev
+    })
 
-    setIsAtestadoDocOpen(false);
-  };
+    setIsAtestadoDocOpen(false)
+  }
+
+  const handleAddAso = (
+    employeeId: string,
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault()
+    const formData = new FormData(event.currentTarget)
+    const fileInput = event.currentTarget.elements.namedItem(
+      'aso-file'
+    ) as HTMLInputElement
+    const file = fileInput?.files?.[0]
+
+    const asoType = formData.get('asoType') as string
+    const asoDate = formData.get('asoDate') as string
+
+    const newAsoDoc: EmployeeDocument = {
+      id: `DOC-ASO-${Date.now()}`,
+      topic: 'ASOs',
+      name: `ASO ${asoType} - ${asoDate}`,
+      uploadDate: new Date().toISOString().split('T')[0],
+      file,
+      asoType: asoType,
+      asoResult: formData.get('asoResult') as string,
+      issueDate: asoDate,
+    }
+
+    setEmployeeDocs((prev) => ({
+      ...prev,
+      [employeeId]: [...(prev[employeeId] || []), newAsoDoc],
+    }))
+
+    setEmployees((prev) =>
+      prev.map((emp) =>
+        emp.id === employeeId ? { ...emp, asoStatus: 'Em dia' } : emp
+      )
+    )
+    setCurrentEmployee((prev) =>
+      prev && prev.id === employeeId ? { ...prev, asoStatus: 'Em dia' } : prev
+    )
+
+    setIsAsoDocOpen(false)
+  }
 
   const filteredSectors = selectedUnit
     ? initialSectorsData.filter((s) => s.unitId === selectedUnit)
@@ -479,67 +500,261 @@ export default function EmployeesPage() {
                             <AccordionTrigger>{topic}</AccordionTrigger>
                             <AccordionContent>
                               {topic === 'Atestados Médicos' && (
-                                <Dialog open={isAtestadoDocOpen} onOpenChange={setIsAtestadoDocOpen}>
+                                <Dialog
+                                  open={isAtestadoDocOpen}
+                                  onOpenChange={setIsAtestadoDocOpen}
+                                >
                                   <DialogTrigger asChild>
-                                    <Button variant='outline' size='sm' className='w-full mb-2'>
+                                    <Button
+                                      variant='outline'
+                                      size='sm'
+                                      className='w-full mb-2'
+                                    >
                                       <Upload className='mr-2 h-4 w-4' />
                                       Registrar Atestado
                                     </Button>
                                   </DialogTrigger>
                                   <DialogContent className='sm:max-w-2xl'>
                                     <DialogHeader>
-                                      <DialogTitle>Registrar Atestado Médico</DialogTitle>
+                                      <DialogTitle>
+                                        Registrar Atestado Médico
+                                      </DialogTitle>
                                       <DialogDescription>
-                                        Preencha os detalhes do atestado médico para{' '}
-                                        <span className='font-semibold'>{currentEmployee.name}</span>.
+                                        Preencha os detalhes do atestado médico
+                                        para{' '}
+                                        <span className='font-semibold'>
+                                          {currentEmployee.name}
+                                        </span>
+                                        .
                                       </DialogDescription>
                                     </DialogHeader>
-                                    <form id="add-atestado-form" onSubmit={(e) => handleAddAtestado(employeeId, e)}>
+                                    <form
+                                      id='add-atestado-form'
+                                      onSubmit={(e) =>
+                                        handleAddAtestado(employeeId, e)
+                                      }
+                                    >
                                       <div className='grid gap-3 py-4'>
-                                          <div className='grid grid-cols-2 gap-4'>
-                                            <div className='space-y-1.5'>
-                                              <Label htmlFor='institution'>Instituição/Unidade de Saúde</Label>
-                                              <Input id='institution' name='institution' required />
-                                            </div>
-                                            <div className='space-y-1.5'>
-                                              <Label htmlFor='issueDate'>Data de Emissão</Label>
-                                              <Input id='issueDate' name='issueDate' type='date' required />
-                                            </div>
+                                        <div className='grid grid-cols-2 gap-4'>
+                                          <div className='space-y-1.5'>
+                                            <Label htmlFor='institution'>
+                                              Instituição/Unidade de Saúde
+                                            </Label>
+                                            <Input
+                                              id='institution'
+                                              name='institution'
+                                              required
+                                            />
                                           </div>
-                                           <div className='grid grid-cols-2 gap-4'>
-                                             <div className='space-y-1.5'>
-                                                <Label htmlFor='doctorName'>Nome do Médico Emissor</Label>
-                                                <Input id='doctorName' name='doctorName' required />
-                                             </div>
-                                             <div className='space-y-1.5'>
-                                                <Label htmlFor='doctorCrm'>CRM</Label>
-                                                <Input id='doctorCrm' name='doctorCrm' required />
-                                             </div>
-                                           </div>
-                                            <div className='grid grid-cols-2 gap-4'>
-                                              <div className='space-y-1.5'>
-                                                <Label htmlFor='daysOff'>Total de Dias</Label>
-                                                <Input id='daysOff' name='daysOff' type='number' required min="0" />
-                                              </div>
-                                              <div className='space-y-1.5'>
-                                                <Label htmlFor='cid'>CID</Label>
-                                                <Input id='cid' name='cid' />
-                                              </div>
-                                            </div>
-                                            <div className='space-y-1.5'>
-                                               <Label htmlFor='atestado-file'>Arquivo do Atestado</Label>
-                                               <Input id='atestado-file' name='atestado-file' type='file' required />
-                                            </div>
-                                            <div className='flex items-center space-x-2'>
-                                               <Checkbox id='isWorkAccident' name='isWorkAccident' />
-                                               <Label htmlFor='isWorkAccident'>Relacionado a Acidente de Trabalho</Label>
-                                            </div>
+                                          <div className='space-y-1.5'>
+                                            <Label htmlFor='issueDate'>
+                                              Data de Emissão
+                                            </Label>
+                                            <Input
+                                              id='issueDate'
+                                              name='issueDate'
+                                              type='date'
+                                              required
+                                            />
+                                          </div>
+                                        </div>
+                                        <div className='grid grid-cols-2 gap-4'>
+                                          <div className='space-y-1.5'>
+                                            <Label htmlFor='doctorName'>
+                                              Nome do Médico Emissor
+                                            </Label>
+                                            <Input
+                                              id='doctorName'
+                                              name='doctorName'
+                                              required
+                                            />
+                                          </div>
+                                          <div className='space-y-1.5'>
+                                            <Label htmlFor='doctorCrm'>
+                                              CRM
+                                            </Label>
+                                            <Input
+                                              id='doctorCrm'
+                                              name='doctorCrm'
+                                              required
+                                            />
+                                          </div>
+                                        </div>
+                                        <div className='grid grid-cols-2 gap-4'>
+                                          <div className='space-y-1.5'>
+                                            <Label htmlFor='daysOff'>
+                                              Total de Dias
+                                            </Label>
+                                            <Input
+                                              id='daysOff'
+                                              name='daysOff'
+                                              type='number'
+                                              required
+                                              min='0'
+                                            />
+                                          </div>
+                                          <div className='space-y-1.5'>
+                                            <Label htmlFor='cid'>CID</Label>
+                                            <Input id='cid' name='cid' />
+                                          </div>
+                                        </div>
+                                        <div className='space-y-1.5'>
+                                          <Label htmlFor='atestado-file'>
+                                            Arquivo do Atestado
+                                          </Label>
+                                          <Input
+                                            id='atestado-file'
+                                            name='atestado-file'
+                                            type='file'
+                                            required
+                                          />
+                                        </div>
+                                        <div className='flex items-center space-x-2'>
+                                          <Checkbox
+                                            id='isWorkAccident'
+                                            name='isWorkAccident'
+                                          />
+                                          <Label htmlFor='isWorkAccident'>
+                                            Relacionado a Acidente de Trabalho
+                                          </Label>
+                                        </div>
                                       </div>
                                     </form>
                                     <DialogFooter>
-                                      <Button variant='outline' onClick={() => setIsAtestadoDocOpen(false)}>Cancelar</Button>
-                                      <Button type='submit' form='add-atestado-form'>Salvar Atestado</Button>
+                                      <Button
+                                        variant='outline'
+                                        onClick={() =>
+                                          setIsAtestadoDocOpen(false)
+                                        }
+                                      >
+                                        Cancelar
+                                      </Button>
+                                      <Button
+                                        type='submit'
+                                        form='add-atestado-form'
+                                      >
+                                        Salvar Atestado
+                                      </Button>
                                     </DialogFooter>
+                                  </DialogContent>
+                                </Dialog>
+                              )}
+                              {topic === 'ASOs' && (
+                                <Dialog
+                                  open={isAsoDocOpen}
+                                  onOpenChange={setIsAsoDocOpen}
+                                >
+                                  <DialogTrigger asChild>
+                                    <Button
+                                      variant='outline'
+                                      size='sm'
+                                      className='w-full mb-2'
+                                    >
+                                      <Upload className='mr-2 h-4 w-4' />
+                                      Registrar ASO
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent>
+                                    <DialogHeader>
+                                      <DialogTitle>Registrar ASO</DialogTitle>
+                                      <DialogDescription>
+                                        Preencha as informações do Atestado de
+                                        Saúde Ocupacional.
+                                      </DialogDescription>
+                                    </DialogHeader>
+                                    <form
+                                      id='add-aso-form'
+                                      onSubmit={(e) =>
+                                        handleAddAso(employeeId, e)
+                                      }
+                                    >
+                                      <div className='grid gap-4 py-4'>
+                                        <div className='space-y-1.5'>
+                                          <Label htmlFor='asoType'>
+                                            Tipo de Avaliação
+                                          </Label>
+                                          <Select name='asoType' required>
+                                            <SelectTrigger>
+                                              <SelectValue placeholder='Selecione o tipo...' />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              <SelectItem value='Admissional'>
+                                                Admissional
+                                              </SelectItem>
+                                              <SelectItem value='Periódico'>
+                                                Periódico
+                                              </SelectItem>
+                                              <SelectItem value='Demissional'>
+                                                Demissional
+                                              </SelectItem>
+                                              <SelectItem value='Retorno ao Trabalho'>
+                                                Retorno ao Trabalho
+                                              </SelectItem>
+                                              <SelectItem value='Mudança de Risco'>
+                                                Mudança de Risco
+                                              </SelectItem>
+                                            </SelectContent>
+                                          </Select>
+                                        </div>
+                                        <div className='space-y-1.5'>
+                                          <Label htmlFor='asoDate'>
+                                            Data do ASO
+                                          </Label>
+                                          <Input
+                                            id='asoDate'
+                                            name='asoDate'
+                                            type='date'
+                                            required
+                                          />
+                                        </div>
+                                        <div className='space-y-1.5'>
+                                          <Label htmlFor='asoResult'>
+                                            Conclusão
+                                          </Label>
+                                          <Select name='asoResult' required>
+                                            <SelectTrigger>
+                                              <SelectValue placeholder='Selecione a conclusão...' />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              <SelectItem value='Apto'>
+                                                Apto
+                                              </SelectItem>
+                                              <SelectItem value='Inapto'>
+                                                Inapto
+                                              </SelectItem>
+                                              <SelectItem value='Apto com Restrições'>
+                                                Apto com Restrições
+                                              </SelectItem>
+                                            </SelectContent>
+                                          </Select>
+                                        </div>
+                                        <div className='space-y-1.5'>
+                                          <Label htmlFor='aso-file'>
+                                            Arquivo do ASO
+                                          </Label>
+                                          <Input
+                                            id='aso-file'
+                                            name='aso-file'
+                                            type='file'
+                                            required
+                                          />
+                                        </div>
+                                      </div>
+                                      <DialogFooter>
+                                        <Button
+                                          variant='outline'
+                                          type='button'
+                                          onClick={() =>
+                                            setIsAsoDocOpen(false)
+                                          }
+                                        >
+                                          Cancelar
+                                        </Button>
+                                        <Button type='submit'>
+                                          Salvar ASO
+                                        </Button>
+                                      </DialogFooter>
+                                    </form>
                                   </DialogContent>
                                 </Dialog>
                               )}
@@ -551,7 +766,11 @@ export default function EmployeesPage() {
                                       className='flex items-center justify-between text-sm'
                                     >
                                       <Link
-                                        href={doc.file ? URL.createObjectURL(doc.file) : '#'}
+                                        href={
+                                          doc.file
+                                            ? URL.createObjectURL(doc.file)
+                                            : '#'
+                                        }
                                         target='_blank'
                                         className='hover:underline flex items-center gap-2'
                                       >
