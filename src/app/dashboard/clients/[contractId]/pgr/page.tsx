@@ -89,6 +89,59 @@ export default function PgrListPage() {
     (unit) => !unitsWithPgr.includes(unit.id)
   )
 
+  if (pgrs.length === 0) {
+    return (
+      <div className='flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm h-96'>
+        <div className='flex flex-col items-center gap-1 text-center'>
+          <h3 className='text-2xl font-bold tracking-tight'>
+            Nenhum PGR Gerado
+          </h3>
+          <p className='text-sm text-muted-foreground'>
+            Comece gerando o primeiro PGR para uma das unidades do cliente.
+          </p>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className='mt-4'>Gerar Novo PGR</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Gerar Novo PGR</DialogTitle>
+                <DialogDescription>
+                  Selecione a unidade para a qual o novo PGR será gerado.
+                </DialogDescription>
+              </DialogHeader>
+              <div className='grid gap-4 py-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='unit-select'>Unidade</Label>
+                  <Select value={selectedUnit} onValueChange={setSelectedUnit}>
+                    <SelectTrigger id='unit-select'>
+                      <SelectValue placeholder='Selecione uma unidade...' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {unitsWithoutPgr.map((unit) => (
+                        <SelectItem key={unit.id} value={unit.id}>
+                          {unit.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant='outline' onClick={() => setIsDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleGeneratePgr} disabled={!selectedUnit}>
+                  Gerar e Iniciar
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className='grid flex-1 auto-rows-max gap-4'>
       <div className='flex items-center justify-between'>
@@ -135,59 +188,42 @@ export default function PgrListPage() {
               </Button>
             </DialogFooter>
           </DialogContent>
-        </div>
+        </Dialog>
+      </div>
 
-        {pgrs.length > 0 ? (
-          <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
-            {pgrs.map((pgr) => {
-              const unit = initialUnitsData.find((u) => u.id === pgr.unitId)
-              return (
-                <Card key={pgr.id} className='flex flex-col'>
-                  <CardHeader>
-                    <div className='flex items-center justify-between'>
-                      <FileText className='h-8 w-8 text-muted-foreground' />
-                    </div>
-                    <CardTitle className='pt-4'>{unit?.name}</CardTitle>
-                    <CardDescription>
-                      Versão: {pgr.version} | Validade: {pgr.validity}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className='flex-grow'></CardContent>
-                  <CardFooter>
-                    <Button
-                      asChild
-                      className='w-full'
-                      onClick={() =>
-                        router.push(
-                          `/dashboard/clients/${contractId}/pgr/${pgr.id}/inventory`
-                        )
-                      }
-                    >
-                      <a href='#'>
-                        Gerenciar PGR{' '}
-                        <ArrowRight className='ml-2 h-4 w-4' />
-                      </a>
-                    </Button>
-                  </CardFooter>
-                </Card>
-              )
-            })}
-          </div>
-        ) : (
-          <div className='flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm h-96'>
-            <div className='flex flex-col items-center gap-1 text-center'>
-              <h3 className='text-2xl font-bold tracking-tight'>
-                Nenhum PGR Gerado
-              </h3>
-              <p className='text-sm text-muted-foreground'>
-                Comece gerando o primeiro PGR para uma das unidades do cliente.
-              </p>
-              <Button className='mt-4' onClick={() => setIsDialogOpen(true)}>
-                Gerar Novo PGR
-              </Button>
-            </div>
-          </div>
-        )}
+      <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
+        {pgrs.map((pgr) => {
+          const unit = initialUnitsData.find((u) => u.id === pgr.unitId)
+          return (
+            <Card key={pgr.id} className='flex flex-col'>
+              <CardHeader>
+                <div className='flex items-center justify-between'>
+                  <FileText className='h-8 w-8 text-muted-foreground' />
+                </div>
+                <CardTitle className='pt-4'>{unit?.name}</CardTitle>
+                <CardDescription>
+                  Versão: {pgr.version} | Validade: {pgr.validity}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className='flex-grow'></CardContent>
+              <CardFooter>
+                <Button
+                  asChild
+                  className='w-full'
+                  onClick={() =>
+                    router.push(
+                      `/dashboard/clients/${contractId}/pgr/${pgr.id}/inventory`
+                    )
+                  }
+                >
+                  <a href='#'>
+                    Gerenciar PGR <ArrowRight className='ml-2 h-4 w-4' />
+                  </a>
+                </Button>
+              </CardFooter>
+            </Card>
+          )
+        })}
       </div>
     </div>
   )
