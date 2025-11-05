@@ -96,6 +96,10 @@ export const initialHazardData = [
   },
 ]
 
+type Hazard = (typeof initialHazardData)[0]
+type Epc = (typeof initialEpcData)[0]
+type Epi = (typeof initialEpiData)[0]
+
 const initialEpcData = [
   {
     id: 'EPC-01',
@@ -137,10 +141,6 @@ const initialEpiData = [
     active: true,
   },
 ]
-
-type Hazard = (typeof initialHazardData)[0]
-type Epc = (typeof initialEpcData)[0]
-type Epi = (typeof initialEpiData)[0]
 
 export default function RisksPage() {
   const [hazardData, setHazardData] = useState(initialHazardData)

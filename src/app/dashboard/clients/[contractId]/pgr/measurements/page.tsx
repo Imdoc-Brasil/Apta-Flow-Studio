@@ -272,28 +272,85 @@ export default function PgrMeasurementsPage() {
              </div>
           </>
         )
-      case 'Químico':
+        case 'Químico':
         return (
           <>
+            <div className='border-t col-span-2 my-2' />
+            <h4 className='font-semibold col-span-2'>Local da Coleta</h4>
             <div className='grid grid-cols-2 gap-4 col-span-2'>
-              <div className='space-y-2'>
-                <Label htmlFor='collectionTechnique'>Técnica de Coleta</Label>
-                <Input
-                  id='collectionTechnique'
-                  name='collectionTechnique'
-                  placeholder='Ex: Bomba de amostragem'
-                  required
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='lab'>Laboratório Responsável</Label>
-                <Input
-                  id='lab'
-                  name='lab'
-                  placeholder='Nome do Laboratório'
-                  required
-                />
-              </div>
+                <div className='space-y-2'>
+                    <Label htmlFor='unit'>Unidade</Label>
+                    <Select name='unit'>
+                        <SelectTrigger>
+                        <SelectValue placeholder='Selecione a unidade' />
+                        </SelectTrigger>
+                        <SelectContent>
+                        {initialUnitsData.map((unit) => (
+                            <SelectItem key={unit.id} value={unit.name}>{unit.name}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className='space-y-2'>
+                    <Label htmlFor='sector'>Setor</Label>
+                    <Select name='sector'>
+                        <SelectTrigger>
+                        <SelectValue placeholder='Selecione o setor' />
+                        </SelectTrigger>
+                        <SelectContent>
+                        {initialSectorsData.map((sector) => (
+                            <SelectItem key={sector.id} value={sector.name}>{sector.name}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                 <div className='space-y-2'>
+                    <Label htmlFor='role'>Cargo</Label>
+                    <Select name='role'>
+                        <SelectTrigger>
+                        <SelectValue placeholder='Selecione o cargo' />
+                        </SelectTrigger>
+                        <SelectContent>
+                        {roles.map((role) => (
+                            <SelectItem key={role.id} value={role.name}>{role.name}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className='space-y-2'>
+                    <Label htmlFor='employee'>Colaborador (se individual)</Label>
+                    <Select name='employee'>
+                        <SelectTrigger>
+                        <SelectValue placeholder='Selecione o colaborador' />
+                        </SelectTrigger>
+                        <SelectContent>
+                        {initialEmployeesData.map((employee) => (
+                            <SelectItem key={employee.id} value={employee.name}>{employee.name}</SelectItem>
+                        ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
+
+            <div className='border-t col-span-2 my-2' />
+            <h4 className='font-semibold col-span-2'>Detalhes da Amostragem</h4>
+             <div className='space-y-2 col-span-2'>
+              <Label htmlFor='collectionTechnique'>Técnica de Coleta</Label>
+              <Input
+                id='collectionTechnique'
+                name='collectionTechnique'
+                placeholder='Ex: Bomba de amostragem com cassete'
+                required
+              />
+            </div>
+             <div className='space-y-2 col-span-2'>
+              <Label htmlFor='lab'>Laboratório Responsável</Label>
+              <Input
+                id='lab'
+                name='lab'
+                placeholder='Nome do Laboratório'
+                required
+              />
             </div>
             <div className='grid grid-cols-3 gap-4 col-span-2'>
               <div className='space-y-2'>
@@ -327,8 +384,15 @@ export default function PgrMeasurementsPage() {
                 />
               </div>
             </div>
+
+            <div className='border-t col-span-2 my-2' />
+            <h4 className='font-semibold col-span-2'>Resultados</h4>
             <div className='grid grid-cols-2 gap-4 col-span-2'>
-              <div className='space-y-2'>
+               <div className='space-y-2'>
+                    <Label htmlFor='date'>Data da Medição</Label>
+                    <Input id='date' name='date' type='date' required />
+                </div>
+                <div className='space-y-2'>
                 <Label htmlFor='result'>Resultado</Label>
                 <Input
                   id='result'
@@ -337,17 +401,16 @@ export default function PgrMeasurementsPage() {
                   required
                 />
               </div>
-              <div className='space-y-2'>
+            </div>
+             <div className='space-y-2 col-span-2'>
                 <Label htmlFor='toleranceLimit'>Limite de Tolerância</Label>
                 <Input
                   id='toleranceLimit'
                   name='toleranceLimit'
-                  placeholder='Ex: 0.05 mg/m³'
-                  required
-                  defaultValue={selectedRiskCatalogItem.toleranceLimit}
+                  readOnly
+                  value={selectedRiskCatalogItem.toleranceLimit || 'N/A'}
                 />
               </div>
-            </div>
           </>
         )
       default:
