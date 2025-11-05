@@ -57,7 +57,7 @@ const initialMeasurements = [
     date: '2024-07-10',
     status: 'Acima do Limite',
   },
-   {
+  {
     id: 'MED-002',
     riskId: 'INV-003',
     riskName: 'Iluminamento Inadequado',
@@ -66,7 +66,7 @@ const initialMeasurements = [
     result: '450 lux',
     toleranceLimit: '500 lux (Mínimo)',
     date: '2024-07-12',
-    status: 'Conforme',
+    status: 'Abaixo do Limite',
   },
 ]
 
@@ -94,10 +94,10 @@ export default function PgrMeasurementsPage() {
     setIsDialogOpen(false)
     ;(event.target as HTMLFormElement).reset()
   }
-  
+
   const getStatusVariant = (status: string) => {
-    if (status.includes('Acima')) return 'destructive'
-    if (status.includes('Abaixo')) return 'destructive'
+    if (status.includes('Acima') || status.includes('Abaixo'))
+      return 'destructive'
     return 'secondary'
   }
 
@@ -115,89 +115,82 @@ export default function PgrMeasurementsPage() {
                 </span>
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className='sm:max-w-2xl'>
               <DialogHeader>
-                <DialogTitle>Registrar Nova Avaliação Quantitativa</DialogTitle>
+                <DialogTitle>Registrar Avaliação de Ruído</DialogTitle>
                 <DialogDescription>
-                  Insira os dados da medição realizada em campo.
+                  Insira os dados da dosimetria de ruído realizada em campo.
                 </DialogDescription>
               </DialogHeader>
               <form id='add-measurement-form' onSubmit={handleAddMeasurement}>
                 <div className='grid gap-4 py-4'>
-                  <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label htmlFor='riskId' className='text-right'>
-                      Risco (Inventário)
-                    </Label>
-                    <Select name='riskId' required>
-                        <SelectTrigger className='col-span-3'>
-                            <SelectValue placeholder="Selecione o risco..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value='INV-001'>INV-001 - Ruído Contínuo</SelectItem>
-                            <SelectItem value='INV-002'>INV-002 - Levantamento de Peso</SelectItem>
-                             <SelectItem value='INV-003'>INV-003 - Iluminamento Inadequado</SelectItem>
-                        </SelectContent>
+                  <div className='space-y-2'>
+                    <Label htmlFor='riskId'>Risco Associado (do Inventário)</Label>
+                    <Select name='riskId' required defaultValue='INV-001'>
+                      <SelectTrigger>
+                        <SelectValue placeholder='Selecione o risco...' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='INV-001'>
+                          INV-001 - Ruído Contínuo
+                        </SelectItem>
+                        <SelectItem value='INV-002'>
+                          INV-002 - Levantamento de Peso (Qualitativo)
+                        </SelectItem>
+                        <SelectItem value='INV-003'>
+                          INV-003 - Iluminamento Inadequado
+                        </SelectItem>
+                      </SelectContent>
                     </Select>
                   </div>
-                  <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label htmlFor='technique' className='text-right'>
-                      Técnica/Norma
-                    </Label>
-                     <Input
-                      id='technique'
-                      name='technique'
-                      placeholder='Ex: NHO-01'
-                      className='col-span-3'
-                      required
-                    />
+                  <div className='grid grid-cols-2 gap-4'>
+                    <div className='space-y-2'>
+                      <Label htmlFor='technique'>Técnica/Norma</Label>
+                      <Input
+                        id='technique'
+                        name='technique'
+                        defaultValue='NHO-01 - Dosimetria de Ruído'
+                        required
+                      />
+                    </div>
+                     <div className='space-y-2'>
+                      <Label htmlFor='date'>Data da Coleta</Label>
+                      <Input
+                        id='date'
+                        name='date'
+                        type='date'
+                        required
+                      />
+                    </div>
                   </div>
-                   <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label htmlFor='equipment' className='text-right'>
-                      Equipamento
-                    </Label>
-                     <Input
-                      id='equipment'
-                      name='equipment'
-                      placeholder='Ex: Dosímetro de ruído...'
-                      className='col-span-3'
-                      required
-                    />
-                  </div>
-                  <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label htmlFor='result' className='text-right'>
-                      Resultado
-                    </Label>
-                    <Input
-                      id='result'
-                      name='result'
-                      placeholder='Ex: 87.5 dB(A)'
-                      className='col-span-3'
-                      required
-                    />
-                  </div>
-                   <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label htmlFor='toleranceLimit' className='text-right'>
-                      Limite de Tolerância
-                    </Label>
-                    <Input
-                      id='toleranceLimit'
-                      name='toleranceLimit'
-                      placeholder='Ex: 85 dB(A)'
-                      className='col-span-3'
-                      required
-                    />
-                  </div>
-                  <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label htmlFor='date' className='text-right'>
-                      Data da Coleta
-                    </Label>
-                    <Input
-                      id='date'
-                      name='date'
-                      type='date'
-                      className='col-span-3'
-                      required
-                    />
+                   <div className='space-y-2'>
+                      <Label htmlFor='equipment'>Equipamento Utilizado</Label>
+                      <Input
+                        id='equipment'
+                        name='equipment'
+                        placeholder='Ex: Dosímetro de ruído Marca, Modelo, Série'
+                        required
+                      />
+                    </div>
+                  <div className='grid grid-cols-2 gap-4'>
+                    <div className='space-y-2'>
+                      <Label htmlFor='result'>Resultado (NE)</Label>
+                      <Input
+                        id='result'
+                        name='result'
+                        placeholder='Ex: 87.5 dB(A)'
+                        required
+                      />
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='toleranceLimit'>Limite de Tolerância</Label>
+                      <Input
+                        id='toleranceLimit'
+                        name='toleranceLimit'
+                        defaultValue='85 dB(A)'
+                        required
+                      />
+                    </div>
                   </div>
                 </div>
                 <DialogFooter>
@@ -227,7 +220,6 @@ export default function PgrMeasurementsPage() {
               <TableRow>
                 <TableHead>Risco Avaliado</TableHead>
                 <TableHead>Resultado</TableHead>
-                <TableHead>Limite de Tolerância</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead>
@@ -239,13 +231,17 @@ export default function PgrMeasurementsPage() {
               {measurements.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell className='font-medium'>
-                     <p>{item.riskName}</p>
+                    <p>{item.riskName}</p>
                     <p className='text-xs text-muted-foreground'>
                       Risco: {item.riskId}
                     </p>
                   </TableCell>
-                  <TableCell>{item.result}</TableCell>
-                   <TableCell>{item.toleranceLimit}</TableCell>
+                  <TableCell>
+                    <p>{item.result}</p>
+                     <p className='text-xs text-muted-foreground'>
+                      Limite: {item.toleranceLimit}
+                    </p>
+                  </TableCell>
                   <TableCell>
                     <Badge variant={getStatusVariant(item.status)}>
                       {item.status}
