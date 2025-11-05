@@ -138,7 +138,6 @@ export default function ClientsPage() {
   ])
 
   const filteredClients = useMemo(() => {
-    if (statusFilter.length === 3) return clientsData
     return clientsData.filter((client) => statusFilter.includes(client.status))
   }, [clientsData, statusFilter])
 
