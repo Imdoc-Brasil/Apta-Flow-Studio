@@ -38,7 +38,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import Link from 'next/link'
-import { initialClientsData } from '@/app/dashboard/clients/data'
+import { initialClientsData } from './data'
 
 export default function ClientsPage() {
   const [clients, setClients] = useState(initialClientsData)
