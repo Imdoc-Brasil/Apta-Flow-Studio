@@ -18,6 +18,7 @@ import {
   XCircle,
   FileSpreadsheet,
   View,
+  GraduationCap,
 } from 'lucide-react'
 import {
   Table,
@@ -71,6 +72,7 @@ export const initialEmployeesData = [
     periodicStatus: 'Em dia',
     vaccineStatus: 'Em dia',
     epiStatus: 'Vencido',
+    trainingStatus: 'Em dia',
     medicalLeaves: 2,
     leaveDays: 5,
     vacation: false,
@@ -91,6 +93,7 @@ export const initialEmployeesData = [
     periodicStatus: 'Vencido',
     vaccineStatus: 'Em dia',
     epiStatus: 'Em dia',
+    trainingStatus: 'Pendente',
     medicalLeaves: 0,
     leaveDays: 0,
     vacation: true,
@@ -143,6 +146,7 @@ export default function EmployeesPage() {
       periodicStatus: 'Pendente',
       vaccineStatus: 'Pendente',
       epiStatus: 'Não Aplicável',
+      trainingStatus: 'Pendente',
       medicalLeaves: 0,
       leaveDays: 0,
       vacation: false,
@@ -412,6 +416,10 @@ export default function EmployeesPage() {
                         <span>EPI</span>
                         <StatusIndicator status={employee.epiStatus} />
                       </div>
+                      <div className='flex justify-between items-center'>
+                        <span>Treinamentos</span>
+                        <StatusIndicator status={employee.trainingStatus} />
+                      </div>
                     </div>
                     <div className='grid grid-cols-2 gap-4 text-center'>
                       <div className='p-2 rounded-lg bg-muted'>
@@ -447,5 +455,3 @@ export default function EmployeesPage() {
     </Tabs>
   )
 }
-
-    
