@@ -48,24 +48,28 @@ const initialEpiData = [
     name: 'Protetor auricular tipo concha',
     ca: '12345',
     active: true,
+    stock: 100,
   },
   {
     id: 'EPI-02',
     name: 'Luva de segurança para proteção contra agentes mecânicos',
     ca: '67890',
     active: true,
+    stock: 250,
   },
   {
     id: 'EPI-03',
     name: 'Respirador purificador de ar',
     ca: '11223',
     active: true,
+    stock: 75,
   },
   {
     ca: '98765',
     name: 'Óculos de proteção',
     id: 'EPI-04',
     active: true,
+    stock: 120,
   },
 ]
 
@@ -83,6 +87,7 @@ export default function EpiInventoryPage() {
       name: formData.get('name') as string,
       ca: formData.get('ca') as string,
       active: true,
+      stock: parseInt(formData.get('quantidade') as string, 10) || 0,
     }
     setEpiData((prev) => [newEpi, ...prev])
     setIsEpiDialogOpen(false)
@@ -303,6 +308,7 @@ export default function EpiInventoryPage() {
             <TableRow>
               <TableHead>Nome</TableHead>
               <TableHead>CA</TableHead>
+              <TableHead>Estoque</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>
                 <span className='sr-only'>Ações</span>
@@ -314,6 +320,7 @@ export default function EpiInventoryPage() {
               <TableRow key={epi.id}>
                 <TableCell className='font-medium'>{epi.name}</TableCell>
                 <TableCell>{epi.ca}</TableCell>
+                <TableCell>{epi.stock}</TableCell>
                 <TableCell>
                   <Badge variant={epi.active ? 'secondary' : 'outline'}>
                     {epi.active ? 'Ativo' : 'Inativo'}
