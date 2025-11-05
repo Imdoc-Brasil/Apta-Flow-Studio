@@ -44,6 +44,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { initialInventory } from '@/app/dashboard/clients/[contractId]/pgr/inventory/page'
 
 const initialMeasurements = [
   {
@@ -79,10 +80,13 @@ export default function PgrMeasurementsPage() {
   const handleAddMeasurement = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
+    const riskId = formData.get('riskId') as string;
+    const riskName = initialInventory.find(item => item.id === riskId)?.risk || 'N/A'
+    
     const newItem: Measurement = {
       id: `MED-${Math.random().toString(36).substr(2, 4).toUpperCase()}`,
-      riskId: formData.get('riskId') as string,
-      riskName: 'Poeira Respirável', // Mock
+      riskId: riskId,
+      riskName: riskName,
       technique: formData.get('technique') as string,
       equipment: formData.get('equipment') as string,
       result: formData.get('result') as string,
@@ -126,20 +130,16 @@ export default function PgrMeasurementsPage() {
                 <div className='grid gap-4 py-4'>
                   <div className='space-y-2'>
                     <Label htmlFor='riskId'>Risco Associado (do Inventário)</Label>
-                    <Select name='riskId' required defaultValue='INV-001'>
+                    <Select name='riskId' required>
                       <SelectTrigger>
                         <SelectValue placeholder='Selecione o risco...' />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value='INV-001'>
-                          INV-001 - Ruído Contínuo
-                        </SelectItem>
-                        <SelectItem value='INV-002'>
-                          INV-002 - Levantamento de Peso (Qualitativo)
-                        </SelectItem>
-                        <SelectItem value='INV-003'>
-                          INV-003 - Iluminamento Inadequado
-                        </SelectItem>
+                        {initialInventory.map(item => (
+                           <SelectItem key={item.id} value={item.id}>
+                             {item.id} - {item.risk} ({item.exposureTarget})
+                           </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
