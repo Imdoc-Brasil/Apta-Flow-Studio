@@ -157,8 +157,8 @@ export default function RisksPage() {
       esocialCode: formData.get('esocialCode') as string,
       category: formData.get('category') as string,
       method: formData.get('method') as string,
-      legalBasis: '', // Should be added to form
-      potentialEffects: '', // Should be added to form
+      legalBasis: formData.get('legalBasis') as string, 
+      potentialEffects: formData.get('potentialEffects') as string,
     }
     setHazardData((prev) => [newHazard, ...prev])
     setIsHazardDialogOpen(false)
@@ -285,6 +285,26 @@ export default function RisksPage() {
                           </SelectItem>
                         </SelectContent>
                       </Select>
+                    </div>
+                     <div className='grid grid-cols-4 items-center gap-4'>
+                      <Label htmlFor='legalBasis' className='text-right'>
+                        Base Legal
+                      </Label>
+                      <Input
+                        id='legalBasis'
+                        name='legalBasis'
+                        className='col-span-3'
+                      />
+                    </div>
+                     <div className='grid grid-cols-4 items-center gap-4'>
+                      <Label htmlFor='potentialEffects' className='text-right'>
+                        Efeitos
+                      </Label>
+                      <Input
+                        id='potentialEffects'
+                        name='potentialEffects'
+                        className='col-span-3'
+                      />
                     </div>
                   </div>
                 </form>
