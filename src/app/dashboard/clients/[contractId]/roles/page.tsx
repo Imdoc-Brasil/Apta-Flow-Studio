@@ -37,8 +37,15 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { create } from 'zustand'
 
-export const initialRolesData = [
+export interface Role {
+  id: string
+  name: string
+  description: string
+}
+
+export const initialRolesData: Role[] = [
   {
     id: 'ROLE-001',
     name: 'Analista Administrativo',
@@ -56,10 +63,20 @@ export const initialRolesData = [
   },
 ]
 
-type Role = (typeof initialRolesData)[0]
+type RolesStore = {
+  roles: Role[]
+  setRoles: (roles: Role[]) => void
+  addRole: (role: Role) => void
+}
+
+export const useRolesStore = create<RolesStore>((set) => ({
+  roles: initialRolesData,
+  setRoles: (roles) => set({ roles }),
+  addRole: (role) => set((state) => ({ roles: [role, ...state.roles] })),
+}))
 
 export default function RolesPage() {
-  const [roles, setRoles] = useState(initialRolesData)
+  const { roles, addRole } = useRolesStore()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   const handleAddRole = (event: React.FormEvent<HTMLFormElement>) => {
@@ -70,7 +87,7 @@ export default function RolesPage() {
       name: formData.get('name') as string,
       description: formData.get('description') as string,
     }
-    setRoles((prev) => [newRole, ...prev])
+    addRole(newRole)
     setIsDialogOpen(false)
     ;(event.target as HTMLFormElement).reset()
   }

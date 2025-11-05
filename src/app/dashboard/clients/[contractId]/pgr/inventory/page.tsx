@@ -23,7 +23,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import {
@@ -50,6 +49,7 @@ import { initialSectorsData as sectors } from '@/app/dashboard/clients/[contract
 import { initialRolesData as roles } from '@/app/dashboard/clients/[contractId]/roles/page'
 import { initialEmployeesData as employees } from '@/app/dashboard/clients/[contractId]/employees/page'
 import { initialUnitsData as units } from '@/app/dashboard/clients/[contractId]/units/page'
+import { initialGheData as ghes } from '@/app/dashboard/clients/[contractId]/ghe/page'
 
 type ExposureType =
   | 'unit'
@@ -136,8 +136,8 @@ export default function PgrInventoryPage() {
         return roles
       case 'employee':
         return employees
-      case 'ghe': // Placeholder for GHE data
-        return [{ id: 'ghe-1', name: 'GHE - Soldadores' }]
+      case 'ghe':
+        return ghes
       default:
         return []
     }
