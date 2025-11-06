@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import {
   Card,
   CardContent,
@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { MoreHorizontal, PlusCircle, CheckCircle } from 'lucide-react'
+import { MoreHorizontal, PlusCircle } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -50,7 +50,6 @@ import {
   initialHazardData,
   type Hazard,
 } from '@/app/dashboard/(main)/risks/page'
-import { initialUnitsData } from '../units/page'
 import { useToast } from '@/hooks/use-toast'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -226,8 +225,6 @@ export default function PgrPage() {
   const { toast } = useToast()
   const [inventory, setInventory] = useState(initialInventory)
   const [isAddRiskDialogOpen, setIsAddRiskDialogOpen] = useState(false)
-  const [currentItem, setCurrentItem] =
-    useState<(typeof initialInventory)[0] | null>(null)
   const [selectedHazard, setSelectedHazard] = useState<Hazard | null>(null)
   const [showStcwInput, setShowStcwInput] = useState(false)
 
@@ -289,7 +286,7 @@ export default function PgrPage() {
       setDerivedRisk(null)
     }
   }
-  
+
   const resetFormState = () => {
     setSelectedHazard(null)
     setShowStcwInput(false)
