@@ -551,7 +551,7 @@ export default function PgrPage() {
                         <h3 className='font-semibold'>
                           Seção 03: Matriz de Risco 5x5
                         </h3>
-                        <div className='grid gap-8 md:grid-cols-2'>
+                        <div className='grid gap-8'>
                           <div className='space-y-6'>
                             <div className='space-y-2'>
                               <Label htmlFor='frequency'>Frequência</Label>
