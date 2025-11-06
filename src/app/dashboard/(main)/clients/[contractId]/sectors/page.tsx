@@ -36,7 +36,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { initialUnitsData } from '../units/page'
+import { initialUnitsData } from '../units/data'
 import { Badge } from '@/components/ui/badge'
 import { initialSectorsData, type Sector } from './data'
 
