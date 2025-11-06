@@ -1,5 +1,5 @@
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { SidebarProvider } from '@/components/ui/sidebar'
+
 
 export default function DashboardLayout({
   children,
@@ -8,7 +8,7 @@ export default function DashboardLayout({
 }) {
   return (
     <TooltipProvider>
-      <SidebarProvider>{children}</SidebarProvider>
+      {children}
     </TooltipProvider>
   )
 }
