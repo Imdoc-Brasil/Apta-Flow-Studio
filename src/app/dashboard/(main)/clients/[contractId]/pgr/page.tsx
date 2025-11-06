@@ -65,7 +65,7 @@ type RiskLevelLabel =
   | 'Médio'
   | 'Alto'
   | 'Crítico'
-type RiskColor =
+export type RiskColor =
   | 'bg-gray-300'
   | 'bg-lime-200'
   | 'bg-yellow-200'
@@ -73,7 +73,7 @@ type RiskColor =
   | 'bg-red-400'
   | 'bg-red-500'
 
-interface RiskEvaluation {
+export interface RiskEvaluation {
   frequency: number
   severity: number
   riskLevel: number
@@ -82,7 +82,7 @@ interface RiskEvaluation {
   riskDescription: string
 }
 
-const initialInventory = [
+export const initialInventory = [
   {
     inventoryId: 'INV-001',
     hazardId: 'RF-001', // Ruído Contínuo ou Intermitente
@@ -193,7 +193,10 @@ const riskMatrixConfig = {
   ],
 }
 
-const getRiskLevel = (frequency: number, severity: number): RiskEvaluation => {
+export const getRiskLevel = (
+  frequency: number,
+  severity: number
+): RiskEvaluation => {
   const freqIndex = frequency - 1
   const sevIndex = severity - 1
 
@@ -223,6 +226,9 @@ const getRiskLevel = (frequency: number, severity: number): RiskEvaluation => {
     riskDescription: levelInfo.description,
   }
 }
+
+export const getHazardById = (id: string) =>
+  initialHazardData.find((h) => h.id === id)
 
 export default function PgrPage() {
   const params = useParams()
@@ -268,9 +274,6 @@ export default function PgrPage() {
       description: `O risco foi adicionado ao inventário com Nível de Risco: ${derivedRisk.riskLabel}.`,
     })
   }
-
-  const getHazardById = (id: string) =>
-    initialHazardData.find((h) => h.id === id)
 
   const handleFrequencyChange = (value: string) => {
     const newFreq = parseInt(value, 10)
@@ -379,13 +382,16 @@ export default function PgrPage() {
                             <Label htmlFor='exposureTarget'>
                               Alvo da Exposição
                             </Label>
-                             <Select name='exposureTarget' required>
+                            <Select name='exposureTarget' required>
                               <SelectTrigger>
                                 <SelectValue placeholder='Selecione o setor' />
                               </SelectTrigger>
                               <SelectContent>
                                 {initialSectorsData.map((sector) => (
-                                  <SelectItem key={sector.id} value={sector.name}>
+                                  <SelectItem
+                                    key={sector.id}
+                                    value={sector.name}
+                                  >
                                     {sector.name}
                                   </SelectItem>
                                 ))}
@@ -491,7 +497,9 @@ export default function PgrPage() {
                                 <SelectItem value='permanent'>
                                   Permanente
                                 </SelectItem>
-                                <SelectItem value='eventual'>Eventual</SelectItem>
+                                <SelectItem value='eventual'>
+                                  Eventual
+                                </SelectItem>
                                 <SelectItem value='intermittent'>
                                   Intermitente
                                 </SelectItem>
@@ -655,39 +663,41 @@ export default function PgrPage() {
                                   {opt.label}
                                 </div>
                               ))}
-                              {severityOptions.slice(1).map((sevOpt, rowIndex) => (
-                                <React.Fragment key={sevOpt.value}>
-                                  <div className='font-medium text-muted-foreground text-right p-1'>
-                                    {sevOpt.label}
-                                  </div>
-                                  {frequencyOptions
-                                    .slice(1)
-                                    .map((freqOpt, colIndex) => {
-                                      const levelIndex =
-                                        riskMatrixConfig.matrix[rowIndex][
-                                          colIndex
-                                        ]
-                                      const currentLevel =
-                                        riskMatrixConfig.levels[
-                                          levelIndex.toString() as keyof typeof riskMatrixConfig.levels
-                                        ]
-                                      const isSelected =
-                                        freqOpt.value === frequency &&
-                                        sevOpt.value === severity
-                                      return (
-                                        <div
-                                          key={`${rowIndex}-${colIndex}`}
-                                          className={cn(
-                                            'h-12 flex items-center justify-center rounded-sm text-white font-bold',
-                                            currentLevel.color,
-                                            isSelected &&
-                                              'ring-2 ring-offset-2 ring-primary'
-                                          )}
-                                        ></div>
-                                      )
-                                    })}
-                                </React.Fragment>
-                              ))}
+                              {severityOptions
+                                .slice(1)
+                                .map((sevOpt, rowIndex) => (
+                                  <React.Fragment key={sevOpt.value}>
+                                    <div className='font-medium text-muted-foreground text-right p-1'>
+                                      {sevOpt.label}
+                                    </div>
+                                    {frequencyOptions
+                                      .slice(1)
+                                      .map((freqOpt, colIndex) => {
+                                        const levelIndex =
+                                          riskMatrixConfig.matrix[rowIndex][
+                                            colIndex
+                                          ]
+                                        const currentLevel =
+                                          riskMatrixConfig.levels[
+                                            levelIndex.toString() as keyof typeof riskMatrixConfig.levels
+                                          ]
+                                        const isSelected =
+                                          freqOpt.value === frequency &&
+                                          sevOpt.value === severity
+                                        return (
+                                          <div
+                                            key={`${rowIndex}-${colIndex}`}
+                                            className={cn(
+                                              'h-12 flex items-center justify-center rounded-sm text-white font-bold',
+                                              currentLevel.color,
+                                              isSelected &&
+                                                'ring-2 ring-offset-2 ring-primary'
+                                            )}
+                                          ></div>
+                                        )
+                                      })}
+                                  </React.Fragment>
+                                ))}
                             </div>
                             <div className='flex justify-center gap-4 text-xs mt-4 flex-wrap'>
                               {Object.values(riskMatrixConfig.levels).map(
@@ -801,9 +811,7 @@ export default function PgrPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align='end'>
                               <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                              <DropdownMenuItem>
-                                Editar Risco
-                              </DropdownMenuItem>
+                              <DropdownMenuItem>Editar Risco</DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem disabled={!item.evaluation}>
                                 Criar Plano de Ação
