@@ -63,11 +63,11 @@ type RiskLevelLabel =
   | 'Alto'
   | 'Crítico'
 type RiskColor =
-  | 'bg-gray-400'
-  | 'bg-green-500'
-  | 'bg-yellow-500'
-  | 'bg-orange-500'
-  | 'bg-red-500'
+  | 'bg-gray-300'
+  | 'bg-lime-200'
+  | 'bg-yellow-200'
+  | 'bg-orange-300'
+  | 'bg-red-400'
 
 interface RiskEvaluation {
   frequency: number
@@ -88,9 +88,9 @@ const initialInventory = [
     evaluation: {
       frequency: 4,
       severity: 3,
-      riskLevel: 12,
+      riskLevel: 4,
       riskLabel: 'Alto' as RiskLevelLabel,
-      riskColor: 'bg-orange-500' as RiskColor,
+      riskColor: 'bg-orange-300' as RiskColor,
       riskDescription:
         'Fatores do ambiente ou elementos materiais que constituem um risco alto para a saúde e integridade física do trabalhador, cujos valores ou importâncias estão notavelmente próximos do nível de ação',
     },
@@ -144,25 +144,25 @@ const riskMatrixConfig = {
   levels: {
     '1': {
       label: 'Irrelevante' as RiskLevelLabel,
-      color: 'bg-gray-400' as RiskColor,
+      color: 'bg-lime-200' as RiskColor,
       description:
         'Fatores do ambiente ou elementos materiais que não constituem nenhum incômodo, nenhum risco para a saúde ou integridade física',
     },
     '2': {
       label: 'Leve' as RiskLevelLabel,
-      color: 'bg-green-500' as RiskColor,
+      color: 'bg-yellow-200' as RiskColor,
       description:
         'Fatores do ambiente ou elementos materiais que constituem um incômodo sem ser uma fonte de risco para a saúde ou integridade física',
     },
     '3': {
       label: 'Médio' as RiskLevelLabel,
-      color: 'bg-yellow-500' as RiskColor,
+      color: 'bg-orange-300' as RiskColor,
       description:
         'Fatores do ambiente ou elementos materiais que constituem um incômodo, podendo ser de médio risco para saúde ou integridade física',
     },
     '4': {
       label: 'Alto' as RiskLevelLabel,
-      color: 'bg-orange-500' as RiskColor,
+      color: 'bg-red-400' as RiskColor,
       description:
         'Fatores do ambiente ou elementos materiais que constituem um risco alto para a saúde e integridade física do trabalhador, cujos valores ou importâncias estão notavelmente próximos do nível de ação',
     },
@@ -174,23 +174,37 @@ const riskMatrixConfig = {
     },
   },
   matrix: [
-    // Frequência
-    [1, 2, 3, 4, 5], // Não se aplica (Severidade 0) -> all mapped to 1 for simplicity here
-    [1, 2, 3, 4, 5], // Reversível leve (Severidade 1)
-    [2, 3, 4, 5, 5], // Reversível severo (Severidade 2)
-    [3, 4, 5, 5, 5], // Irreversível severo (Severidade 3)
-    [4, 5, 5, 5, 5], // Fatal ou Incapacitante (Severidade 4)
-    [5, 5, 5, 5, 5], // Altamente Catastrófico (Severidade 5)
+    // Severidade (Linhas) vs Frequência (Colunas)
+    // Frequência:  1, 2, 3, 4, 5
+    [1, 1, 2, 3, 4], // Severidade 1: Reversível leve
+    [1, 2, 3, 4, 4], // Severidade 2: Reversível severo
+    [2, 3, 4, 4, 5], // Severidade 3: Irreversível severo
+    [3, 4, 4, 5, 5], // Severidade 4: Fatal ou Incapacitante
+    [4, 4, 5, 5, 5], // Severidade 5: Altamente Catastrófico
   ],
 }
 
 const getRiskLevel = (frequency: number, severity: number): RiskEvaluation => {
-  const freqIndex = frequency
-  const sevIndex = severity
-  const levelIndex =
-    riskMatrixConfig.matrix[sevIndex]?.[freqIndex - 1] ||
-    riskMatrixConfig.matrix[0][0]
-  const levelInfo = riskMatrixConfig.levels[levelIndex.toString() as '1']
+  // Ajustando para indices base-0. Seletor de Frequência vai de 1-5, severidade de 1-5
+  const freqIndex = frequency - 1
+  const sevIndex = severity - 1
+
+  // Handle out of bounds / "Não Exposto" / "Não se aplica"
+  if (freqIndex < 0 || sevIndex < 0) {
+    return {
+      frequency,
+      severity,
+      riskLevel: 0,
+      riskLabel: 'Irrelevante',
+      riskColor: 'bg-gray-300',
+      riskDescription:
+        'A avaliação não pode ser concluída. Selecione a frequência e a classificação de efeito.',
+    }
+  }
+
+  const levelIndex = riskMatrixConfig.matrix[sevIndex][freqIndex]
+  const levelInfo =
+    riskMatrixConfig.levels[levelIndex.toString() as keyof typeof riskMatrixConfig.levels]
 
   return {
     frequency,
@@ -223,8 +237,8 @@ export default function PgrPage() {
     const newRisk = {
       inventoryId: `INV-${Date.now().toString().slice(-4)}`,
       hazardId: formData.get('hazard') as string,
-      unitId: formData.get('unit') as string,
-      sector: formData.get('sector') as string,
+      unitId: formData.get('exposureTarget') as string, // Assuming target is unit for now
+      sector: formData.get('exposureTarget') as string, // This needs refinement based on group
       source: formData.get('source') as string,
       evaluation: null,
     }
@@ -235,26 +249,29 @@ export default function PgrPage() {
 
   const handleEvaluateRisk = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!currentItem) return
-
-    const evaluation = getRiskLevel(frequency, severity)
+    if (!currentItem || !derivedRisk || derivedRisk.riskLevel === 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Avaliação Incompleta',
+        description:
+          'Por favor, selecione uma Frequência e uma Classificação de Efeito válidas.',
+      })
+      return
+    }
 
     setInventory((prev) =>
       prev.map((item) =>
         item.inventoryId === currentItem.inventoryId
-          ? { ...item, evaluation }
+          ? { ...item, evaluation: derivedRisk }
           : item
       )
     )
     toast({
       title: 'Risco Avaliado!',
-      description: `O Nível de Risco foi classificado como ${evaluation.riskLabel}.`,
+      description: `O Nível de Risco foi classificado como ${derivedRisk.riskLabel}.`,
     })
     setIsEvaluateDialogOpen(false)
     setCurrentItem(null)
-    setFrequency(0)
-    setSeverity(0)
-    setDerivedRisk(null)
   }
 
   const openEvaluateDialog = (item: (typeof initialInventory)[0]) => {
@@ -273,7 +290,6 @@ export default function PgrPage() {
 
   const getHazardById = (id: string) =>
     initialHazardData.find((h) => h.id === id)
-  const getUnitById = (id: string) => initialUnitsData.find((u) => u.id === id)
 
   const handleFrequencyChange = (value: string) => {
     const newFreq = parseInt(value, 10)
@@ -307,9 +323,6 @@ export default function PgrPage() {
           <TabsList>
             <TabsTrigger value='inventory'>Inventário de Riscos</TabsTrigger>
             <TabsTrigger value='plan'>Plano de Ação</TabsTrigger>
-            <TabsTrigger value='matrix' disabled>
-              Matriz de Risco
-            </TabsTrigger>
           </TabsList>
           <div className='ml-auto flex items-center gap-2'>
             <Dialog
@@ -581,10 +594,9 @@ export default function PgrPage() {
                           {item.evaluation ? (
                             <div className='flex items-center gap-2'>
                               <span
-                                className={`h-3 w-3 rounded-full ${item.evaluation.riskColor}`}
+                                className={cn('h-3 w-3 rounded-full', item.evaluation.riskColor)}
                               />
                               <span>
-                                {item.evaluation.riskLevel} -{' '}
                                 {item.evaluation.riskLabel}
                               </span>
                             </div>
@@ -669,9 +681,7 @@ export default function PgrPage() {
         onOpenChange={(isOpen) => {
           setIsEvaluateDialogOpen(isOpen)
           if (!isOpen) {
-            setFrequency(0)
-            setSeverity(0)
-            setDerivedRisk(null)
+            setCurrentItem(null)
           }
         }}
       >
@@ -685,8 +695,8 @@ export default function PgrPage() {
           </DialogHeader>
           <form id='evaluate-risk-form' onSubmit={handleEvaluateRisk}>
             <div className='grid gap-8 py-4 md:grid-cols-2'>
-              {/* Left Column: Selectors */}
-              <div className='space-y-8'>
+              {/* Left Column: Selectors & Result */}
+              <div className='space-y-6'>
                 <div className='space-y-2'>
                   <Label htmlFor='frequency'>Frequência</Label>
                   <Select
@@ -727,45 +737,69 @@ export default function PgrPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                {derivedRisk && (
-                  <div className='rounded-md border p-4 space-y-2'>
-                     <h3 className='font-semibold'>Resultado da Avaliação</h3>
-                     <div className='flex items-center gap-2'>
-                        <span className={cn('h-4 w-4 rounded-full', derivedRisk.riskColor)} />
-                        <p className='font-bold'>{derivedRisk.riskLabel}</p>
-                     </div>
-                     <p className='text-sm text-muted-foreground'>{derivedRisk.riskDescription}</p>
+                {derivedRisk && derivedRisk.riskLevel > 0 && (
+                  <div className='rounded-md border p-4 space-y-2 bg-muted/50'>
+                    <h3 className='font-semibold'>Resultado da Avaliação</h3>
+                    <div className='flex items-center gap-2'>
+                      <span
+                        className={cn(
+                          'h-4 w-4 rounded-full',
+                          derivedRisk.riskColor
+                        )}
+                      />
+                      <p className='font-bold text-lg'>
+                        {derivedRisk.riskLabel}
+                      </p>
+                    </div>
+                    <p className='text-sm text-muted-foreground'>
+                      {derivedRisk.riskDescription}
+                    </p>
                   </div>
                 )}
               </div>
 
               {/* Right Column: Matrix */}
-              <div className='space-y-4'>
+              <div className='space-y-2'>
                 <h3 className='font-semibold text-center'>Matriz de Risco</h3>
-                <div className='grid grid-cols-5 gap-1 text-xs text-center'>
-                  {riskMatrixConfig.matrix.slice(1).reverse().map((row, rowIndex) =>
-                      row.map((level, colIndex) => {
-                          const currentLevel = riskMatrixConfig.levels[level.toString() as '1'];
-                          const isSelected = (colIndex + 1 === frequency) && (5 - rowIndex === severity);
-                          return (
-                            <div key={`${rowIndex}-${colIndex}`} className={cn(
-                                'h-12 w-12 flex items-center justify-center rounded-sm',
-                                currentLevel.color,
-                                isSelected && 'ring-2 ring-offset-2 ring-primary'
-                            )}>
-                                {currentLevel.label}
-                            </div>
-                          )
-                      })
-                  )}
-                </div>
-                 <div className='flex justify-center gap-4 text-xs mt-2'>
-                    {Object.values(riskMatrixConfig.levels).map(level => (
-                        <div key={level.label} className="flex items-center gap-1">
-                            <div className={cn("h-3 w-3 rounded-full", level.color)}></div>
-                            <span>{level.label}</span>
-                        </div>
+                <div className='grid grid-cols-6 gap-1 text-xs text-center items-center'>
+                    {/* Header Row */}
+                    <div />
+                    {frequencyOptions.slice(1).map(opt => (
+                        <div key={opt.value} className="font-medium text-muted-foreground p-1">{opt.label}</div>
                     ))}
+
+                    {/* Matrix Rows */}
+                    {severityOptions.slice(1).map((sevOpt, rowIndex) => (
+                        <React.Fragment key={sevOpt.value}>
+                            <div className="font-medium text-muted-foreground text-right p-1">{sevOpt.label}</div>
+                            {frequencyOptions.slice(1).map((freqOpt, colIndex) => {
+                                const levelIndex = riskMatrixConfig.matrix[rowIndex][colIndex];
+                                const currentLevel = riskMatrixConfig.levels[levelIndex.toString() as keyof typeof riskMatrixConfig.levels];
+                                const isSelected = (freqOpt.value === frequency) && (sevOpt.value === severity);
+                                return (
+                                    <div key={`${rowIndex}-${colIndex}`} className={cn(
+                                        'h-12 flex items-center justify-center rounded-sm text-white font-bold',
+                                        currentLevel.color,
+                                        isSelected && 'ring-2 ring-offset-2 ring-primary'
+                                    )}>
+                                    </div>
+                                )
+                            })}
+                        </React.Fragment>
+                    ))}
+                </div>
+                <div className='flex justify-center gap-4 text-xs mt-4'>
+                  {Object.values(riskMatrixConfig.levels).map((level) => (
+                    <div
+                      key={level.label}
+                      className='flex items-center gap-1.5'
+                    >
+                      <div
+                        className={cn('h-3 w-3 rounded-full', level.color)}
+                      ></div>
+                      <span>{level.label}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
