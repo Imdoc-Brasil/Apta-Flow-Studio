@@ -46,6 +46,7 @@ import {
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 import { initialUnitsData, Unit } from '../../units/data'
+import { initialSectorsData, Sector } from '../../sectors/data'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -101,6 +102,8 @@ export default function PgrHistoryPage() {
   const { toast } = useToast()
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null)
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null)
+  const [unitSectors, setUnitSectors] = useState<Sector[]>([])
+
 
   const [updates, setUpdates] = useState<PgrUpdate[]>([])
   const [newUpdate, setNewUpdate] = useState('')
@@ -112,8 +115,11 @@ export default function PgrHistoryPage() {
     if (selectedUnitId) {
       const unit = initialUnitsData.find((u) => u.id === selectedUnitId)
       setSelectedUnit(unit || null)
+      const sectors = initialSectorsData.filter(s => s.unitId === selectedUnitId)
+      setUnitSectors(sectors)
     } else {
       setSelectedUnit(null)
+      setUnitSectors([])
     }
   }, [selectedUnitId])
 
@@ -186,7 +192,7 @@ export default function PgrHistoryPage() {
                 Emitir Novo PGR
               </Button>
             </DialogTrigger>
-            <DialogContent className='sm:max-w-2xl'>
+            <DialogContent className='sm:max-w-3xl'>
               <DialogHeader>
                 <DialogTitle>Emitir Novo PGR</DialogTitle>
                 <DialogDescription>
@@ -225,10 +231,30 @@ export default function PgrHistoryPage() {
                       </div>
                       {selectedUnit && (
                         <div className='space-y-2 text-sm text-muted-foreground border-t pt-4 mt-4'>
-                           <p><span className='font-semibold text-foreground'>CNPJ:</span> {selectedUnit.cnpj}</p>
-                           <p><span className='font-semibold text-foreground'>Endereço:</span> {selectedUnit.address}</p>
-                           <p><span className='font-semibold text-foreground'>CNAE:</span> {selectedUnit.cnae}</p>
-                           <p><span className='font-semibold text-foreground'>Grau de Risco:</span> {selectedUnit.riskLevel}</p>
+                          <p>
+                            <span className='font-semibold text-foreground'>
+                              CNPJ:
+                            </span>{' '}
+                            {selectedUnit.cnpj}
+                          </p>
+                          <p>
+                            <span className='font-semibold text-foreground'>
+                              Endereço:
+                            </span>{' '}
+                            {selectedUnit.address}
+                          </p>
+                          <p>
+                            <span className='font-semibold text-foreground'>
+                              CNAE:
+                            </span>{' '}
+                            {selectedUnit.cnae}
+                          </p>
+                          <p>
+                            <span className='font-semibold text-foreground'>
+                              Grau de Risco:
+                            </span>{' '}
+                            {selectedUnit.riskLevel}
+                          </p>
                         </div>
                       )}
                       <div className='grid grid-cols-4 items-center gap-4'>
@@ -265,61 +291,129 @@ export default function PgrHistoryPage() {
                       </div>
                     </fieldset>
                     
+                    {/* Seção Base Legal */}
+                    <fieldset className='space-y-4 rounded-lg border p-4'>
+                      <legend className='-ml-1 px-1 text-sm font-medium'>
+                        Seção: Base Legal e o que diz a NR01
+                      </legend>
+                       <div className='space-y-2'>
+                          <Label>Objetivo do Programa de Gerenciamento de Risco</Label>
+                           <Textarea
+                              placeholder='[Será preenchido automaticamente pela IA]'
+                              disabled
+                           />
+                       </div>
+                       <div className='space-y-2'>
+                          <Label>Introdução</Label>
+                           <Textarea
+                              placeholder='[Será preenchido automaticamente pela IA]'
+                              disabled
+                           />
+                       </div>
+                       <div className='space-y-2'>
+                          <Label>Resumo dos ítens da NR01</Label>
+                           <Textarea
+                              placeholder='[Será preenchido automaticamente pela IA]'
+                              disabled
+                           />
+                       </div>
+                    </fieldset>
+
+                    {/* Seção Mapa Organizacional */}
+                    {selectedUnit && (
+                      <fieldset className='space-y-4 rounded-lg border p-4'>
+                        <legend className='-ml-1 px-1 text-sm font-medium'>
+                          Seção: Do Mapa Organizacional da Unidade
+                        </legend>
+                        <p className='text-sm text-muted-foreground'>
+                          Abaixo estão listados os setores e cargos da unidade{' '}
+                          <span className='font-semibold text-foreground'>{selectedUnit.name}</span>.
+                        </p>
+                        {unitSectors.length > 0 ? (
+                          <div className='space-y-4'>
+                            {unitSectors.map(sector => (
+                              <div key={sector.id} className='rounded-md border p-3'>
+                                <h4 className='font-semibold'>{sector.name}</h4>
+                                <p className='text-sm text-muted-foreground'>{sector.description}</p>
+                                <div className='mt-2 pl-4'>
+                                  <h5 className='text-xs font-semibold text-muted-foreground'>CARGOS:</h5>
+                                  <p className='text-xs text-muted-foreground italic'>
+                                    (A lista de cargos para este setor aparecerá aqui)
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className='text-center text-sm text-muted-foreground py-4'>
+                            Nenhum setor cadastrado para esta unidade.
+                          </div>
+                        )}
+                      </fieldset>
+                    )}
+
+
                     {/* Seção 2: Atualizações */}
                     <fieldset className='space-y-4 rounded-lg border p-4'>
-                       <legend className='-ml-1 px-1 text-sm font-medium'>
+                      <legend className='-ml-1 px-1 text-sm font-medium'>
                         Seção: Atualizações
                       </legend>
-                        <div className='flex items-end gap-2'>
-                            <div className='grid w-full items-center gap-1.5'>
-                            <Label htmlFor='update-description'>
-                                Descrição da Atualização
-                            </Label>
-                            <Textarea
-                                id='update-description'
-                                placeholder='Ex: Inclusão da função de Almoxarife'
-                                value={newUpdate}
-                                onChange={(e) => setNewUpdate(e.target.value)}
-                            />
-                            </div>
-                            <div className='grid max-w-[180px] w-full items-center gap-1.5'>
-                            <Label htmlFor='update-date'>Data</Label>
-                            <Input
-                                type='date'
-                                id='update-date'
-                                value={newUpdateDate}
-                                onChange={(e) => setNewUpdateDate(e.target.value)}
-                            />
-                            </div>
-                            <Button type='button' onClick={handleAddUpdate}>
-                                Adicionar
-                            </Button>
+                      <div className='flex items-end gap-2'>
+                        <div className='grid w-full items-center gap-1.5'>
+                          <Label htmlFor='update-description'>
+                            Descrição da Atualização
+                          </Label>
+                          <Textarea
+                            id='update-description'
+                            placeholder='Ex: Inclusão da função de Almoxarife'
+                            value={newUpdate}
+                            onChange={(e) => setNewUpdate(e.target.value)}
+                          />
                         </div>
-                         {updates.length > 0 && <Separator />}
-                        <div className='space-y-2'>
-                           {updates.map((update, index) => (
-                            <div key={index} className='flex gap-4 text-sm'>
-                                <div className='text-muted-foreground whitespace-nowrap'>
-                                {new Date(update.date).toLocaleDateString('pt-BR', {
-                                    timeZone: 'UTC',
-                                })}
-                                </div>
-                                <div className='font-medium'>{update.description}</div>
-                            </div>
-                            ))}
+                        <div className='grid max-w-[180px] w-full items-center gap-1.5'>
+                          <Label htmlFor='update-date'>Data</Label>
+                          <Input
+                            type='date'
+                            id='update-date'
+                            value={newUpdateDate}
+                            onChange={(e) =>
+                              setNewUpdateDate(e.target.value)
+                            }
+                          />
                         </div>
+                        <Button type='button' onClick={handleAddUpdate}>
+                          Adicionar
+                        </Button>
+                      </div>
+                      {updates.length > 0 && <Separator />}
+                      <div className='space-y-2'>
+                        {updates.map((update, index) => (
+                          <div key={index} className='flex gap-4 text-sm'>
+                            <div className='text-muted-foreground whitespace-nowrap'>
+                              {new Date(update.date).toLocaleDateString(
+                                'pt-BR',
+                                {
+                                  timeZone: 'UTC',
+                                }
+                              )}
+                            </div>
+                            <div className='font-medium'>
+                              {update.description}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </fieldset>
-                    
+
                     {/* Seção 3: Sumário */}
-                     <fieldset className='space-y-4 rounded-lg border p-4 min-h-[10rem]'>
-                       <legend className='-ml-1 px-1 text-sm font-medium'>
+                    <fieldset className='space-y-4 rounded-lg border p-4 min-h-[10rem]'>
+                      <legend className='-ml-1 px-1 text-sm font-medium'>
                         Seção: Sumário
                       </legend>
                       <div className='flex items-center justify-center h-full text-sm text-muted-foreground'>
                         O sumário do documento será gerado aqui.
                       </div>
                     </fieldset>
-
                   </div>
                 </ScrollArea>
               </form>
