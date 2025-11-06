@@ -5,6 +5,8 @@ export const initialEpiData = [
     ca: '12345',
     shelfLife: 365,
     active: true,
+    fabricante: '3M',
+    vencimentoCA: '2025-12-31',
   },
   {
     id: 'EPI-02',
@@ -12,6 +14,8 @@ export const initialEpiData = [
     ca: '67890',
     shelfLife: 180,
     active: true,
+    fabricante: 'Ansell',
+    vencimentoCA: '2024-10-15',
   },
   {
     id: 'EPI-03',
@@ -19,6 +23,8 @@ export const initialEpiData = [
     ca: '11223',
     shelfLife: 90,
     active: true,
+    fabricante: 'Honeywell',
+    vencimentoCA: '2025-01-20',
   },
 ]
 
@@ -38,7 +44,7 @@ export const initialEpiDeliveries = [
     deliveryDate: '2024-07-01',
     quantity: 1,
   },
-   {
+  {
     id: 'DEL-002',
     epiId: 'EPI-02',
     epiName: 'Luva de segurança para proteção contra agentes mecânicos',
@@ -49,13 +55,19 @@ export const initialEpiDeliveries = [
   },
 ]
 
-
 export const initialCaRiskMapping = [
-    { ca: '12345', epiName: 'Protetor auricular tipo concha', risk: 'Ruído' },
-    { ca: '67890', epiName: 'Luva de segurança para proteção contra agentes mecânicos', risk: 'Agentes Abrasivos e Escoriantes' },
-    { ca: '11223', epiName: 'Respirador purificador de ar', risk: 'Poeiras e Névoas' },
+  { ca: '12345', epiName: 'Protetor auricular tipo concha', risk: 'Ruído' },
+  {
+    ca: '67890',
+    epiName: 'Luva de segurança para proteção contra agentes mecânicos',
+    risk: 'Agentes Abrasivos e Escoriantes',
+  },
+  {
+    ca: '11223',
+    epiName: 'Respirador purificador de ar',
+    risk: 'Poeiras e Névoas',
+  },
 ]
-
 
 export type Epi = (typeof initialEpiData)[0]
 export type EpiStock = (typeof initialEpiStock)[0]

@@ -57,6 +57,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
 
 export default function EpisPage() {
   const [epiData, setEpiData] = useState(initialEpiData)
@@ -76,7 +77,9 @@ export default function EpisPage() {
       name: formData.get('name') as string,
       ca: formData.get('ca') as string,
       shelfLife: Number(formData.get('shelfLife')),
-      active: true,
+      active: formData.get('active') === 'on',
+      fabricante: formData.get('fabricante') as string,
+      vencimentoCA: formData.get('vencimentoCA') as string,
     }
     setEpiData((prev) => [newEpi, ...prev])
     setIsEpiDialogOpen(false)
@@ -175,7 +178,7 @@ export default function EpisPage() {
                         </span>
                       </Button>
                     </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent className='sm:max-w-lg'>
                       <DialogHeader>
                         <DialogTitle>Adicionar Novo EPI</DialogTitle>
                       </DialogHeader>
@@ -185,19 +188,75 @@ export default function EpisPage() {
                             <Label htmlFor='name' className='text-right'>
                               Nome
                             </Label>
-                            <Input id='name' name='name' className='col-span-3' required />
+                            <Input
+                              id='name'
+                              name='name'
+                              className='col-span-3'
+                              required
+                            />
                           </div>
                           <div className='grid grid-cols-4 items-center gap-4'>
                             <Label htmlFor='ca' className='text-right'>
                               Nº do CA
                             </Label>
-                            <Input id='ca' name='ca' className='col-span-3' required />
+                            <Input
+                              id='ca'
+                              name='ca'
+                              className='col-span-3'
+                              required
+                            />
                           </div>
-                           <div className='grid grid-cols-4 items-center gap-4'>
+                          <div className='grid grid-cols-4 items-center gap-4'>
+                            <Label
+                              htmlFor='fabricante'
+                              className='text-right'
+                            >
+                              Fabricante
+                            </Label>
+                            <Input
+                              id='fabricante'
+                              name='fabricante'
+                              className='col-span-3'
+                            />
+                          </div>
+                          <div className='grid grid-cols-4 items-center gap-4'>
+                            <Label
+                              htmlFor='vencimentoCA'
+                              className='text-right'
+                            >
+                              Venc. do CA
+                            </Label>
+                            <Input
+                              id='vencimentoCA'
+                              name='vencimentoCA'
+                              type='date'
+                              className='col-span-3'
+                            />
+                          </div>
+                          <div className='grid grid-cols-4 items-center gap-4'>
                             <Label htmlFor='shelfLife' className='text-right'>
                               Vida Útil (dias)
                             </Label>
-                            <Input id='shelfLife' name='shelfLife' type='number' className='col-span-3' required />
+                            <Input
+                              id='shelfLife'
+                              name='shelfLife'
+                              type='number'
+                              className='col-span-3'
+                              required
+                            />
+                          </div>
+                          <div className='grid grid-cols-4 items-center gap-4'>
+                            <Label htmlFor='active' className='text-right'>
+                              Status
+                            </Label>
+                            <div className='col-span-3 flex items-center gap-2'>
+                              <Switch
+                                id='active'
+                                name='active'
+                                defaultChecked={true}
+                              />
+                              <Label htmlFor='active'>Ativo</Label>
+                            </div>
                           </div>
                         </div>
                       </form>
@@ -222,7 +281,8 @@ export default function EpisPage() {
                     <TableRow>
                       <TableHead>Nome</TableHead>
                       <TableHead>CA</TableHead>
-                       <TableHead>Vida Útil (dias)</TableHead>
+                      <TableHead>Venc. CA</TableHead>
+                      <TableHead>Vida Útil</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>
                         <span className='sr-only'>Ações</span>
@@ -234,7 +294,13 @@ export default function EpisPage() {
                       <TableRow key={epi.id}>
                         <TableCell className='font-medium'>{epi.name}</TableCell>
                         <TableCell>{epi.ca}</TableCell>
-                         <TableCell>{epi.shelfLife}</TableCell>
+                        <TableCell>
+                          {new Date(epi.vencimentoCA).toLocaleDateString(
+                            'pt-BR',
+                            { timeZone: 'UTC' }
+                          )}
+                        </TableCell>
+                        <TableCell>{epi.shelfLife} dias</TableCell>
                         <TableCell>
                           <Badge variant={epi.active ? 'secondary' : 'outline'}>
                             {epi.active ? 'Ativo' : 'Inativo'}
@@ -319,11 +385,13 @@ export default function EpisPage() {
                                 <SelectValue placeholder='Selecione o EPI' />
                               </SelectTrigger>
                               <SelectContent>
-                                {epiData.map((epi) => (
-                                  <SelectItem key={epi.id} value={epi.id}>
-                                    {epi.name} (CA: {epi.ca})
-                                  </SelectItem>
-                                ))}
+                                {epiData
+                                  .filter((epi) => epi.active)
+                                  .map((epi) => (
+                                    <SelectItem key={epi.id} value={epi.id}>
+                                      {epi.name} (CA: {epi.ca})
+                                    </SelectItem>
+                                  ))}
                               </SelectContent>
                             </Select>
                           </div>
@@ -338,11 +406,12 @@ export default function EpisPage() {
                               className='col-span-3'
                               required
                               defaultValue={1}
+                              min={1}
                             />
                           </div>
                         </div>
                       </form>
-                       <DialogFooter>
+                      <DialogFooter>
                         <Button
                           variant='outline'
                           onClick={() => setIsDeliveryDialogOpen(false)}
@@ -370,20 +439,32 @@ export default function EpisPage() {
                   </TableHeader>
                   <TableBody>
                     {epiDeliveries.map((delivery) => {
-                      const epi = epiData.find((e) => e.id === delivery.epiId);
-                      const nextChangeDate = epi ? new Date(delivery.deliveryDate) : null;
+                      const epi = epiData.find((e) => e.id === delivery.epiId)
+                      const nextChangeDate = epi
+                        ? new Date(delivery.deliveryDate)
+                        : null
                       if (nextChangeDate && epi?.shelfLife) {
-                        nextChangeDate.setDate(nextChangeDate.getDate() + epi.shelfLife);
+                        nextChangeDate.setDate(
+                          nextChangeDate.getDate() + epi.shelfLife
+                        )
                       }
-                       return(
-                      <TableRow key={delivery.id}>
-                        <TableCell>{delivery.employeeName}</TableCell>
-                        <TableCell>{delivery.epiName}</TableCell>
-                        <TableCell>{new Date(delivery.deliveryDate).toLocaleDateString()}</TableCell>
-                        <TableCell>{delivery.quantity}</TableCell>
-                        <TableCell>{nextChangeDate ? nextChangeDate.toLocaleDateString() : 'N/A'}</TableCell>
-                      </TableRow>
-                       )
+                      return (
+                        <TableRow key={delivery.id}>
+                          <TableCell>{delivery.employeeName}</TableCell>
+                          <TableCell>{delivery.epiName}</TableCell>
+                          <TableCell>
+                            {new Date(
+                              delivery.deliveryDate
+                            ).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>{delivery.quantity}</TableCell>
+                          <TableCell>
+                            {nextChangeDate
+                              ? nextChangeDate.toLocaleDateString()
+                              : 'N/A'}
+                          </TableCell>
+                        </TableRow>
+                      )
                     })}
                   </TableBody>
                 </Table>
@@ -416,8 +497,16 @@ export default function EpisPage() {
                         <TableCell>{item.quantity}</TableCell>
                         <TableCell>{item.minStock}</TableCell>
                         <TableCell>
-                          <Badge variant={item.quantity > item.minStock ? 'secondary' : 'destructive'}>
-                             {item.quantity > item.minStock ? 'Em estoque' : 'Estoque baixo'}
+                          <Badge
+                            variant={
+                              item.quantity > item.minStock
+                                ? 'secondary'
+                                : 'destructive'
+                            }
+                          >
+                            {item.quantity > item.minStock
+                              ? 'Em estoque'
+                              : 'Estoque baixo'}
                           </Badge>
                         </TableCell>
                       </TableRow>
