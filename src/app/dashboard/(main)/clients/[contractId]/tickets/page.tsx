@@ -80,10 +80,8 @@ import { format, formatDistanceToNow, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { initialStaffsData } from '@/app/dashboard/(main)/employees/page'
-import {
-  initialEmployeesData,
-  type Employee,
-} from '../employees/page'
+import { initialEmployeesData } from '../employees/data'
+import type { Employee } from '../employees/data'
 import { Separator } from '@/components/ui/separator'
 import { Progress } from '@/components/ui/progress'
 import { Checkbox } from '@/components/ui/checkbox'

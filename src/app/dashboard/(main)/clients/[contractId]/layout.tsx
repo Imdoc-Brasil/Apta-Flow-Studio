@@ -8,7 +8,6 @@ import { ClientSidebar } from '@/components/client-sidebar'
 import { Button } from '@/components/ui/button'
 import { PanelLeft } from 'lucide-react'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
-import { UserNav } from '@/components/user-nav'
 import { Logo } from '@/components/logo'
 import Link from 'next/link'
 
@@ -18,7 +17,7 @@ export default function ClientDetailLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className='flex min-h-screen w-full flex-col bg-muted/40'>
+    <>
       <Sidebar
         variant='sidebar'
         collapsible='icon'
@@ -28,11 +27,10 @@ export default function ClientDetailLayout({
           <ClientSidebar />
         </SidebarContent>
       </Sidebar>
-      <div className='flex flex-1 flex-col transition-all duration-200 ease-in-out md:ml-14 md:group-data-[state=expanded]/sidebar-wrapper:ml-60'>
-        <header className='sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6'>
-          <Sheet>
+      <div className='sm:hidden'>
+        <Sheet>
             <SheetTrigger asChild>
-              <Button size='icon' variant='outline' className='md:hidden'>
+              <Button size='icon' variant='outline' className='absolute top-3 left-3 z-40'>
                 <PanelLeft className='h-5 w-5' />
                 <span className='sr-only'>Alternar Menu</span>
               </Button>
@@ -50,16 +48,10 @@ export default function ClientDetailLayout({
               </nav>
             </SheetContent>
           </Sheet>
-
-          <div className='relative ml-auto flex-1 md:grow-0'>
-            {/* This can be a global search in the future */}
-          </div>
-          <UserNav />
-        </header>
-        <main className='flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6'>
-          {children}
-        </main>
       </div>
-    </div>
+      <div className='flex flex-1 flex-col transition-all duration-200 ease-in-out md:ml-14 md:group-data-[state=expanded]/sidebar-wrapper:ml-60'>
+        {children}
+      </div>
+    </>
   )
 }
