@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { MoreHorizontal, PlusCircle } from 'lucide-react'
+import { MoreHorizontal, PlusCircle, Lock } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -315,6 +315,10 @@ export default function PgrPage() {
             <TabsTrigger value='plan'>Plano de Ação</TabsTrigger>
           </TabsList>
           <div className='ml-auto flex items-center gap-2'>
+            <Button variant='outline'>
+              <Lock className='mr-2 h-4 w-4' />
+              Gestão de PGRA
+            </Button>
             <Dialog
               open={isAddRiskDialogOpen}
               onOpenChange={(isOpen) => {
