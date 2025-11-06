@@ -20,11 +20,11 @@ import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { useToast } from '@/hooks/use-toast'
 import { initialEpiData } from '../data'
+import { initialHazardData } from '@/app/dashboard/(main)/risks/page'
 import {
-  initialHazardData,
+  initialInventory,
   getHazardById,
 } from '@/app/dashboard/(main)/clients/[contractId]/pgr/page'
-import { initialInventory } from '../../pgr/page'
 import { initialEmployeesData } from '../../employees/data'
 import { initialSectorsData } from '../../sectors/data'
 import { initialUnitsData } from '../../units/data'
