@@ -1,12 +1,13 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
-import { useParams, useSearchParams } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -15,6 +16,9 @@ import {
   Search,
   Users,
   Building,
+  ArrowRight,
+  LayoutGrid,
+  List,
 } from 'lucide-react'
 import {
   Table,
@@ -39,16 +43,21 @@ import { Textarea } from '@/components/ui/textarea'
 import { initialUnitsData } from '../units/data'
 import { Badge } from '@/components/ui/badge'
 import { initialSectorsData, type Sector } from './data'
+import { cn } from '@/lib/utils'
+import Link from 'next/link'
 
 export default function SectorsPage() {
   const params = useParams()
+  const router = useRouter()
+  const contractId = params.contractId as string
   const searchParams = useSearchParams()
   const selectedUnitId = searchParams.get('unitId')
 
   const [sectors, setSectors] = useState(initialSectorsData)
   const [isAddSectorDialogOpen, setIsAddSectorDialogOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  
+  const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
+
   useEffect(() => {
     // This is an empty effect to force a re-render and fix chunk loading issues.
   }, [])
@@ -100,61 +109,81 @@ export default function SectorsPage() {
               unidade.
             </CardDescription>
           </div>
-          <Dialog
-            open={isAddSectorDialogOpen}
-            onOpenChange={setIsAddSectorDialogOpen}
-          >
-            <DialogTrigger asChild>
-              <Button size='sm' className='h-8 gap-1'>
-                <PlusCircle className='h-3.5 w-3.5' />
-                <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
-                  Adicionar Setor
-                </span>
+          <div className='flex items-center gap-2'>
+            <div className='flex items-center gap-1 rounded-lg bg-muted p-1'>
+              <Button
+                variant={viewMode === 'card' ? 'secondary' : 'ghost'}
+                size='icon'
+                className='h-8 w-8'
+                onClick={() => setViewMode('card')}
+              >
+                <LayoutGrid className='h-4 w-4' />
               </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Adicionar Novo Setor</DialogTitle>
-              </DialogHeader>
-              <form id='add-sector-form' onSubmit={handleAddSector}>
-                <div className='grid gap-4 py-4'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='unitId'>Unidade</Label>
-                    <Input
-                      id='unitId'
-                      name='unitId'
-                      readOnly
-                      defaultValue={getUnitName(selectedUnitId || '')}
-                    />
-                     <input
-                      type='hidden'
-                      name='unitId'
-                      value={selectedUnitId || ''}
-                    />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='name'>Nome do Setor</Label>
-                    <Input id='name' name='name' required />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='description'>Descrição</Label>
-                    <Textarea id='description' name='description' />
-                  </div>
-                </div>
-              </form>
-              <DialogFooter>
-                 <Button
-                  variant='outline'
-                  onClick={() => setIsAddSectorDialogOpen(false)}
-                >
-                  Cancelar
+              <Button
+                variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                size='icon'
+                className='h-8 w-8'
+                onClick={() => setViewMode('list')}
+              >
+                <List className='h-4 w-4' />
+              </Button>
+            </div>
+            <Dialog
+              open={isAddSectorDialogOpen}
+              onOpenChange={setIsAddSectorDialogOpen}
+            >
+              <DialogTrigger asChild>
+                <Button size='sm' className='h-8 gap-1'>
+                  <PlusCircle className='h-3.5 w-3.5' />
+                  <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
+                    Adicionar Setor
+                  </span>
                 </Button>
-                <Button type='submit' form='add-sector-form'>
-                  Salvar
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Adicionar Novo Setor</DialogTitle>
+                </DialogHeader>
+                <form id='add-sector-form' onSubmit={handleAddSector}>
+                  <div className='grid gap-4 py-4'>
+                    <div className='space-y-2'>
+                      <Label htmlFor='unitId'>Unidade</Label>
+                      <Input
+                        id='unitId'
+                        name='unitId'
+                        readOnly
+                        defaultValue={getUnitName(selectedUnitId || '')}
+                      />
+                      <input
+                        type='hidden'
+                        name='unitId'
+                        value={selectedUnitId || ''}
+                      />
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='name'>Nome do Setor</Label>
+                      <Input id='name' name='name' required />
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='description'>Descrição</Label>
+                      <Textarea id='description' name='description' />
+                    </div>
+                  </div>
+                </form>
+                <DialogFooter>
+                  <Button
+                    variant='outline'
+                    onClick={() => setIsAddSectorDialogOpen(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button type='submit' form='add-sector-form'>
+                    Salvar
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
         <div className='pt-4'>
           <div className='relative'>
@@ -169,42 +198,108 @@ export default function SectorsPage() {
         </div>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Setor</TableHead>
-              <TableHead className='hidden md:table-cell'>Unidade</TableHead>
-              <TableHead className='hidden sm:table-cell'>
-                Colaboradores
-              </TableHead>
-              <TableHead>
-                <span className='sr-only'>Ações</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
+        {viewMode === 'card' ? (
+          <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
             {filteredSectors.map((sector) => (
-              <TableRow key={sector.id}>
-                <TableCell>
-                  <div className='font-medium'>{sector.name}</div>
-                  <div className='hidden text-sm text-muted-foreground md:inline'>
+              <Card
+                key={sector.id}
+                className='flex flex-col hover:shadow-md transition-shadow cursor-pointer'
+                onClick={() =>
+                  router.push(
+                    `/dashboard/clients/${contractId}/roles?sectorId=${sector.id}`
+                  )
+                }
+              >
+                <CardHeader>
+                  <CardTitle>{sector.name}</CardTitle>
+                  <CardDescription>
+                    <Badge variant='outline'>{getUnitName(sector.unitId)}</Badge>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className='flex-grow'>
+                  <p className='text-sm text-muted-foreground line-clamp-2'>
                     {sector.description}
-                  </div>
-                </TableCell>
-                <TableCell className='hidden md:table-cell'>
-                  <Badge variant='outline'>{getUnitName(sector.unitId)}</Badge>
-                </TableCell>
-                <TableCell className='hidden sm:table-cell'>-</TableCell>
-                <TableCell>
-                  <Button aria-haspopup='true' size='icon' variant='ghost'>
-                    <MoreHorizontal className='h-4 w-4' />
-                    <span className='sr-only'>Alternar menu</span>
+                  </p>
+                </CardContent>
+                <CardFooter>
+                  <Button asChild className='w-full' variant='outline'>
+                    <Link
+                      href={`/dashboard/clients/${contractId}/roles?sectorId=${sector.id}`}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Ver Cargos <ArrowRight className='ml-2 h-4 w-4' />
+                    </Link>
                   </Button>
-                </TableCell>
-              </TableRow>
+                </CardFooter>
+              </Card>
             ))}
-          </TableBody>
-        </Table>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Setor</TableHead>
+                <TableHead className='hidden md:table-cell'>Unidade</TableHead>
+                <TableHead className='hidden sm:table-cell'>
+                  Colaboradores
+                </TableHead>
+                <TableHead>
+                  <span className='sr-only'>Ações</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredSectors.map((sector) => (
+                <TableRow
+                  key={sector.id}
+                  onClick={() =>
+                    router.push(
+                      `/dashboard/clients/${contractId}/roles?sectorId=${sector.id}`
+                    )
+                  }
+                  className='cursor-pointer'
+                >
+                  <TableCell>
+                    <div className='font-medium'>{sector.name}</div>
+                    <div className='hidden text-sm text-muted-foreground md:inline'>
+                      {sector.description}
+                    </div>
+                  </TableCell>
+                  <TableCell className='hidden md:table-cell'>
+                    <Badge variant='outline'>
+                      {getUnitName(sector.unitId)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className='hidden sm:table-cell'>-</TableCell>
+                  <TableCell>
+                    <Button aria-haspopup='true' size='icon' variant='ghost'>
+                      <MoreHorizontal className='h-4 w-4' />
+                      <span className='sr-only'>Alternar menu</span>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+        {filteredSectors.length === 0 && (
+          <div className='flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm h-96'>
+            <div className='flex flex-col items-center gap-1 text-center'>
+              <h3 className='text-2xl font-bold tracking-tight'>
+                Nenhum setor encontrado
+              </h3>
+              <p className='text-sm text-muted-foreground'>
+                Ajuste seus filtros ou adicione um novo setor.
+              </p>
+              <Button
+                className='mt-4'
+                onClick={() => setIsAddSectorDialogOpen(true)}
+              >
+                Adicionar Setor
+              </Button>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   )
