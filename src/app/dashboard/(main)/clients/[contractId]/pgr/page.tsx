@@ -46,31 +46,36 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { initialHazardData, type Hazard } from '@/app/dashboard/(main)/risks/page'
+import {
+  initialHazardData,
+  type Hazard,
+} from '@/app/dashboard/(main)/risks/page'
 import { initialUnitsData } from '../units/page'
 import { useToast } from '@/hooks/use-toast'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
+import { cn } from '@/lib/utils'
 
-type RiskLevel =
-  | 'Trivial'
-  | 'Tolerável'
-  | 'Moderado'
-  | 'Substancial'
-  | 'Intolerável'
+type RiskLevelLabel =
+  | 'Irrelevante'
+  | 'Leve'
+  | 'Médio'
+  | 'Alto'
+  | 'Crítico'
 type RiskColor =
+  | 'bg-gray-400'
   | 'bg-green-500'
-  | 'bg-blue-500'
   | 'bg-yellow-500'
   | 'bg-orange-500'
   | 'bg-red-500'
 
 interface RiskEvaluation {
-  probability: number
+  frequency: number
   severity: number
   riskLevel: number
-  riskLabel: RiskLevel
+  riskLabel: RiskLevelLabel
   riskColor: RiskColor
+  riskDescription: string
 }
 
 const initialInventory = [
@@ -81,11 +86,13 @@ const initialInventory = [
     sector: 'Produção',
     source: 'Máquina de corte XYZ',
     evaluation: {
-      probability: 3,
-      severity: 4,
+      frequency: 4,
+      severity: 3,
       riskLevel: 12,
-      riskLabel: 'Substancial' as RiskLevel,
+      riskLabel: 'Alto' as RiskLevelLabel,
       riskColor: 'bg-orange-500' as RiskColor,
+      riskDescription:
+        'Fatores do ambiente ou elementos materiais que constituem um risco alto para a saúde e integridade física do trabalhador, cujos valores ou importâncias estão notavelmente próximos do nível de ação',
     },
   },
   {
@@ -99,12 +106,101 @@ const initialInventory = [
 ]
 
 const methodologies = [
-    { id: "questionnaire", label: "Aplicação questionário de avaliação preliminar de risco" },
-    { id: "interview", label: "Entrevista presencial" },
-    { id: "info", label: "Informações fornecidas pelo representante da empresa" },
-    { id: "measurements", label: "Uso de equipamentos e protocolo de medições" },
-    { id: "tool", label: "Aplicação de ferramenta de avaliação preliminar de fatores de rico" },
+  {
+    id: 'questionnaire',
+    label: 'Aplicação questionário de avaliação preliminar de risco',
+  },
+  { id: 'interview', label: 'Entrevista presencial' },
+  {
+    id: 'info',
+    label: 'Informações fornecidas pelo representante da empresa',
+  },
+  { id: 'measurements', label: 'Uso de equipamentos e protocolo de medições' },
+  {
+    id: 'tool',
+    label: 'Aplicação de ferramenta de avaliação preliminar de fatores de rico',
+  },
 ]
+
+const frequencyOptions = [
+  { value: 0, label: 'Não Exposto' },
+  { value: 1, label: 'Altamente Improvável' },
+  { value: 2, label: 'Improvável' },
+  { value: 3, label: 'Habitual' },
+  { value: 4, label: 'Provável' },
+  { value: 5, label: 'Altamente Provável' },
+]
+
+const severityOptions = [
+  { value: 0, label: 'Não se aplica' },
+  { value: 1, label: 'Reversível leve' },
+  { value: 2, label: 'Reversível severo' },
+  { value: 3, label: 'Irreversível severo' },
+  { value: 4, label: 'Fatal ou Incapacitante' },
+  { value: 5, label: 'Altamente Catastrófico' },
+]
+
+const riskMatrixConfig = {
+  levels: {
+    '1': {
+      label: 'Irrelevante' as RiskLevelLabel,
+      color: 'bg-gray-400' as RiskColor,
+      description:
+        'Fatores do ambiente ou elementos materiais que não constituem nenhum incômodo, nenhum risco para a saúde ou integridade física',
+    },
+    '2': {
+      label: 'Leve' as RiskLevelLabel,
+      color: 'bg-green-500' as RiskColor,
+      description:
+        'Fatores do ambiente ou elementos materiais que constituem um incômodo sem ser uma fonte de risco para a saúde ou integridade física',
+    },
+    '3': {
+      label: 'Médio' as RiskLevelLabel,
+      color: 'bg-yellow-500' as RiskColor,
+      description:
+        'Fatores do ambiente ou elementos materiais que constituem um incômodo, podendo ser de médio risco para saúde ou integridade física',
+    },
+    '4': {
+      label: 'Alto' as RiskLevelLabel,
+      color: 'bg-orange-500' as RiskColor,
+      description:
+        'Fatores do ambiente ou elementos materiais que constituem um risco alto para a saúde e integridade física do trabalhador, cujos valores ou importâncias estão notavelmente próximos do nível de ação',
+    },
+    '5': {
+      label: 'Crítico' as RiskLevelLabel,
+      color: 'bg-red-500' as RiskColor,
+      description:
+        'Fatores do ambiente ou elementos materiais que constituem um risco critico para a saúde e integridade física do trabalhador, cujos valores ou importâncias estão notavelmente acima dos limites de tolerância',
+    },
+  },
+  matrix: [
+    // Frequência
+    [1, 2, 3, 4, 5], // Não se aplica (Severidade 0) -> all mapped to 1 for simplicity here
+    [1, 2, 3, 4, 5], // Reversível leve (Severidade 1)
+    [2, 3, 4, 5, 5], // Reversível severo (Severidade 2)
+    [3, 4, 5, 5, 5], // Irreversível severo (Severidade 3)
+    [4, 5, 5, 5, 5], // Fatal ou Incapacitante (Severidade 4)
+    [5, 5, 5, 5, 5], // Altamente Catastrófico (Severidade 5)
+  ],
+}
+
+const getRiskLevel = (frequency: number, severity: number): RiskEvaluation => {
+  const freqIndex = frequency
+  const sevIndex = severity
+  const levelIndex =
+    riskMatrixConfig.matrix[sevIndex]?.[freqIndex - 1] ||
+    riskMatrixConfig.matrix[0][0]
+  const levelInfo = riskMatrixConfig.levels[levelIndex.toString() as '1']
+
+  return {
+    frequency,
+    severity,
+    riskLevel: levelIndex,
+    riskLabel: levelInfo.label,
+    riskColor: levelInfo.color,
+    riskDescription: levelInfo.description,
+  }
+}
 
 export default function PgrPage() {
   const { toast } = useToast()
@@ -115,6 +211,11 @@ export default function PgrPage() {
   const [currentItem, setCurrentItem] =
     useState<(typeof initialInventory)[0] | null>(null)
   const [selectedHazard, setSelectedHazard] = useState<Hazard | null>(null)
+
+  // State for evaluation form
+  const [frequency, setFrequency] = useState(0)
+  const [severity, setSeverity] = useState(0)
+  const [derivedRisk, setDerivedRisk] = useState<RiskEvaluation | null>(null)
 
   const handleAddRisk = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -132,42 +233,11 @@ export default function PgrPage() {
     setSelectedHazard(null)
   }
 
-  const getRiskLevel = (
-    probability: number,
-    severity: number
-  ): RiskEvaluation => {
-    const riskLevel = probability * severity
-    let riskLabel: RiskLevel = 'Trivial'
-    let riskColor: RiskColor = 'bg-green-500'
-
-    if (riskLevel >= 1 && riskLevel <= 4) {
-      riskLabel = 'Trivial'
-      riskColor = 'bg-green-500'
-    } else if (riskLevel >= 5 && riskLevel <= 9) {
-      riskLabel = 'Tolerável'
-      riskColor = 'bg-blue-500'
-    } else if (riskLevel >= 10 && riskLevel <= 14) {
-      riskLabel = 'Moderado'
-      riskColor = 'bg-yellow-500'
-    } else if (riskLevel >= 15 && riskLevel <= 19) {
-      riskLabel = 'Substancial'
-      riskColor = 'bg-orange-500'
-    } else {
-      riskLabel = 'Intolerável'
-      riskColor = 'bg-red-500'
-    }
-    return { probability, severity, riskLevel, riskLabel, riskColor }
-  }
-
   const handleEvaluateRisk = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!currentItem) return
 
-    const formData = new FormData(event.currentTarget)
-    const probability = parseInt(formData.get('probability') as string, 10)
-    const severity = parseInt(formData.get('severity') as string, 10)
-
-    const evaluation = getRiskLevel(probability, severity)
+    const evaluation = getRiskLevel(frequency, severity)
 
     setInventory((prev) =>
       prev.map((item) =>
@@ -178,20 +248,52 @@ export default function PgrPage() {
     )
     toast({
       title: 'Risco Avaliado!',
-      description: `O Nível de Risco foi calculado como ${evaluation.riskLevel} (${evaluation.riskLabel}).`,
+      description: `O Nível de Risco foi classificado como ${evaluation.riskLabel}.`,
     })
     setIsEvaluateDialogOpen(false)
     setCurrentItem(null)
+    setFrequency(0)
+    setSeverity(0)
+    setDerivedRisk(null)
   }
 
   const openEvaluateDialog = (item: (typeof initialInventory)[0]) => {
     setCurrentItem(item)
+    const currentFreq = item.evaluation?.frequency || 0
+    const currentSev = item.evaluation?.severity || 0
+    setFrequency(currentFreq)
+    setSeverity(currentSev)
+    if (currentFreq > 0 && currentSev > 0) {
+      setDerivedRisk(getRiskLevel(currentFreq, currentSev))
+    } else {
+      setDerivedRisk(null)
+    }
     setIsEvaluateDialogOpen(true)
   }
 
   const getHazardById = (id: string) =>
     initialHazardData.find((h) => h.id === id)
   const getUnitById = (id: string) => initialUnitsData.find((u) => u.id === id)
+
+  const handleFrequencyChange = (value: string) => {
+    const newFreq = parseInt(value, 10)
+    setFrequency(newFreq)
+    if (newFreq > 0 && severity > 0) {
+      setDerivedRisk(getRiskLevel(newFreq, severity))
+    } else {
+      setDerivedRisk(null)
+    }
+  }
+
+  const handleSeverityChange = (value: string) => {
+    const newSev = parseInt(value, 10)
+    setSeverity(newSev)
+    if (frequency > 0 && newSev > 0) {
+      setDerivedRisk(getRiskLevel(frequency, newSev))
+    } else {
+      setDerivedRisk(null)
+    }
+  }
 
   return (
     <div className='grid flex-1 auto-rows-max gap-4'>
@@ -232,112 +334,196 @@ export default function PgrPage() {
                   <div className='space-y-6 py-4'>
                     {/* Section 1 */}
                     <div className='space-y-4 rounded-md border p-4'>
-                        <h3 className='font-semibold'>Seção 01: Identificação</h3>
-                         <div className='grid md:grid-cols-2 gap-4'>
-                           <div className='space-y-2'>
-                                <Label htmlFor='exposureGroup'>Grupo de Exposição</Label>
-                                <Select name='exposureGroup' required>
-                                    <SelectTrigger><SelectValue placeholder='Selecione o grupo' /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value='unit'>Unidade</SelectItem>
-                                        <SelectItem value='sector'>Setor</SelectItem>
-                                        <SelectItem value='role'>Cargo</SelectItem>
-                                        <SelectItem value='ghe'>GHE</SelectItem>
-                                        <SelectItem value='employee'>Colaborador Específico</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className='space-y-2'>
-                                <Label htmlFor='exposureTarget'>Alvo da Exposição</Label>
-                                <Input id='exposureTarget' name='exposureTarget' placeholder='Ex: Unidade X, Setor Y...'/>
-                            </div>
-                        </div>
-
+                      <h3 className='font-semibold'>
+                        Seção 01: Identificação
+                      </h3>
+                      <div className='grid md:grid-cols-2 gap-4'>
                         <div className='space-y-2'>
-                            <Label htmlFor='hazard'>Perigo / Agente de Risco</Label>
-                            <Select name='hazard' required onValueChange={(value) => setSelectedHazard(getHazardById(value) || null)}>
-                                <SelectTrigger><SelectValue placeholder='Selecione o perigo no catálogo' /></SelectTrigger>
-                                <SelectContent>
-                                {initialHazardData.map((hazard) => (
-                                    <SelectItem key={hazard.id} value={hazard.id}>
-                                    {hazard.name} ({hazard.category})
-                                    </SelectItem>
-                                ))}
-                                </SelectContent>
-                            </Select>
+                          <Label htmlFor='exposureGroup'>
+                            Grupo de Exposição
+                          </Label>
+                          <Select name='exposureGroup' required>
+                            <SelectTrigger>
+                              <SelectValue placeholder='Selecione o grupo' />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value='unit'>Unidade</SelectItem>
+                              <SelectItem value='sector'>Setor</SelectItem>
+                              <SelectItem value='role'>Cargo</SelectItem>
+                              <SelectItem value='ghe'>GHE</SelectItem>
+                              <SelectItem value='employee'>
+                                Colaborador Específico
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
-                        
-                        {selectedHazard && (
-                            <div className='grid md:grid-cols-2 gap-4 text-sm'>
-                                <div className='space-y-1'>
-                                    <p className='font-medium text-muted-foreground'>Grupo de risco</p>
-                                    <p className='font-semibold'>{selectedHazard.category}</p>
-                                </div>
-                                <div className='space-y-1'>
-                                    <p className='font-medium text-muted-foreground'>Fundamentação legal</p>
-                                    <p className='font-semibold'>{selectedHazard.legalBasis}</p>
-                                </div>
-                                 <div className='space-y-1 col-span-2'>
-                                    <p className='font-medium text-muted-foreground'>Efeitos potenciais / Possíveis lesões ou agravos à saúde</p>
-                                    <p className='font-semibold'>{selectedHazard.potentialEffects}</p>
-                                </div>
-                            </div>
-                        )}
+                        <div className='space-y-2'>
+                          <Label htmlFor='exposureTarget'>
+                            Alvo da Exposição
+                          </Label>
+                          <Input
+                            id='exposureTarget'
+                            name='exposureTarget'
+                            placeholder='Ex: Unidade X, Setor Y...'
+                          />
+                        </div>
+                      </div>
+
+                      <div className='space-y-2'>
+                        <Label htmlFor='hazard'>
+                          Perigo / Agente de Risco
+                        </Label>
+                        <Select
+                          name='hazard'
+                          required
+                          onValueChange={(value) =>
+                            setSelectedHazard(getHazardById(value) || null)
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder='Selecione o perigo no catálogo' />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {initialHazardData.map((hazard) => (
+                              <SelectItem key={hazard.id} value={hazard.id}>
+                                {hazard.name} ({hazard.category})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {selectedHazard && (
+                        <div className='grid md:grid-cols-2 gap-4 text-sm'>
+                          <div className='space-y-1'>
+                            <p className='font-medium text-muted-foreground'>
+                              Grupo de risco
+                            </p>
+                            <p className='font-semibold'>
+                              {selectedHazard.category}
+                            </p>
+                          </div>
+                          <div className='space-y-1'>
+                            <p className='font-medium text-muted-foreground'>
+                              Fundamentação legal
+                            </p>
+                            <p className='font-semibold'>
+                              {selectedHazard.legalBasis}
+                            </p>
+                          </div>
+                          <div className='space-y-1 col-span-2'>
+                            <p className='font-medium text-muted-foreground'>
+                              Efeitos potenciais / Possíveis lesões ou agravos
+                              à saúde
+                            </p>
+                            <p className='font-semibold'>
+                              {selectedHazard.potentialEffects}
+                            </p>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Section 2 */}
                     <div className='space-y-4 rounded-md border p-4'>
-                       <h3 className='font-semibold'>Seção 02: Caracterização da Exposição</h3>
+                      <h3 className='font-semibold'>
+                        Seção 02: Caracterização da Exposição
+                      </h3>
+                      <div className='space-y-2'>
+                        <Label htmlFor='source'>
+                          Fontes ou circunstâncias
+                        </Label>
+                        <Textarea
+                          id='source'
+                          name='source'
+                          placeholder='Descreva a fonte do risco. Ex: Prensa hidráulica modelo X, atividade de solda...'
+                          required
+                        />
+                      </div>
+                      <div className='grid md:grid-cols-2 gap-4'>
                         <div className='space-y-2'>
-                            <Label htmlFor='source'>Fontes ou circunstâncias</Label>
-                            <Textarea id='source' name='source' placeholder='Descreva a fonte do risco. Ex: Prensa hidráulica modelo X, atividade de solda...' required />
+                          <Label htmlFor='exposureTime'>Tempo de exposição</Label>
+                          <Input
+                            id='exposureTime'
+                            name='exposureTime'
+                            placeholder='HH:MM'
+                          />
                         </div>
-                        <div className='grid md:grid-cols-2 gap-4'>
-                            <div className='space-y-2'>
-                                <Label htmlFor='exposureTime'>Tempo de exposição</Label>
-                                <Input id='exposureTime' name='exposureTime' placeholder='HH:MM' />
+                        <div className='space-y-2'>
+                          <Label htmlFor='exposureType'>
+                            Tipo de Exposição
+                          </Label>
+                          <Select name='exposureType'>
+                            <SelectTrigger>
+                              <SelectValue placeholder='Selecione o tipo' />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value='not_informed'>
+                                Não Informado
+                              </SelectItem>
+                              <SelectItem value='permanent'>Permanente</SelectItem>
+                              <SelectItem value='eventual'>Eventual</SelectItem>
+                              <SelectItem value='intermittent'>
+                                Intermitente
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className='space-y-2'>
+                        <Label htmlFor='evaluationCriteria'>
+                          Critério de avaliação
+                        </Label>
+                        <Select name='evaluationCriteria'>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Selecione o critério' />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value='qualitative'>
+                              Qualitativo
+                            </SelectItem>
+                            <SelectItem value='quantitative'>
+                              Quantitativo
+                            </SelectItem>
+                            <SelectItem value='semi_quantitative'>
+                              Semi Quantitativo
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className='space-y-3'>
+                        <Label>Metodologia da Avaliação</Label>
+                        <div className='space-y-2'>
+                          {methodologies.map((item) => (
+                            <div
+                              key={item.id}
+                              className='flex items-center space-x-2'
+                            >
+                              <Checkbox
+                                id={`method-${item.id}`}
+                                name='methodology'
+                                value={item.id}
+                              />
+                              <label
+                                htmlFor={`method-${item.id}`}
+                                className='text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
+                              >
+                                {item.label}
+                              </label>
                             </div>
-                             <div className='space-y-2'>
-                                <Label htmlFor='exposureType'>Tipo de Exposição</Label>
-                                <Select name='exposureType'>
-                                    <SelectTrigger><SelectValue placeholder='Selecione o tipo' /></SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value='not_informed'>Não Informado</SelectItem>
-                                        <SelectItem value='permanent'>Permanente</SelectItem>
-                                        <SelectItem value='eventual'>Eventual</SelectItem>
-                                        <SelectItem value='intermittent'>Intermitente</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                          ))}
                         </div>
-                         <div className='space-y-2'>
-                            <Label htmlFor='evaluationCriteria'>Critério de avaliação</Label>
-                            <Select name='evaluationCriteria'>
-                                <SelectTrigger><SelectValue placeholder='Selecione o critério' /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value='qualitative'>Qualitativo</SelectItem>
-                                    <SelectItem value='quantitative'>Quantitativo</SelectItem>
-                                    <SelectItem value='semi_quantitative'>Semi Quantitativo</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className='space-y-3'>
-                            <Label>Metodologia da Avaliação</Label>
-                            <div className='space-y-2'>
-                                {methodologies.map((item) => (
-                                    <div key={item.id} className="flex items-center space-x-2">
-                                        <Checkbox id={`method-${item.id}`} name="methodology" value={item.id} />
-                                        <label htmlFor={`method-${item.id}`} className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                            {item.label}
-                                        </label>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                         <div className='space-y-2'>
-                            <Label htmlFor='exposureDescription'>Descrição da exposição</Label>
-                            <Textarea id='exposureDescription' name='exposureDescription' placeholder='Descreva mais detalhes de como ocorre a exposição...' />
-                        </div>
+                      </div>
+                      <div className='space-y-2'>
+                        <Label htmlFor='exposureDescription'>
+                          Descrição da exposição
+                        </Label>
+                        <Textarea
+                          id='exposureDescription'
+                          name='exposureDescription'
+                          placeholder='Descreva mais detalhes de como ocorre a exposição...'
+                        />
+                      </div>
                     </div>
                   </div>
                   <DialogFooter>
@@ -480,66 +666,113 @@ export default function PgrPage() {
       {/* Evaluate Risk Dialog */}
       <Dialog
         open={isEvaluateDialogOpen}
-        onOpenChange={setIsEvaluateDialogOpen}
+        onOpenChange={(isOpen) => {
+          setIsEvaluateDialogOpen(isOpen)
+          if (!isOpen) {
+            setFrequency(0)
+            setSeverity(0)
+            setDerivedRisk(null)
+          }
+        }}
       >
-        <DialogContent>
+        <DialogContent className='sm:max-w-4xl'>
           <DialogHeader>
             <DialogTitle>Avaliação de Risco</DialogTitle>
             <DialogDescription>
-              Avalie a Probabilidade e a Severidade do risco para calcular o
+              Avalie a Frequência e a Classificação de Efeito para calcular o
               Nível de Risco.
             </DialogDescription>
           </DialogHeader>
           <form id='evaluate-risk-form' onSubmit={handleEvaluateRisk}>
-            <div className='grid gap-6 py-4'>
-              <div className='space-y-2'>
-                <Label htmlFor='probability'>Probabilidade</Label>
-                <Select
-                  name='probability'
-                  required
-                  defaultValue={currentItem?.evaluation?.probability.toString()}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder='Selecione a probabilidade' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='1'>1 - Muito Baixa</SelectItem>
-                    <SelectItem value='2'>2 - Baixa</SelectItem>
-                    <SelectItem value='3'>3 - Média</SelectItem>
-                    <SelectItem value='4'>4 - Alta</SelectItem>
-                    <SelectItem value='5'>5 - Muito Alta</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className='text-xs text-muted-foreground'>
-                  Qual a chance do evento de risco ocorrer?
-                </p>
+            <div className='grid gap-8 py-4 md:grid-cols-2'>
+              {/* Left Column: Selectors */}
+              <div className='space-y-8'>
+                <div className='space-y-2'>
+                  <Label htmlFor='frequency'>Frequência</Label>
+                  <Select
+                    name='frequency'
+                    required
+                    value={frequency.toString()}
+                    onValueChange={handleFrequencyChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder='Selecione a frequência' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {frequencyOptions.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value.toString()}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='severity'>Classificação de Efeito</Label>
+                  <Select
+                    name='severity'
+                    required
+                    value={severity.toString()}
+                    onValueChange={handleSeverityChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder='Selecione a classificação' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {severityOptions.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value.toString()}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {derivedRisk && (
+                  <div className='rounded-md border p-4 space-y-2'>
+                     <h3 className='font-semibold'>Resultado da Avaliação</h3>
+                     <div className='flex items-center gap-2'>
+                        <span className={cn('h-4 w-4 rounded-full', derivedRisk.riskColor)} />
+                        <p className='font-bold'>{derivedRisk.riskLabel}</p>
+                     </div>
+                     <p className='text-sm text-muted-foreground'>{derivedRisk.riskDescription}</p>
+                  </div>
+                )}
               </div>
-              <div className='space-y-2'>
-                <Label htmlFor='severity'>Severidade</Label>
-                <Select
-                  name='severity'
-                  required
-                  defaultValue={currentItem?.evaluation?.severity.toString()}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder='Selecione a severidade' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value='1'>1 - Insignificante</SelectItem>
-                    <SelectItem value='2'>2 - Menor</SelectItem>
-                    <SelectItem value='3'>3 - Moderada</SelectItem>
-                    <SelectItem value='4'>4 - Maior</SelectItem>
-                    <SelectItem value='5'>5 - Catastrófica</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className='text-xs text-muted-foreground'>
-                  Qual o impacto caso o evento de risco ocorra?
-                </p>
+
+              {/* Right Column: Matrix */}
+              <div className='space-y-4'>
+                <h3 className='font-semibold text-center'>Matriz de Risco</h3>
+                <div className='grid grid-cols-5 gap-1 text-xs text-center'>
+                  {riskMatrixConfig.matrix.slice(1).reverse().map((row, rowIndex) =>
+                      row.map((level, colIndex) => {
+                          const currentLevel = riskMatrixConfig.levels[level.toString() as '1'];
+                          const isSelected = (colIndex + 1 === frequency) && (5 - rowIndex === severity);
+                          return (
+                            <div key={`${rowIndex}-${colIndex}`} className={cn(
+                                'h-12 w-12 flex items-center justify-center rounded-sm',
+                                currentLevel.color,
+                                isSelected && 'ring-2 ring-offset-2 ring-primary'
+                            )}>
+                                {currentLevel.label}
+                            </div>
+                          )
+                      })
+                  )}
+                </div>
+                 <div className='flex justify-center gap-4 text-xs mt-2'>
+                    {Object.values(riskMatrixConfig.levels).map(level => (
+                        <div key={level.label} className="flex items-center gap-1">
+                            <div className={cn("h-3 w-3 rounded-full", level.color)}></div>
+                            <span>{level.label}</span>
+                        </div>
+                    ))}
+                </div>
               </div>
             </div>
             <DialogFooter>
               <Button
                 variant='outline'
+                type='button'
                 onClick={() => setIsEvaluateDialogOpen(false)}
               >
                 Cancelar
