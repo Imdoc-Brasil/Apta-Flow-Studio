@@ -54,8 +54,6 @@ export const initialHazardData = [
     category: 'Físico',
     legalBasis: 'NR-15, Anexo 1',
     potentialEffects: 'Perda auditiva (PAIR), estresse, problemas cardiovasculares.',
-    toleranceLimit: '85 dB(A)',
-    actionLevel: '80 dB(A)',
   },
   {
     id: 'RF-002',
@@ -74,7 +72,6 @@ export const initialHazardData = [
     category: 'Químico',
     legalBasis: 'NR-15, Anexo 12',
     potentialEffects: 'Silicose, câncer de pulmão, doenças renais.',
-    toleranceLimit: '0.05 mg/m³',
   },
   {
     id: 'RE-001',
@@ -96,7 +93,7 @@ export const initialHazardData = [
   },
 ]
 
-type Hazard = (typeof initialHazardData)[0]
+export type Hazard = (typeof initialHazardData)[0]
 type Epc = (typeof initialEpcData)[0]
 type Epi = (typeof initialEpiData)[0]
 

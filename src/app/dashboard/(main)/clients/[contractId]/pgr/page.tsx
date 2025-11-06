@@ -46,12 +46,24 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { initialHazardData } from '@/app/dashboard/(main)/risks/page'
+import { initialHazardData, type Hazard } from '@/app/dashboard/(main)/risks/page'
 import { initialUnitsData } from '../units/page'
 import { useToast } from '@/hooks/use-toast'
+import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
 
-type RiskLevel = 'Trivial' | 'Tolerável' | 'Moderado' | 'Substancial' | 'Intolerável'
-type RiskColor = 'bg-green-500' | 'bg-blue-500' | 'bg-yellow-500' | 'bg-orange-500' | 'bg-red-500'
+type RiskLevel =
+  | 'Trivial'
+  | 'Tolerável'
+  | 'Moderado'
+  | 'Substancial'
+  | 'Intolerável'
+type RiskColor =
+  | 'bg-green-500'
+  | 'bg-blue-500'
+  | 'bg-yellow-500'
+  | 'bg-orange-500'
+  | 'bg-red-500'
 
 interface RiskEvaluation {
   probability: number
@@ -86,13 +98,23 @@ const initialInventory = [
   },
 ]
 
+const methodologies = [
+    { id: "questionnaire", label: "Aplicação questionário de avaliação preliminar de risco" },
+    { id: "interview", label: "Entrevista presencial" },
+    { id: "info", label: "Informações fornecidas pelo representante da empresa" },
+    { id: "measurements", label: "Uso de equipamentos e protocolo de medições" },
+    { id: "tool", label: "Aplicação de ferramenta de avaliação preliminar de fatores de rico" },
+]
+
 export default function PgrPage() {
   const { toast } = useToast()
   const [inventory, setInventory] = useState(initialInventory)
   const [isAddRiskDialogOpen, setIsAddRiskDialogOpen] = useState(false)
   const [isEvaluateDialogOpen, setIsEvaluateDialogOpen] = useState(false)
   const [isPlanDialogOpen, setIsPlanDialogOpen] = useState(false)
-  const [currentItem, setCurrentItem] = useState<typeof initialInventory[0] | null>(null)
+  const [currentItem, setCurrentItem] =
+    useState<(typeof initialInventory)[0] | null>(null)
+  const [selectedHazard, setSelectedHazard] = useState<Hazard | null>(null)
 
   const handleAddRisk = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -107,9 +129,13 @@ export default function PgrPage() {
     }
     setInventory((prev) => [...prev, newRisk])
     setIsAddRiskDialogOpen(false)
+    setSelectedHazard(null)
   }
 
-  const getRiskLevel = (probability: number, severity: number): RiskEvaluation => {
+  const getRiskLevel = (
+    probability: number,
+    severity: number
+  ): RiskEvaluation => {
     const riskLevel = probability * severity
     let riskLabel: RiskLevel = 'Trivial'
     let riskColor: RiskColor = 'bg-green-500'
@@ -140,11 +166,11 @@ export default function PgrPage() {
     const formData = new FormData(event.currentTarget)
     const probability = parseInt(formData.get('probability') as string, 10)
     const severity = parseInt(formData.get('severity') as string, 10)
-    
+
     const evaluation = getRiskLevel(probability, severity)
 
-    setInventory(prev => 
-      prev.map(item => 
+    setInventory((prev) =>
+      prev.map((item) =>
         item.inventoryId === currentItem.inventoryId
           ? { ...item, evaluation }
           : item
@@ -158,12 +184,13 @@ export default function PgrPage() {
     setCurrentItem(null)
   }
 
-  const openEvaluateDialog = (item: typeof initialInventory[0]) => {
+  const openEvaluateDialog = (item: (typeof initialInventory)[0]) => {
     setCurrentItem(item)
     setIsEvaluateDialogOpen(true)
   }
 
-  const getHazardById = (id: string) => initialHazardData.find((h) => h.id === id)
+  const getHazardById = (id: string) =>
+    initialHazardData.find((h) => h.id === id)
   const getUnitById = (id: string) => initialUnitsData.find((u) => u.id === id)
 
   return (
@@ -178,83 +205,151 @@ export default function PgrPage() {
           <TabsList>
             <TabsTrigger value='inventory'>Inventário de Riscos</TabsTrigger>
             <TabsTrigger value='plan'>Plano de Ação</TabsTrigger>
-            <TabsTrigger value='matrix' disabled>Matriz de Risco</TabsTrigger>
+            <TabsTrigger value='matrix' disabled>
+              Matriz de Risco
+            </TabsTrigger>
           </TabsList>
           <div className='ml-auto flex items-center gap-2'>
-            <Dialog open={isAddRiskDialogOpen} onOpenChange={setIsAddRiskDialogOpen}>
+            <Dialog
+              open={isAddRiskDialogOpen}
+              onOpenChange={setIsAddRiskDialogOpen}
+            >
               <DialogTrigger asChild>
                 <Button>
                   <PlusCircle className='mr-2 h-4 w-4' />
                   Adicionar Risco ao Inventário
                 </Button>
               </DialogTrigger>
-              <DialogContent className='sm:max-w-lg'>
+              <DialogContent className='sm:max-w-3xl'>
                 <DialogHeader>
                   <DialogTitle>Adicionar Risco ao Inventário</DialogTitle>
                   <DialogDescription>
-                    Associe um perigo a uma unidade, setor e fonte geradora específica.
+                    Associe um perigo a uma unidade, setor e fonte geradora
+                    específica.
                   </DialogDescription>
                 </DialogHeader>
                 <form id='add-risk-form' onSubmit={handleAddRisk}>
-                  <div className='grid gap-4 py-4'>
-                    {/* Form fields from previous step */}
-                     <div className='space-y-2'>
-                      <Label htmlFor='unit'>Unidade</Label>
-                      <Select name='unit' required>
-                        <SelectTrigger>
-                          <SelectValue placeholder='Selecione a unidade' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {initialUnitsData.map((unit) => (
-                            <SelectItem key={unit.id} value={unit.id}>
-                              {unit.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                  <div className='space-y-6 py-4'>
+                    {/* Section 1 */}
+                    <div className='space-y-4 rounded-md border p-4'>
+                        <h3 className='font-semibold'>Seção 01: Identificação</h3>
+                         <div className='grid md:grid-cols-2 gap-4'>
+                           <div className='space-y-2'>
+                                <Label htmlFor='exposureGroup'>Grupo de Exposição</Label>
+                                <Select name='exposureGroup' required>
+                                    <SelectTrigger><SelectValue placeholder='Selecione o grupo' /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value='unit'>Unidade</SelectItem>
+                                        <SelectItem value='sector'>Setor</SelectItem>
+                                        <SelectItem value='role'>Cargo</SelectItem>
+                                        <SelectItem value='ghe'>GHE</SelectItem>
+                                        <SelectItem value='employee'>Colaborador Específico</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className='space-y-2'>
+                                <Label htmlFor='exposureTarget'>Alvo da Exposição</Label>
+                                <Input id='exposureTarget' name='exposureTarget' placeholder='Ex: Unidade X, Setor Y...'/>
+                            </div>
+                        </div>
+
+                        <div className='space-y-2'>
+                            <Label htmlFor='hazard'>Perigo / Agente de Risco</Label>
+                            <Select name='hazard' required onValueChange={(value) => setSelectedHazard(getHazardById(value) || null)}>
+                                <SelectTrigger><SelectValue placeholder='Selecione o perigo no catálogo' /></SelectTrigger>
+                                <SelectContent>
+                                {initialHazardData.map((hazard) => (
+                                    <SelectItem key={hazard.id} value={hazard.id}>
+                                    {hazard.name} ({hazard.category})
+                                    </SelectItem>
+                                ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        
+                        {selectedHazard && (
+                            <div className='grid md:grid-cols-2 gap-4 text-sm'>
+                                <div className='space-y-1'>
+                                    <p className='font-medium text-muted-foreground'>Grupo de risco</p>
+                                    <p className='font-semibold'>{selectedHazard.category}</p>
+                                </div>
+                                <div className='space-y-1'>
+                                    <p className='font-medium text-muted-foreground'>Fundamentação legal</p>
+                                    <p className='font-semibold'>{selectedHazard.legalBasis}</p>
+                                </div>
+                                 <div className='space-y-1 col-span-2'>
+                                    <p className='font-medium text-muted-foreground'>Efeitos potenciais / Possíveis lesões ou agravos à saúde</p>
+                                    <p className='font-semibold'>{selectedHazard.potentialEffects}</p>
+                                </div>
+                            </div>
+                        )}
                     </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='sector'>Setor</Label>
-                      {/* TODO: This should be dynamic based on the selected unit */}
-                      <Select name='sector' required>
-                        <SelectTrigger>
-                          <SelectValue placeholder='Selecione o setor' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value='Administrativo'>Administrativo</SelectItem>
-                          <SelectItem value='Produção'>Produção</SelectItem>
-                          <SelectItem value='Logística'>Logística</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='hazard'>Perigo/Fator de Risco</Label>
-                      <Select name='hazard' required>
-                        <SelectTrigger>
-                          <SelectValue placeholder='Selecione o perigo no catálogo' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {initialHazardData.map((hazard) => (
-                            <SelectItem key={hazard.id} value={hazard.id}>
-                              {hazard.name} ({hazard.category})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='source'>Fonte Geradora/Atividade</Label>
-                      <Textarea
-                        id='source'
-                        name='source'
-                        placeholder='Descreva a fonte do risco. Ex: Prensa hidráulica modelo X, atividade de solda...'
-                        required
-                      />
+
+                    {/* Section 2 */}
+                    <div className='space-y-4 rounded-md border p-4'>
+                       <h3 className='font-semibold'>Seção 02: Caracterização da Exposição</h3>
+                        <div className='space-y-2'>
+                            <Label htmlFor='source'>Fontes ou circunstâncias</Label>
+                            <Textarea id='source' name='source' placeholder='Descreva a fonte do risco. Ex: Prensa hidráulica modelo X, atividade de solda...' required />
+                        </div>
+                        <div className='grid md:grid-cols-2 gap-4'>
+                            <div className='space-y-2'>
+                                <Label htmlFor='exposureTime'>Tempo de exposição</Label>
+                                <Input id='exposureTime' name='exposureTime' placeholder='HH:MM' />
+                            </div>
+                             <div className='space-y-2'>
+                                <Label htmlFor='exposureType'>Tipo de Exposição</Label>
+                                <Select name='exposureType'>
+                                    <SelectTrigger><SelectValue placeholder='Selecione o tipo' /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value='not_informed'>Não Informado</SelectItem>
+                                        <SelectItem value='permanent'>Permanente</SelectItem>
+                                        <SelectItem value='eventual'>Eventual</SelectItem>
+                                        <SelectItem value='intermittent'>Intermitente</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                         <div className='space-y-2'>
+                            <Label htmlFor='evaluationCriteria'>Critério de avaliação</Label>
+                            <Select name='evaluationCriteria'>
+                                <SelectTrigger><SelectValue placeholder='Selecione o critério' /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value='qualitative'>Qualitativo</SelectItem>
+                                    <SelectItem value='quantitative'>Quantitativo</SelectItem>
+                                    <SelectItem value='semi_quantitative'>Semi Quantitativo</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className='space-y-3'>
+                            <Label>Metodologia da Avaliação</Label>
+                            <div className='space-y-2'>
+                                {methodologies.map((item) => (
+                                    <div key={item.id} className="flex items-center space-x-2">
+                                        <Checkbox id={`method-${item.id}`} name="methodology" value={item.id} />
+                                        <label htmlFor={`method-${item.id}`} className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                            {item.label}
+                                        </label>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                         <div className='space-y-2'>
+                            <Label htmlFor='exposureDescription'>Descrição da exposição</Label>
+                            <Textarea id='exposureDescription' name='exposureDescription' placeholder='Descreva mais detalhes de como ocorre a exposição...' />
+                        </div>
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button variant='outline' onClick={() => setIsAddRiskDialogOpen(false)}>Cancelar</Button>
-                    <Button type='submit' form='add-risk-form'>Adicionar</Button>
+                    <Button
+                      variant='outline'
+                      onClick={() => setIsAddRiskDialogOpen(false)}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button type='submit' form='add-risk-form'>
+                      Adicionar
+                    </Button>
                   </DialogFooter>
                 </form>
               </DialogContent>
@@ -266,7 +361,8 @@ export default function PgrPage() {
             <CardHeader>
               <CardTitle>Inventário de Riscos Ocupacionais</CardTitle>
               <CardDescription>
-                Listagem de todos os perigos e riscos identificados na empresa. Avalie cada risco para determinar sua prioridade.
+                Listagem de todos os perigos e riscos identificados na empresa.
+                Avalie cada risco para determinar sua prioridade.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -277,7 +373,9 @@ export default function PgrPage() {
                     <TableHead>Setor</TableHead>
                     <TableHead>Nível de Risco</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead><span className='sr-only'>Ações</span></TableHead>
+                    <TableHead>
+                      <span className='sr-only'>Ações</span>
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -288,36 +386,61 @@ export default function PgrPage() {
                       <TableRow key={item.inventoryId}>
                         <TableCell className='font-medium'>
                           <div className='font-medium'>{hazard.name}</div>
-                          <div className='text-sm text-muted-foreground'>{item.source}</div>
+                          <div className='text-sm text-muted-foreground'>
+                            {item.source}
+                          </div>
                         </TableCell>
                         <TableCell>{item.sector}</TableCell>
                         <TableCell>
                           {item.evaluation ? (
                             <div className='flex items-center gap-2'>
-                              <span className={`h-3 w-3 rounded-full ${item.evaluation.riskColor}`} />
-                              <span>{item.evaluation.riskLevel} - {item.evaluation.riskLabel}</span>
+                              <span
+                                className={`h-3 w-3 rounded-full ${item.evaluation.riskColor}`}
+                              />
+                              <span>
+                                {item.evaluation.riskLevel} -{' '}
+                                {item.evaluation.riskLabel}
+                              </span>
                             </div>
                           ) : (
-                            <span className='text-muted-foreground'>Não avaliado</span>
+                            <span className='text-muted-foreground'>
+                              Não avaliado
+                            </span>
                           )}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={item.evaluation ? "secondary" : "outline"}>
-                            {item.evaluation ? "Avaliado" : "Pendente"}
+                          <Badge
+                            variant={item.evaluation ? 'secondary' : 'outline'}
+                          >
+                            {item.evaluation ? 'Avaliado' : 'Pendente'}
                           </Badge>
                         </TableCell>
                         <TableCell>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button aria-haspopup='true' size='icon' variant='ghost'><MoreHorizontal className='h-4 w-4' /></Button>
+                              <Button
+                                aria-haspopup='true'
+                                size='icon'
+                                variant='ghost'
+                              >
+                                <MoreHorizontal className='h-4 w-4' />
+                              </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align='end'>
                               <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                              <DropdownMenuItem onClick={() => openEvaluateDialog(item)}>Avaliar Risco</DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => openEvaluateDialog(item)}
+                              >
+                                Avaliar Risco
+                              </DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem disabled={!item.evaluation}>Criar Plano de Ação</DropdownMenuItem>
+                              <DropdownMenuItem disabled={!item.evaluation}>
+                                Criar Plano de Ação
+                              </DropdownMenuItem>
                               <DropdownMenuItem>Editar</DropdownMenuItem>
-                              <DropdownMenuItem className='text-destructive'>Excluir</DropdownMenuItem>
+                              <DropdownMenuItem className='text-destructive'>
+                                Excluir
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
@@ -329,21 +452,22 @@ export default function PgrPage() {
             </CardContent>
           </Card>
         </TabsContent>
-         <TabsContent value='plan'>
+        <TabsContent value='plan'>
           <Card>
             <CardHeader>
               <CardTitle>Plano de Ação</CardTitle>
               <CardDescription>
-                Ações de melhoria para mitigar ou eliminar os riscos identificados.
+                Ações de melhoria para mitigar ou eliminar os riscos
+                identificados.
               </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm h-96">
-                <div className="flex flex-col items-center gap-1 text-center">
-                  <h3 className="text-2xl font-bold tracking-tight">
+              <div className='flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm h-96'>
+                <div className='flex flex-col items-center gap-1 text-center'>
+                  <h3 className='text-2xl font-bold tracking-tight'>
                     Nenhuma ação planejada
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className='text-sm text-muted-foreground'>
                     Avalie um risco no inventário para criar uma ação.
                   </p>
                 </div>
@@ -354,20 +478,30 @@ export default function PgrPage() {
       </Tabs>
 
       {/* Evaluate Risk Dialog */}
-      <Dialog open={isEvaluateDialogOpen} onOpenChange={setIsEvaluateDialogOpen}>
+      <Dialog
+        open={isEvaluateDialogOpen}
+        onOpenChange={setIsEvaluateDialogOpen}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Avaliação de Risco</DialogTitle>
             <DialogDescription>
-              Avalie a Probabilidade e a Severidade do risco para calcular o Nível de Risco.
+              Avalie a Probabilidade e a Severidade do risco para calcular o
+              Nível de Risco.
             </DialogDescription>
           </DialogHeader>
           <form id='evaluate-risk-form' onSubmit={handleEvaluateRisk}>
             <div className='grid gap-6 py-4'>
               <div className='space-y-2'>
                 <Label htmlFor='probability'>Probabilidade</Label>
-                <Select name='probability' required defaultValue={currentItem?.evaluation?.probability.toString()}>
-                  <SelectTrigger><SelectValue placeholder='Selecione a probabilidade'/></SelectTrigger>
+                <Select
+                  name='probability'
+                  required
+                  defaultValue={currentItem?.evaluation?.probability.toString()}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder='Selecione a probabilidade' />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value='1'>1 - Muito Baixa</SelectItem>
                     <SelectItem value='2'>2 - Baixa</SelectItem>
@@ -376,12 +510,20 @@ export default function PgrPage() {
                     <SelectItem value='5'>5 - Muito Alta</SelectItem>
                   </SelectContent>
                 </Select>
-                 <p className='text-xs text-muted-foreground'>Qual a chance do evento de risco ocorrer?</p>
+                <p className='text-xs text-muted-foreground'>
+                  Qual a chance do evento de risco ocorrer?
+                </p>
               </div>
-               <div className='space-y-2'>
+              <div className='space-y-2'>
                 <Label htmlFor='severity'>Severidade</Label>
-                <Select name='severity' required defaultValue={currentItem?.evaluation?.severity.toString()}>
-                  <SelectTrigger><SelectValue placeholder='Selecione a severidade'/></SelectTrigger>
+                <Select
+                  name='severity'
+                  required
+                  defaultValue={currentItem?.evaluation?.severity.toString()}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder='Selecione a severidade' />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value='1'>1 - Insignificante</SelectItem>
                     <SelectItem value='2'>2 - Menor</SelectItem>
@@ -390,12 +532,21 @@ export default function PgrPage() {
                     <SelectItem value='5'>5 - Catastrófica</SelectItem>
                   </SelectContent>
                 </Select>
-                 <p className='text-xs text-muted-foreground'>Qual o impacto caso o evento de risco ocorra?</p>
+                <p className='text-xs text-muted-foreground'>
+                  Qual o impacto caso o evento de risco ocorra?
+                </p>
               </div>
             </div>
-             <DialogFooter>
-              <Button variant='outline' onClick={() => setIsEvaluateDialogOpen(false)}>Cancelar</Button>
-              <Button type='submit' form='evaluate-risk-form'>Salvar Avaliação</Button>
+            <DialogFooter>
+              <Button
+                variant='outline'
+                onClick={() => setIsEvaluateDialogOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button type='submit' form='evaluate-risk-form'>
+                Salvar Avaliação
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>
