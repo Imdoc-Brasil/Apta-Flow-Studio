@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
+import React, { useState, useEffect } from 'react'
 
 const pgrHistoryData = [
   {
@@ -42,6 +43,23 @@ const pgrHistoryData = [
     status: 'Expirado',
   },
 ]
+
+function ClientSideDateFormatter({ dateString }: { dateString: string }) {
+  const [formattedDate, setFormattedDate] = useState('')
+
+  useEffect(() => {
+    // A 'T00:00:00' garante que a data seja interpretada em UTC,
+    // evitando que ela mude de dia dependendo do fuso horário do navegador.
+    const date = new Date(`${dateString}T00:00:00`)
+    setFormattedDate(date.toLocaleDateString('pt-BR'))
+  }, [dateString])
+
+  if (!formattedDate) {
+    return null // Retorna nulo durante a renderização do servidor e a primeira renderização do cliente
+  }
+
+  return <>{formattedDate}</>
+}
 
 export default function PgrHistoryPage() {
   return (
@@ -84,13 +102,15 @@ export default function PgrHistoryPage() {
                 <TableRow key={item.version}>
                   <TableCell className='font-medium'>{item.version}</TableCell>
                   <TableCell>
-                    {new Date(item.issueDate).toLocaleDateString('pt-BR')}
+                    <ClientSideDateFormatter dateString={item.issueDate} />
                   </TableCell>
                   <TableCell>{item.validity}</TableCell>
                   <TableCell>{item.responsible}</TableCell>
                   <TableCell>
                     <Badge
-                      variant={item.status === 'Vigente' ? 'secondary' : 'outline'}
+                      variant={
+                        item.status === 'Vigente' ? 'secondary' : 'outline'
+                      }
                     >
                       {item.status}
                     </Badge>
