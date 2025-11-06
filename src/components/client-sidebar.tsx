@@ -102,8 +102,13 @@ export function ClientSidebar() {
   const sstNavItems = [
     {
       href: `${basePath}/pgr`,
-      label: 'Gestão de Riscos (PGR)',
+      label: 'Inventário de Riscos',
       icon: ShieldAlert,
+    },
+    {
+      href: `${basePath}/pgr/history`,
+      label: 'Gestão de PGR',
+      icon: FileText,
     },
     { href: `${basePath}/pcmso`, label: 'Gestão de PCMSO', icon: BookUser },
     { href: `${basePath}/asos`, label: 'Gestão de ASOs', icon: ClipboardCheck },
