@@ -57,6 +57,7 @@ import { cn } from '@/lib/utils'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
+import { initialSectorsData } from '../sectors/data'
 
 type RiskLevelLabel =
   | 'Irrelevante'
@@ -322,7 +323,7 @@ export default function PgrPage() {
             <Button asChild variant='outline'>
               <Link href={`/dashboard/clients/${contractId}/pgr/history`}>
                 <Lock className='mr-2 h-4 w-4' />
-                Gestão de PGRA
+                Gestão de PGR
               </Link>
             </Button>
             <Dialog
@@ -378,11 +379,18 @@ export default function PgrPage() {
                             <Label htmlFor='exposureTarget'>
                               Alvo da Exposição
                             </Label>
-                            <Input
-                              id='exposureTarget'
-                              name='exposureTarget'
-                              placeholder='Ex: Unidade X, Setor Y...'
-                            />
+                             <Select name='exposureTarget' required>
+                              <SelectTrigger>
+                                <SelectValue placeholder='Selecione o setor' />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {initialSectorsData.map((sector) => (
+                                  <SelectItem key={sector.id} value={sector.name}>
+                                    {sector.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </div>
                         </div>
 

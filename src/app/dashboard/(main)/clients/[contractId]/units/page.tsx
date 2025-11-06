@@ -11,7 +11,13 @@ import {
   CardFooter,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { MoreHorizontal, PlusCircle, Search, Filter, ArrowRight } from 'lucide-react'
+import {
+  MoreHorizontal,
+  PlusCircle,
+  Search,
+  Filter,
+  ArrowRight,
+} from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -37,6 +43,7 @@ import { initialClientsData } from '@/app/dashboard/(main)/clients/data'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Textarea } from '@/components/ui/textarea'
 import Link from 'next/link'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 export const initialUnitsData = [
   {
@@ -48,6 +55,10 @@ export const initialUnitsData = [
     status: 'Ativa',
     cnae: '62.01-5-01',
     riskLevel: '3',
+    legalResponsible: 'Dr. Ricardo Mendes',
+    pgrResponsible: 'Eng. Ana Beatriz',
+    ltcatResponsible: 'Eng. Ana Beatriz',
+    pcmsoResponsible: 'Dr. Carlos Alberto',
   },
   {
     id: 'UNIT-002',
@@ -58,6 +69,10 @@ export const initialUnitsData = [
     status: 'Ativa',
     cnae: '62.01-5-01',
     riskLevel: '3',
+    legalResponsible: 'Dr. Ricardo Mendes',
+    pgrResponsible: 'Eng. Carlos Silva',
+    ltcatResponsible: 'Eng. Carlos Silva',
+    pcmsoResponsible: 'Dra. Fernanda Costa',
   },
 ]
 
@@ -79,32 +94,53 @@ export default function UnitsPage() {
   const [statusFilter, setStatusFilter] = useState<string[]>(['Ativa'])
 
   // Form state
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
-  const [cnpj, setCnpj] = useState('')
-  const [address, setAddress] = useState('')
-  const [cnae, setCnae] = useState('')
-  const [riskLevel, setRiskLevel] = useState('')
+  const [formState, setFormState] = useState<Omit<Unit, 'id' | 'status'>>({
+    name: '',
+    description: '',
+    cnpj: '',
+    address: '',
+    cnae: '',
+    riskLevel: '',
+    legalResponsible: '',
+    pgrResponsible: '',
+    ltcatResponsible: '',
+    pcmsoResponsible: '',
+  })
 
   useEffect(() => {
     if (client) {
       if (inheritData) {
-        setName(client.name)
-        setDescription('') // Description is specific to the unit
-        setCnpj(client.cnpj)
-        setAddress(client.address)
-        setCnae(client.cnae)
-        setRiskLevel(client.riskLevel)
+        setFormState((prev) => ({
+          ...prev,
+          name: client.name,
+          cnpj: client.cnpj,
+          address: client.address,
+          cnae: client.cnae,
+          riskLevel: client.riskLevel,
+        }))
       } else {
-        setName('')
-        setDescription('')
-        setCnpj('')
-        setAddress('')
-        setCnae('')
-        setRiskLevel('')
+        setFormState({
+          name: '',
+          description: '',
+          cnpj: '',
+          address: '',
+          cnae: '',
+          riskLevel: '',
+          legalResponsible: '',
+          pgrResponsible: '',
+          ltcatResponsible: '',
+          pcmsoResponsible: '',
+        })
       }
     }
   }, [inheritData, client])
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target
+    setFormState((prev) => ({ ...prev, [name]: value }))
+  }
 
   const handleAddUnit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -112,12 +148,7 @@ export default function UnitsPage() {
       id: `UNIT-${Math.floor(Math.random() * 1000)
         .toString()
         .padStart(3, '0')}`,
-      name,
-      description,
-      cnpj,
-      address,
-      cnae,
-      riskLevel,
+      ...formState,
       status: 'Ativa',
     }
     setUnits((prev) => [...prev, newUnit])
@@ -150,7 +181,7 @@ export default function UnitsPage() {
                 </span>
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className='sm:max-w-2xl'>
               <DialogHeader>
                 <DialogTitle>Adicionar Nova Unidade</DialogTitle>
                 <DialogDescription>
@@ -158,88 +189,132 @@ export default function UnitsPage() {
                 </DialogDescription>
               </DialogHeader>
               <form id='add-unit-form' onSubmit={handleAddUnit}>
-                <div className='grid gap-4 py-4'>
-                  <div className='flex items-center space-x-2 mb-4'>
-                    <Checkbox
-                      id='inherit'
-                      checked={inheritData}
-                      onCheckedChange={(checked) =>
-                        setInheritData(checked as boolean)
-                      }
-                    />
-                    <Label htmlFor='inherit' className='cursor-pointer'>
-                      Herdar dados da empresa principal
-                    </Label>
+                <ScrollArea className='h-[60vh] pr-6'>
+                  <div className='grid gap-4 py-4'>
+                    <div className='flex items-center space-x-2 mb-4'>
+                      <Checkbox
+                        id='inherit'
+                        checked={inheritData}
+                        onCheckedChange={(checked) =>
+                          setInheritData(checked as boolean)
+                        }
+                      />
+                      <Label htmlFor='inherit' className='cursor-pointer'>
+                        Herdar dados da empresa principal
+                      </Label>
+                    </div>
+
+                    <div className='space-y-2'>
+                      <Label htmlFor='name'>Nome</Label>
+                      <Input
+                        id='name'
+                        name='name'
+                        value={formState.name}
+                        onChange={handleInputChange}
+                        required
+                      />
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='description'>Descrição</Label>
+                      <Textarea
+                        id='description'
+                        name='description'
+                        value={formState.description}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+
+                    <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                      <div className='space-y-2'>
+                        <Label htmlFor='cnpj'>CNPJ</Label>
+                        <Input
+                          id='cnpj'
+                          name='cnpj'
+                          value={formState.cnpj}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                      <div className='space-y-2'>
+                        <Label htmlFor='address'>Endereço</Label>
+                        <Input
+                          id='address'
+                          name='address'
+                          value={formState.address}
+                          onChange={handleInputChange}
+                          required
+                        />
+                      </div>
+                      <div className='space-y-2'>
+                        <Label htmlFor='cnae'>CNAE</Label>
+                        <Input
+                          id='cnae'
+                          name='cnae'
+                          value={formState.cnae}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                      <div className='space-y-2'>
+                        <Label htmlFor='riskLevel'>Grau de Risco</Label>
+                        <Input
+                          id='riskLevel'
+                          name='riskLevel'
+                          value={formState.riskLevel}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                    </div>
+
+                    <div className='space-y-4 pt-4 border-t'>
+                      <h3 className='font-medium text-lg'>Responsáveis</h3>
+                      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                        <div className='space-y-2'>
+                          <Label htmlFor='legalResponsible'>
+                            Responsável Legal
+                          </Label>
+                          <Input
+                            id='legalResponsible'
+                            name='legalResponsible'
+                            value={formState.legalResponsible}
+                            onChange={handleInputChange}
+                          />
+                        </div>
+                        <div className='space-y-2'>
+                          <Label htmlFor='pgrResponsible'>
+                            Responsável pelo PGR
+                          </Label>
+                          <Input
+                            id='pgrResponsible'
+                            name='pgrResponsible'
+                            value={formState.pgrResponsible}
+                            onChange={handleInputChange}
+                          />
+                        </div>
+                        <div className='space-y-2'>
+                          <Label htmlFor='ltcatResponsible'>
+                            Responsável pelo LTCAT
+                          </Label>
+                          <Input
+                            id='ltcatResponsible'
+                            name='ltcatResponsible'
+                            value={formState.ltcatResponsible}
+                            onChange={handleInputChange}
+                          />
+                        </div>
+                        <div className='space-y-2'>
+                          <Label htmlFor='pcmsoResponsible'>
+                            Responsável pelo PCMSO
+                          </Label>
+                          <Input
+                            id='pcmsoResponsible'
+                            name='pcmsoResponsible'
+                            value={formState.pcmsoResponsible}
+                            onChange={handleInputChange}
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label htmlFor='name' className='text-right'>
-                      Nome
-                    </Label>
-                    <Input
-                      id='name'
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className='col-span-3'
-                      required
-                    />
-                  </div>
-                  <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label htmlFor='description' className='text-right'>
-                      Descrição
-                    </Label>
-                    <Textarea
-                      id='description'
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      className='col-span-3'
-                    />
-                  </div>
-                  <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label htmlFor='cnpj' className='text-right'>
-                      CNPJ
-                    </Label>
-                    <Input
-                      id='cnpj'
-                      value={cnpj}
-                      onChange={(e) => setCnpj(e.target.value)}
-                      className='col-span-3'
-                    />
-                  </div>
-                  <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label htmlFor='address' className='text-right'>
-                      Endereço
-                    </Label>
-                    <Input
-                      id='address'
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      className='col-span-3'
-                      required
-                    />
-                  </div>
-                  <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label htmlFor='cnae' className='text-right'>
-                      CNAE
-                    </Label>
-                    <Input
-                      id='cnae'
-                      value={cnae}
-                      onChange={(e) => setCnae(e.target.value)}
-                      className='col-span-3'
-                    />
-                  </div>
-                  <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label htmlFor='riskLevel' className='text-right'>
-                      Grau de Risco
-                    </Label>
-                    <Input
-                      id='riskLevel'
-                      value={riskLevel}
-                      onChange={(e) => setRiskLevel(e.target.value)}
-                      className='col-span-3'
-                    />
-                  </div>
-                </div>
+                </ScrollArea>
               </form>
               <DialogFooter>
                 <Button
@@ -261,26 +336,30 @@ export default function UnitsPage() {
       </CardHeader>
       <CardContent>
         {filteredUnits.length > 0 ? (
-           <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
-           {filteredUnits.map((unit) => (
-             <Card key={unit.id} className='flex flex-col'>
-               <CardHeader>
-                 <CardTitle>{unit.name}</CardTitle>
-                 <CardDescription>{unit.address}</CardDescription>
-               </CardHeader>
-               <CardContent className='flex-grow'>
-                <p className='text-sm text-muted-foreground'>{unit.description}</p>
-               </CardContent>
-               <CardFooter>
+          <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
+            {filteredUnits.map((unit) => (
+              <Card key={unit.id} className='flex flex-col'>
+                <CardHeader>
+                  <CardTitle>{unit.name}</CardTitle>
+                  <CardDescription>{unit.address}</CardDescription>
+                </CardHeader>
+                <CardContent className='flex-grow'>
+                  <p className='text-sm text-muted-foreground'>
+                    {unit.description}
+                  </p>
+                </CardContent>
+                <CardFooter>
                   <Button asChild className='w-full'>
-                    <Link href={`/dashboard/clients/${contractId}/sectors?unitId=${unit.id}`}>
+                    <Link
+                      href={`/dashboard/clients/${contractId}/sectors?unitId=${unit.id}`}
+                    >
                       Ver Setores <ArrowRight className='ml-2 h-4 w-4' />
                     </Link>
                   </Button>
-               </CardFooter>
-             </Card>
-           ))}
-         </div>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
         ) : (
           <div className='flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm h-96'>
             <div className='flex flex-col items-center gap-1 text-center'>

@@ -44,8 +44,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { initialStaffsData } from '@/app/dashboard/(main)/employees/page'
 import { useToast } from '@/hooks/use-toast'
+import { initialUnitsData } from '../units/page'
 
 const initialPgrHistoryData = [
   {
@@ -54,6 +54,7 @@ const initialPgrHistoryData = [
     validity: '24 meses',
     responsible: 'Eng. Ana Beatriz',
     status: 'Vigente',
+    unit: 'Matriz São Paulo',
   },
   {
     version: '1.0',
@@ -61,6 +62,7 @@ const initialPgrHistoryData = [
     validity: '24 meses',
     responsible: 'Eng. Carlos Silva',
     status: 'Expirado',
+    unit: 'Filial Rio de Janeiro',
   },
 ]
 
@@ -70,10 +72,13 @@ function ClientSideDateFormatter({ dateString }: { dateString: string }) {
   const [formattedDate, setFormattedDate] = useState('')
 
   useEffect(() => {
-    // A 'T00:00:00' garante que a data seja interpretada em UTC,
-    // evitando que ela mude de dia dependendo do fuso horário do navegador.
-    const date = new Date(`${dateString}T00:00:00`)
-    setFormattedDate(date.toLocaleDateString('pt-BR'))
+    if (dateString) {
+      const date = new Date(dateString)
+      // Ajuste para garantir que a data seja interpretada em UTC e não mude de dia
+      const timezoneOffset = date.getTimezoneOffset() * 60000
+      const adjustedDate = new Date(date.getTime() + timezoneOffset)
+      setFormattedDate(adjustedDate.toLocaleDateString('pt-BR'))
+    }
   }, [dateString])
 
   if (!formattedDate) {
@@ -87,6 +92,7 @@ export default function PgrHistoryPage() {
   const [pgrHistory, setPgrHistory] = useState(initialPgrHistoryData)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const { toast } = useToast()
+  const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null)
 
   const getNextVersion = () => {
     if (pgrHistory.length === 0) return '1.0'
@@ -98,24 +104,42 @@ export default function PgrHistoryPage() {
 
   const handleEmitPgr = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const formData = new FormData(event.currentTarget)
-    const responsibleName =
-      initialStaffsData.find(
-        (staff) => staff.email === (formData.get('responsible') as string)
-      )?.name || 'Não definido'
+    if (!selectedUnitId) {
+      toast({
+        variant: 'destructive',
+        title: 'Unidade não selecionada',
+        description: 'Por favor, selecione uma unidade para emitir o PGR.',
+      })
+      return
+    }
 
+    const selectedUnit = initialUnitsData.find(
+      (unit) => unit.id === selectedUnitId
+    )
+    if (!selectedUnit) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'Unidade selecionada não encontrada.',
+      })
+      return
+    }
+
+    const formData = new FormData(event.currentTarget)
     const newPgr: PgrEntry = {
-      version: formData.get('version') as string,
-      issueDate: new Date().toISOString().split('T')[0],
-      validity: formData.get('validity') as string,
-      responsible: responsibleName,
+      version: getNextVersion(),
+      issueDate: formData.get('issueDate') as string,
+      validity: '24 meses',
+      responsible: selectedUnit.pgrResponsible || 'Não definido',
       status: 'Vigente',
+      unit: selectedUnit.name,
     }
     setPgrHistory((prev) => [newPgr, ...prev])
     setIsDialogOpen(false)
+    setSelectedUnitId(null)
     toast({
       title: 'PGR Emitido com Sucesso!',
-      description: `A versão ${newPgr.version} do PGR foi adicionada ao histórico.`,
+      description: `A versão ${newPgr.version} do PGR para a unidade ${newPgr.unit} foi adicionada.`,
     })
   }
 
@@ -144,45 +168,58 @@ export default function PgrHistoryPage() {
               <form id='emit-pgr-form' onSubmit={handleEmitPgr}>
                 <div className='grid gap-4 py-4'>
                   <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label htmlFor='version' className='text-right'>
-                      Versão
+                    <Label htmlFor='unit' className='text-right'>
+                      Unidade
                     </Label>
-                    <Input
-                      id='version'
-                      name='version'
-                      className='col-span-3'
-                      defaultValue={getNextVersion()}
+                    <Select
+                      name='unit'
+                      onValueChange={setSelectedUnitId}
                       required
-                    />
-                  </div>
-                  <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label htmlFor='validity' className='text-right'>
-                      Vigência
-                    </Label>
-                    <Input
-                      id='validity'
-                      name='validity'
-                      placeholder='Ex: 24 meses'
-                      className='col-span-3'
-                      required
-                    />
-                  </div>
-                  <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label htmlFor='responsible' className='text-right'>
-                      Responsável
-                    </Label>
-                    <Select name='responsible' required>
+                    >
                       <SelectTrigger className='col-span-3'>
-                        <SelectValue placeholder='Selecione um responsável' />
+                        <SelectValue placeholder='Selecione uma unidade' />
                       </SelectTrigger>
                       <SelectContent>
-                        {initialStaffsData.map((staff) => (
-                          <SelectItem key={staff.email} value={staff.email}>
-                            {staff.name}
+                        {initialUnitsData.map((unit) => (
+                          <SelectItem key={unit.id} value={unit.id}>
+                            {unit.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+                  <div className='grid grid-cols-4 items-center gap-4'>
+                    <Label htmlFor='issueDate' className='text-right'>
+                      Data de Emissão
+                    </Label>
+                    <Input
+                      id='issueDate'
+                      name='issueDate'
+                      type='date'
+                      className='col-span-3'
+                      defaultValue={new Date().toISOString().split('T')[0]}
+                      required
+                    />
+                  </div>
+                  <div className='grid grid-cols-4 items-center gap-4'>
+                    <Label className='text-right'>Vigência</Label>
+                    <Input
+                      className='col-span-3'
+                      value='24 meses'
+                      disabled
+                    />
+                  </div>
+                  <div className='grid grid-cols-4 items-center gap-4'>
+                    <Label className='text-right'>Responsável PGR</Label>
+                    <Input
+                      className='col-span-3'
+                      value={
+                        initialUnitsData.find(
+                          (unit) => unit.id === selectedUnitId
+                        )?.pgrResponsible || 'Selecione uma unidade'
+                      }
+                      disabled
+                    />
                   </div>
                 </div>
               </form>
@@ -214,6 +251,7 @@ export default function PgrHistoryPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Versão</TableHead>
+                <TableHead>Unidade</TableHead>
                 <TableHead>Data de Emissão</TableHead>
                 <TableHead>Vigência</TableHead>
                 <TableHead>Responsável Técnico</TableHead>
@@ -227,6 +265,7 @@ export default function PgrHistoryPage() {
               {pgrHistory.map((item) => (
                 <TableRow key={item.version}>
                   <TableCell className='font-medium'>{item.version}</TableCell>
+                  <TableCell>{item.unit}</TableCell>
                   <TableCell>
                     <ClientSideDateFormatter dateString={item.issueDate} />
                   </TableCell>
