@@ -55,6 +55,8 @@ import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import Link from 'next/link'
+import { useParams } from 'next/navigation'
 
 type RiskLevelLabel =
   | 'Irrelevante'
@@ -222,11 +224,11 @@ const getRiskLevel = (frequency: number, severity: number): RiskEvaluation => {
 }
 
 export default function PgrPage() {
+  const params = useParams()
+  const contractId = params.contractId as string
   const { toast } = useToast()
   const [inventory, setInventory] = useState(initialInventory)
   const [isAddRiskDialogOpen, setIsAddRiskDialogOpen] = useState(false)
-  const [isPgrManagementDialogOpen, setIsPgrManagementDialogOpen] =
-    useState(false)
   const [selectedHazard, setSelectedHazard] = useState<Hazard | null>(null)
   const [showStcwInput, setShowStcwInput] = useState(false)
 
@@ -317,67 +319,12 @@ export default function PgrPage() {
             <TabsTrigger value='plan'>Plano de Ação</TabsTrigger>
           </TabsList>
           <div className='ml-auto flex items-center gap-2'>
-            <Dialog
-              open={isPgrManagementDialogOpen}
-              onOpenChange={setIsPgrManagementDialogOpen}
-            >
-              <DialogTrigger asChild>
-                <Button variant='outline'>
-                  <Lock className='mr-2 h-4 w-4' />
-                  Gestão de PGRA
-                </Button>
-              </DialogTrigger>
-              <DialogContent className='sm:max-w-2xl'>
-                <DialogHeader>
-                  <DialogTitle>Gestão do Documento PGRA</DialogTitle>
-                  <DialogDescription>
-                    Configure o escopo, a vigência e os responsáveis pelo
-                    documento mestre do PGRA.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className='grid gap-4 py-4'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='validity'>Vigência do Documento</Label>
-                    <Select name='validity'>
-                      <SelectTrigger>
-                        <SelectValue placeholder='Selecione a vigência' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value='12'>12 meses</SelectItem>
-                        <SelectItem value='24'>24 meses</SelectItem>
-                        <SelectItem value='36'>36 meses</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className='space-y-2'>
-                    <Label>Responsáveis Técnicos</Label>
-                    <Input placeholder='Nome do Engenheiro de Segurança' />
-                    <Input placeholder='Nome do Médico do Trabalho' />
-                  </div>
-                   <div className='space-y-2'>
-                     <Label>Unidades Inclusas no Documento</Label>
-                     {/* TODO: Populate with real data */}
-                     <div className="flex items-center space-x-2">
-                       <Checkbox id="unit1" />
-                       <label htmlFor="unit1">Matriz São Paulo</label>
-                     </div>
-                     <div className="flex items-center space-x-2">
-                       <Checkbox id="unit2" />
-                       <label htmlFor="unit2">Filial Rio de Janeiro</label>
-                     </div>
-                   </div>
-                </div>
-                <DialogFooter>
-                  <Button
-                    variant='outline'
-                    onClick={() => setIsPgrManagementDialogOpen(false)}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button>Salvar Configurações</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            <Button asChild variant='outline'>
+              <Link href={`/dashboard/clients/${contractId}/pgr/history`}>
+                <Lock className='mr-2 h-4 w-4' />
+                Gestão de PGRA
+              </Link>
+            </Button>
             <Dialog
               open={isAddRiskDialogOpen}
               onOpenChange={(isOpen) => {
@@ -846,9 +793,7 @@ export default function PgrPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align='end'>
                               <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                              <DropdownMenuItem
-                                // TODO: Create edit functionality
-                              >
+                              <DropdownMenuItem>
                                 Editar Risco
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
