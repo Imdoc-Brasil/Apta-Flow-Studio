@@ -143,6 +143,10 @@ export default function PgrHistoryPage() {
     })
   }
 
+  const selectedUnit = initialUnitsData.find(
+    (unit) => unit.id === selectedUnitId
+  )
+
   return (
     <div className='grid flex-1 auto-rows-max gap-4'>
       <div className='flex items-center gap-4'>
@@ -214,9 +218,7 @@ export default function PgrHistoryPage() {
                     <Input
                       className='col-span-3'
                       value={
-                        initialUnitsData.find(
-                          (unit) => unit.id === selectedUnitId
-                        )?.pgrResponsible || 'Selecione uma unidade'
+                        selectedUnit?.pgrResponsible || 'Selecione uma unidade'
                       }
                       disabled
                     />
