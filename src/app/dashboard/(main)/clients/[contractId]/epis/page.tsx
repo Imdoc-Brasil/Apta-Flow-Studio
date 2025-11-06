@@ -404,6 +404,7 @@ export default function EpisPage() {
                       <TableHead>EPI</TableHead>
                       <TableHead>CA</TableHead>
                       <TableHead>Quantidade em Estoque</TableHead>
+                      <TableHead>Estoque Mínimo</TableHead>
                       <TableHead>Status</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -413,6 +414,7 @@ export default function EpisPage() {
                         <TableCell>{getEpiNameById(item.epiId)}</TableCell>
                         <TableCell>{getEpiCaById(item.epiId)}</TableCell>
                         <TableCell>{item.quantity}</TableCell>
+                        <TableCell>{item.minStock}</TableCell>
                         <TableCell>
                           <Badge variant={item.quantity > item.minStock ? 'secondary' : 'destructive'}>
                              {item.quantity > item.minStock ? 'Em estoque' : 'Estoque baixo'}
