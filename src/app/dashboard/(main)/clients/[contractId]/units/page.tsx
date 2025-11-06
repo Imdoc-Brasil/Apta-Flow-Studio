@@ -57,8 +57,7 @@ export default function UnitsPage() {
 
   const [units, setUnits] = useState(initialUnitsData)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [currentUnit, setCurrentUnit] = useState<Unit | null>(null)
+  const [editingUnit, setEditingUnit] = useState<Unit | null>(null)
   const [inheritData, setInheritData] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string[]>(['Ativa'])
@@ -91,7 +90,7 @@ export default function UnitsPage() {
     })
     setInheritData(false)
   }
-
+  
   useEffect(() => {
     if (isAddDialogOpen) {
       if (client && inheritData) {
@@ -110,10 +109,13 @@ export default function UnitsPage() {
   }, [isAddDialogOpen, inheritData, client])
 
   useEffect(() => {
-    if (isEditDialogOpen && currentUnit) {
-      setFormState(currentUnit)
+    if (editingUnit) {
+      setFormState(editingUnit)
+    } else {
+      resetFormState()
     }
-  }, [isEditDialogOpen, currentUnit])
+  }, [editingUnit])
+
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -133,22 +135,19 @@ export default function UnitsPage() {
     }
     setUnits((prev) => [...prev, newUnit])
     setIsAddDialogOpen(false)
-    resetFormState()
   }
 
   const handleUpdateUnit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!currentUnit) return
+    if (!editingUnit) return
     setUnits((prev) =>
-      prev.map((u) => (u.id === currentUnit.id ? { ...u, ...formState } : u))
+      prev.map((u) => (u.id === editingUnit.id ? { ...u, ...formState } : u))
     )
-    setIsEditDialogOpen(false)
-    setCurrentUnit(null)
+    setEditingUnit(null)
   }
-
+  
   const openEditDialog = (unit: Unit) => {
-    setCurrentUnit(unit)
-    setIsEditDialogOpen(true)
+    setEditingUnit(unit)
   }
 
   const filteredUnits = useMemo(() => {
@@ -162,10 +161,10 @@ export default function UnitsPage() {
     })
   }, [units, searchTerm, statusFilter])
 
-  const renderUnitForm = () => (
+  const renderUnitForm = (isEditing: boolean) => (
     <ScrollArea className='h-[60vh] pr-6'>
       <div className='grid gap-4 py-4'>
-        {isAddDialogOpen && (
+        {!isEditing && (
           <div className='flex items-center space-x-2 mb-4'>
             <Checkbox
               id='inherit'
@@ -312,14 +311,13 @@ export default function UnitsPage() {
                   </DialogDescription>
                 </DialogHeader>
                 <form id='add-unit-form' onSubmit={handleAddUnit}>
-                  {renderUnitForm()}
+                  {renderUnitForm(false)}
                 </form>
                 <DialogFooter>
                   <Button
                     variant='outline'
                     onClick={() => {
                       setIsAddDialogOpen(false)
-                      resetFormState()
                     }}
                   >
                     Cancelar
@@ -339,36 +337,55 @@ export default function UnitsPage() {
           {filteredUnits.length > 0 ? (
             <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
               {filteredUnits.map((unit) => (
-                <Card
-                  key={unit.id}
-                  className='flex flex-col hover:shadow-md transition-shadow'
-                >
-                  <DialogTrigger asChild>
-                    <div
-                      className='flex-grow cursor-pointer'
-                      onClick={() => openEditDialog(unit)}
-                    >
-                      <CardHeader>
-                        <CardTitle>{unit.name}</CardTitle>
-                        <CardDescription>{unit.address}</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <p className='text-sm text-muted-foreground'>
-                          {unit.description}
-                        </p>
-                      </CardContent>
-                    </div>
-                  </DialogTrigger>
-                  <CardFooter>
-                    <Button asChild className='w-full' variant='outline'>
-                      <Link
-                        href={`/dashboard/clients/${contractId}/sectors?unitId=${unit.id}`}
+                <Dialog key={unit.id} onOpenChange={(isOpen) => !isOpen && setEditingUnit(null)}>
+                  <Card className='flex flex-col hover:shadow-md transition-shadow'>
+                    <DialogTrigger asChild>
+                       <div className='flex-grow cursor-pointer' onClick={() => openEditDialog(unit)}>
+                        <CardHeader>
+                          <CardTitle>{unit.name}</CardTitle>
+                          <CardDescription>{unit.address}</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <p className='text-sm text-muted-foreground'>
+                            {unit.description}
+                          </p>
+                        </CardContent>
+                      </div>
+                    </DialogTrigger>
+                    <CardFooter>
+                      <Button asChild className='w-full' variant='outline'>
+                        <Link
+                          href={`/dashboard/clients/${contractId}/sectors?unitId=${unit.id}`}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          Ver Setores <ArrowRight className='ml-2 h-4 w-4' />
+                        </Link>
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                   <DialogContent className='sm:max-w-2xl'>
+                    <DialogHeader>
+                      <DialogTitle>Editar Unidade</DialogTitle>
+                      <DialogDescription>
+                        Visualize e atualize os detalhes da unidade.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <form id={`update-unit-form-${unit.id}`} onSubmit={handleUpdateUnit}>
+                      {renderUnitForm(true)}
+                    </form>
+                    <DialogFooter>
+                      <Button
+                        variant='outline'
+                        onClick={() => setEditingUnit(null)}
                       >
-                        Ver Setores <ArrowRight className='ml-2 h-4 w-4' />
-                      </Link>
-                    </Button>
-                  </CardFooter>
-                </Card>
+                        Cancelar
+                      </Button>
+                      <Button type='submit' form={`update-unit-form-${unit.id}`}>
+                        Salvar Alterações
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               ))}
             </div>
           ) : (
@@ -388,41 +405,6 @@ export default function UnitsPage() {
           )}
         </CardContent>
       </Card>
-
-      {/* Edit Dialog */}
-      <Dialog
-        open={isEditDialogOpen}
-        onOpenChange={(isOpen) => {
-          setIsEditDialogOpen(isOpen)
-          if (!isOpen) setCurrentUnit(null)
-        }}
-      >
-        <DialogContent className='sm:max-w-2xl'>
-          <DialogHeader>
-            <DialogTitle>Editar Unidade</DialogTitle>
-            <DialogDescription>
-              Visualize e atualize os detalhes da unidade.
-            </DialogDescription>
-          </DialogHeader>
-          <form id='update-unit-form' onSubmit={handleUpdateUnit}>
-            {renderUnitForm()}
-          </form>
-          <DialogFooter>
-            <Button
-              variant='outline'
-              onClick={() => {
-                setIsEditDialogOpen(false)
-                setCurrentUnit(null)
-              }}
-            >
-              Cancelar
-            </Button>
-            <Button type='submit' form='update-unit-form'>
-              Salvar Alterações
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   )
 }
