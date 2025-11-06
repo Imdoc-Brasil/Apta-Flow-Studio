@@ -19,9 +19,7 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { initialEpiData } from '../data'
-import {
-  initialHazardData,
-} from '@/app/dashboard/(main)/risks/page'
+import { initialHazardData } from '@/app/dashboard/(main)/risks/page'
 import {
   initialInventory,
   getHazardById,
@@ -29,6 +27,7 @@ import {
 import { initialEmployeesData } from '../../employees/data'
 import { initialSectorsData } from '../../sectors/data'
 import { initialUnitsData } from '../../units/data'
+import { initialGheData } from '../../ghe/data'
 import { Input } from '@/components/ui/input'
 import { ArrowDown, ChevronsRight } from 'lucide-react'
 
@@ -62,7 +61,8 @@ export default function RecommendationMatrixPage() {
       toast({
         variant: 'destructive',
         title: 'Seleção Incompleta',
-        description: 'Por favor, preencha todos os campos para criar o vínculo.',
+        description:
+          'Por favor, preencha todos os campos para criar o vínculo.',
       })
       return
     }
@@ -160,12 +160,24 @@ export default function RecommendationMatrixPage() {
         )
       case 'ghe':
         return (
-          <Input
-            placeholder='Nome do GHE (Grupo Homogêneo de Exposição)'
+          <Select
+            onValueChange={setSelectedAssociationValue}
             value={selectedAssociationValue}
-            onChange={(e) => setSelectedAssociationValue(e.target.value)}
             required
-          />
+          >
+            <SelectTrigger>
+              <SelectValue placeholder='Selecione um GHE da unidade' />
+            </SelectTrigger>
+            <SelectContent>
+              {initialGheData
+                .filter((g) => g.unitId === selectedUnit)
+                .map((ghe) => (
+                  <SelectItem key={ghe.id} value={ghe.id}>
+                    {ghe.name}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
         )
       default:
         return null
@@ -218,48 +230,52 @@ export default function RecommendationMatrixPage() {
             }`}
           >
             <div className='flex items-center gap-4'>
-                <div className='flex-1 space-y-2'>
-                  <Label className='font-semibold'>SE (Critério)</Label>
-                  <Select
-                    onValueChange={(v) => {
-                      setAssociationType(v as AssociationType)
-                      setSelectedAssociationValue('') // Reset value on type change
-                    }}
-                    value={associationType}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder='Selecione o tipo de critério' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {associationOptions.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <div className='pt-2'>{renderAssociationSelect()}</div>
-                </div>
+              <div className='flex-1 space-y-2'>
+                <Label className='font-semibold'>SE (Critério)</Label>
+                <Select
+                  onValueChange={(v) => {
+                    setAssociationType(v as AssociationType)
+                    setSelectedAssociationValue('') // Reset value on type change
+                  }}
+                  value={associationType}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder='Selecione o tipo de critério' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {associationOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <div className='pt-2'>{renderAssociationSelect()}</div>
+              </div>
 
-                <div className='flex items-center justify-center px-4'>
-                   <ChevronsRight className="h-8 w-8 text-muted-foreground" />
-                </div>
+              <div className='flex items-center justify-center px-4'>
+                <ChevronsRight className='h-8 w-8 text-muted-foreground' />
+              </div>
 
-                <div className='flex-1 space-y-2'>
-                  <Label className='font-semibold'>ENTÃO (Ação)</Label>
-                  <Select onValueChange={setSelectedEpi} value={selectedEpi} required>
-                    <SelectTrigger>
-                      <SelectValue placeholder='Selecione o EPI a ser recomendado' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {initialEpiData.map((epi) => (
-                        <SelectItem key={epi.id} value={epi.id}>
-                          {epi.name} (CA: {epi.ca})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div className='flex-1 space-y-2'>
+                <Label className='font-semibold'>ENTÃO (Ação)</Label>
+                <Select
+                  onValueChange={setSelectedEpi}
+                  value={selectedEpi}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder='Selecione o EPI a ser recomendado' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {initialEpiData.map((epi) => (
+                      <SelectItem key={epi.id} value={epi.id}>
+                        {epi.name} (CA: {epi.ca})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className='flex justify-end pt-4'>
