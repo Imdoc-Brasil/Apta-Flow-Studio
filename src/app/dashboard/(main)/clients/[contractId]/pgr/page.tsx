@@ -1,7 +1,6 @@
 'use client'
 
-import React from 'react'
-import { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
   Card,
   CardContent,
@@ -109,18 +108,20 @@ const initialInventory = [
 
 const methodologies = [
   {
-    id: 'questionnaire',
-    label: 'Aplicação questionário de avaliação preliminar de risco',
+    id: 'preliminar',
+    label: 'Avaliação preliminar de risco: com entrevistas e coleta de dados e informações',
   },
-  { id: 'interview', label: 'Entrevista presencial' },
-  {
-    id: 'info',
-    label: 'Informações fornecidas pelo representante da empresa',
+  { 
+    id: 'aep', 
+    label: 'Analise Ergonômica Preliminar - Aplicação de checklist Hudson Couto' 
   },
-  { id: 'measurements', label: 'Uso de equipamentos e protocolo de medições' },
   {
-    id: 'tool',
-    label: 'Aplicação de ferramenta de avaliação preliminar de fatores de rico',
+    id: 'stcw',
+    label: 'Aplicação do Formulário STCW - NR30 - Aquaviário (Se esta opção for selecionada, abrir um campo para inserir o nome abaixo: Nome do agente (STCW):',
+  },
+  { 
+    id: 'coleta', 
+    label: 'Coleta de dados: Medição ou amostragem dos agentes de risco no ambiente. Análise laboratorial: Determinação da concentração ou intensidade. Comparação: Confronto dos resultados com os limites de referência. Cálculo do risco: Uso de modelos para estimar a probabilidade e o impacto numérico. Aplicação de ferramenta de avaliação preliminar de fatores de risco psicossociais' 
   },
 ]
 
@@ -227,6 +228,7 @@ export default function PgrPage() {
   const [currentItem, setCurrentItem] =
     useState<(typeof initialInventory)[0] | null>(null)
   const [selectedHazard, setSelectedHazard] = useState<Hazard | null>(null)
+  const [showStcwInput, setShowStcwInput] = useState(false);
 
   // State for evaluation form
   const [frequency, setFrequency] = useState(0)
@@ -312,6 +314,13 @@ export default function PgrPage() {
       setDerivedRisk(null)
     }
   }
+
+  const handleMethodologyChange = (checked: boolean, id: string) => {
+    if (id === 'stcw') {
+      setShowStcwInput(checked);
+    }
+  };
+
 
   return (
     <div className='grid flex-1 auto-rows-max gap-4'>
@@ -495,14 +504,11 @@ export default function PgrPage() {
                               <SelectValue placeholder='Selecione o critério' />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value='qualitative'>
-                                Qualitativo
+                               <SelectItem value='qualitative'>
+                                Avaliação Qualitativa
                               </SelectItem>
                               <SelectItem value='quantitative'>
-                                Quantitativo
-                              </SelectItem>
-                              <SelectItem value='semi_quantitative'>
-                                Semi Quantitativo
+                                Avaliação Quantitativa de Risco (AQR)
                               </SelectItem>
                             </SelectContent>
                           </Select>
@@ -513,19 +519,29 @@ export default function PgrPage() {
                             {methodologies.map((item) => (
                               <div
                                 key={item.id}
-                                className='flex items-center space-x-2'
+                                className='flex items-start space-x-2'
                               >
                                 <Checkbox
                                   id={`method-${item.id}`}
                                   name='methodology'
                                   value={item.id}
+                                  onCheckedChange={(checked) => handleMethodologyChange(!!checked, item.id)}
                                 />
+                                <div className="grid gap-1.5 leading-none">
                                 <label
                                   htmlFor={`method-${item.id}`}
                                   className='text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
                                 >
                                   {item.label}
                                 </label>
+                                {item.id === 'stcw' && showStcwInput && (
+                                  <Input 
+                                    name="stcw_agent_name"
+                                    placeholder="Nome do agente (STCW)" 
+                                    className="mt-2"
+                                  />
+                                )}
+                                </div>
                               </div>
                             ))}
                           </div>
