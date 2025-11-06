@@ -1,4 +1,3 @@
-
 export const initialClientsData = [
   {
     contractId: 'CTR-2024-001',
