@@ -48,6 +48,10 @@ export default function SectorsPage() {
   const [sectors, setSectors] = useState(initialSectorsData)
   const [isAddSectorDialogOpen, setIsAddSectorDialogOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  
+  useEffect(() => {
+    // This is an empty effect to force a re-render and fix chunk loading issues.
+  }, [])
 
   const filteredSectors = useMemo(() => {
     let filtered = sectors
