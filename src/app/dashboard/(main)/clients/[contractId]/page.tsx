@@ -1,11 +1,11 @@
 'use client'
 
 import { useParams } from 'next/navigation'
-import { initialClientsData } from '@/app/dashboard/(main)/clients/data'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
+import { initialClientsData } from '../data'
 
 const getClientById = (contractId: string) => {
   return initialClientsData.find((client) => client.contractId === contractId)
