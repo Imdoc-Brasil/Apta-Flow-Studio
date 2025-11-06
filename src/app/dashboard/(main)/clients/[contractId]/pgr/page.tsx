@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useParams } from 'next/navigation'
 import {
   Card,
   CardContent,
@@ -19,7 +18,7 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { MoreHorizontal, PlusCircle } from 'lucide-react'
+import { MoreHorizontal, PlusCircle, CheckCircle } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -35,6 +34,7 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Label } from '@/components/ui/label'
@@ -48,8 +48,19 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { initialHazardData } from '@/app/dashboard/(main)/risks/page'
 import { initialUnitsData } from '../units/page'
+import { useToast } from '@/hooks/use-toast'
 
-// Mock data - In a real app, this would come from a database
+type RiskLevel = 'Trivial' | 'Tolerável' | 'Moderado' | 'Substancial' | 'Intolerável'
+type RiskColor = 'bg-green-500' | 'bg-blue-500' | 'bg-yellow-500' | 'bg-orange-500' | 'bg-red-500'
+
+interface RiskEvaluation {
+  probability: number
+  severity: number
+  riskLevel: number
+  riskLabel: RiskLevel
+  riskColor: RiskColor
+}
+
 const initialInventory = [
   {
     inventoryId: 'INV-001',
@@ -57,12 +68,31 @@ const initialInventory = [
     unitId: 'UNIT-001', // Matriz São Paulo
     sector: 'Produção',
     source: 'Máquina de corte XYZ',
+    evaluation: {
+      probability: 3,
+      severity: 4,
+      riskLevel: 12,
+      riskLabel: 'Substancial' as RiskLevel,
+      riskColor: 'bg-orange-500' as RiskColor,
+    },
+  },
+  {
+    inventoryId: 'INV-002',
+    hazardId: 'RE-001', // Levantamento de peso
+    unitId: 'UNIT-002', // Filial Rio
+    sector: 'Logística',
+    source: 'Carregamento manual de caixas',
+    evaluation: null as RiskEvaluation | null,
   },
 ]
 
 export default function PgrPage() {
-  const [isAddRiskDialogOpen, setIsAddRiskDialogOpen] = useState(false)
+  const { toast } = useToast()
   const [inventory, setInventory] = useState(initialInventory)
+  const [isAddRiskDialogOpen, setIsAddRiskDialogOpen] = useState(false)
+  const [isEvaluateDialogOpen, setIsEvaluateDialogOpen] = useState(false)
+  const [isPlanDialogOpen, setIsPlanDialogOpen] = useState(false)
+  const [currentItem, setCurrentItem] = useState<typeof initialInventory[0] | null>(null)
 
   const handleAddRisk = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -73,13 +103,67 @@ export default function PgrPage() {
       unitId: formData.get('unit') as string,
       sector: formData.get('sector') as string,
       source: formData.get('source') as string,
+      evaluation: null,
     }
     setInventory((prev) => [...prev, newRisk])
     setIsAddRiskDialogOpen(false)
   }
 
-  const getHazardById = (id: string) =>
-    initialHazardData.find((h) => h.id === id)
+  const getRiskLevel = (probability: number, severity: number): RiskEvaluation => {
+    const riskLevel = probability * severity
+    let riskLabel: RiskLevel = 'Trivial'
+    let riskColor: RiskColor = 'bg-green-500'
+
+    if (riskLevel >= 1 && riskLevel <= 4) {
+      riskLabel = 'Trivial'
+      riskColor = 'bg-green-500'
+    } else if (riskLevel >= 5 && riskLevel <= 9) {
+      riskLabel = 'Tolerável'
+      riskColor = 'bg-blue-500'
+    } else if (riskLevel >= 10 && riskLevel <= 14) {
+      riskLabel = 'Moderado'
+      riskColor = 'bg-yellow-500'
+    } else if (riskLevel >= 15 && riskLevel <= 19) {
+      riskLabel = 'Substancial'
+      riskColor = 'bg-orange-500'
+    } else {
+      riskLabel = 'Intolerável'
+      riskColor = 'bg-red-500'
+    }
+    return { probability, severity, riskLevel, riskLabel, riskColor }
+  }
+
+  const handleEvaluateRisk = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!currentItem) return
+
+    const formData = new FormData(event.currentTarget)
+    const probability = parseInt(formData.get('probability') as string, 10)
+    const severity = parseInt(formData.get('severity') as string, 10)
+    
+    const evaluation = getRiskLevel(probability, severity)
+
+    setInventory(prev => 
+      prev.map(item => 
+        item.inventoryId === currentItem.inventoryId
+          ? { ...item, evaluation }
+          : item
+      )
+    )
+    toast({
+      title: 'Risco Avaliado!',
+      description: `O Nível de Risco foi calculado como ${evaluation.riskLevel} (${evaluation.riskLabel}).`,
+    })
+    setIsEvaluateDialogOpen(false)
+    setCurrentItem(null)
+  }
+
+  const openEvaluateDialog = (item: typeof initialInventory[0]) => {
+    setCurrentItem(item)
+    setIsEvaluateDialogOpen(true)
+  }
+
+  const getHazardById = (id: string) => initialHazardData.find((h) => h.id === id)
   const getUnitById = (id: string) => initialUnitsData.find((u) => u.id === id)
 
   return (
@@ -93,15 +177,11 @@ export default function PgrPage() {
         <div className='flex items-center'>
           <TabsList>
             <TabsTrigger value='inventory'>Inventário de Riscos</TabsTrigger>
-            <TabsTrigger value='plan' disabled>
-              Plano de Ação
-            </TabsTrigger>
+            <TabsTrigger value='plan'>Plano de Ação</TabsTrigger>
+            <TabsTrigger value='matrix' disabled>Matriz de Risco</TabsTrigger>
           </TabsList>
           <div className='ml-auto flex items-center gap-2'>
-            <Dialog
-              open={isAddRiskDialogOpen}
-              onOpenChange={setIsAddRiskDialogOpen}
-            >
+            <Dialog open={isAddRiskDialogOpen} onOpenChange={setIsAddRiskDialogOpen}>
               <DialogTrigger asChild>
                 <Button>
                   <PlusCircle className='mr-2 h-4 w-4' />
@@ -112,13 +192,13 @@ export default function PgrPage() {
                 <DialogHeader>
                   <DialogTitle>Adicionar Risco ao Inventário</DialogTitle>
                   <DialogDescription>
-                    Associe um perigo a uma unidade, setor e fonte geradora
-                    específica.
+                    Associe um perigo a uma unidade, setor e fonte geradora específica.
                   </DialogDescription>
                 </DialogHeader>
                 <form id='add-risk-form' onSubmit={handleAddRisk}>
                   <div className='grid gap-4 py-4'>
-                    <div className='space-y-2'>
+                    {/* Form fields from previous step */}
+                     <div className='space-y-2'>
                       <Label htmlFor='unit'>Unidade</Label>
                       <Select name='unit' required>
                         <SelectTrigger>
@@ -141,9 +221,7 @@ export default function PgrPage() {
                           <SelectValue placeholder='Selecione o setor' />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value='Administrativo'>
-                            Administrativo
-                          </SelectItem>
+                          <SelectItem value='Administrativo'>Administrativo</SelectItem>
                           <SelectItem value='Produção'>Produção</SelectItem>
                           <SelectItem value='Logística'>Logística</SelectItem>
                         </SelectContent>
@@ -175,15 +253,8 @@ export default function PgrPage() {
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button
-                      variant='outline'
-                      onClick={() => setIsAddRiskDialogOpen(false)}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button type='submit' form='add-risk-form'>
-                      Adicionar
-                    </Button>
+                    <Button variant='outline' onClick={() => setIsAddRiskDialogOpen(false)}>Cancelar</Button>
+                    <Button type='submit' form='add-risk-form'>Adicionar</Button>
                   </DialogFooter>
                 </form>
               </DialogContent>
@@ -193,10 +264,9 @@ export default function PgrPage() {
         <TabsContent value='inventory'>
           <Card>
             <CardHeader>
-              <CardTitle>Inventário de Riscos</CardTitle>
+              <CardTitle>Inventário de Riscos Ocupacionais</CardTitle>
               <CardDescription>
-                Listagem de todos os perigos e riscos identificados na empresa,
-                por unidade e setor.
+                Listagem de todos os perigos e riscos identificados na empresa. Avalie cada risco para determinar sua prioridade.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -204,48 +274,50 @@ export default function PgrPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Perigo / Fator de Risco</TableHead>
-                    <TableHead>Categoria</TableHead>
                     <TableHead>Setor</TableHead>
-                    <TableHead>Unidade</TableHead>
-                    <TableHead>
-                      <span className='sr-only'>Ações</span>
-                    </TableHead>
+                    <TableHead>Nível de Risco</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead><span className='sr-only'>Ações</span></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {inventory.map((item) => {
                     const hazard = getHazardById(item.hazardId)
-                    const unit = getUnitById(item.unitId)
-                    if (!hazard || !unit) return null
+                    if (!hazard) return null
                     return (
                       <TableRow key={item.inventoryId}>
                         <TableCell className='font-medium'>
-                          {hazard.name}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant='outline'>{hazard.category}</Badge>
+                          <div className='font-medium'>{hazard.name}</div>
+                          <div className='text-sm text-muted-foreground'>{item.source}</div>
                         </TableCell>
                         <TableCell>{item.sector}</TableCell>
-                        <TableCell>{unit.name}</TableCell>
+                        <TableCell>
+                          {item.evaluation ? (
+                            <div className='flex items-center gap-2'>
+                              <span className={`h-3 w-3 rounded-full ${item.evaluation.riskColor}`} />
+                              <span>{item.evaluation.riskLevel} - {item.evaluation.riskLabel}</span>
+                            </div>
+                          ) : (
+                            <span className='text-muted-foreground'>Não avaliado</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={item.evaluation ? "secondary" : "outline"}>
+                            {item.evaluation ? "Avaliado" : "Pendente"}
+                          </Badge>
+                        </TableCell>
                         <TableCell>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button
-                                aria-haspopup='true'
-                                size='icon'
-                                variant='ghost'
-                              >
-                                <MoreHorizontal className='h-4 w-4' />
-                                <span className='sr-only'>Alternar menu</span>
-                              </Button>
+                              <Button aria-haspopup='true' size='icon' variant='ghost'><MoreHorizontal className='h-4 w-4' /></Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align='end'>
                               <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                              <DropdownMenuItem>Avaliar Risco</DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => openEvaluateDialog(item)}>Avaliar Risco</DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem disabled={!item.evaluation}>Criar Plano de Ação</DropdownMenuItem>
                               <DropdownMenuItem>Editar</DropdownMenuItem>
-                              <DropdownMenuItem className='text-destructive'>
-                                Excluir
-                              </DropdownMenuItem>
+                              <DropdownMenuItem className='text-destructive'>Excluir</DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
@@ -257,7 +329,77 @@ export default function PgrPage() {
             </CardContent>
           </Card>
         </TabsContent>
+         <TabsContent value='plan'>
+          <Card>
+            <CardHeader>
+              <CardTitle>Plano de Ação</CardTitle>
+              <CardDescription>
+                Ações de melhoria para mitigar ou eliminar os riscos identificados.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm h-96">
+                <div className="flex flex-col items-center gap-1 text-center">
+                  <h3 className="text-2xl font-bold tracking-tight">
+                    Nenhuma ação planejada
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Avalie um risco no inventário para criar uma ação.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
+
+      {/* Evaluate Risk Dialog */}
+      <Dialog open={isEvaluateDialogOpen} onOpenChange={setIsEvaluateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Avaliação de Risco</DialogTitle>
+            <DialogDescription>
+              Avalie a Probabilidade e a Severidade do risco para calcular o Nível de Risco.
+            </DialogDescription>
+          </DialogHeader>
+          <form id='evaluate-risk-form' onSubmit={handleEvaluateRisk}>
+            <div className='grid gap-6 py-4'>
+              <div className='space-y-2'>
+                <Label htmlFor='probability'>Probabilidade</Label>
+                <Select name='probability' required defaultValue={currentItem?.evaluation?.probability.toString()}>
+                  <SelectTrigger><SelectValue placeholder='Selecione a probabilidade'/></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='1'>1 - Muito Baixa</SelectItem>
+                    <SelectItem value='2'>2 - Baixa</SelectItem>
+                    <SelectItem value='3'>3 - Média</SelectItem>
+                    <SelectItem value='4'>4 - Alta</SelectItem>
+                    <SelectItem value='5'>5 - Muito Alta</SelectItem>
+                  </SelectContent>
+                </Select>
+                 <p className='text-xs text-muted-foreground'>Qual a chance do evento de risco ocorrer?</p>
+              </div>
+               <div className='space-y-2'>
+                <Label htmlFor='severity'>Severidade</Label>
+                <Select name='severity' required defaultValue={currentItem?.evaluation?.severity.toString()}>
+                  <SelectTrigger><SelectValue placeholder='Selecione a severidade'/></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='1'>1 - Insignificante</SelectItem>
+                    <SelectItem value='2'>2 - Menor</SelectItem>
+                    <SelectItem value='3'>3 - Moderada</SelectItem>
+                    <SelectItem value='4'>4 - Maior</SelectItem>
+                    <SelectItem value='5'>5 - Catastrófica</SelectItem>
+                  </SelectContent>
+                </Select>
+                 <p className='text-xs text-muted-foreground'>Qual o impacto caso o evento de risco ocorra?</p>
+              </div>
+            </div>
+             <DialogFooter>
+              <Button variant='outline' onClick={() => setIsEvaluateDialogOpen(false)}>Cancelar</Button>
+              <Button type='submit' form='evaluate-risk-form'>Salvar Avaliação</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
