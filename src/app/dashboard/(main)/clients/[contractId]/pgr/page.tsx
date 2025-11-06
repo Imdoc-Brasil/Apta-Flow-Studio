@@ -69,6 +69,7 @@ type RiskColor =
   | 'bg-yellow-200'
   | 'bg-orange-300'
   | 'bg-red-400'
+  | 'bg-red-500'
 
 interface RiskEvaluation {
   frequency: number
@@ -91,7 +92,7 @@ const initialInventory = [
       severity: 3,
       riskLevel: 4,
       riskLabel: 'Alto' as RiskLevelLabel,
-      riskColor: 'bg-orange-300' as RiskColor,
+      riskColor: 'bg-red-400' as RiskColor,
       riskDescription:
         'Fatores do ambiente ou elementos materiais que constituem um risco alto para a saúde e integridade física do trabalhador, cujos valores ou importâncias estão notavelmente próximos do nível de ação',
     },
@@ -109,19 +110,22 @@ const initialInventory = [
 const methodologies = [
   {
     id: 'preliminar',
-    label: 'Avaliação preliminar de risco: com entrevistas e coleta de dados e informações',
+    label:
+      'Avaliação preliminar de risco: com entrevistas e coleta de dados e informações',
   },
-  { 
-    id: 'aep', 
-    label: 'Analise Ergonômica Preliminar - Aplicação de checklist Hudson Couto' 
+  {
+    id: 'aep',
+    label: 'Analise Ergonômica Preliminar - Aplicação de checklist Hudson Couto',
   },
   {
     id: 'stcw',
-    label: 'Aplicação do Formulário STCW - NR30 - Aquaviário (Se esta opção for selecionada, abrir um campo para inserir o nome abaixo: Nome do agente (STCW):',
+    label:
+      'Aplicação do Formulário STCW - NR30 - Aquaviário (Se esta opção for selecionada, abrir um campo para inserir o nome abaixo: Nome do agente (STCW):',
   },
-  { 
-    id: 'coleta', 
-    label: 'Coleta de dados: Medição ou amostragem dos agentes de risco no ambiente. Análise laboratorial: Determinação da concentração ou intensidade. Comparação: Confronto dos resultados com os limites de referência. Cálculo do risco: Uso de modelos para estimar a probabilidade e o impacto numérico. Aplicação de ferramenta de avaliação preliminar de fatores de risco psicossociais' 
+  {
+    id: 'coleta',
+    label:
+      'Coleta de dados: Medição ou amostragem dos agentes de risco no ambiente. Análise laboratorial: Determinação da concentração ou intensidade. Comparação: Confronto dos resultados com os limites de referência. Cálculo do risco: Uso de modelos para estimar a probabilidade e o impacto numérico. Aplicação de ferramenta de avaliação preliminar de fatores de risco psicossociais',
   },
 ]
 
@@ -177,22 +181,20 @@ const riskMatrixConfig = {
     },
   },
   matrix: [
-    // Severidade (Linhas) vs Frequência (Colunas)
+    // Frequência (Colunas) vs Severidade (Linhas)
     // Frequência:  1, 2, 3, 4, 5
-    [1, 1, 2, 3, 4], // Severidade 1: Reversível leve
-    [1, 2, 3, 4, 4], // Severidade 2: Reversível severo
-    [2, 3, 4, 4, 5], // Severidade 3: Irreversível severo
-    [3, 4, 4, 5, 5], // Severidade 4: Fatal ou Incapacitante
-    [4, 4, 5, 5, 5], // Severidade 5: Altamente Catastrófico
+    [1, 1, 2, 3, 4], // Severidade 1
+    [1, 2, 3, 4, 4], // Severidade 2
+    [2, 3, 4, 4, 5], // Severidade 3
+    [3, 4, 4, 5, 5], // Severidade 4
+    [4, 4, 5, 5, 5], // Severidade 5
   ],
 }
 
 const getRiskLevel = (frequency: number, severity: number): RiskEvaluation => {
-  // Ajustando para indices base-0. Seletor de Frequência vai de 1-5, severidade de 1-5
   const freqIndex = frequency - 1
   const sevIndex = severity - 1
 
-  // Handle out of bounds / "Não Exposto" / "Não se aplica"
   if (freqIndex < 0 || sevIndex < 0) {
     return {
       frequency,
@@ -200,14 +202,15 @@ const getRiskLevel = (frequency: number, severity: number): RiskEvaluation => {
       riskLevel: 0,
       riskLabel: 'Irrelevante',
       riskColor: 'bg-gray-300',
-      riskDescription:
-        'A avaliação não pode ser concluída. Selecione a frequência e a classificação de efeito.',
+      riskDescription: 'Selecione a frequência e a classificação de efeito.',
     }
   }
 
   const levelIndex = riskMatrixConfig.matrix[sevIndex][freqIndex]
   const levelInfo =
-    riskMatrixConfig.levels[levelIndex.toString() as keyof typeof riskMatrixConfig.levels]
+    riskMatrixConfig.levels[
+      levelIndex.toString() as keyof typeof riskMatrixConfig.levels
+    ]
 
   return {
     frequency,
@@ -223,12 +226,10 @@ export default function PgrPage() {
   const { toast } = useToast()
   const [inventory, setInventory] = useState(initialInventory)
   const [isAddRiskDialogOpen, setIsAddRiskDialogOpen] = useState(false)
-  const [isEvaluateDialogOpen, setIsEvaluateDialogOpen] = useState(false)
-  const [isPlanDialogOpen, setIsPlanDialogOpen] = useState(false)
   const [currentItem, setCurrentItem] =
     useState<(typeof initialInventory)[0] | null>(null)
   const [selectedHazard, setSelectedHazard] = useState<Hazard | null>(null)
-  const [showStcwInput, setShowStcwInput] = useState(false);
+  const [showStcwInput, setShowStcwInput] = useState(false)
 
   // State for evaluation form
   const [frequency, setFrequency] = useState(0)
@@ -238,58 +239,32 @@ export default function PgrPage() {
   const handleAddRisk = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
-    const newRisk = {
-      inventoryId: `INV-${Date.now().toString().slice(-4)}`,
-      hazardId: formData.get('hazard') as string,
-      unitId: formData.get('exposureTarget') as string, // Assuming target is unit for now
-      sector: formData.get('exposureTarget') as string, // This needs refinement based on group
-      source: formData.get('source') as string,
-      evaluation: null,
-    }
-    setInventory((prev) => [...prev, newRisk])
-    setIsAddRiskDialogOpen(false)
-    setSelectedHazard(null)
-  }
 
-  const handleEvaluateRisk = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (!currentItem || !derivedRisk || derivedRisk.riskLevel === 0) {
+    if (!derivedRisk || derivedRisk.riskLevel === 0) {
       toast({
         variant: 'destructive',
         title: 'Avaliação Incompleta',
         description:
-          'Por favor, selecione uma Frequência e uma Classificação de Efeito válidas.',
+          'Por favor, avalie o risco na Seção 03 antes de adicionar.',
       })
       return
     }
 
-    setInventory((prev) =>
-      prev.map((item) =>
-        item.inventoryId === currentItem.inventoryId
-          ? { ...item, evaluation: derivedRisk }
-          : item
-      )
-    )
-    toast({
-      title: 'Risco Avaliado!',
-      description: `O Nível de Risco foi classificado como ${derivedRisk.riskLabel}.`,
-    })
-    setIsEvaluateDialogOpen(false)
-    setCurrentItem(null)
-  }
-
-  const openEvaluateDialog = (item: (typeof initialInventory)[0]) => {
-    setCurrentItem(item)
-    const currentFreq = item.evaluation?.frequency || 0
-    const currentSev = item.evaluation?.severity || 0
-    setFrequency(currentFreq)
-    setSeverity(currentSev)
-    if (currentFreq > 0 && currentSev > 0) {
-      setDerivedRisk(getRiskLevel(currentFreq, currentSev))
-    } else {
-      setDerivedRisk(null)
+    const newRisk = {
+      inventoryId: `INV-${Date.now().toString().slice(-4)}`,
+      hazardId: formData.get('hazard') as string,
+      unitId: formData.get('exposureTarget') as string,
+      sector: formData.get('exposureTarget') as string,
+      source: formData.get('source') as string,
+      evaluation: derivedRisk,
     }
-    setIsEvaluateDialogOpen(true)
+    setInventory((prev) => [...prev, newRisk])
+    setIsAddRiskDialogOpen(false)
+    resetFormState()
+    toast({
+      title: 'Risco Adicionado!',
+      description: `O risco foi adicionado ao inventário com Nível de Risco: ${derivedRisk.riskLabel}.`,
+    })
   }
 
   const getHazardById = (id: string) =>
@@ -314,13 +289,20 @@ export default function PgrPage() {
       setDerivedRisk(null)
     }
   }
+  
+  const resetFormState = () => {
+    setSelectedHazard(null)
+    setShowStcwInput(false)
+    setFrequency(0)
+    setSeverity(0)
+    setDerivedRisk(null)
+  }
 
   const handleMethodologyChange = (checked: boolean, id: string) => {
     if (id === 'stcw') {
-      setShowStcwInput(checked);
+      setShowStcwInput(checked)
     }
-  };
-
+  }
 
   return (
     <div className='grid flex-1 auto-rows-max gap-4'>
@@ -338,7 +320,10 @@ export default function PgrPage() {
           <div className='ml-auto flex items-center gap-2'>
             <Dialog
               open={isAddRiskDialogOpen}
-              onOpenChange={setIsAddRiskDialogOpen}
+              onOpenChange={(isOpen) => {
+                setIsAddRiskDialogOpen(isOpen)
+                if (!isOpen) resetFormState()
+              }}
             >
               <DialogTrigger asChild>
                 <Button>
@@ -346,12 +331,12 @@ export default function PgrPage() {
                   Adicionar Risco ao Inventário
                 </Button>
               </DialogTrigger>
-              <DialogContent className='sm:max-w-3xl'>
+              <DialogContent className='sm:max-w-4xl'>
                 <DialogHeader>
                   <DialogTitle>Adicionar Risco ao Inventário</DialogTitle>
                   <DialogDescription>
-                    Associe um perigo a uma unidade, setor e fonte geradora
-                    específica.
+                    Identifique o perigo, caracterize a exposição e avalie o
+                    risco.
                   </DialogDescription>
                 </DialogHeader>
                 <form id='add-risk-form' onSubmit={handleAddRisk}>
@@ -467,7 +452,9 @@ export default function PgrPage() {
                         </div>
                         <div className='grid md:grid-cols-2 gap-4'>
                           <div className='space-y-2'>
-                            <Label htmlFor='exposureTime'>Tempo de exposição</Label>
+                            <Label htmlFor='exposureTime'>
+                              Tempo de exposição
+                            </Label>
                             <Input
                               id='exposureTime'
                               name='exposureTime'
@@ -486,7 +473,9 @@ export default function PgrPage() {
                                 <SelectItem value='not_informed'>
                                   Não Informado
                                 </SelectItem>
-                                <SelectItem value='permanent'>Permanente</SelectItem>
+                                <SelectItem value='permanent'>
+                                  Permanente
+                                </SelectItem>
                                 <SelectItem value='eventual'>Eventual</SelectItem>
                                 <SelectItem value='intermittent'>
                                   Intermitente
@@ -504,7 +493,7 @@ export default function PgrPage() {
                               <SelectValue placeholder='Selecione o critério' />
                             </SelectTrigger>
                             <SelectContent>
-                               <SelectItem value='qualitative'>
+                              <SelectItem value='qualitative'>
                                 Avaliação Qualitativa
                               </SelectItem>
                               <SelectItem value='quantitative'>
@@ -525,22 +514,24 @@ export default function PgrPage() {
                                   id={`method-${item.id}`}
                                   name='methodology'
                                   value={item.id}
-                                  onCheckedChange={(checked) => handleMethodologyChange(!!checked, item.id)}
+                                  onCheckedChange={(checked) =>
+                                    handleMethodologyChange(!!checked, item.id)
+                                  }
                                 />
-                                <div className="grid gap-1.5 leading-none">
-                                <label
-                                  htmlFor={`method-${item.id}`}
-                                  className='text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
-                                >
-                                  {item.label}
-                                </label>
-                                {item.id === 'stcw' && showStcwInput && (
-                                  <Input 
-                                    name="stcw_agent_name"
-                                    placeholder="Nome do agente (STCW)" 
-                                    className="mt-2"
-                                  />
-                                )}
+                                <div className='grid gap-1.5 leading-none'>
+                                  <label
+                                    htmlFor={`method-${item.id}`}
+                                    className='text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
+                                  >
+                                    {item.label}
+                                  </label>
+                                  {item.id === 'stcw' && showStcwInput && (
+                                    <Input
+                                      name='stcw_agent_name'
+                                      placeholder='Nome do agente (STCW)'
+                                      className='mt-2'
+                                    />
+                                  )}
                                 </div>
                               </div>
                             ))}
@@ -557,11 +548,159 @@ export default function PgrPage() {
                           />
                         </div>
                       </div>
+
+                      {/* Section 3 */}
+                      <div className='space-y-4 rounded-md border p-4'>
+                        <h3 className='font-semibold'>
+                          Seção 03: Matriz de Risco 5x5
+                        </h3>
+                        <div className='grid gap-8 md:grid-cols-2'>
+                          <div className='space-y-6'>
+                            <div className='space-y-2'>
+                              <Label htmlFor='frequency'>Frequência</Label>
+                              <Select
+                                name='frequency'
+                                required
+                                value={frequency.toString()}
+                                onValueChange={handleFrequencyChange}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder='Selecione a frequência' />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {frequencyOptions.map((opt) => (
+                                    <SelectItem
+                                      key={opt.value}
+                                      value={opt.value.toString()}
+                                    >
+                                      {opt.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className='space-y-2'>
+                              <Label htmlFor='severity'>
+                                Classificação de Efeito
+                              </Label>
+                              <Select
+                                name='severity'
+                                required
+                                value={severity.toString()}
+                                onValueChange={handleSeverityChange}
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder='Selecione a classificação' />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {severityOptions.map((opt) => (
+                                    <SelectItem
+                                      key={opt.value}
+                                      value={opt.value.toString()}
+                                    >
+                                      {opt.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            {derivedRisk && derivedRisk.riskLevel > 0 && (
+                              <div className='rounded-md border p-4 space-y-2 bg-muted/50'>
+                                <h3 className='font-semibold'>
+                                  Resultado da Avaliação
+                                </h3>
+                                <div className='flex items-center gap-2'>
+                                  <span
+                                    className={cn(
+                                      'h-4 w-4 rounded-full',
+                                      derivedRisk.riskColor
+                                    )}
+                                  />
+                                  <p className='font-bold text-lg'>
+                                    {derivedRisk.riskLabel}
+                                  </p>
+                                </div>
+                                <p className='text-sm text-muted-foreground'>
+                                  {derivedRisk.riskDescription}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                          <div className='space-y-2'>
+                            <h3 className='font-semibold text-center'>
+                              Matriz de Risco
+                            </h3>
+                            <div className='grid grid-cols-6 gap-1 text-xs text-center items-center'>
+                              <div />
+                              {frequencyOptions.slice(1).map((opt) => (
+                                <div
+                                  key={opt.value}
+                                  className='font-medium text-muted-foreground p-1'
+                                >
+                                  {opt.label}
+                                </div>
+                              ))}
+                              {severityOptions.slice(1).map((sevOpt, rowIndex) => (
+                                <React.Fragment key={sevOpt.value}>
+                                  <div className='font-medium text-muted-foreground text-right p-1'>
+                                    {sevOpt.label}
+                                  </div>
+                                  {frequencyOptions
+                                    .slice(1)
+                                    .map((freqOpt, colIndex) => {
+                                      const levelIndex =
+                                        riskMatrixConfig.matrix[rowIndex][
+                                          colIndex
+                                        ]
+                                      const currentLevel =
+                                        riskMatrixConfig.levels[
+                                          levelIndex.toString() as keyof typeof riskMatrixConfig.levels
+                                        ]
+                                      const isSelected =
+                                        freqOpt.value === frequency &&
+                                        sevOpt.value === severity
+                                      return (
+                                        <div
+                                          key={`${rowIndex}-${colIndex}`}
+                                          className={cn(
+                                            'h-12 flex items-center justify-center rounded-sm text-white font-bold',
+                                            currentLevel.color,
+                                            isSelected &&
+                                              'ring-2 ring-offset-2 ring-primary'
+                                          )}
+                                        ></div>
+                                      )
+                                    })}
+                                </React.Fragment>
+                              ))}
+                            </div>
+                            <div className='flex justify-center gap-4 text-xs mt-4 flex-wrap'>
+                              {Object.values(riskMatrixConfig.levels).map(
+                                (level) => (
+                                  <div
+                                    key={level.label}
+                                    className='flex items-center gap-1.5'
+                                  >
+                                    <div
+                                      className={cn(
+                                        'h-3 w-3 rounded-full',
+                                        level.color
+                                      )}
+                                    ></div>
+                                    <span>{level.label}</span>
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </ScrollArea>
                   <DialogFooter>
                     <Button
                       variant='outline'
+                      type='button'
                       onClick={() => setIsAddRiskDialogOpen(false)}
                     >
                       Cancelar
@@ -614,11 +753,12 @@ export default function PgrPage() {
                           {item.evaluation ? (
                             <div className='flex items-center gap-2'>
                               <span
-                                className={cn('h-3 w-3 rounded-full', item.evaluation.riskColor)}
+                                className={cn(
+                                  'h-3 w-3 rounded-full',
+                                  item.evaluation.riskColor
+                                )}
                               />
-                              <span>
-                                {item.evaluation.riskLabel}
-                              </span>
+                              <span>{item.evaluation.riskLabel}</span>
                             </div>
                           ) : (
                             <span className='text-muted-foreground'>
@@ -647,15 +787,14 @@ export default function PgrPage() {
                             <DropdownMenuContent align='end'>
                               <DropdownMenuLabel>Ações</DropdownMenuLabel>
                               <DropdownMenuItem
-                                onClick={() => openEvaluateDialog(item)}
+                                // TODO: Create edit functionality
                               >
-                                Avaliar Risco
+                                Editar Risco
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem disabled={!item.evaluation}>
                                 Criar Plano de Ação
                               </DropdownMenuItem>
-                              <DropdownMenuItem>Editar</DropdownMenuItem>
                               <DropdownMenuItem className='text-destructive'>
                                 Excluir
                               </DropdownMenuItem>
@@ -694,150 +833,6 @@ export default function PgrPage() {
           </Card>
         </TabsContent>
       </Tabs>
-
-      {/* Evaluate Risk Dialog */}
-      <Dialog
-        open={isEvaluateDialogOpen}
-        onOpenChange={(isOpen) => {
-          setIsEvaluateDialogOpen(isOpen)
-          if (!isOpen) {
-            setCurrentItem(null)
-          }
-        }}
-      >
-        <DialogContent className='sm:max-w-4xl'>
-          <DialogHeader>
-            <DialogTitle>Avaliação de Risco</DialogTitle>
-            <DialogDescription>
-              Avalie a Frequência e a Classificação de Efeito para calcular o
-              Nível de Risco.
-            </DialogDescription>
-          </DialogHeader>
-          <form id='evaluate-risk-form' onSubmit={handleEvaluateRisk}>
-            <div className='grid gap-8 py-4 md:grid-cols-2'>
-              {/* Left Column: Selectors & Result */}
-              <div className='space-y-6'>
-                <div className='space-y-2'>
-                  <Label htmlFor='frequency'>Frequência</Label>
-                  <Select
-                    name='frequency'
-                    required
-                    value={frequency.toString()}
-                    onValueChange={handleFrequencyChange}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder='Selecione a frequência' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {frequencyOptions.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value.toString()}>
-                          {opt.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='severity'>Classificação de Efeito</Label>
-                  <Select
-                    name='severity'
-                    required
-                    value={severity.toString()}
-                    onValueChange={handleSeverityChange}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder='Selecione a classificação' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {severityOptions.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value.toString()}>
-                          {opt.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {derivedRisk && derivedRisk.riskLevel > 0 && (
-                  <div className='rounded-md border p-4 space-y-2 bg-muted/50'>
-                    <h3 className='font-semibold'>Resultado da Avaliação</h3>
-                    <div className='flex items-center gap-2'>
-                      <span
-                        className={cn(
-                          'h-4 w-4 rounded-full',
-                          derivedRisk.riskColor
-                        )}
-                      />
-                      <p className='font-bold text-lg'>
-                        {derivedRisk.riskLabel}
-                      </p>
-                    </div>
-                    <p className='text-sm text-muted-foreground'>
-                      {derivedRisk.riskDescription}
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Right Column: Matrix */}
-              <div className='space-y-2'>
-                <h3 className='font-semibold text-center'>Matriz de Risco</h3>
-                <div className='grid grid-cols-6 gap-1 text-xs text-center items-center'>
-                    {/* Header Row */}
-                    <div />
-                    {frequencyOptions.slice(1).map(opt => (
-                        <div key={opt.value} className="font-medium text-muted-foreground p-1">{opt.label}</div>
-                    ))}
-
-                    {/* Matrix Rows */}
-                    {severityOptions.slice(1).map((sevOpt, rowIndex) => (
-                        <React.Fragment key={sevOpt.value}>
-                            <div className="font-medium text-muted-foreground text-right p-1">{sevOpt.label}</div>
-                            {frequencyOptions.slice(1).map((freqOpt, colIndex) => {
-                                const levelIndex = riskMatrixConfig.matrix[rowIndex][colIndex];
-                                const currentLevel = riskMatrixConfig.levels[levelIndex.toString() as keyof typeof riskMatrixConfig.levels];
-                                const isSelected = (freqOpt.value === frequency) && (sevOpt.value === severity);
-                                return (
-                                    <div key={`${rowIndex}-${colIndex}`} className={cn(
-                                        'h-12 flex items-center justify-center rounded-sm text-white font-bold',
-                                        currentLevel.color,
-                                        isSelected && 'ring-2 ring-offset-2 ring-primary'
-                                    )}>
-                                    </div>
-                                )
-                            })}
-                        </React.Fragment>
-                    ))}
-                </div>
-                <div className='flex justify-center gap-4 text-xs mt-4'>
-                  {Object.values(riskMatrixConfig.levels).map((level) => (
-                    <div
-                      key={level.label}
-                      className='flex items-center gap-1.5'
-                    >
-                      <div
-                        className={cn('h-3 w-3 rounded-full', level.color)}
-                      ></div>
-                      <span>{level.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                variant='outline'
-                type='button'
-                onClick={() => setIsEvaluateDialogOpen(false)}
-              >
-                Cancelar
-              </Button>
-              <Button type='submit' form='evaluate-risk-form'>
-                Salvar Avaliação
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
