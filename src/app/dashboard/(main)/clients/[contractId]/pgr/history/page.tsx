@@ -26,8 +26,28 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Badge } from '@/components/ui/badge'
 import React, { useState, useEffect } from 'react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { initialStaffsData } from '@/app/dashboard/(main)/employees/page'
+import { useToast } from '@/hooks/use-toast'
 
-const pgrHistoryData = [
+const initialPgrHistoryData = [
   {
     version: '2.0',
     issueDate: '2024-01-15',
@@ -43,6 +63,8 @@ const pgrHistoryData = [
     status: 'Expirado',
   },
 ]
+
+type PgrEntry = (typeof initialPgrHistoryData)[0]
 
 function ClientSideDateFormatter({ dateString }: { dateString: string }) {
   const [formattedDate, setFormattedDate] = useState('')
@@ -62,6 +84,41 @@ function ClientSideDateFormatter({ dateString }: { dateString: string }) {
 }
 
 export default function PgrHistoryPage() {
+  const [pgrHistory, setPgrHistory] = useState(initialPgrHistoryData)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const { toast } = useToast()
+
+  const getNextVersion = () => {
+    if (pgrHistory.length === 0) return '1.0'
+    const latestVersion = Math.max(
+      ...pgrHistory.map((p) => parseFloat(p.version))
+    )
+    return (latestVersion + 1).toFixed(1)
+  }
+
+  const handleEmitPgr = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const formData = new FormData(event.currentTarget)
+    const responsibleName =
+      initialStaffsData.find(
+        (staff) => staff.email === (formData.get('responsible') as string)
+      )?.name || 'Não definido'
+
+    const newPgr: PgrEntry = {
+      version: formData.get('version') as string,
+      issueDate: new Date().toISOString().split('T')[0],
+      validity: formData.get('validity') as string,
+      responsible: responsibleName,
+      status: 'Vigente',
+    }
+    setPgrHistory((prev) => [newPgr, ...prev])
+    setIsDialogOpen(false)
+    toast({
+      title: 'PGR Emitido com Sucesso!',
+      description: `A versão ${newPgr.version} do PGR foi adicionada ao histórico.`,
+    })
+  }
+
   return (
     <div className='grid flex-1 auto-rows-max gap-4'>
       <div className='flex items-center gap-4'>
@@ -69,10 +126,79 @@ export default function PgrHistoryPage() {
           Gestão de Documentos PGR
         </h1>
         <div className='ml-auto flex items-center gap-2'>
-          <Button>
-            <PlusCircle className='mr-2 h-4 w-4' />
-            Emitir Novo PGR
-          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <PlusCircle className='mr-2 h-4 w-4' />
+                Emitir Novo PGR
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Emitir Novo PGR</DialogTitle>
+                <DialogDescription>
+                  Preencha as informações para gerar uma nova versão do
+                  documento PGR.
+                </DialogDescription>
+              </DialogHeader>
+              <form id='emit-pgr-form' onSubmit={handleEmitPgr}>
+                <div className='grid gap-4 py-4'>
+                  <div className='grid grid-cols-4 items-center gap-4'>
+                    <Label htmlFor='version' className='text-right'>
+                      Versão
+                    </Label>
+                    <Input
+                      id='version'
+                      name='version'
+                      className='col-span-3'
+                      defaultValue={getNextVersion()}
+                      required
+                    />
+                  </div>
+                  <div className='grid grid-cols-4 items-center gap-4'>
+                    <Label htmlFor='validity' className='text-right'>
+                      Vigência
+                    </Label>
+                    <Input
+                      id='validity'
+                      name='validity'
+                      placeholder='Ex: 24 meses'
+                      className='col-span-3'
+                      required
+                    />
+                  </div>
+                  <div className='grid grid-cols-4 items-center gap-4'>
+                    <Label htmlFor='responsible' className='text-right'>
+                      Responsável
+                    </Label>
+                    <Select name='responsible' required>
+                      <SelectTrigger className='col-span-3'>
+                        <SelectValue placeholder='Selecione um responsável' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {initialStaffsData.map((staff) => (
+                          <SelectItem key={staff.email} value={staff.email}>
+                            {staff.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </form>
+              <DialogFooter>
+                <Button
+                  variant='outline'
+                  onClick={() => setIsDialogOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button type='submit' form='emit-pgr-form'>
+                  Emitir
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
       <Card>
@@ -98,7 +224,7 @@ export default function PgrHistoryPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {pgrHistoryData.map((item) => (
+              {pgrHistory.map((item) => (
                 <TableRow key={item.version}>
                   <TableCell className='font-medium'>{item.version}</TableCell>
                   <TableCell>
