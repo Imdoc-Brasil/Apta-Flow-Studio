@@ -45,7 +45,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
-import { initialUnitsData } from '../units/page'
+import { initialUnitsData } from '../../units/data'
 
 const initialPgrHistoryData = [
   {
