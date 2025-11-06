@@ -23,11 +23,12 @@ import { initialEpiData } from '../data'
 import {
   initialHazardData,
   getHazardById,
-} from '@/app/dashboard/(main)/risks/page'
+} from '@/app/dashboard/(main)/clients/[contractId]/pgr/page'
 import { initialInventory } from '../../pgr/page'
 import { initialEmployeesData } from '../../employees/data'
 import { initialSectorsData } from '../../sectors/data'
 import { initialUnitsData } from '../../units/data'
+import { Input } from '@/components/ui/input'
 
 type AssociationType =
   | 'risk'
