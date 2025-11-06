@@ -57,35 +57,6 @@ export default function InfoDashboard() {
   const params = useParams()
   const contractId = params.contractId as string
   const client = getClientById(contractId)
-  const { toast } = useToast()
-
-  const [updates, setUpdates] = useState<PgrUpdate[]>([
-    {
-      date: '2024-07-25',
-      description: 'Versão inicial do documento gerada.',
-    },
-  ])
-  const [newUpdate, setNewUpdate] = useState('')
-  const [newUpdateDate, setNewUpdateDate] = useState(
-    new Date().toISOString().split('T')[0]
-  )
-
-  const handleAddUpdate = () => {
-    if (!newUpdate.trim()) {
-      toast({
-        variant: 'destructive',
-        title: 'Erro',
-        description: 'A descrição da atualização não pode estar vazia.',
-      })
-      return
-    }
-    setUpdates([{ date: newUpdateDate, description: newUpdate }, ...updates])
-    setNewUpdate('')
-    toast({
-      title: 'Atualização Adicionada!',
-      description: 'O log de atualizações do PGR foi atualizado.',
-    })
-  }
 
   if (!client) {
     return (
@@ -220,59 +191,6 @@ export default function InfoDashboard() {
                 </CardFooter>
               </Card>
             ))}
-          </div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Atualizações do Documento PGR</CardTitle>
-          <CardDescription>
-            Registre o histórico de revisões e atualizações do documento.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className='space-y-6'>
-          <div className='flex items-end gap-2'>
-            <div className='grid w-full max-w-sm items-center gap-1.5'>
-              <Label htmlFor='update-description'>
-                Descrição da Atualização
-              </Label>
-              <Textarea
-                id='update-description'
-                placeholder='Ex: Inclusão da função de Almoxarife'
-                value={newUpdate}
-                onChange={(e) => setNewUpdate(e.target.value)}
-              />
-            </div>
-            <div className='grid w-full max-w-[180px] items-center gap-1.5'>
-              <Label htmlFor='update-date'>Data</Label>
-              <Input
-                type='date'
-                id='update-date'
-                value={newUpdateDate}
-                onChange={(e) => setNewUpdateDate(e.target.value)}
-              />
-            </div>
-            <Button onClick={handleAddUpdate}>
-              <PlusCircle className='mr-2 h-4 w-4' /> Adicionar
-            </Button>
-          </div>
-          <Separator />
-          <div className='space-y-4'>
-            <h3 className='font-medium text-md flex items-center'>
-              <History className='mr-2 h-4 w-4' /> Histórico de Revisões
-            </h3>
-            <div className='border rounded-md p-4 max-h-60 overflow-y-auto'>
-              {updates.map((update, index) => (
-                <div key={index} className='flex gap-4 not-first:mt-4'>
-                  <div className='text-sm text-muted-foreground whitespace-nowrap'>
-                    {new Date(update.date).toLocaleDateString('pt-BR', {
-                      timeZone: 'UTC',
-                    })}
-                  </div>
-                  <div className='font-medium text-sm'>{update.description}</div>
-                </div>
-              ))}
-            </div>
           </div>
         </CardContent>
       </Card>

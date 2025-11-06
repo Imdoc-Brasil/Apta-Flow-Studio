@@ -16,7 +16,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { MoreHorizontal, FileDown, PlusCircle } from 'lucide-react'
+import { MoreHorizontal, FileDown, PlusCircle, History } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,7 +45,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
-import { initialUnitsData } from '../../units/data'
+import { initialUnitsData, Unit } from '../../units/data'
+import { Textarea } from '@/components/ui/textarea'
+import { Separator } from '@/components/ui/separator'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 const initialPgrHistoryData = [
   {
@@ -67,6 +70,10 @@ const initialPgrHistoryData = [
 ]
 
 type PgrEntry = (typeof initialPgrHistoryData)[0]
+interface PgrUpdate {
+  date: string
+  description: string
+}
 
 function ClientSideDateFormatter({ dateString }: { dateString: string }) {
   const [formattedDate, setFormattedDate] = useState('')
@@ -93,6 +100,22 @@ export default function PgrHistoryPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const { toast } = useToast()
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null)
+  const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null)
+
+  const [updates, setUpdates] = useState<PgrUpdate[]>([])
+  const [newUpdate, setNewUpdate] = useState('')
+  const [newUpdateDate, setNewUpdateDate] = useState(
+    new Date().toISOString().split('T')[0]
+  )
+
+  useEffect(() => {
+    if (selectedUnitId) {
+      const unit = initialUnitsData.find((u) => u.id === selectedUnitId)
+      setSelectedUnit(unit || null)
+    } else {
+      setSelectedUnit(null)
+    }
+  }, [selectedUnitId])
 
   const getNextVersion = () => {
     if (pgrHistory.length === 0) return '1.0'
@@ -104,23 +127,11 @@ export default function PgrHistoryPage() {
 
   const handleEmitPgr = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!selectedUnitId) {
+    if (!selectedUnit) {
       toast({
         variant: 'destructive',
         title: 'Unidade não selecionada',
         description: 'Por favor, selecione uma unidade para emitir o PGR.',
-      })
-      return
-    }
-
-    const selectedUnit = initialUnitsData.find(
-      (unit) => unit.id === selectedUnitId
-    )
-    if (!selectedUnit) {
-      toast({
-        variant: 'destructive',
-        title: 'Erro',
-        description: 'Unidade selecionada não encontrada.',
       })
       return
     }
@@ -137,15 +148,29 @@ export default function PgrHistoryPage() {
     setPgrHistory((prev) => [newPgr, ...prev])
     setIsDialogOpen(false)
     setSelectedUnitId(null)
+    setUpdates([])
     toast({
       title: 'PGR Emitido com Sucesso!',
       description: `A versão ${newPgr.version} do PGR para a unidade ${newPgr.unit} foi adicionada.`,
     })
   }
 
-  const selectedUnit = initialUnitsData.find(
-    (unit) => unit.id === selectedUnitId
-  )
+  const handleAddUpdate = () => {
+    if (!newUpdate.trim()) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description: 'A descrição da atualização não pode estar vazia.',
+      })
+      return
+    }
+    setUpdates([{ date: newUpdateDate, description: newUpdate }, ...updates])
+    setNewUpdate('')
+    toast({
+      title: 'Atualização Adicionada!',
+      description: 'O log de atualizações do PGR foi atualizado.',
+    })
+  }
 
   return (
     <div className='grid flex-1 auto-rows-max gap-4'>
@@ -161,7 +186,7 @@ export default function PgrHistoryPage() {
                 Emitir Novo PGR
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className='sm:max-w-2xl'>
               <DialogHeader>
                 <DialogTitle>Emitir Novo PGR</DialogTitle>
                 <DialogDescription>
@@ -170,62 +195,135 @@ export default function PgrHistoryPage() {
                 </DialogDescription>
               </DialogHeader>
               <form id='emit-pgr-form' onSubmit={handleEmitPgr}>
-                <div className='grid gap-4 py-4'>
-                  <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label htmlFor='unit' className='text-right'>
-                      Unidade
-                    </Label>
-                    <Select
-                      name='unit'
-                      onValueChange={setSelectedUnitId}
-                      required
-                    >
-                      <SelectTrigger className='col-span-3'>
-                        <SelectValue placeholder='Selecione uma unidade' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {initialUnitsData.map((unit) => (
-                          <SelectItem key={unit.id} value={unit.id}>
-                            {unit.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                <ScrollArea className='h-[70vh]'>
+                  <div className='space-y-6 p-1 pr-6'>
+                    {/* Seção 1: Identificação */}
+                    <fieldset className='space-y-4 rounded-lg border p-4'>
+                      <legend className='-ml-1 px-1 text-sm font-medium'>
+                        Seção: Identificação da Empresa
+                      </legend>
+                      <div className='grid grid-cols-4 items-center gap-4'>
+                        <Label htmlFor='unit' className='text-right'>
+                          Unidade
+                        </Label>
+                        <Select
+                          name='unit'
+                          onValueChange={setSelectedUnitId}
+                          required
+                        >
+                          <SelectTrigger className='col-span-3'>
+                            <SelectValue placeholder='Selecione uma unidade' />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {initialUnitsData.map((unit) => (
+                              <SelectItem key={unit.id} value={unit.id}>
+                                {unit.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {selectedUnit && (
+                        <div className='space-y-2 text-sm text-muted-foreground border-t pt-4 mt-4'>
+                           <p><span className='font-semibold text-foreground'>CNPJ:</span> {selectedUnit.cnpj}</p>
+                           <p><span className='font-semibold text-foreground'>Endereço:</span> {selectedUnit.address}</p>
+                           <p><span className='font-semibold text-foreground'>CNAE:</span> {selectedUnit.cnae}</p>
+                           <p><span className='font-semibold text-foreground'>Grau de Risco:</span> {selectedUnit.riskLevel}</p>
+                        </div>
+                      )}
+                      <div className='grid grid-cols-4 items-center gap-4'>
+                        <Label htmlFor='issueDate' className='text-right'>
+                          Data de Emissão
+                        </Label>
+                        <Input
+                          id='issueDate'
+                          name='issueDate'
+                          type='date'
+                          className='col-span-3'
+                          defaultValue={new Date().toISOString().split('T')[0]}
+                          required
+                        />
+                      </div>
+                      <div className='grid grid-cols-4 items-center gap-4'>
+                        <Label className='text-right'>Vigência</Label>
+                        <Input
+                          className='col-span-3'
+                          value='24 meses'
+                          disabled
+                        />
+                      </div>
+                      <div className='grid grid-cols-4 items-center gap-4'>
+                        <Label className='text-right'>Responsável PGR</Label>
+                        <Input
+                          className='col-span-3'
+                          value={
+                            selectedUnit?.pgrResponsible ||
+                            'Selecione uma unidade'
+                          }
+                          disabled
+                        />
+                      </div>
+                    </fieldset>
+                    
+                    {/* Seção 2: Atualizações */}
+                    <fieldset className='space-y-4 rounded-lg border p-4'>
+                       <legend className='-ml-1 px-1 text-sm font-medium'>
+                        Seção: Atualizações
+                      </legend>
+                        <div className='flex items-end gap-2'>
+                            <div className='grid w-full items-center gap-1.5'>
+                            <Label htmlFor='update-description'>
+                                Descrição da Atualização
+                            </Label>
+                            <Textarea
+                                id='update-description'
+                                placeholder='Ex: Inclusão da função de Almoxarife'
+                                value={newUpdate}
+                                onChange={(e) => setNewUpdate(e.target.value)}
+                            />
+                            </div>
+                            <div className='grid max-w-[180px] w-full items-center gap-1.5'>
+                            <Label htmlFor='update-date'>Data</Label>
+                            <Input
+                                type='date'
+                                id='update-date'
+                                value={newUpdateDate}
+                                onChange={(e) => setNewUpdateDate(e.target.value)}
+                            />
+                            </div>
+                            <Button type='button' onClick={handleAddUpdate}>
+                                Adicionar
+                            </Button>
+                        </div>
+                         {updates.length > 0 && <Separator />}
+                        <div className='space-y-2'>
+                           {updates.map((update, index) => (
+                            <div key={index} className='flex gap-4 text-sm'>
+                                <div className='text-muted-foreground whitespace-nowrap'>
+                                {new Date(update.date).toLocaleDateString('pt-BR', {
+                                    timeZone: 'UTC',
+                                })}
+                                </div>
+                                <div className='font-medium'>{update.description}</div>
+                            </div>
+                            ))}
+                        </div>
+                    </fieldset>
+                    
+                    {/* Seção 3: Sumário */}
+                     <fieldset className='space-y-4 rounded-lg border p-4 min-h-[10rem]'>
+                       <legend className='-ml-1 px-1 text-sm font-medium'>
+                        Seção: Sumário
+                      </legend>
+                      <div className='flex items-center justify-center h-full text-sm text-muted-foreground'>
+                        O sumário do documento será gerado aqui.
+                      </div>
+                    </fieldset>
+
                   </div>
-                  <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label htmlFor='issueDate' className='text-right'>
-                      Data de Emissão
-                    </Label>
-                    <Input
-                      id='issueDate'
-                      name='issueDate'
-                      type='date'
-                      className='col-span-3'
-                      defaultValue={new Date().toISOString().split('T')[0]}
-                      required
-                    />
-                  </div>
-                  <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label className='text-right'>Vigência</Label>
-                    <Input
-                      className='col-span-3'
-                      value='24 meses'
-                      disabled
-                    />
-                  </div>
-                  <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label className='text-right'>Responsável PGR</Label>
-                    <Input
-                      className='col-span-3'
-                      value={
-                        selectedUnit?.pgrResponsible || 'Selecione uma unidade'
-                      }
-                      disabled
-                    />
-                  </div>
-                </div>
+                </ScrollArea>
               </form>
-              <DialogFooter>
+              <DialogFooter className='pt-4 border-t'>
                 <Button
                   variant='outline'
                   onClick={() => setIsDialogOpen(false)}
