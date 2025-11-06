@@ -118,6 +118,11 @@ export function ClientSidebar() {
       icon: CalendarCheck,
     },
     { href: `${basePath}/epis`, label: 'Gestão de EPIs', icon: HardHat },
+    {
+      href: `${basePath}/epis/recommendation`,
+      label: 'Matriz de Recomendação',
+      icon: ClipboardList,
+    },
     { href: `${basePath}/epc`, label: 'Gestão de EPC', icon: Factory },
     {
       href: `${basePath}/trainings`,
