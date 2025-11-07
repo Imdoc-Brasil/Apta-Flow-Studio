@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { MoreHorizontal, PlusCircle, Search, Filter } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -70,6 +70,24 @@ import { initialSectorsData } from '../sectors/data'
 import { initialUnitsData } from '../units/data'
 import { initialEnvironmentsData } from '../environments/data'
 import { Separator } from '@/components/ui/separator'
+
+// Componente para formatar datas com segurança no cliente
+function ClientSideDateFormatter({ dateString }: { dateString: string }) {
+  const [formattedDate, setFormattedDate] = useState('')
+
+  useEffect(() => {
+    if (dateString) {
+      // Usar new Date() pode ser inconsistente. Para evitar erros de hidratação,
+      // criamos a data com base em UTC para depois formatar.
+      const date = new Date(dateString)
+      const timezoneOffset = date.getTimezoneOffset() * 60000
+      const adjustedDate = new Date(date.getTime() + timezoneOffset)
+      setFormattedDate(adjustedDate.toLocaleDateString('pt-BR'))
+    }
+  }, [dateString])
+
+  return <>{formattedDate || '...'}</> // Mostra '...' enquanto carrega
+}
 
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState(initialEmployeesData)
@@ -416,9 +434,7 @@ export default function EmployeesPage() {
                     {getRoleById(employee.roleId)?.name || 'N/A'}
                   </TableCell>
                   <TableCell className='hidden sm:table-cell'>
-                    {new Date(employee.admissionDate).toLocaleDateString(
-                      'pt-BR'
-                    )}
+                    <ClientSideDateFormatter dateString={employee.admissionDate} />
                   </TableCell>
                   <TableCell>
                     <Badge variant={getStatusBadgeVariant(employee.status)}>
@@ -600,9 +616,7 @@ export default function EmployeesPage() {
                     Data de Admissão
                   </p>
                   <p>
-                    {new Date(
-                      currentEmployeeDetails.employee.admissionDate
-                    ).toLocaleDateString('pt-BR')}
+                    <ClientSideDateFormatter dateString={currentEmployeeDetails.employee.admissionDate} />
                   </p>
                 </div>
               </div>
