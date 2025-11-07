@@ -11,6 +11,13 @@ export interface PropertyInfo {
   builtArea: string
 }
 
+export interface ContractingCompany {
+  name: string
+  cnpj: string
+  cnae: string
+  riskLevel: string
+}
+
 export const initialUnitsData = [
   {
     id: 'UNIT-001',
@@ -66,6 +73,7 @@ export const initialUnitsData = [
     type: 'Obra' as UnitType,
     description: 'Construção do novo centro comercial na Av. Paulista.',
     cnpj: '12.345.678/0001-99', // CNPJ da Matriz
+    cno: '90.123456.78.99',
     propertyInfo: {
       address: 'Av. Paulista, 1000',
       zipCode: '01310-100',
@@ -86,4 +94,20 @@ export const initialUnitsData = [
   },
 ]
 
-export type Unit = (typeof initialUnitsData)[0]
+export type Unit = {
+  id: string
+  name: string
+  type: UnitType
+  description: string
+  cnpj: string
+  propertyInfo: PropertyInfo
+  status: 'Ativa' | 'Inativa'
+  cnae: string
+  riskLevel: string
+  legalResponsible: string
+  pgrResponsible: string
+  ltcatResponsible: string
+  pcmsoResponsible: string
+  cno?: string
+  contractingCompany?: ContractingCompany
+}
