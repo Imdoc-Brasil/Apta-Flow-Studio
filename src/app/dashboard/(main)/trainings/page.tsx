@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState } from 'react'
@@ -60,7 +61,7 @@ export interface Training {
   workload: number // in hours
 }
 
-const initialTrainingsData: Training[] = [
+export const initialTrainingsData: Training[] = [
   {
     id: 'TRN-001',
     title: 'NR-35 - Trabalho em Altura',
