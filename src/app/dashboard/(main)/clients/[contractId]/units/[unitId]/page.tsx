@@ -47,6 +47,8 @@ export default function UnitDetailsPage() {
   const totalEmployees = employeesInUnit.length
   const expiredAsos = 0 // Placeholder
   const pcdEmployees = 0 // Placeholder
+  const expiredTrainings = 0 // Placeholder
+  const expiredVaccines = 0 // Placeholder
 
   if (!unit) {
     return (
@@ -265,6 +267,38 @@ export default function UnitDetailsPage() {
                   )}
                 >
                   {expiredAsos}
+                </span>
+              </Link>
+              <Link
+                href='#'
+                className='flex items-center justify-between rounded-md p-2 hover:bg-muted'
+              >
+                <span className='text-muted-foreground'>
+                  Treinamentos vencidos
+                </span>
+                <span
+                  className={cn(
+                    'font-semibold',
+                    expiredTrainings > 0 && 'text-destructive'
+                  )}
+                >
+                  {expiredTrainings}
+                </span>
+              </Link>
+               <Link
+                href='#'
+                className='flex items-center justify-between rounded-md p-2 hover:bg-muted'
+              >
+                <span className='text-muted-foreground'>
+                  Vacinas vencidas
+                </span>
+                <span
+                  className={cn(
+                    'font-semibold',
+                    expiredVaccines > 0 && 'text-destructive'
+                  )}
+                >
+                  {expiredVaccines}
                 </span>
               </Link>
               <Link
