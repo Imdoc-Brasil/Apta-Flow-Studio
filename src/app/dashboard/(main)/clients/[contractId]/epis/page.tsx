@@ -70,6 +70,11 @@ export default function EpisPage() {
 
   const [isEpiDialogOpen, setIsEpiDialogOpen] = useState(false)
   const [isDeliveryDialogOpen, setIsDeliveryDialogOpen] = useState(false)
+  const [isStockDialogOpen, setIsStockDialogOpen] = useState(false)
+  const [editingStockItem, setEditingStockItem] = useState<EpiStock | null>(
+    null
+  )
+
   const { toast } = useToast()
 
   const handleAddEpi = (event: React.FormEvent<HTMLFormElement>) => {
@@ -144,431 +149,589 @@ export default function EpisPage() {
     })
   }
 
+  const handleStockSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const formData = new FormData(event.currentTarget)
+    const quantity = Number(formData.get('quantity'))
+    const minStock = Number(formData.get('minStock'))
+
+    if (editingStockItem) {
+      // Editing existing stock
+      setEpiStock((prev) =>
+        prev.map((item) =>
+          item.epiId === editingStockItem.epiId
+            ? { ...item, quantity, minStock }
+            : item
+        )
+      )
+      toast({ title: 'Estoque Atualizado!' })
+    } else {
+      // Adding new item to stock
+      const epiId = formData.get('epiId') as string
+      if (epiStock.some((item) => item.epiId === epiId)) {
+        toast({
+          variant: 'destructive',
+          title: 'Item já existe no estoque',
+          description: 'Para atualizar, selecione o item na lista.',
+        })
+        return
+      }
+      const newStockItem: EpiStock = {
+        epiId,
+        quantity,
+        minStock,
+      }
+      setEpiStock((prev) => [newStockItem, ...prev])
+      toast({ title: 'Item adicionado ao estoque!' })
+    }
+    setIsStockDialogOpen(false)
+    setEditingStockItem(null)
+  }
+
+  const openStockDialog = (item: EpiStock | null) => {
+    setEditingStockItem(item)
+    setIsStockDialogOpen(true)
+  }
+
   const getEpiNameById = (epiId: string) =>
     epiData.find((e) => e.id === epiId)?.name || 'N/A'
   const getEpiCaById = (epiId: string) =>
     epiData.find((e) => e.id === epiId)?.ca || 'N/A'
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Gestão de EPIs</CardTitle>
-        <CardDescription>
-          Gerencie o catálogo, estoque, entregas e vínculos de Equipamentos de
-          Proteção Individual.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue='catalog'>
-          <TabsList className='grid w-full grid-cols-4'>
-            <TabsTrigger value='catalog'>Catálogo de EPIs</TabsTrigger>
-            <TabsTrigger value='delivery'>Gestão de Entrega</TabsTrigger>
-            <TabsTrigger value='stock'>Controle de Estoque</TabsTrigger>
-            <TabsTrigger value='mapping'>C.A x Riscos</TabsTrigger>
-          </TabsList>
-
-          {/* Tab: Catálogo de EPIs */}
-          <TabsContent value='catalog'>
-            <Card>
-              <CardHeader>
-                <CardTitle className='flex items-center justify-between'>
-                  Catálogo
-                  <Dialog
-                    open={isEpiDialogOpen}
-                    onOpenChange={setIsEpiDialogOpen}
-                  >
-                    <DialogTrigger asChild>
-                      <Button size='sm' className='h-8 gap-1'>
-                        <PlusCircle className='h-3.5 w-3.5' />
-                        <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
-                          Adicionar EPI
-                        </span>
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className='sm:max-w-2xl'>
-                      <DialogHeader>
-                        <DialogTitle>Adicionar Novo EPI</DialogTitle>
-                      </DialogHeader>
-                      <form id='add-epi-form' onSubmit={handleAddEpi}>
-                        <ScrollArea className='h-[70vh]'>
-                          <div className='grid gap-6 p-4'>
-                            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                              <div className='space-y-2'>
-                                <Label htmlFor='name'>Nome do EPI</Label>
-                                <Input id='name' name='name' required />
-                              </div>
-                              <div className='space-y-2'>
-                                <Label htmlFor='ca'>Nº do CA</Label>
-                                <Input id='ca' name='ca' required />
-                              </div>
-                            </div>
-
-                            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                              <div className='space-y-2'>
-                                <Label htmlFor='fabricante'>Fabricante</Label>
-                                <Input id='fabricante' name='fabricante' />
-                              </div>
-                              <div className='space-y-2'>
-                                <Label htmlFor='vencimentoCA'>
-                                  Vencimento do CA
-                                </Label>
-                                <Input
-                                  id='vencimentoCA'
-                                  name='vencimentoCA'
-                                  type='date'
-                                />
-                              </div>
-                            </div>
-                            
-                            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                               <div className='space-y-2'>
-                                <Label htmlFor='shelfLife'>
-                                  Vida Útil (dias)
-                                </Label>
-                                <Input
-                                  id='shelfLife'
-                                  name='shelfLife'
-                                  type='number'
-                                  required
-                                />
-                              </div>
-                               <div className='flex items-center gap-2 pt-6'>
-                                <Switch
-                                  id='active'
-                                  name='active'
-                                  defaultChecked={true}
-                                />
-                                <Label htmlFor='active'>Status Ativo</Label>
-                              </div>
-                            </div>
-
-                            <div className='space-y-2'>
-                              <Label htmlFor='specifications'>
-                                Especificações Técnicas
-                              </Label>
-                              <Textarea
-                                id='specifications'
-                                name='specifications'
-                                placeholder='Descreva as características técnicas do EPI...'
-                              />
-                            </div>
-
-                            <div className='space-y-2'>
-                              <Label htmlFor='usage'>Forma de Uso</Label>
-                              <Textarea
-                                id='usage'
-                                name='usage'
-                                placeholder='Instruções sobre como utilizar o EPI corretamente...'
-                              />
-                            </div>
-
-                            <div className='space-y-2'>
-                              <Label htmlFor='hygiene'>Higienização</Label>
-                              <Textarea
-                                id='hygiene'
-                                name='hygiene'
-                                placeholder='Instruções de limpeza e conservação...'
-                              />
-                            </div>
-
-                            <div className='space-y-2'>
-                              <Label htmlFor='replacement'>Substituição</Label>
-                              <Textarea
-                                id='replacement'
-                                name='replacement'
-                                placeholder='Indicações de quando o EPI deve ser substituído...'
-                              />
-                            </div>
-                          </div>
-                        </ScrollArea>
-                      </form>
-                      <DialogFooter>
-                        <Button
-                          variant='outline'
-                          onClick={() => setIsEpiDialogOpen(false)}
-                        >
-                          Cancelar
-                        </Button>
-                        <Button type='submit' form='add-epi-form'>
-                          Salvar
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Nome</TableHead>
-                      <TableHead>CA</TableHead>
-                      <TableHead>Venc. CA</TableHead>
-                      <TableHead>Vida Útil</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>
-                        <span className='sr-only'>Ações</span>
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {epiData.map((epi) => (
-                      <TableRow key={epi.id}>
-                        <TableCell className='font-medium'>{epi.name}</TableCell>
-                        <TableCell>{epi.ca}</TableCell>
-                        <TableCell>
-                          {new Date(epi.vencimentoCA).toLocaleDateString(
-                            'pt-BR',
-                            { timeZone: 'UTC' }
-                          )}
-                        </TableCell>
-                        <TableCell>{epi.shelfLife} dias</TableCell>
-                        <TableCell>
-                          <Badge variant={epi.active ? 'secondary' : 'outline'}>
-                            {epi.active ? 'Ativo' : 'Inativo'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                aria-haspopup='true'
-                                size='icon'
-                                variant='ghost'
-                              >
-                                <MoreHorizontal className='h-4 w-4' />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align='end'>
-                              <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                              <DropdownMenuItem>Editar</DropdownMenuItem>
-                              <DropdownMenuItem>Desativar</DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
+  const renderStockForm = (stockItem: EpiStock | null) => {
+    return (
+      <form id='stock-form' onSubmit={handleStockSubmit}>
+        <div className='grid gap-4 py-4'>
+          <div className='space-y-2'>
+            <Label htmlFor='epiId'>EPI</Label>
+            {stockItem ? (
+              <Input value={getEpiNameById(stockItem.epiId)} disabled />
+            ) : (
+              <Select name='epiId' required>
+                <SelectTrigger>
+                  <SelectValue placeholder='Selecione o EPI do catálogo' />
+                </SelectTrigger>
+                <SelectContent>
+                  {epiData
+                    .filter((epi) => epi.active)
+                    .map((epi) => (
+                      <SelectItem key={epi.id} value={epi.id}>
+                        {epi.name} (CA: {epi.ca})
+                      </SelectItem>
                     ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+          <div className='space-y-2'>
+            <Label htmlFor='quantity'>Quantidade em Estoque</Label>
+            <Input
+              id='quantity'
+              name='quantity'
+              type='number'
+              defaultValue={stockItem?.quantity}
+              required
+              min={0}
+            />
+          </div>
+          <div className='space-y-2'>
+            <Label htmlFor='minStock'>Estoque Mínimo</Label>
+            <Input
+              id='minStock'
+              name='minStock'
+              type='number'
+              defaultValue={stockItem?.minStock}
+              required
+              min={0}
+            />
+          </div>
+        </div>
+      </form>
+    )
+  }
 
-          {/* Tab: Gestão de Entrega */}
-          <TabsContent value='delivery'>
-            <Card>
-              <CardHeader>
-                <CardTitle className='flex items-center justify-between'>
-                  Registro de Entregas
-                  <Dialog
-                    open={isDeliveryDialogOpen}
-                    onOpenChange={setIsDeliveryDialogOpen}
-                  >
-                    <DialogTrigger asChild>
-                      <Button size='sm' className='h-8 gap-1'>
-                        <PlusCircle className='h-3.5 w-3.5' />
-                        <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
-                          Registrar Entrega
-                        </span>
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Registrar Nova Entrega</DialogTitle>
-                      </DialogHeader>
-                      <form
-                        id='add-delivery-form'
-                        onSubmit={handleAddDelivery}
-                      >
-                        <div className='grid gap-4 py-4'>
-                          <div className='grid grid-cols-4 items-center gap-4'>
-                            <Label htmlFor='employeeId' className='text-right'>
-                              Colaborador
-                            </Label>
-                            <Select name='employeeId' required>
-                              <SelectTrigger className='col-span-3'>
-                                <SelectValue placeholder='Selecione o colaborador' />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {initialEmployeesData.map((emp) => (
-                                  <SelectItem key={emp.id} value={emp.id}>
-                                    {emp.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className='grid grid-cols-4 items-center gap-4'>
-                            <Label htmlFor='epiId' className='text-right'>
-                              EPI
-                            </Label>
-                            <Select name='epiId' required>
-                              <SelectTrigger className='col-span-3'>
-                                <SelectValue placeholder='Selecione o EPI' />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {epiData
-                                  .filter((epi) => epi.active)
-                                  .map((epi) => (
-                                    <SelectItem key={epi.id} value={epi.id}>
-                                      {epi.name} (CA: {epi.ca})
-                                    </SelectItem>
-                                  ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className='grid grid-cols-4 items-center gap-4'>
-                            <Label htmlFor='quantity' className='text-right'>
-                              Quantidade
-                            </Label>
-                            <Input
-                              id='quantity'
-                              name='quantity'
-                              type='number'
-                              className='col-span-3'
-                              required
-                              defaultValue={1}
-                              min={1}
-                            />
-                          </div>
-                        </div>
-                      </form>
-                      <DialogFooter>
-                        <Button
-                          variant='outline'
-                          onClick={() => setIsDeliveryDialogOpen(false)}
-                        >
-                          Cancelar
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Gestão de EPIs</CardTitle>
+          <CardDescription>
+            Gerencie o catálogo, estoque, entregas e vínculos de Equipamentos de
+            Proteção Individual.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue='catalog'>
+            <TabsList className='grid w-full grid-cols-4'>
+              <TabsTrigger value='catalog'>Catálogo de EPIs</TabsTrigger>
+              <TabsTrigger value='delivery'>Gestão de Entrega</TabsTrigger>
+              <TabsTrigger value='stock'>Controle de Estoque</TabsTrigger>
+              <TabsTrigger value='mapping'>C.A x Riscos</TabsTrigger>
+            </TabsList>
+
+            {/* Tab: Catálogo de EPIs */}
+            <TabsContent value='catalog'>
+              <Card>
+                <CardHeader>
+                  <CardTitle className='flex items-center justify-between'>
+                    Catálogo
+                    <Dialog
+                      open={isEpiDialogOpen}
+                      onOpenChange={setIsEpiDialogOpen}
+                    >
+                      <DialogTrigger asChild>
+                        <Button size='sm' className='h-8 gap-1'>
+                          <PlusCircle className='h-3.5 w-3.5' />
+                          <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
+                            Adicionar EPI
+                          </span>
                         </Button>
-                        <Button type='submit' form='add-delivery-form'>
-                          Registrar
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Colaborador</TableHead>
-                      <TableHead>EPI</TableHead>
-                      <TableHead>Data</TableHead>
-                      <TableHead>Quantidade</TableHead>
-                      <TableHead>Próx. Troca</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {epiDeliveries.map((delivery) => {
-                      const epi = epiData.find((e) => e.id === delivery.epiId)
-                      const nextChangeDate = epi
-                        ? new Date(delivery.deliveryDate)
-                        : null
-                      if (nextChangeDate && epi?.shelfLife) {
-                        nextChangeDate.setDate(
-                          nextChangeDate.getDate() + epi.shelfLife
-                        )
-                      }
-                      return (
-                        <TableRow key={delivery.id}>
-                          <TableCell>{delivery.employeeName}</TableCell>
-                          <TableCell>{delivery.epiName}</TableCell>
-                          <TableCell>
-                            {new Date(
-                              delivery.deliveryDate
-                            ).toLocaleDateString()}
+                      </DialogTrigger>
+                      <DialogContent className='sm:max-w-2xl'>
+                        <DialogHeader>
+                          <DialogTitle>Adicionar Novo EPI</DialogTitle>
+                        </DialogHeader>
+                        <form id='add-epi-form' onSubmit={handleAddEpi}>
+                          <ScrollArea className='h-[70vh]'>
+                            <div className='grid gap-6 p-4'>
+                              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                                <div className='space-y-2'>
+                                  <Label htmlFor='name'>Nome do EPI</Label>
+                                  <Input id='name' name='name' required />
+                                </div>
+                                <div className='space-y-2'>
+                                  <Label htmlFor='ca'>Nº do CA</Label>
+                                  <Input id='ca' name='ca' required />
+                                </div>
+                              </div>
+
+                              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                                <div className='space-y-2'>
+                                  <Label htmlFor='fabricante'>
+                                    Fabricante
+                                  </Label>
+                                  <Input id='fabricante' name='fabricante' />
+                                </div>
+                                <div className='space-y-2'>
+                                  <Label htmlFor='vencimentoCA'>
+                                    Vencimento do CA
+                                  </Label>
+                                  <Input
+                                    id='vencimentoCA'
+                                    name='vencimentoCA'
+                                    type='date'
+                                  />
+                                </div>
+                              </div>
+
+                              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                                <div className='space-y-2'>
+                                  <Label htmlFor='shelfLife'>
+                                    Vida Útil (dias)
+                                  </Label>
+                                  <Input
+                                    id='shelfLife'
+                                    name='shelfLife'
+                                    type='number'
+                                    required
+                                  />
+                                </div>
+                                <div className='flex items-center gap-2 pt-6'>
+                                  <Switch
+                                    id='active'
+                                    name='active'
+                                    defaultChecked={true}
+                                  />
+                                  <Label htmlFor='active'>Status Ativo</Label>
+                                </div>
+                              </div>
+
+                              <div className='space-y-2'>
+                                <Label htmlFor='specifications'>
+                                  Especificações Técnicas
+                                </Label>
+                                <Textarea
+                                  id='specifications'
+                                  name='specifications'
+                                  placeholder='Descreva as características técnicas do EPI...'
+                                />
+                              </div>
+
+                              <div className='space-y-2'>
+                                <Label htmlFor='usage'>Forma de Uso</Label>
+                                <Textarea
+                                  id='usage'
+                                  name='usage'
+                                  placeholder='Instruções sobre como utilizar o EPI corretamente...'
+                                />
+                              </div>
+
+                              <div className='space-y-2'>
+                                <Label htmlFor='hygiene'>Higienização</Label>
+                                <Textarea
+                                  id='hygiene'
+                                  name='hygiene'
+                                  placeholder='Instruções de limpeza e conservação...'
+                                />
+                              </div>
+
+                              <div className='space-y-2'>
+                                <Label htmlFor='replacement'>Substituição</Label>
+                                <Textarea
+                                  id='replacement'
+                                  name='replacement'
+                                  placeholder='Indicações de quando o EPI deve ser substituído...'
+                                />
+                              </div>
+                            </div>
+                          </ScrollArea>
+                          <DialogFooter>
+                            <Button
+                              variant='outline'
+                              onClick={() => setIsEpiDialogOpen(false)}
+                            >
+                              Cancelar
+                            </Button>
+                            <Button type='submit' form='add-epi-form'>
+                              Salvar
+                            </Button>
+                          </DialogFooter>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>CA</TableHead>
+                        <TableHead>Venc. CA</TableHead>
+                        <TableHead>Vida Útil</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>
+                          <span className='sr-only'>Ações</span>
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {epiData.map((epi) => (
+                        <TableRow key={epi.id}>
+                          <TableCell className='font-medium'>
+                            {epi.name}
                           </TableCell>
-                          <TableCell>{delivery.quantity}</TableCell>
+                          <TableCell>{epi.ca}</TableCell>
                           <TableCell>
-                            {nextChangeDate
-                              ? nextChangeDate.toLocaleDateString()
-                              : 'N/A'}
+                            {new Date(epi.vencimentoCA).toLocaleDateString(
+                              'pt-BR',
+                              { timeZone: 'UTC' }
+                            )}
+                          </TableCell>
+                          <TableCell>{epi.shelfLife} dias</TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={epi.active ? 'secondary' : 'outline'}
+                            >
+                              {epi.active ? 'Ativo' : 'Inativo'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  aria-haspopup='true'
+                                  size='icon'
+                                  variant='ghost'
+                                >
+                                  <MoreHorizontal className='h-4 w-4' />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align='end'>
+                                <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                                <DropdownMenuItem>Editar</DropdownMenuItem>
+                                <DropdownMenuItem>Desativar</DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </TableCell>
                         </TableRow>
-                      )
-                    })}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-          {/* Tab: Controle de Estoque */}
-          <TabsContent value='stock'>
-            <Card>
-              <CardHeader>
-                <CardTitle>Estoque</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>EPI</TableHead>
-                      <TableHead>CA</TableHead>
-                      <TableHead>Quantidade em Estoque</TableHead>
-                      <TableHead>Estoque Mínimo</TableHead>
-                      <TableHead>Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {epiStock.map((item) => (
-                      <TableRow key={item.epiId}>
-                        <TableCell>{getEpiNameById(item.epiId)}</TableCell>
-                        <TableCell>{getEpiCaById(item.epiId)}</TableCell>
-                        <TableCell>{item.quantity}</TableCell>
-                        <TableCell>{item.minStock}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              item.quantity > item.minStock
-                                ? 'secondary'
-                                : 'destructive'
-                            }
+            {/* Tab: Gestão de Entrega */}
+            <TabsContent value='delivery'>
+              <Card>
+                <CardHeader>
+                  <CardTitle className='flex items-center justify-between'>
+                    Registro de Entregas
+                    <Dialog
+                      open={isDeliveryDialogOpen}
+                      onOpenChange={setIsDeliveryDialogOpen}
+                    >
+                      <DialogTrigger asChild>
+                        <Button size='sm' className='h-8 gap-1'>
+                          <PlusCircle className='h-3.5 w-3.5' />
+                          <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
+                            Registrar Entrega
+                          </span>
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Registrar Nova Entrega</DialogTitle>
+                        </DialogHeader>
+                        <form
+                          id='add-delivery-form'
+                          onSubmit={handleAddDelivery}
+                        >
+                          <div className='grid gap-4 py-4'>
+                            <div className='grid grid-cols-4 items-center gap-4'>
+                              <Label
+                                htmlFor='employeeId'
+                                className='text-right'
+                              >
+                                Colaborador
+                              </Label>
+                              <Select name='employeeId' required>
+                                <SelectTrigger className='col-span-3'>
+                                  <SelectValue placeholder='Selecione o colaborador' />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {initialEmployeesData.map((emp) => (
+                                    <SelectItem key={emp.id} value={emp.id}>
+                                      {emp.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className='grid grid-cols-4 items-center gap-4'>
+                              <Label htmlFor='epiId' className='text-right'>
+                                EPI
+                              </Label>
+                              <Select name='epiId' required>
+                                <SelectTrigger className='col-span-3'>
+                                  <SelectValue placeholder='Selecione o EPI' />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {epiData
+                                    .filter((epi) => epi.active)
+                                    .map((epi) => (
+                                      <SelectItem key={epi.id} value={epi.id}>
+                                        {epi.name} (CA: {epi.ca})
+                                      </SelectItem>
+                                    ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className='grid grid-cols-4 items-center gap-4'>
+                              <Label htmlFor='quantity' className='text-right'>
+                                Quantidade
+                              </Label>
+                              <Input
+                                id='quantity'
+                                name='quantity'
+                                type='number'
+                                className='col-span-3'
+                                required
+                                defaultValue={1}
+                                min={1}
+                              />
+                            </div>
+                          </div>
+                        </form>
+                        <DialogFooter>
+                          <Button
+                            variant='outline'
+                            onClick={() => setIsDeliveryDialogOpen(false)}
                           >
-                            {item.quantity > item.minStock
-                              ? 'Em estoque'
-                              : 'Estoque baixo'}
-                          </Badge>
-                        </TableCell>
+                            Cancelar
+                          </Button>
+                          <Button type='submit' form='add-delivery-form'>
+                            Registrar
+                          </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Colaborador</TableHead>
+                        <TableHead>EPI</TableHead>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Quantidade</TableHead>
+                        <TableHead>Próx. Troca</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
+                    </TableHeader>
+                    <TableBody>
+                      {epiDeliveries.map((delivery) => {
+                        const epi = epiData.find(
+                          (e) => e.id === delivery.epiId
+                        )
+                        const nextChangeDate = epi
+                          ? new Date(delivery.deliveryDate)
+                          : null
+                        if (nextChangeDate && epi?.shelfLife) {
+                          nextChangeDate.setDate(
+                            nextChangeDate.getDate() + epi.shelfLife
+                          )
+                        }
+                        return (
+                          <TableRow key={delivery.id}>
+                            <TableCell>{delivery.employeeName}</TableCell>
+                            <TableCell>{delivery.epiName}</TableCell>
+                            <TableCell>
+                              {new Date(
+                                delivery.deliveryDate
+                              ).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>{delivery.quantity}</TableCell>
+                            <TableCell>
+                              {nextChangeDate
+                                ? nextChangeDate.toLocaleDateString()
+                                : 'N/A'}
+                            </TableCell>
+                          </TableRow>
+                        )
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-          {/* Tab: C.A x Riscos */}
-          <TabsContent value='mapping'>
-            <Card>
-              <CardHeader>
-                <CardTitle>Tabela de C.A x Riscos</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>CA</TableHead>
-                      <TableHead>EPI</TableHead>
-                      <TableHead>Risco Associado</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {caRiskMapping.map((mapping) => (
-                      <TableRow key={mapping.ca}>
-                        <TableCell>{mapping.ca}</TableCell>
-                        <TableCell>{mapping.epiName}</TableCell>
-                        <TableCell>{mapping.risk}</TableCell>
+            {/* Tab: Controle de Estoque */}
+            <TabsContent value='stock'>
+              <Card>
+                <CardHeader>
+                  <CardTitle className='flex items-center justify-between'>
+                    Estoque
+                    <Button
+                      size='sm'
+                      className='h-8 gap-1'
+                      onClick={() => openStockDialog(null)}
+                    >
+                      <PlusCircle className='h-3.5 w-3.5' />
+                      <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
+                        Adicionar ao Estoque
+                      </span>
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>EPI</TableHead>
+                        <TableHead>CA</TableHead>
+                        <TableHead>Quantidade em Estoque</TableHead>
+                        <TableHead>Estoque Mínimo</TableHead>
+                        <TableHead>Status</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+                    </TableHeader>
+                    <TableBody>
+                      {epiStock.map((item) => (
+                        <TableRow
+                          key={item.epiId}
+                          className='cursor-pointer'
+                          onClick={() => openStockDialog(item)}
+                        >
+                          <TableCell>{getEpiNameById(item.epiId)}</TableCell>
+                          <TableCell>{getEpiCaById(item.epiId)}</TableCell>
+                          <TableCell>{item.quantity}</TableCell>
+                          <TableCell>{item.minStock}</TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                item.quantity > item.minStock
+                                  ? 'secondary'
+                                  : 'destructive'
+                              }
+                            >
+                              {item.quantity > item.minStock
+                                ? 'Em estoque'
+                                : 'Estoque baixo'}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Tab: C.A x Riscos */}
+            <TabsContent value='mapping'>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Tabela de C.A x Riscos</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>CA</TableHead>
+                        <TableHead>EPI</TableHead>
+                        <TableHead>Risco Associado</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {caRiskMapping.map((mapping) => (
+                        <TableRow key={mapping.ca}>
+                          <TableCell>{mapping.ca}</TableCell>
+                          <TableCell>{mapping.epiName}</TableCell>
+                          <TableCell>{mapping.risk}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </CardContent>
+      </Card>
+
+      {/* Stock Dialog */}
+      <Dialog open={isStockDialogOpen} onOpenChange={setIsStockDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {editingStockItem ? 'Atualizar' : 'Adicionar'} Item no Estoque
+            </DialogTitle>
+            <DialogDescription>
+              {editingStockItem
+                ? 'Atualize a quantidade e o estoque mínimo.'
+                : 'Adicione um novo EPI ao controle de estoque.'}
+            </DialogDescription>
+          </DialogHeader>
+          {renderStockForm(editingStockItem)}
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => {
+                setIsStockDialogOpen(false)
+                setEditingStockItem(null)
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button type='submit' form='stock-form'>
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }
+
+    
