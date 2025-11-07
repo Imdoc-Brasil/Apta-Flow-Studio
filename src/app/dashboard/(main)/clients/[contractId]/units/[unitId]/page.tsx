@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useParams } from 'next/navigation'
@@ -17,6 +18,7 @@ import { Separator } from '@/components/ui/separator'
 import { initialSectorsData } from '../../sectors/data'
 import { initialRolesData } from '../../roles/data'
 import { initialEmployeesData } from '../../employees/data'
+import { cn } from '@/lib/utils'
 
 const getUnitById = (unitId: string): Unit | undefined => {
   return initialUnitsData.find((unit) => unit.id === unitId)
@@ -256,7 +258,14 @@ export default function UnitDetailsPage() {
                 className='flex items-center justify-between rounded-md p-2 hover:bg-muted'
               >
                 <span className='text-muted-foreground'>ASOs vencidos</span>
-                <span className='font-semibold'>{expiredAsos}</span>
+                <span
+                  className={cn(
+                    'font-semibold',
+                    expiredAsos > 0 && 'text-destructive'
+                  )}
+                >
+                  {expiredAsos}
+                </span>
               </Link>
               <Link
                 href='#'
