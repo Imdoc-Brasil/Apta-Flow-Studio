@@ -179,7 +179,7 @@ export default function UnitsPage() {
             id='name'
             name='name'
             defaultValue={unit?.name}
-            readOnly={!isEditing}
+            disabled={!isEditing}
             required
           />
         </div>
@@ -189,7 +189,7 @@ export default function UnitsPage() {
             id='description'
             name='description'
             defaultValue={unit?.description}
-            readOnly={!isEditing}
+            disabled={!isEditing}
           />
         </div>
 
@@ -200,7 +200,7 @@ export default function UnitsPage() {
               id='cnpj'
               name='cnpj'
               defaultValue={unit?.cnpj}
-              readOnly={!isEditing}
+              disabled={!isEditing}
             />
           </div>
           <div className='space-y-2'>
@@ -209,7 +209,7 @@ export default function UnitsPage() {
               id='address'
               name='address'
               defaultValue={unit?.address}
-              readOnly={!isEditing}
+              disabled={!isEditing}
               required
             />
           </div>
@@ -219,7 +219,7 @@ export default function UnitsPage() {
               id='cnae'
               name='cnae'
               defaultValue={unit?.cnae}
-              readOnly={!isEditing}
+              disabled={!isEditing}
             />
           </div>
           <div className='space-y-2'>
@@ -228,7 +228,7 @@ export default function UnitsPage() {
               id='riskLevel'
               name='riskLevel'
               defaultValue={unit?.riskLevel}
-              readOnly={!isEditing}
+              disabled={!isEditing}
             />
           </div>
         </div>
@@ -242,7 +242,7 @@ export default function UnitsPage() {
                 id='legalResponsible'
                 name='legalResponsible'
                 defaultValue={unit?.legalResponsible}
-                readOnly={!isEditing}
+                disabled={!isEditing}
               />
             </div>
             <div className='space-y-2'>
@@ -251,7 +251,7 @@ export default function UnitsPage() {
                 id='pgrResponsible'
                 name='pgrResponsible'
                 defaultValue={unit?.pgrResponsible}
-                readOnly={!isEditing}
+                disabled={!isEditing}
               />
             </div>
             <div className='space-y-2'>
@@ -260,7 +260,7 @@ export default function UnitsPage() {
                 id='ltcatResponsible'
                 name='ltcatResponsible'
                 defaultValue={unit?.ltcatResponsible}
-                readOnly={!isEditing}
+                disabled={!isEditing}
               />
             </div>
             <div className='space-y-2'>
@@ -269,7 +269,7 @@ export default function UnitsPage() {
                 id='pcmsoResponsible'
                 name='pcmsoResponsible'
                 defaultValue={unit?.pcmsoResponsible}
-                readOnly={!isEditing}
+                disabled={!isEditing}
               />
             </div>
           </div>
@@ -562,3 +562,5 @@ export default function UnitsPage() {
     </>
   )
 }
+
+    
