@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
@@ -65,378 +64,6 @@ const getClientById = (contractId: string) => {
   return initialClientsData.find((client) => client.contractId === contractId)
 }
 
-function UnitDetailDialog({
-  unit,
-  open,
-  onOpenChange,
-  onUnitUpdate,
-}: {
-  unit: Unit | null
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onUnitUpdate: (updatedUnit: Unit) => void
-}) {
-  const [isEditing, setIsEditing] = useState(false)
-
-  useEffect(() => {
-    // Reset editing state when dialog is closed or unit changes
-    if (!open) {
-      setIsEditing(false)
-    }
-  }, [open])
-
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (!unit) return
-
-    const formData = new FormData(event.currentTarget)
-    const unitType = formData.get('type') as UnitType
-
-    const updatedData = {
-      name: formData.get('name') as string,
-      type: unitType,
-      description: formData.get('description') as string,
-      cnpj: formData.get('cnpj') as string,
-      cno: unitType === 'Obra' ? (formData.get('cno') as string) : undefined,
-      contractingCompany:
-        unitType === 'Contrato'
-          ? {
-              name: formData.get('contractingName') as string,
-              cnpj: formData.get('contractingCnpj') as string,
-              cnae: formData.get('contractingCnae') as string,
-              riskLevel: formData.get('contractingRiskLevel') as string,
-            }
-          : undefined,
-      propertyInfo: {
-        address: formData.get('address') as string,
-        zipCode: formData.get('zipCode') as string,
-        neighborhood: formData.get('neighborhood') as string,
-        city: formData.get('city') as string,
-        state: formData.get('state') as string,
-        country: formData.get('country') as string,
-        totalArea: formData.get('totalArea') as string,
-        builtArea: formData.get('builtArea') as string,
-      },
-      cnae: formData.get('cnae') as string,
-      riskLevel: formData.get('riskLevel') as string,
-      legalResponsible: formData.get('legalResponsible') as string,
-      pgrResponsible: formData.get('pgrResponsible') as string,
-      ltcatResponsible: formData.get('ltcatResponsible') as string,
-      pcmsoResponsible: formData.get('pcmsoResponsible') as string,
-    }
-
-    onUnitUpdate({ ...unit, ...updatedData })
-    setIsEditing(false)
-  }
-
-  const renderFormFields = (isEditingMode: boolean, unitData: Unit | null) => {
-    const unitType =
-      isEditingMode && unitData
-        ? (document.querySelector('[name="type"]') as HTMLSelectElement)?.value ||
-          unitData.type
-        : unitData?.type
-
-    return (
-      <ScrollArea className='h-[60vh] pr-6'>
-        <div className='grid gap-6 py-4'>
-          {/* General Info */}
-          <fieldset className='grid gap-4 rounded-lg border p-4'>
-            <legend className='-ml-1 px-1 text-sm font-medium'>
-              Informações Gerais
-            </legend>
-            <div className='space-y-2'>
-              <Label htmlFor='type'>Tipo</Label>
-              <Select
-                name='type'
-                defaultValue={unitData?.type}
-                required
-                disabled={!isEditingMode}
-                onValueChange={(value) => {
-                  // Force re-render to show conditional fields
-                  const fakeEvent = {
-                    preventDefault: () => {},
-                    currentTarget: event?.currentTarget as HTMLFormElement,
-                  }
-                  if (event?.currentTarget) {
-                     // This is a trick to trigger a re-render. A better state management would be ideal.
-                    onUnitUpdate({ ...unitData!, type: value as UnitType });
-                    onUnitUpdate({ ...unitData! });
-                  }
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder='Selecione o tipo' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='Unidade'>Unidade</SelectItem>
-                  <SelectItem value='Obra'>Obra</SelectItem>
-                  <SelectItem value='Contrato'>Contrato</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='name'>Nome</Label>
-              <Input
-                id='name'
-                name='name'
-                defaultValue={unitData?.name}
-                required
-                disabled={!isEditingMode}
-              />
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='description'>Descrição</Label>
-              <Textarea
-                id='description'
-                name='description'
-                defaultValue={unitData?.description}
-                disabled={!isEditingMode}
-              />
-            </div>
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-              <div className='space-y-2'>
-                <Label htmlFor='cnpj'>CNPJ</Label>
-                <Input
-                  id='cnpj'
-                  name='cnpj'
-                  defaultValue={unitData?.cnpj}
-                  disabled={!isEditingMode}
-                />
-              </div>
-              {unitType === 'Obra' && (
-                <div className='space-y-2'>
-                  <Label htmlFor='cno'>Número do CNO</Label>
-                  <Input
-                    id='cno'
-                    name='cno'
-                    defaultValue={unitData?.cno}
-                    disabled={!isEditingMode}
-                  />
-                </div>
-              )}
-              <div className='space-y-2'>
-                <Label htmlFor='cnae'>CNAE</Label>
-                <Input
-                  id='cnae'
-                  name='cnae'
-                  defaultValue={unitData?.cnae}
-                  disabled={!isEditingMode}
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='riskLevel'>Grau de Risco</Label>
-                <Input
-                  id='riskLevel'
-                  name='riskLevel'
-                  defaultValue={unitData?.riskLevel}
-                  disabled={!isEditingMode}
-                />
-              </div>
-            </div>
-          </fieldset>
-
-          {unitType === 'Contrato' && (
-            <fieldset className='grid gap-4 rounded-lg border p-4'>
-              <legend className='-ml-1 px-1 text-sm font-medium'>
-                Informações da Empresa Contratante
-              </legend>
-              <div className='space-y-2'>
-                <Label htmlFor='contractingName'>Razão Social</Label>
-                <Input
-                  id='contractingName'
-                  name='contractingName'
-                  defaultValue={unitData?.contractingCompany?.name}
-                  disabled={!isEditingMode}
-                />
-              </div>
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                 <div className='space-y-2'>
-                    <Label htmlFor='contractingCnpj'>CNPJ</Label>
-                    <Input id='contractingCnpj' name='contractingCnpj' defaultValue={unitData?.contractingCompany?.cnpj} disabled={!isEditingMode} />
-                </div>
-                <div className='space-y-2'>
-                    <Label htmlFor='contractingCnae'>CNAE</Label>
-                    <Input id='contractingCnae' name='contractingCnae' defaultValue={unitData?.contractingCompany?.cnae} disabled={!isEditingMode} />
-                </div>
-                <div className='space-y-2'>
-                    <Label htmlFor='contractingRiskLevel'>Grau de Risco</Label>
-                    <Input id='contractingRiskLevel' name='contractingRiskLevel' defaultValue={unitData?.contractingCompany?.riskLevel} disabled={!isEditingMode} />
-                </div>
-              </div>
-            </fieldset>
-          )}
-
-          {/* Property Info */}
-          <fieldset className='grid gap-4 rounded-lg border p-4'>
-            <legend className='-ml-1 px-1 text-sm font-medium'>
-              Informações do Imóvel
-            </legend>
-            <div className='space-y-2'>
-              <Label htmlFor='address'>Endereço Completo</Label>
-              <Input
-                id='address'
-                name='address'
-                defaultValue={unitData?.propertyInfo.address}
-                required
-                disabled={!isEditingMode}
-              />
-            </div>
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-              <div className='space-y-2'>
-                <Label htmlFor='zipCode'>CEP</Label>
-                <Input
-                  id='zipCode'
-                  name='zipCode'
-                  defaultValue={unitData?.propertyInfo.zipCode}
-                  disabled={!isEditingMode}
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='neighborhood'>Bairro</Label>
-                <Input
-                  id='neighborhood'
-                  name='neighborhood'
-                  defaultValue={unitData?.propertyInfo.neighborhood}
-                  disabled={!isEditingMode}
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='city'>Cidade</Label>
-                <Input
-                  id='city'
-                  name='city'
-                  defaultValue={unitData?.propertyInfo.city}
-                  disabled={!isEditingMode}
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='state'>Estado</Label>
-                <Input
-                  id='state'
-                  name='state'
-                  defaultValue={unitData?.propertyInfo.state}
-                  disabled={!isEditingMode}
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='country'>País</Label>
-                <Input
-                  id='country'
-                  name='country'
-                  defaultValue={unitData?.propertyInfo.country}
-                  disabled={!isEditingMode}
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='totalArea'>Área Total</Label>
-                <Input
-                  id='totalArea'
-                  name='totalArea'
-                  defaultValue={unitData?.propertyInfo.totalArea}
-                  disabled={!isEditingMode}
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='builtArea'>Área Construída</Label>
-                <Input
-                  id='builtArea'
-                  name='builtArea'
-                  defaultValue={unitData?.propertyInfo.builtArea}
-                  disabled={!isEditingMode}
-                />
-              </div>
-            </div>
-          </fieldset>
-
-          {/* Responsibles */}
-          <fieldset className='grid gap-4 rounded-lg border p-4'>
-            <legend className='-ml-1 px-1 text-sm font-medium'>
-              Responsáveis
-            </legend>
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-              <div className='space-y-2'>
-                <Label htmlFor='legalResponsible'>Responsável Legal</Label>
-                <Input
-                  id='legalResponsible'
-                  name='legalResponsible'
-                  defaultValue={unitData?.legalResponsible}
-                  disabled={!isEditingMode}
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='pgrResponsible'>Responsável pelo PGR</Label>
-                <Input
-                  id='pgrResponsible'
-                  name='pgrResponsible'
-                  defaultValue={unitData?.pgrResponsible}
-                  disabled={!isEditingMode}
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='ltcatResponsible'>Responsável pelo LTCAT</Label>
-                <Input
-                  id='ltcatResponsible'
-                  name='ltcatResponsible'
-                  defaultValue={unitData?.ltcatResponsible}
-                  disabled={!isEditingMode}
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='pcmsoResponsible'>Responsável pelo PCMSO</Label>
-                <Input
-                  id='pcmsoResponsible'
-                  name='pcmsoResponsible'
-                  defaultValue={unitData?.pcmsoResponsible}
-                  disabled={!isEditingMode}
-                />
-              </div>
-            </div>
-          </fieldset>
-        </div>
-      </ScrollArea>
-    )
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-3xl'>
-        <DialogHeader>
-          <DialogTitle>{unit?.name}</DialogTitle>
-          <DialogDescription>
-            Visualize ou edite os detalhes da unidade.
-          </DialogDescription>
-        </DialogHeader>
-
-        <form id={`update-unit-form-${unit?.id}`} onSubmit={handleSubmit}>
-          {renderFormFields(isEditing, unit)}
-        </form>
-
-        <DialogFooter>
-          {isEditing ? (
-            <>
-              <Button variant='outline' onClick={() => setIsEditing(false)}>
-                Cancelar
-              </Button>
-              <Button type='submit' form={`update-unit-form-${unit?.id}`}>
-                Salvar Alterações
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button variant='outline' onClick={() => onOpenChange(false)}>
-                Fechar
-              </Button>
-              <Button onClick={() => setIsEditing(true)}>
-                <Pencil className='mr-2 h-4 w-4' /> Editar
-              </Button>
-            </>
-          )}
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
 export default function UnitsPage() {
   const params = useParams()
   const contractId = params.contractId as string
@@ -444,12 +71,10 @@ export default function UnitsPage() {
 
   const [units, setUnits] = useState(initialUnitsData)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [isDetailOpen, setIsDetailOpen] = useState(false)
-  const [currentUnit, setCurrentUnit] = useState<Unit | null>(null)
-  const [inheritData, setInheritData] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string[]>(['Ativa'])
   const [formType, setFormType] = useState<UnitType>('Unidade')
+  const [inheritData, setInheritData] = useState(false)
 
   const resetFormState = () => {
     setFormType('Unidade')
@@ -508,23 +133,6 @@ export default function UnitsPage() {
     setIsAddDialogOpen(false)
   }
 
-  const handleUpdateUnit = (updatedUnit: Unit) => {
-    setUnits((prev) =>
-      prev.map((u) => (u.id === updatedUnit.id ? updatedUnit : u))
-    )
-    setCurrentUnit(updatedUnit)
-  }
-
-  const openDetailDialog = (unit: Unit) => {
-    setCurrentUnit(unit)
-    setIsDetailOpen(true)
-  }
-
-  const closeDetailDialog = () => {
-    setIsDetailOpen(false)
-    setCurrentUnit(null)
-  }
-
   const filteredUnits = useMemo(() => {
     return units.filter((unit) => {
       const matchesSearch = unit.name
@@ -542,10 +150,7 @@ export default function UnitsPage() {
         <CardHeader>
           <CardTitle className='flex items-center justify-between'>
             Mapa de Unidades
-            <Dialog
-              open={isAddDialogOpen}
-              onOpenChange={setIsAddDialogOpen}
-            >
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
                 <Button size='sm' className='h-8 gap-1'>
                   <PlusCircle className='h-3.5 w-3.5' />
@@ -584,7 +189,9 @@ export default function UnitsPage() {
                         <Select
                           name='type'
                           value={formType}
-                          onValueChange={(value) => setFormType(value as UnitType)}
+                          onValueChange={(value) =>
+                            setFormType(value as UnitType)
+                          }
                           required
                         >
                           <SelectTrigger>
@@ -597,35 +204,53 @@ export default function UnitsPage() {
                           </SelectContent>
                         </Select>
                       </div>
-                      
+
                       {formType === 'Obra' && (
-                         <div className='space-y-2'>
-                            <Label htmlFor='cno'>Número do CNO</Label>
-                            <Input id='cno' name='cno' />
-                         </div>
+                        <div className='space-y-2'>
+                          <Label htmlFor='cno'>Número do CNO</Label>
+                          <Input id='cno' name='cno' />
+                        </div>
                       )}
-                      
+
                       {formType === 'Contrato' && (
                         <fieldset className='grid gap-4 rounded-lg border p-4'>
-                            <legend className='-ml-1 px-1 text-sm font-medium'>Informações da Contratante</legend>
+                          <legend className='-ml-1 px-1 text-sm font-medium'>
+                            Informações da Contratante
+                          </legend>
+                          <div className='space-y-2'>
+                            <Label htmlFor='contractingName'>
+                              Razão Social
+                            </Label>
+                            <Input
+                              id='contractingName'
+                              name='contractingName'
+                            />
+                          </div>
+                          <div className='grid grid-cols-2 gap-4'>
                             <div className='space-y-2'>
-                                <Label htmlFor='contractingName'>Razão Social</Label>
-                                <Input id='contractingName' name='contractingName' />
+                              <Label htmlFor='contractingCnpj'>CNPJ</Label>
+                              <Input
+                                id='contractingCnpj'
+                                name='contractingCnpj'
+                              />
                             </div>
-                            <div className='grid grid-cols-2 gap-4'>
-                                <div className='space-y-2'>
-                                    <Label htmlFor='contractingCnpj'>CNPJ</Label>
-                                    <Input id='contractingCnpj' name='contractingCnpj' />
-                                </div>
-                                <div className='space-y-2'>
-                                    <Label htmlFor='contractingCnae'>CNAE</Label>
-                                    <Input id='contractingCnae' name='contractingCnae' />
-                                </div>
-                                <div className='space-y-2'>
-                                    <Label htmlFor='contractingRiskLevel'>Grau de Risco</Label>
-                                    <Input id='contractingRiskLevel' name='contractingRiskLevel' />
-                                </div>
+                            <div className='space-y-2'>
+                              <Label htmlFor='contractingCnae'>CNAE</Label>
+                              <Input
+                                id='contractingCnae'
+                                name='contractingCnae'
+                              />
                             </div>
+                            <div className='space-y-2'>
+                              <Label htmlFor='contractingRiskLevel'>
+                                Grau de Risco
+                              </Label>
+                              <Input
+                                id='contractingRiskLevel'
+                                name='contractingRiskLevel'
+                              />
+                            </div>
+                          </div>
                         </fieldset>
                       )}
 
@@ -637,6 +262,40 @@ export default function UnitsPage() {
                         <Label htmlFor='description'>Descrição</Label>
                         <Textarea id='description' name='description' />
                       </div>
+
+                      <fieldset className='grid gap-4 rounded-lg border p-4'>
+                        <legend className='-ml-1 px-1 text-sm font-medium'>
+                          Informações Gerais
+                        </legend>
+                        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                          <div className='space-y-2'>
+                            <Label htmlFor='cnpj'>CNPJ</Label>
+                            <Input
+                              id='cnpj'
+                              name='cnpj'
+                              defaultValue={inheritData ? client?.cnpj : ''}
+                            />
+                          </div>
+                          <div className='space-y-2'>
+                            <Label htmlFor='cnae'>CNAE</Label>
+                            <Input
+                              id='cnae'
+                              name='cnae'
+                              defaultValue={inheritData ? client?.cnae : ''}
+                            />
+                          </div>
+                          <div className='space-y-2'>
+                            <Label htmlFor='riskLevel'>Grau de Risco</Label>
+                            <Input
+                              id='riskLevel'
+                              name='riskLevel'
+                              defaultValue={
+                                inheritData ? client?.riskLevel : ''
+                              }
+                            />
+                          </div>
+                        </div>
+                      </fieldset>
 
                       {/* Property Info */}
                       <fieldset className='grid gap-4 rounded-lg border p-4'>
@@ -678,7 +337,11 @@ export default function UnitsPage() {
                           </div>
                           <div className='space-y-2'>
                             <Label htmlFor='add-country'>País</Label>
-                            <Input id='add-country' name='add-country' defaultValue="Brasil" />
+                            <Input
+                              id='add-country'
+                              name='add-country'
+                              defaultValue='Brasil'
+                            />
                           </div>
                           <div className='space-y-2'>
                             <Label htmlFor='add-totalArea'>Área Total</Label>
@@ -765,32 +428,26 @@ export default function UnitsPage() {
                   key={unit.id}
                   className='flex flex-col hover:shadow-md transition-shadow'
                 >
-                  <div
-                    className='flex-grow cursor-pointer'
-                    onClick={() => openDetailDialog(unit)}
-                  >
-                    <CardHeader>
-                      <div className='flex justify-between items-start'>
-                        <CardTitle>{unit.name}</CardTitle>
-                        <Badge variant='outline'>{unit.type}</Badge>
-                      </div>
-                      <CardDescription>
-                        {unit.propertyInfo.address}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <p className='text-sm text-muted-foreground'>
-                        {unit.description}
-                      </p>
-                    </CardContent>
-                  </div>
+                  <CardHeader>
+                    <div className='flex justify-between items-start'>
+                      <CardTitle>{unit.name}</CardTitle>
+                      <Badge variant='outline'>{unit.type}</Badge>
+                    </div>
+                    <CardDescription>
+                      {unit.propertyInfo.address}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className='flex-grow'>
+                    <p className='text-sm text-muted-foreground'>
+                      {unit.description}
+                    </p>
+                  </CardContent>
                   <CardFooter>
                     <Button asChild className='w-full' variant='outline'>
                       <Link
                         href={`/dashboard/clients/${contractId}/sectors?unitId=${unit.id}`}
-                        onClick={(e) => e.stopPropagation()}
                       >
-                        Ver Setores <ArrowRight className='ml-2 h-4 w-4' />
+                        Gerenciar Setores <ArrowRight className='ml-2 h-4 w-4' />
                       </Link>
                     </Button>
                   </CardFooter>
@@ -817,13 +474,6 @@ export default function UnitsPage() {
           )}
         </CardContent>
       </Card>
-
-      <UnitDetailDialog
-        unit={currentUnit}
-        open={isDetailOpen}
-        onOpenChange={closeDetailDialog}
-        onUnitUpdate={handleUpdateUnit}
-      />
     </>
   )
 }
