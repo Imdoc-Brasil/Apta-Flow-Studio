@@ -28,6 +28,7 @@ import { initialEmployeesData } from '../../employees/data'
 import { initialSectorsData } from '../../sectors/data'
 import { initialUnitsData } from '../../units/data'
 import { initialGheData } from '../../ghe/data'
+import { initialEnvironmentsData } from '../../environments/data'
 import { Input } from '@/components/ui/input'
 import { ArrowDown, ChevronsRight } from 'lucide-react'
 
@@ -38,6 +39,7 @@ type AssociationType =
   | 'sector'
   | 'unit'
   | 'ghe'
+  | 'environment'
 
 export default function RecommendationMatrixPage() {
   const { toast } = useToast()
@@ -54,6 +56,11 @@ export default function RecommendationMatrixPage() {
     .filter((inv) => inv.unitId === selectedUnit)
     .map((inv) => getHazardById(inv.hazardId))
     .filter((h) => h !== undefined)
+
+  const unitSectors = initialSectorsData.filter(s => s.unitId === selectedUnit);
+  const unitSectorIds = unitSectors.map(s => s.id);
+  const unitEnvironments = initialEnvironmentsData.filter(env => unitSectorIds.includes(env.sectorId));
+
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -148,11 +155,28 @@ export default function RecommendationMatrixPage() {
               <SelectValue placeholder='Selecione um setor da unidade' />
             </SelectTrigger>
             <SelectContent>
-              {initialSectorsData
-                .filter((s) => s.unitId === selectedUnit)
-                .map((sector) => (
+              {unitSectors.map((sector) => (
                   <SelectItem key={sector.id} value={sector.id}>
                     {sector.name}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+        )
+      case 'environment':
+         return (
+          <Select
+            onValueChange={setSelectedAssociationValue}
+            value={selectedAssociationValue}
+            required
+          >
+            <SelectTrigger>
+              <SelectValue placeholder='Selecione um ambiente da unidade' />
+            </SelectTrigger>
+            <SelectContent>
+              {unitEnvironments.map((env) => (
+                  <SelectItem key={env.id} value={env.id}>
+                    {env.name}
                   </SelectItem>
                 ))}
             </SelectContent>
@@ -188,6 +212,7 @@ export default function RecommendationMatrixPage() {
     { value: 'risk', label: 'Risco Específico' },
     { value: 'role', label: 'Cargo' },
     { value: 'sector', label: 'Setor' },
+    { value: 'environment', label: 'Ambiente de Trabalho' },
     { value: 'ghe', label: 'GHE' },
     { value: 'employee', label: 'Colaborador Específico' },
   ]
