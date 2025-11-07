@@ -1,3 +1,4 @@
+
 'use client'
 
 import Link from 'next/link'
@@ -31,6 +32,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   Ticket,
+  MapPin,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -71,6 +73,7 @@ export function ClientSidebar() {
   const estruturaNavItems = [
     { href: `${basePath}/units`, label: 'Unidades', icon: Building },
     { href: `${basePath}/sectors`, label: 'Setores', icon: HeartPulse },
+    { href: `${basePath}/environments`, label: 'Ambientes', icon: MapPin },
     { href: `${basePath}/roles`, label: 'Cargos', icon: Briefcase },
     { href: `${basePath}/employees`, label: 'Colaboradores', icon: Users },
     { href: `${basePath}/ghe`, label: 'GHE', icon: Users },

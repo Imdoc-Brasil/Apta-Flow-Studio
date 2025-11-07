@@ -1,3 +1,4 @@
+
 'use client'
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
@@ -20,6 +21,7 @@ import {
   LayoutGrid,
   List,
   Filter,
+  MapPin,
 } from 'lucide-react'
 import {
   Table,
@@ -307,13 +309,21 @@ export default function SectorsPage() {
                       </p>
                     </CardContent>
                   </div>
-                  <CardFooter>
-                    <Button asChild className='w-full' variant='outline'>
+                  <CardFooter className='flex items-center gap-2'>
+                    <Button asChild className='w-full' variant='outline' size='sm'>
                       <Link
                         href={`/dashboard/clients/${contractId}/roles?sectorId=${sector.id}`}
                         onClick={(e) => e.stopPropagation()}
                       >
                         Ver Cargos <ArrowRight className='ml-2 h-4 w-4' />
+                      </Link>
+                    </Button>
+                     <Button asChild className='w-full' variant='outline' size='sm'>
+                      <Link
+                        href={`/dashboard/clients/${contractId}/environments?sectorId=${sector.id}`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Ver Ambientes <ArrowRight className='ml-2 h-4 w-4' />
                       </Link>
                     </Button>
                   </CardFooter>
