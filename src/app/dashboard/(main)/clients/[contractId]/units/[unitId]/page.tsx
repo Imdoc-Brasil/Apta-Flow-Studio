@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useParams } from 'next/navigation'
@@ -433,24 +434,24 @@ export default function UnitDetailsPage() {
               <CardHeader>
                 <CardTitle>Resumo</CardTitle>
               </CardHeader>
-              <CardContent className='grid gap-1 text-sm'>
+              <CardContent className='grid gap-2 text-sm'>
                 <Link
                   href={`/dashboard/clients/${contractId}/sectors?unitId=${unitId}`}
-                  className='flex items-center justify-between rounded-md p-2 hover:bg-muted'
+                  className='flex items-center justify-between rounded-lg border bg-background p-3 hover:bg-accent hover:text-accent-foreground'
                 >
                   <span className='text-muted-foreground'>Setores</span>
                   <span className='font-semibold'>{totalSectors}</span>
                 </Link>
                 <Link
                   href={`/dashboard/clients/${contractId}/roles`}
-                  className='flex items-center justify-between rounded-md p-2 hover:bg-muted'
+                  className='flex items-center justify-between rounded-lg border bg-background p-3 hover:bg-accent hover:text-accent-foreground'
                 >
                   <span className='text-muted-foreground'>Cargos</span>
                   <span className='font-semibold'>{totalRoles}</span>
                 </Link>
                 <Link
                   href={`/dashboard/clients/${contractId}/employees`}
-                  className='flex items-center justify-between rounded-md p-2 hover:bg-muted'
+                  className='flex items-center justify-between rounded-lg border bg-background p-3 hover:bg-accent hover:text-accent-foreground'
                 >
                   <span className='text-muted-foreground'>
                     Total de colaboradores
@@ -459,7 +460,7 @@ export default function UnitDetailsPage() {
                 </Link>
                 <Link
                   href='#'
-                  className='flex items-center justify-between rounded-md p-2 hover:bg-muted'
+                  className='flex items-center justify-between rounded-lg border bg-background p-3 hover:bg-accent hover:text-accent-foreground'
                 >
                   <span className='text-muted-foreground'>ASOs vencidos</span>
                   <span
@@ -471,9 +472,9 @@ export default function UnitDetailsPage() {
                     {expiredAsos}
                   </span>
                 </Link>
-                <Link
+                 <Link
                   href='#'
-                  className='flex items-center justify-between rounded-md p-2 hover:bg-muted'
+                  className='flex items-center justify-between rounded-lg border bg-background p-3 hover:bg-accent hover:text-accent-foreground'
                 >
                   <span className='text-muted-foreground'>
                     Treinamentos vencidos
@@ -487,14 +488,14 @@ export default function UnitDetailsPage() {
                     {expiredTrainings}
                   </span>
                 </Link>
-                <Link
+                 <Link
                   href='#'
-                  className='flex items-center justify-between rounded-md p-2 hover:bg-muted'
+                  className='flex items-center justify-between rounded-lg border bg-background p-3 hover:bg-accent hover:text-accent-foreground'
                 >
                   <span className='text-muted-foreground'>
                     Vacinas vencidas
                   </span>
-                  <span
+                   <span
                     className={cn(
                       'font-semibold',
                       expiredVaccines > 0 && 'text-destructive'
@@ -505,7 +506,7 @@ export default function UnitDetailsPage() {
                 </Link>
                 <Link
                   href='#'
-                  className='flex items-center justify-between rounded-md p-2 hover:bg-muted'
+                  className='flex items-center justify-between rounded-lg border bg-background p-3 hover:bg-accent hover:text-accent-foreground'
                 >
                   <span className='text-muted-foreground'>
                     Total de colaboradores PCD
@@ -545,3 +546,5 @@ export default function UnitDetailsPage() {
     </>
   )
 }
+
+    
