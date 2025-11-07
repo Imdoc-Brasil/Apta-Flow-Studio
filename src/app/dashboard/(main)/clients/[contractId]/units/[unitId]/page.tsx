@@ -93,135 +93,134 @@ export default function UnitDetailsPage() {
               <CardTitle>Detalhes da Unidade</CardTitle>
               <CardDescription>{unit.description}</CardDescription>
             </CardHeader>
-            <CardContent className='space-y-6'>
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-4 text-sm'>
-                <div>
-                  <p className='font-medium text-muted-foreground'>CNPJ</p>
-                  <p>{unit.cnpj}</p>
+            <CardContent className='grid gap-4 sm:grid-cols-2 md:grid-cols-3'>
+              <div className='space-y-1'>
+                <p className='text-sm font-medium text-muted-foreground'>CNPJ</p>
+                <p>{unit.cnpj}</p>
+              </div>
+              <div className='space-y-1'>
+                <p className='text-sm font-medium text-muted-foreground'>CNAE</p>
+                <p>{unit.cnae}</p>
+              </div>
+              <div className='space-y-1'>
+                <p className='text-sm font-medium text-muted-foreground'>
+                  Grau de Risco
+                </p>
+                <p>{unit.riskLevel}</p>
+              </div>
+              {unit.cno && (
+                <div className='space-y-1'>
+                  <p className='text-sm font-medium text-muted-foreground'>CNO</p>
+                  <p>{unit.cno}</p>
                 </div>
-                <div>
-                  <p className='font-medium text-muted-foreground'>CNAE</p>
-                  <p>{unit.cnae}</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {unit.contractingCompany && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Empresa Contratante</CardTitle>
+              </CardHeader>
+              <CardContent className='grid gap-4 sm:grid-cols-2 md:grid-cols-2'>
+                 <div className='space-y-1'>
+                  <p className='text-sm font-medium text-muted-foreground'>
+                    Razão Social
+                  </p>
+                  <p>{unit.contractingCompany.name}</p>
                 </div>
-                <div>
-                  <p className='font-medium text-muted-foreground'>
+                <div className='space-y-1'>
+                  <p className='text-sm font-medium text-muted-foreground'>
+                    CNPJ
+                  </p>
+                  <p>{unit.contractingCompany.cnpj}</p>
+                </div>
+                <div className='space-y-1'>
+                  <p className='text-sm font-medium text-muted-foreground'>
+                    CNAE
+                  </p>
+                  <p>{unit.contractingCompany.cnae}</p>
+                </div>
+                <div className='space-y-1'>
+                  <p className='text-sm font-medium text-muted-foreground'>
                     Grau de Risco
                   </p>
-                  <p>{unit.riskLevel}</p>
+                  <p>{unit.contractingCompany.riskLevel}</p>
                 </div>
-                {unit.cno && (
-                  <div>
-                    <p className='font-medium text-muted-foreground'>CNO</p>
-                    <p>{unit.cno}</p>
-                  </div>
-                )}
+              </CardContent>
+            </Card>
+           )}
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Informações do Imóvel</CardTitle>
+            </CardHeader>
+            <CardContent className='grid gap-4 sm:grid-cols-2 md:grid-cols-3'>
+              <div className='space-y-1 md:col-span-3'>
+                <p className='text-sm font-medium text-muted-foreground'>
+                  Endereço
+                </p>
+                <p>{unit.propertyInfo.address}</p>
               </div>
-
-              {unit.contractingCompany && (
-                <>
-                  <Separator />
-                  <div>
-                    <h3 className='font-semibold mb-2'>Empresa Contratante</h3>
-                    <div className='grid grid-cols-1 md:grid-cols-2 gap-4 text-sm'>
-                      <div>
-                        <p className='font-medium text-muted-foreground'>
-                          Razão Social
-                        </p>
-                        <p>{unit.contractingCompany.name}</p>
-                      </div>
-                      <div>
-                        <p className='font-medium text-muted-foreground'>
-                          CNPJ
-                        </p>
-                        <p>{unit.contractingCompany.cnpj}</p>
-                      </div>
-                      <div>
-                        <p className='font-medium text-muted-foreground'>
-                          CNAE
-                        </p>
-                        <p>{unit.contractingCompany.cnae}</p>
-                      </div>
-                      <div>
-                        <p className='font-medium text-muted-foreground'>
-                          Grau de Risco
-                        </p>
-                        <p>{unit.contractingCompany.riskLevel}</p>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              <Separator />
-              <div>
-                <h3 className='font-semibold mb-2'>Informações do Imóvel</h3>
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-4 text-sm'>
-                  <div className='col-span-full'>
-                    <p className='font-medium text-muted-foreground'>
-                      Endereço
-                    </p>
-                    <p>{unit.propertyInfo.address}</p>
-                  </div>
-                  <div>
-                    <p className='font-medium text-muted-foreground'>Bairro</p>
-                    <p>{unit.propertyInfo.neighborhood}</p>
-                  </div>
-                  <div>
-                    <p className='font-medium text-muted-foreground'>CEP</p>
-                    <p>{unit.propertyInfo.zipCode}</p>
-                  </div>
-                  <div>
-                    <p className='font-medium text-muted-foreground'>
-                      Cidade / Estado
-                    </p>
-                    <p>
-                      {unit.propertyInfo.city} / {unit.propertyInfo.state}
-                    </p>
-                  </div>
-                  <div>
-                    <p className='font-medium text-muted-foreground'>
-                      Área Total
-                    </p>
-                    <p>{unit.propertyInfo.totalArea}</p>
-                  </div>
-                  <div>
-                    <p className='font-medium text-muted-foreground'>
-                      Área Construída
-                    </p>
-                    <p>{unit.propertyInfo.builtArea}</p>
-                  </div>
-                </div>
+              <div className='space-y-1'>
+                <p className='text-sm font-medium text-muted-foreground'>Bairro</p>
+                <p>{unit.propertyInfo.neighborhood}</p>
               </div>
-
-              <Separator />
-              <div>
-                <h3 className='font-semibold mb-2'>Responsáveis Técnicos</h3>
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-4 text-sm'>
-                  <div>
-                    <p className='font-medium text-muted-foreground'>
-                      Responsável Legal
-                    </p>
-                    <p>{unit.legalResponsible}</p>
-                  </div>
-                  <div>
-                    <p className='font-medium text-muted-foreground'>
-                      Responsável pelo PGR
-                    </p>
-                    <p>{unit.pgrResponsible}</p>
-                  </div>
-                  <div>
-                    <p className='font-medium text-muted-foreground'>
-                      Responsável pelo LTCAT
-                    </p>
-                    <p>{unit.ltcatResponsible}</p>
-                  </div>
-                  <div>
-                    <p className='font-medium text-muted-foreground'>
-                      Responsável pelo PCMSO
-                    </p>
-                    <p>{unit.pcmsoResponsible}</p>
-                  </div>
-                </div>
+              <div className='space-y-1'>
+                <p className='text-sm font-medium text-muted-foreground'>CEP</p>
+                <p>{unit.propertyInfo.zipCode}</p>
+              </div>
+              <div className='space-y-1'>
+                <p className='text-sm font-medium text-muted-foreground'>
+                  Cidade / Estado
+                </p>
+                <p>
+                  {unit.propertyInfo.city} / {unit.propertyInfo.state}
+                </p>
+              </div>
+              <div className='space-y-1'>
+                <p className='text-sm font-medium text-muted-foreground'>
+                  Área Total
+                </p>
+                <p>{unit.propertyInfo.totalArea}</p>
+              </div>
+              <div className='space-y-1'>
+                <p className='text-sm font-medium text-muted-foreground'>
+                  Área Construída
+                </p>
+                <p>{unit.propertyInfo.builtArea}</p>
+              </div>
+            </CardContent>
+          </Card>
+          
+           <Card>
+            <CardHeader>
+              <CardTitle>Responsáveis Técnicos</CardTitle>
+            </CardHeader>
+            <CardContent className='grid gap-4 sm:grid-cols-2'>
+              <div className='space-y-1'>
+                <p className='text-sm font-medium text-muted-foreground'>
+                  Responsável Legal
+                </p>
+                <p>{unit.legalResponsible}</p>
+              </div>
+              <div className='space-y-1'>
+                <p className='text-sm font-medium text-muted-foreground'>
+                  Responsável pelo PGR
+                </p>
+                <p>{unit.pgrResponsible}</p>
+              </div>
+              <div className='space-y-1'>
+                <p className='text-sm font-medium text-muted-foreground'>
+                  Responsável pelo LTCAT
+                </p>
+                <p>{unit.ltcatResponsible}</p>
+              </div>
+              <div className='space-y-1'>
+                <p className='text-sm font-medium text-muted-foreground'>
+                  Responsável pelo PCMSO
+                </p>
+                <p>{unit.pcmsoResponsible}</p>
               </div>
             </CardContent>
           </Card>
