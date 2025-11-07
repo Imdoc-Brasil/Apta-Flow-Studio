@@ -309,7 +309,7 @@ export default function SectorsPage() {
                       </p>
                     </CardContent>
                   </div>
-                  <CardFooter className='flex flex-col sm:flex-row items-center gap-2'>
+                  <CardFooter className='flex flex-col lg:flex-row items-center gap-2'>
                     <Button asChild className='w-full' variant='outline' size='sm'>
                       <Link
                         href={`/dashboard/clients/${contractId}/roles?sectorId=${sector.id}`}
