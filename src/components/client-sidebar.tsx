@@ -72,7 +72,11 @@ export function ClientSidebar() {
   const estruturaNavItems = [
     { href: `${basePath}/units`, label: 'Unidades', icon: Building },
     { href: `${basePath}/sectors`, label: 'Setores', icon: HeartPulse },
-    { href: `${basePath}/environments`, label: 'Ambientes', icon: MapPin },
+    {
+      href: `${basePath}/environments`,
+      label: 'Postos de Trabalho',
+      icon: MapPin,
+    },
     { href: `${basePath}/roles`, label: 'Cargos', icon: Briefcase },
     { href: `${basePath}/employees`, label: 'Colaboradores', icon: Users },
     { href: `${basePath}/ghe`, label: 'GHE', icon: Users },
@@ -375,21 +379,20 @@ export function ClientSidebar() {
           </CollapsibleTrigger>
           <CollapsibleContent asChild>
             <ul className='pl-6 pt-1 space-y-1'>
-              {sstNavItems
-                .map((item) => (
-                  <SidebarMenuItem key={item.label}>
-                    <Link href={item.href}>
-                      <SidebarMenuButton
-                        isActive={getIsActive(item.href)}
-                        tooltip={item.label}
-                        className='h-8'
-                      >
-                        <item.icon />
-                        <span>{item.label}</span>
-                      </SidebarMenuButton>
-                    </Link>
-                  </SidebarMenuItem>
-                ))}
+              {sstNavItems.map((item) => (
+                <SidebarMenuItem key={item.label}>
+                  <Link href={item.href}>
+                    <SidebarMenuButton
+                      isActive={getIsActive(item.href)}
+                      tooltip={item.label}
+                      className='h-8'
+                    >
+                      <item.icon />
+                      <span>{item.label}</span>
+                    </SidebarMenuButton>
+                  </Link>
+                </SidebarMenuItem>
+              ))}
             </ul>
           </CollapsibleContent>
         </Collapsible>

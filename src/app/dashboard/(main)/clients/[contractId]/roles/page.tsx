@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState, useMemo } from 'react'
@@ -156,10 +155,10 @@ export default function RolesPage() {
                       </Select>
                     </div>
                     <div className='space-y-2'>
-                      <Label htmlFor='environmentId'>Ambiente de Trabalho</Label>
+                      <Label htmlFor='environmentId'>Posto de Trabalho</Label>
                       <Select name='environmentId'>
                         <SelectTrigger>
-                          <SelectValue placeholder='Selecione o ambiente principal (opcional)' />
+                          <SelectValue placeholder='Selecione o posto de trabalho principal (opcional)' />
                         </SelectTrigger>
                         <SelectContent>
                           {initialEnvironmentsData.map((env) => (
@@ -187,15 +186,19 @@ export default function RolesPage() {
                       />
                     </div>
                     <div className='space-y-2'>
-                      <Label htmlFor='requirements'>Requisitos/Qualificações</Label>
+                      <Label htmlFor='requirements'>
+                        Requisitos/Qualificações
+                      </Label>
                       <Textarea
                         id='requirements'
                         name='requirements'
                         placeholder='Liste competências, treinamentos obrigatórios (NRs), certificações, etc.'
                       />
                     </div>
-                     <div className='space-y-2'>
-                      <Label htmlFor='requiredExams'>Exames Médicos (PCMSO)</Label>
+                    <div className='space-y-2'>
+                      <Label htmlFor='requiredExams'>
+                        Exames Médicos (PCMSO)
+                      </Label>
                       <Input
                         id='requiredExams'
                         name='requiredExams'

@@ -150,7 +150,7 @@ export default function SectorsPage() {
           <Label htmlFor='name'>Nome do Setor</Label>
           <Input id='name' name='name' required />
         </div>
-         <div className='space-y-2'>
+        <div className='space-y-2'>
           <Label htmlFor='code'>Código</Label>
           <Input id='code' name='code' placeholder='Opcional' />
         </div>
@@ -170,7 +170,7 @@ export default function SectorsPage() {
             <div>
               <CardTitle>{selectedUnitName}</CardTitle>
               <CardDescription>
-                Gerencie os setores, departamentos e ambientes de trabalho desta
+                Gerencie os setores, departamentos e postos de trabalho desta
                 unidade.
               </CardDescription>
             </div>
@@ -316,7 +316,8 @@ export default function SectorsPage() {
                         href={`/dashboard/clients/${contractId}/environments?sectorId=${sector.id}`}
                         onClick={(e) => e.stopPropagation()}
                       >
-                        Ver Ambientes <ArrowRight className='ml-2 h-4 w-4' />
+                        Ver Postos de Trabalho{' '}
+                        <ArrowRight className='ml-2 h-4 w-4' />
                       </Link>
                     </Button>
                   </CardFooter>

@@ -52,17 +52,20 @@ export default function RecommendationMatrixPage() {
 
   const uniqueRoles = [
     ...new Set(initialEmployeesData.map((employee) => employee.roleId)),
-  ].map(roleId => initialRolesData.find(r => r.id === roleId)).filter(Boolean);
-  
+  ]
+    .map((roleId) => initialRolesData.find((r) => r.id === roleId))
+    .filter(Boolean)
+
   const inventoryRisks = initialInventory
     .filter((inv) => inv.unitId === selectedUnit)
     .map((inv) => getHazardById(inv.hazardId))
     .filter((h) => h !== undefined)
 
-  const unitSectors = initialSectorsData.filter(s => s.unitId === selectedUnit);
-  const unitSectorIds = unitSectors.map(s => s.id);
-  const unitEnvironments = initialEnvironmentsData.filter(env => unitSectorIds.includes(env.sectorId));
-
+  const unitSectors = initialSectorsData.filter((s) => s.unitId === selectedUnit)
+  const unitSectorIds = unitSectors.map((s) => s.id)
+  const unitEnvironments = initialEnvironmentsData.filter((env) =>
+    unitSectorIds.includes(env.sectorId)
+  )
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -158,29 +161,29 @@ export default function RecommendationMatrixPage() {
             </SelectTrigger>
             <SelectContent>
               {unitSectors.map((sector) => (
-                  <SelectItem key={sector.id} value={sector.id}>
-                    {sector.name}
-                  </SelectItem>
-                ))}
+                <SelectItem key={sector.id} value={sector.id}>
+                  {sector.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         )
       case 'environment':
-         return (
+        return (
           <Select
             onValueChange={setSelectedAssociationValue}
             value={selectedAssociationValue}
             required
           >
             <SelectTrigger>
-              <SelectValue placeholder='Selecione um ambiente da unidade' />
+              <SelectValue placeholder='Selecione um posto de trabalho da unidade' />
             </SelectTrigger>
             <SelectContent>
               {unitEnvironments.map((env) => (
-                  <SelectItem key={env.id} value={env.id}>
-                    {env.name}
-                  </SelectItem>
-                ))}
+                <SelectItem key={env.id} value={env.id}>
+                  {env.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         )
@@ -214,7 +217,7 @@ export default function RecommendationMatrixPage() {
     { value: 'risk', label: 'Risco Específico' },
     { value: 'role', label: 'Cargo' },
     { value: 'sector', label: 'Setor' },
-    { value: 'environment', label: 'Ambiente de Trabalho' },
+    { value: 'environment', label: 'Posto de Trabalho' },
     { value: 'ghe', label: 'GHE' },
     { value: 'employee', label: 'Colaborador Específico' },
   ]

@@ -14,7 +14,10 @@ import { Button } from '@/components/ui/button'
 import { ArrowLeft, MoreHorizontal, PlusCircle } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
-import { initialEnvironmentsData, type Environment } from '../../environments/data'
+import {
+  initialEnvironmentsData,
+  type Environment,
+} from '../../environments/data'
 import {
   Table,
   TableBody,
@@ -90,8 +93,8 @@ export default function SectorDetailsPage() {
     if (editingEnvironment) {
       // Update logic would go here
       toast({
-        title: 'Ambiente Atualizado!',
-        description: `O ambiente "${environmentData.name}" foi atualizado.`,
+        title: 'Posto de Trabalho Atualizado!',
+        description: `O posto de trabalho "${environmentData.name}" foi atualizado.`,
       })
     } else {
       // Create
@@ -102,8 +105,8 @@ export default function SectorDetailsPage() {
       }
       setEnvironments((prev) => [...prev, newEnvironment])
       toast({
-        title: 'Ambiente Adicionado!',
-        description: `O ambiente "${newEnvironment.name}" foi criado.`,
+        title: 'Posto de Trabalho Adicionado!',
+        description: `O posto de trabalho "${newEnvironment.name}" foi criado.`,
       })
     }
 
@@ -121,7 +124,7 @@ export default function SectorDetailsPage() {
       <div className='grid gap-6 p-1 pr-6'>
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
           <div className='space-y-2'>
-            <Label htmlFor='name'>Nome do Ambiente</Label>
+            <Label htmlFor='name'>Nome do Posto de Trabalho</Label>
             <Input
               id='name'
               name='name'
@@ -136,12 +139,12 @@ export default function SectorDetailsPage() {
         </div>
 
         <div className='space-y-2'>
-          <Label htmlFor='description'>Descrição do Ambiente</Label>
+          <Label htmlFor='description'>Descrição do Posto de Trabalho</Label>
           <Textarea
             id='description'
             name='description'
             defaultValue={environment?.description}
-            placeholder='Descreva o propósito geral deste ambiente/etapa.'
+            placeholder='Descreva o propósito geral deste posto de trabalho.'
           />
         </div>
         <div className='space-y-2'>
@@ -272,14 +275,14 @@ export default function SectorDetailsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Ambientes de Trabalho</CardTitle>
+            <CardTitle>Postos de Trabalho</CardTitle>
             <CardDescription>
               Locais de trabalho e etapas de processo dentro deste setor.
             </CardDescription>
             <div className='flex justify-end'>
               <Button size='sm' onClick={() => openFormDialog(null)}>
                 <PlusCircle className='mr-2 h-4 w-4' />
-                Adicionar Ambiente
+                Adicionar Posto de Trabalho
               </Button>
             </div>
           </CardHeader>
@@ -287,7 +290,7 @@ export default function SectorDetailsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Ambiente</TableHead>
+                  <TableHead>Posto de Trabalho</TableHead>
                   <TableHead>Atividades</TableHead>
                   <TableHead>
                     <span className='sr-only'>Ações</span>
@@ -316,11 +319,11 @@ export default function SectorDetailsPage() {
                   </TableRow>
                 ))}
                 {environments.length === 0 && (
-                   <TableRow>
-                     <TableCell colSpan={3} className='text-center h-24'>
-                       Nenhum ambiente cadastrado para este setor.
-                     </TableCell>
-                   </TableRow>
+                  <TableRow>
+                    <TableCell colSpan={3} className='text-center h-24'>
+                      Nenhum posto de trabalho cadastrado para este setor.
+                    </TableCell>
+                  </TableRow>
                 )}
               </TableBody>
             </Table>
@@ -332,11 +335,13 @@ export default function SectorDetailsPage() {
         <DialogContent className='sm:max-w-3xl'>
           <DialogHeader>
             <DialogTitle>
-              {editingEnvironment ? 'Editar' : 'Adicionar'} Ambiente de Trabalho
+              {editingEnvironment ? 'Editar' : 'Adicionar'} Posto de Trabalho
             </DialogTitle>
             <DialogDescription>
-              {editingEnvironment ? 'Atualize os detalhes' : 'Preencha os detalhes'}{' '}
-              para este ambiente ou etapa de processo.
+              {editingEnvironment
+                ? 'Atualize os detalhes'
+                : 'Preencha os detalhes'}{' '}
+              para este posto de trabalho.
             </DialogDescription>
           </DialogHeader>
           <form id='environment-form' onSubmit={handleFormSubmit}>
@@ -353,7 +358,9 @@ export default function SectorDetailsPage() {
               Cancelar
             </Button>
             <Button type='submit' form='environment-form'>
-              {editingEnvironment ? 'Salvar Alterações' : 'Salvar Ambiente'}
+              {editingEnvironment
+                ? 'Salvar Alterações'
+                : 'Salvar Posto de Trabalho'}
             </Button>
           </DialogFooter>
         </DialogContent>

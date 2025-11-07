@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
@@ -117,7 +116,13 @@ export default function EmployeesPage() {
 
     const role = getRoleById(employee.roleId)
     if (!role)
-      return { employee, role: null, sector: null, unit: null, environment: null }
+      return {
+        employee,
+        role: null,
+        sector: null,
+        unit: null,
+        environment: null,
+      }
 
     const sector = getSectorById(role.sectorId)
     if (!sector)
@@ -127,7 +132,7 @@ export default function EmployeesPage() {
     const environment = role.environmentId
       ? getEnvironmentById(role.environmentId)
       : null
-      
+
     return { employee, role, sector, unit, environment }
   }
 
@@ -434,7 +439,9 @@ export default function EmployeesPage() {
                     {getRoleById(employee.roleId)?.name || 'N/A'}
                   </TableCell>
                   <TableCell className='hidden sm:table-cell'>
-                    <ClientSideDateFormatter dateString={employee.admissionDate} />
+                    <ClientSideDateFormatter
+                      dateString={employee.admissionDate}
+                    />
                   </TableCell>
                   <TableCell>
                     <Badge variant={getStatusBadgeVariant(employee.status)}>
@@ -593,7 +600,7 @@ export default function EmployeesPage() {
                   </p>
                   <p>{currentEmployeeDetails.unit?.name || 'N/A'}</p>
                 </div>
-                 <div className='space-y-1'>
+                <div className='space-y-1'>
                   <p className='text-sm font-medium text-muted-foreground'>
                     Posto de Trabalho
                   </p>
@@ -616,7 +623,11 @@ export default function EmployeesPage() {
                     Data de Admissão
                   </p>
                   <p>
-                    <ClientSideDateFormatter dateString={currentEmployeeDetails.employee.admissionDate} />
+                    <ClientSideDateFormatter
+                      dateString={
+                        currentEmployeeDetails.employee.admissionDate
+                      }
+                    />
                   </p>
                 </div>
               </div>
