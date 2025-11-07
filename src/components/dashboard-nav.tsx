@@ -14,6 +14,7 @@ import {
   ClipboardList,
   ShieldAlert,
   HardHat,
+  GraduationCap,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -29,6 +30,7 @@ const navItems = [
   { href: '/dashboard/profiles', icon: HardHat, label: 'Perfis' },
   { href: '/dashboard/services', icon: ClipboardList, label: 'Serviços' },
   { href: '/dashboard/risks', icon: ShieldAlert, label: 'Riscos' },
+  { href: '/dashboard/trainings', icon: GraduationCap, label: 'Treinamentos' },
   { href: '/dashboard/documents', icon: FileText, label: 'Documentos' },
   { href: '/dashboard/tickets', icon: Ticket, label: 'Tickets' },
   { href: '/dashboard/performance', icon: Activity, label: 'Desempenho' },
