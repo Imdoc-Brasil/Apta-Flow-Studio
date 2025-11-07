@@ -1,3 +1,4 @@
+
 export const initialEpiData = [
   {
     id: 'EPI-01',
@@ -7,6 +8,14 @@ export const initialEpiData = [
     active: true,
     fabricante: '3M',
     vencimentoCA: '2025-12-31',
+    specifications:
+      'Protetor auditivo circum-auricular, composto por duas conchas de plástico ABS, com espuma interna. Haste em aço mola inoxidável.',
+    hygiene:
+      'Limpar as conchas com pano úmido e sabão neutro. As espumas devem ser trocadas a cada 6 meses.',
+    replacement:
+      'Substituir o equipamento a cada 12 meses de uso contínuo ou quando apresentar danos visíveis.',
+    usage:
+      'Ajustar a haste sobre a cabeça, garantindo que as conchas cubram completamente as orelhas e estejam bem vedadas.',
   },
   {
     id: 'EPI-02',
@@ -16,6 +25,13 @@ export const initialEpiData = [
     active: true,
     fabricante: 'Ansell',
     vencimentoCA: '2024-10-15',
+    specifications:
+      'Luva tricotada em fios de polietileno de alta densidade (HPPE), revestimento em poliuretano (PU) na palma e dedos.',
+    hygiene: 'Lavar com água e sabão neutro. Secar à sombra.',
+    replacement:
+      'Substituir quando apresentar furos, rasgos ou desgaste excessivo do revestimento.',
+    usage:
+      'Utilizar em atividades com risco de corte ou abrasão. Verificar a integridade antes de cada uso.',
   },
   {
     id: 'EPI-03',
@@ -25,6 +41,10 @@ export const initialEpiData = [
     active: true,
     fabricante: 'Honeywell',
     vencimentoCA: '2025-01-20',
+    specifications: 'Peça semifacial em elastômero, com dois filtros para partículas P2.',
+    hygiene: 'Limpar a peça facial com lenço umedecido após o uso. Não lavar os filtros.',
+    replacement: 'Substituir os filtros quando a respiração se tornar difícil ou a cada 30 dias.',
+    usage: 'Ajustar as tiras de fixação para garantir vedação total no rosto. Realizar teste de pressão negativa.',
   },
 ]
 

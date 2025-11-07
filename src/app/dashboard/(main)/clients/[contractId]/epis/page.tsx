@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState } from 'react'
@@ -58,6 +59,8 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Textarea } from '@/components/ui/textarea'
 
 export default function EpisPage() {
   const [epiData, setEpiData] = useState(initialEpiData)
@@ -80,6 +83,10 @@ export default function EpisPage() {
       active: formData.get('active') === 'on',
       fabricante: formData.get('fabricante') as string,
       vencimentoCA: formData.get('vencimentoCA') as string,
+      specifications: formData.get('specifications') as string,
+      hygiene: formData.get('hygiene') as string,
+      replacement: formData.get('replacement') as string,
+      usage: formData.get('usage') as string,
     }
     setEpiData((prev) => [newEpi, ...prev])
     setIsEpiDialogOpen(false)
@@ -178,50 +185,102 @@ export default function EpisPage() {
                         </span>
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className='sm:max-w-lg'>
+                    <DialogContent className='sm:max-w-2xl'>
                       <DialogHeader>
                         <DialogTitle>Adicionar Novo EPI</DialogTitle>
                       </DialogHeader>
                       <form id='add-epi-form' onSubmit={handleAddEpi}>
-                        <div className='grid gap-4 py-4'>
-                          <div className='space-y-2'>
-                            <Label htmlFor='name'>Nome</Label>
-                            <Input id='name' name='name' required />
+                        <ScrollArea className='h-[70vh]'>
+                          <div className='grid gap-6 p-4'>
+                            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                              <div className='space-y-2'>
+                                <Label htmlFor='name'>Nome do EPI</Label>
+                                <Input id='name' name='name' required />
+                              </div>
+                              <div className='space-y-2'>
+                                <Label htmlFor='ca'>Nº do CA</Label>
+                                <Input id='ca' name='ca' required />
+                              </div>
+                            </div>
+
+                            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                              <div className='space-y-2'>
+                                <Label htmlFor='fabricante'>Fabricante</Label>
+                                <Input id='fabricante' name='fabricante' />
+                              </div>
+                              <div className='space-y-2'>
+                                <Label htmlFor='vencimentoCA'>
+                                  Vencimento do CA
+                                </Label>
+                                <Input
+                                  id='vencimentoCA'
+                                  name='vencimentoCA'
+                                  type='date'
+                                />
+                              </div>
+                            </div>
+                            
+                            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                               <div className='space-y-2'>
+                                <Label htmlFor='shelfLife'>
+                                  Vida Útil (dias)
+                                </Label>
+                                <Input
+                                  id='shelfLife'
+                                  name='shelfLife'
+                                  type='number'
+                                  required
+                                />
+                              </div>
+                               <div className='flex items-center gap-2 pt-6'>
+                                <Switch
+                                  id='active'
+                                  name='active'
+                                  defaultChecked={true}
+                                />
+                                <Label htmlFor='active'>Status Ativo</Label>
+                              </div>
+                            </div>
+
+                            <div className='space-y-2'>
+                              <Label htmlFor='specifications'>
+                                Especificações Técnicas
+                              </Label>
+                              <Textarea
+                                id='specifications'
+                                name='specifications'
+                                placeholder='Descreva as características técnicas do EPI...'
+                              />
+                            </div>
+
+                            <div className='space-y-2'>
+                              <Label htmlFor='usage'>Forma de Uso</Label>
+                              <Textarea
+                                id='usage'
+                                name='usage'
+                                placeholder='Instruções sobre como utilizar o EPI corretamente...'
+                              />
+                            </div>
+
+                            <div className='space-y-2'>
+                              <Label htmlFor='hygiene'>Higienização</Label>
+                              <Textarea
+                                id='hygiene'
+                                name='hygiene'
+                                placeholder='Instruções de limpeza e conservação...'
+                              />
+                            </div>
+
+                            <div className='space-y-2'>
+                              <Label htmlFor='replacement'>Substituição</Label>
+                              <Textarea
+                                id='replacement'
+                                name='replacement'
+                                placeholder='Indicações de quando o EPI deve ser substituído...'
+                              />
+                            </div>
                           </div>
-                          <div className='space-y-2'>
-                            <Label htmlFor='ca'>Nº do CA</Label>
-                            <Input id='ca' name='ca' required />
-                          </div>
-                          <div className='space-y-2'>
-                            <Label htmlFor='fabricante'>Fabricante</Label>
-                            <Input id='fabricante' name='fabricante' />
-                          </div>
-                          <div className='space-y-2'>
-                            <Label htmlFor='vencimentoCA'>Venc. do CA</Label>
-                            <Input
-                              id='vencimentoCA'
-                              name='vencimentoCA'
-                              type='date'
-                            />
-                          </div>
-                          <div className='space-y-2'>
-                            <Label htmlFor='shelfLife'>Vida Útil (dias)</Label>
-                            <Input
-                              id='shelfLife'
-                              name='shelfLife'
-                              type='number'
-                              required
-                            />
-                          </div>
-                          <div className='flex items-center gap-2'>
-                            <Switch
-                              id='active'
-                              name='active'
-                              defaultChecked={true}
-                            />
-                            <Label htmlFor='active'>Status Ativo</Label>
-                          </div>
-                        </div>
+                        </ScrollArea>
                       </form>
                       <DialogFooter>
                         <Button
