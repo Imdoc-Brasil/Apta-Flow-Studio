@@ -38,6 +38,7 @@ import {
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 import { Textarea } from '@/components/ui/textarea'
+import { Badge } from '@/components/ui/badge'
 
 // Mock Data - In a real app, this would come from an API
 export type TrainingModality = 'Online' | 'Presencial' | 'Híbrido'
