@@ -424,34 +424,28 @@ export default function UnitsPage() {
           {filteredUnits.length > 0 ? (
             <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
               {filteredUnits.map((unit) => (
-                <Card
+                <Link
                   key={unit.id}
-                  className='flex flex-col hover:shadow-md transition-shadow'
+                  href={`/dashboard/clients/${contractId}/units/${unit.id}`}
+                  className='block'
                 >
-                  <CardHeader>
-                    <div className='flex justify-between items-start'>
-                      <CardTitle>{unit.name}</CardTitle>
-                      <Badge variant='outline'>{unit.type}</Badge>
-                    </div>
-                    <CardDescription>
-                      {unit.propertyInfo.address}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className='flex-grow'>
-                    <p className='text-sm text-muted-foreground'>
-                      {unit.description}
-                    </p>
-                  </CardContent>
-                  <CardFooter>
-                    <Button asChild className='w-full' variant='outline'>
-                      <Link
-                        href={`/dashboard/clients/${contractId}/units/${unit.id}`}
-                      >
-                        Gerenciar Unidade <ArrowRight className='ml-2 h-4 w-4' />
-                      </Link>
-                    </Button>
-                  </CardFooter>
-                </Card>
+                  <Card className='flex flex-col h-full hover:shadow-md transition-shadow cursor-pointer'>
+                    <CardHeader>
+                      <div className='flex justify-between items-start'>
+                        <CardTitle>{unit.name}</CardTitle>
+                        <Badge variant='outline'>{unit.type}</Badge>
+                      </div>
+                      <CardDescription>
+                        {unit.propertyInfo.address}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className='flex-grow'>
+                      <p className='text-sm text-muted-foreground'>
+                        {unit.description}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
             </div>
           ) : (
