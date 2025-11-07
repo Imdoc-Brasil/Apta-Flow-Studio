@@ -46,8 +46,15 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Textarea } from '@/components/ui/textarea'
 import Link from 'next/link'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { initialUnitsData, type Unit } from './data'
+import { initialUnitsData, type Unit, UnitType } from './data'
 import { Separator } from '@/components/ui/separator'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 const getClientById = (contractId: string) => {
   return initialClientsData.find((client) => client.contractId === contractId)
@@ -80,6 +87,7 @@ function UnitDetailDialog({
     const formData = new FormData(event.currentTarget)
     const updatedData = {
       name: formData.get('name') as string,
+      type: formData.get('type') as UnitType,
       description: formData.get('description') as string,
       cnpj: formData.get('cnpj') as string,
       address: formData.get('address') as string,
@@ -100,12 +108,10 @@ function UnitDetailDialog({
       <DialogContent className='sm:max-w-2xl'>
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? `Editar Unidade: ${unit?.name}` : unit?.name}
+            {unit?.name}
           </DialogTitle>
-          <DialogDescription>
-            {isEditing
-              ? 'Atualize os detalhes da unidade.'
-              : 'Visualize os detalhes da unidade.'}
+           <DialogDescription>
+            Visualize os detalhes da unidade.
           </DialogDescription>
         </DialogHeader>
 
@@ -113,6 +119,19 @@ function UnitDetailDialog({
            <form id={`update-unit-form-${unit?.id}`} onSubmit={handleSubmit}>
             <ScrollArea className='h-[60vh] pr-6'>
               <div className='grid gap-4 py-4'>
+                 <div className='space-y-2'>
+                    <Label htmlFor='type'>Tipo</Label>
+                    <Select name='type' defaultValue={unit?.type} required>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Selecione o tipo"/>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Unidade">Unidade</SelectItem>
+                            <SelectItem value="Obra">Obra</SelectItem>
+                            <SelectItem value="Contrato">Contrato</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
                 <div className='space-y-2'>
                   <Label htmlFor='name'>Nome</Label>
                   <Input id='name' name='name' defaultValue={unit?.name} required />
@@ -166,7 +185,11 @@ function UnitDetailDialog({
         ) : (
           <ScrollArea className='h-[60vh] pr-6'>
             <div className='space-y-4 text-sm py-4'>
-              <div>
+               <div className='space-y-1'>
+                 <Label className='font-semibold'>Tipo</Label>
+                 <p><Badge variant="secondary">{unit?.type}</Badge></p>
+              </div>
+              <div className='space-y-1'>
                 <Label className='font-semibold text-base'>Descrição</Label>
                 <p className='text-muted-foreground'>{unit?.description || '-'}</p>
               </div>
@@ -256,6 +279,7 @@ export default function UnitsPage() {
 
   const [formState, setFormState] = useState<Omit<Unit, 'id' | 'status'>>({
     name: '',
+    type: 'Unidade',
     description: '',
     cnpj: '',
     address: '',
@@ -270,6 +294,7 @@ export default function UnitsPage() {
   const resetFormState = () => {
     setFormState({
       name: '',
+      type: 'Unidade',
       description: '',
       cnpj: '',
       address: '',
@@ -289,6 +314,7 @@ export default function UnitsPage() {
         setFormState((prev) => ({
           ...prev,
           name: '',
+          type: prev.type,
           cnpj: client.cnpj,
           address: client.address,
           cnae: client.cnae,
@@ -358,15 +384,15 @@ export default function UnitsPage() {
                 <Button size='sm' className='h-8 gap-1'>
                   <PlusCircle className='h-3.5 w-3.5' />
                   <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
-                    Adicionar Unidade
+                    Adicionar
                   </span>
                 </Button>
               </DialogTrigger>
               <DialogContent className='sm:max-w-2xl'>
                 <DialogHeader>
-                  <DialogTitle>Adicionar Nova Unidade</DialogTitle>
+                  <DialogTitle>Adicionar Nova Unidade/Obra/Contrato</DialogTitle>
                   <DialogDescription>
-                    Preencha os detalhes da nova unidade ou local de trabalho.
+                    Preencha os detalhes da nova estrutura.
                   </DialogDescription>
                 </DialogHeader>
                 <form id='add-unit-form' onSubmit={handleAddUnit}>
@@ -383,6 +409,30 @@ export default function UnitsPage() {
                         <Label htmlFor='inherit' className='cursor-pointer'>
                           Herdar dados da empresa principal
                         </Label>
+                      </div>
+
+                      <div className='space-y-2'>
+                        <Label htmlFor='type'>Tipo</Label>
+                        <Select
+                          name='type'
+                          value={formState.type}
+                          onValueChange={(value) =>
+                            setFormState((prev) => ({
+                              ...prev,
+                              type: value as UnitType,
+                            }))
+                          }
+                          required
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder='Selecione o tipo' />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value='Unidade'>Unidade</SelectItem>
+                            <SelectItem value='Obra'>Obra</SelectItem>
+                            <SelectItem value='Contrato'>Contrato</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       <div className='space-y-2'>
@@ -580,7 +630,10 @@ export default function UnitsPage() {
                     onClick={() => openDetailDialog(unit)}
                   >
                     <CardHeader>
-                      <CardTitle>{unit.name}</CardTitle>
+                      <div className='flex justify-between items-start'>
+                        <CardTitle>{unit.name}</CardTitle>
+                        <Badge variant='outline'>{unit.type}</Badge>
+                      </div>
                       <CardDescription>{unit.address}</CardDescription>
                     </CardHeader>
                     <CardContent>
