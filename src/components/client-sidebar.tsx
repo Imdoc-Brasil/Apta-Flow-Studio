@@ -78,6 +78,11 @@ export function ClientSidebar() {
     { href: `${basePath}/employees`, label: 'Colaboradores', icon: Users },
     { href: `${basePath}/ghe`, label: 'GHE', icon: Users },
     { href: `${basePath}/processes`, label: 'Processos', icon: Network },
+    {
+      href: `${basePath}/activities`,
+      label: 'Atividades',
+      icon: ClipboardList,
+    },
   ]
 
   const saudeNavItems = [

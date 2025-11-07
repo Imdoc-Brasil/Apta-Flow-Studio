@@ -45,6 +45,7 @@ import {
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { initialActivitiesData } from '../activities/data'
 
 export default function ProcessesPage() {
   const [processes, setProcesses] = useState(initialProcessesData)
@@ -229,16 +230,26 @@ export default function ProcessesPage() {
                           {index + 1}
                         </div>
                         <div className='flex-grow space-y-2'>
-                          <Input
+                           <Select
                             name={`step-name-${index}`}
                             defaultValue={step.name}
-                            placeholder='Nome da Etapa'
                             required
-                          />
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder='Selecione a atividade padrão' />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {initialActivitiesData.map((activity) => (
+                                <SelectItem key={activity.id} value={activity.name}>
+                                  {activity.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                           <Textarea
                             name={`step-description-${index}`}
                             defaultValue={step.description}
-                            placeholder='Descrição da atividade'
+                            placeholder='Descrição da atividade (opcional, pode vir do catálogo)'
                             rows={2}
                           />
                           <Select
