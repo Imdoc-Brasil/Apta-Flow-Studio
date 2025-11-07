@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
@@ -19,6 +19,12 @@ import { initialSectorsData } from '../../sectors/data'
 import { initialRolesData } from '../../roles/data'
 import { initialEmployeesData } from '../../employees/data'
 import { cn } from '@/lib/utils'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 const getUnitById = (unitId: string): Unit | undefined => {
   return initialUnitsData.find((unit) => unit.id === unitId)
@@ -76,9 +82,30 @@ export default function UnitDetailsPage() {
             <span className='sr-only'>Voltar</span>
           </Link>
         </Button>
-        <h1 className='flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0'>
-          {unit.name}
-        </h1>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant='ghost' className='gap-1 text-xl font-semibold'>
+              {unit.name}
+              <ChevronDown className='h-4 w-4' />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align='start'>
+            {initialUnitsData.map((navUnit) => (
+              <Link
+                key={navUnit.id}
+                href={`/dashboard/clients/${contractId}/units/${navUnit.id}`}
+              >
+                <DropdownMenuItem
+                  disabled={navUnit.id === unitId}
+                  className='cursor-pointer'
+                >
+                  {navUnit.name}
+                </DropdownMenuItem>
+              </Link>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         <Badge variant='outline' className='ml-auto sm:ml-0'>
           {unit.type}
         </Badge>
