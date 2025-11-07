@@ -184,79 +184,42 @@ export default function EpisPage() {
                       </DialogHeader>
                       <form id='add-epi-form' onSubmit={handleAddEpi}>
                         <div className='grid gap-4 py-4'>
-                          <div className='grid grid-cols-4 items-center gap-4'>
-                            <Label htmlFor='name' className='text-right'>
-                              Nome
-                            </Label>
-                            <Input
-                              id='name'
-                              name='name'
-                              className='col-span-3'
-                              required
-                            />
+                          <div className='space-y-2'>
+                            <Label htmlFor='name'>Nome</Label>
+                            <Input id='name' name='name' required />
                           </div>
-                          <div className='grid grid-cols-4 items-center gap-4'>
-                            <Label htmlFor='ca' className='text-right'>
-                              Nº do CA
-                            </Label>
-                            <Input
-                              id='ca'
-                              name='ca'
-                              className='col-span-3'
-                              required
-                            />
+                          <div className='space-y-2'>
+                            <Label htmlFor='ca'>Nº do CA</Label>
+                            <Input id='ca' name='ca' required />
                           </div>
-                          <div className='grid grid-cols-4 items-center gap-4'>
-                            <Label
-                              htmlFor='fabricante'
-                              className='text-right'
-                            >
-                              Fabricante
-                            </Label>
-                            <Input
-                              id='fabricante'
-                              name='fabricante'
-                              className='col-span-3'
-                            />
+                          <div className='space-y-2'>
+                            <Label htmlFor='fabricante'>Fabricante</Label>
+                            <Input id='fabricante' name='fabricante' />
                           </div>
-                          <div className='grid grid-cols-4 items-center gap-4'>
-                            <Label
-                              htmlFor='vencimentoCA'
-                              className='text-right'
-                            >
-                              Venc. do CA
-                            </Label>
+                          <div className='space-y-2'>
+                            <Label htmlFor='vencimentoCA'>Venc. do CA</Label>
                             <Input
                               id='vencimentoCA'
                               name='vencimentoCA'
                               type='date'
-                              className='col-span-3'
                             />
                           </div>
-                          <div className='grid grid-cols-4 items-center gap-4'>
-                            <Label htmlFor='shelfLife' className='text-right'>
-                              Vida Útil (dias)
-                            </Label>
+                          <div className='space-y-2'>
+                            <Label htmlFor='shelfLife'>Vida Útil (dias)</Label>
                             <Input
                               id='shelfLife'
                               name='shelfLife'
                               type='number'
-                              className='col-span-3'
                               required
                             />
                           </div>
-                          <div className='grid grid-cols-4 items-center gap-4'>
-                            <Label htmlFor='active' className='text-right'>
-                              Status
-                            </Label>
-                            <div className='col-span-3 flex items-center gap-2'>
-                              <Switch
-                                id='active'
-                                name='active'
-                                defaultChecked={true}
-                              />
-                              <Label htmlFor='active'>Ativo</Label>
-                            </div>
+                          <div className='flex items-center gap-2'>
+                            <Switch
+                              id='active'
+                              name='active'
+                              defaultChecked={true}
+                            />
+                            <Label htmlFor='active'>Status Ativo</Label>
                           </div>
                         </div>
                       </form>
