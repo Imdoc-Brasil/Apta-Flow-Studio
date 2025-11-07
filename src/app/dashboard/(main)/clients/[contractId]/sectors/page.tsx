@@ -1,4 +1,3 @@
-
 'use client'
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
@@ -68,8 +67,7 @@ export default function SectorsPage() {
 
   const [sectors, setSectors] = useState(initialSectorsData)
   const [isAddSectorDialogOpen, setIsAddSectorDialogOpen] = useState(false)
-  const [isEditSectorDialogOpen, setIsEditSectorDialogOpen] = useState(false)
-  const [editingSector, setEditingSector] = useState<Sector | null>(null)
+  
   const [searchTerm, setSearchTerm] = useState('')
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
   const [unitFilter, setUnitFilter] = useState<string[]>(
@@ -112,28 +110,6 @@ export default function SectorsPage() {
     })
   }
 
-  const handleEditSector = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    if (!editingSector) return
-
-    const formData = new FormData(e.currentTarget)
-    const updatedSector: Sector = {
-      ...editingSector,
-      name: formData.get('name') as string,
-      description: formData.get('description') as string,
-    }
-
-    setSectors((prev) =>
-      prev.map((s) => (s.id === editingSector.id ? updatedSector : s))
-    )
-    setIsEditSectorDialogOpen(false)
-    setEditingSector(null)
-    toast({
-      title: 'Setor Atualizado!',
-      description: `O setor "${updatedSector.name}" foi atualizado.`,
-    })
-  }
-
   const getUnitName = (unitId: string) => {
     return initialUnitsData.find((unit) => unit.id === unitId)?.name || 'N/A'
   }
@@ -143,12 +119,7 @@ export default function SectorsPage() {
       ? getUnitName(unitFilter[0])
       : 'Todos os Setores'
 
-  const openEditDialog = (sector: Sector) => {
-    setEditingSector(sector)
-    setIsEditSectorDialogOpen(true)
-  }
-
-  const renderSectorForm = (sector?: Sector | null) => (
+  const renderSectorForm = () => (
     <div className='grid gap-4 py-4'>
       <div className='space-y-2'>
         <Label htmlFor='unitId'>Unidade</Label>
@@ -156,20 +127,19 @@ export default function SectorsPage() {
           id='unitId'
           name='unitId'
           readOnly
-          defaultValue={getUnitName(sector?.unitId || urlUnitId || '')}
+          defaultValue={getUnitName(urlUnitId || '')}
         />
-        <input type='hidden' name='unitId' value={sector?.unitId || urlUnitId || ''} />
+        <input type='hidden' name='unitId' value={urlUnitId || ''} />
       </div>
       <div className='space-y-2'>
         <Label htmlFor='name'>Nome do Setor</Label>
-        <Input id='name' name='name' defaultValue={sector?.name} required />
+        <Input id='name' name='name' required />
       </div>
       <div className='space-y-2'>
         <Label htmlFor='description'>Descrição</Label>
         <Textarea
           id='description'
           name='description'
-          defaultValue={sector?.description}
         />
       </div>
     </div>
@@ -287,47 +257,43 @@ export default function SectorsPage() {
           {viewMode === 'card' ? (
             <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
               {filteredSectors.map((sector) => (
-                <Card
-                  key={sector.id}
-                  className='flex flex-col hover:shadow-md transition-shadow'
-                >
-                  <div
-                    className='flex-grow cursor-pointer'
-                    onClick={() => openEditDialog(sector)}
-                  >
-                    <CardHeader>
-                      <CardTitle>{sector.name}</CardTitle>
-                      <CardDescription>
-                        <Badge variant='outline'>
-                          {getUnitName(sector.unitId)}
-                        </Badge>
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <p className='text-sm text-muted-foreground line-clamp-2'>
-                        {sector.description}
-                      </p>
-                    </CardContent>
-                  </div>
-                  <CardFooter className='flex flex-col lg:flex-row items-center gap-2'>
-                    <Button asChild className='w-full' variant='outline' size='sm'>
-                      <Link
-                        href={`/dashboard/clients/${contractId}/roles?sectorId=${sector.id}`}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        Ver Cargos <ArrowRight className='ml-2 h-4 w-4' />
-                      </Link>
-                    </Button>
-                     <Button asChild className='w-full' variant='outline' size='sm'>
-                      <Link
-                        href={`/dashboard/clients/${contractId}/environments?sectorId=${sector.id}`}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        Ver Ambientes <ArrowRight className='ml-2 h-4 w-4' />
-                      </Link>
-                    </Button>
-                  </CardFooter>
-                </Card>
+                 <Link key={sector.id} href={`/dashboard/clients/${contractId}/sectors/${sector.id}`} className='block'>
+                    <Card
+                      className='flex flex-col h-full hover:shadow-md transition-shadow cursor-pointer'
+                    >
+                      <CardHeader>
+                        <CardTitle>{sector.name}</CardTitle>
+                        <CardDescription>
+                          <Badge variant='outline'>
+                            {getUnitName(sector.unitId)}
+                          </Badge>
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className='flex-grow'>
+                        <p className='text-sm text-muted-foreground line-clamp-2'>
+                          {sector.description}
+                        </p>
+                      </CardContent>
+                      <CardFooter className='flex-col lg:flex-row items-center gap-2'>
+                        <Button asChild className='w-full' variant='outline' size='sm'>
+                          <Link
+                            href={`/dashboard/clients/${contractId}/roles?sectorId=${sector.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            Ver Cargos <ArrowRight className='ml-2 h-4 w-4' />
+                          </Link>
+                        </Button>
+                         <Button asChild className='w-full' variant='outline' size='sm'>
+                          <Link
+                            href={`/dashboard/clients/${contractId}/environments?sectorId=${sector.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            Ver Ambientes <ArrowRight className='ml-2 h-4 w-4' />
+                          </Link>
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                 </Link>
               ))}
             </div>
           ) : (
@@ -348,11 +314,7 @@ export default function SectorsPage() {
               </TableHeader>
               <TableBody>
                 {filteredSectors.map((sector) => (
-                  <TableRow
-                    key={sector.id}
-                    onClick={() => openEditDialog(sector)}
-                    className='cursor-pointer'
-                  >
+                   <TableRow key={sector.id} onClick={() => router.push(`/dashboard/clients/${contractId}/sectors/${sector.id}`)} className='cursor-pointer'>
                     <TableCell>
                       <div className='font-medium'>{sector.name}</div>
                       <div className='hidden text-sm text-muted-foreground md:inline'>
@@ -401,35 +363,6 @@ export default function SectorsPage() {
           )}
         </CardContent>
       </Card>
-
-      {/* Edit Dialog */}
-      <Dialog
-        open={isEditSectorDialogOpen}
-        onOpenChange={setIsEditSectorDialogOpen}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar Setor</DialogTitle>
-            <DialogDescription>
-              Visualize e atualize os detalhes do setor.
-            </DialogDescription>
-          </DialogHeader>
-          <form id='edit-sector-form' onSubmit={handleEditSector}>
-            {renderSectorForm(editingSector)}
-          </form>
-          <DialogFooter>
-            <Button
-              variant='outline'
-              onClick={() => setIsEditSectorDialogOpen(false)}
-            >
-              Cancelar
-            </Button>
-            <Button type='submit' form='edit-sector-form'>
-              Salvar Alterações
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   )
 }
