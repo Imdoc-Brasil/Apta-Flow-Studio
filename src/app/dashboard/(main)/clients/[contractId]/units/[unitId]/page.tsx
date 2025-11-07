@@ -227,31 +227,46 @@ export default function UnitDetailsPage() {
             <CardHeader>
               <CardTitle>Resumo</CardTitle>
             </CardHeader>
-            <CardContent className='space-y-4'>
-              <div className='flex justify-between items-center'>
+            <CardContent className='grid gap-1 text-sm'>
+              <Link
+                href={`/dashboard/clients/${contractId}/sectors?unitId=${unitId}`}
+                className='flex items-center justify-between rounded-md p-2 hover:bg-muted'
+              >
                 <span className='text-muted-foreground'>Setores</span>
                 <span className='font-semibold'>{totalSectors}</span>
-              </div>
-              <div className='flex justify-between items-center'>
+              </Link>
+              <Link
+                href={`/dashboard/clients/${contractId}/roles`}
+                className='flex items-center justify-between rounded-md p-2 hover:bg-muted'
+              >
                 <span className='text-muted-foreground'>Cargos</span>
                 <span className='font-semibold'>{totalRoles}</span>
-              </div>
-              <div className='flex justify-between items-center'>
+              </Link>
+              <Link
+                href={`/dashboard/clients/${contractId}/employees`}
+                className='flex items-center justify-between rounded-md p-2 hover:bg-muted'
+              >
                 <span className='text-muted-foreground'>
                   Total de colaboradores
                 </span>
                 <span className='font-semibold'>{totalEmployees}</span>
-              </div>
-              <div className='flex justify-between items-center'>
+              </Link>
+              <Link
+                href='#'
+                className='flex items-center justify-between rounded-md p-2 hover:bg-muted'
+              >
                 <span className='text-muted-foreground'>ASOs vencidos</span>
                 <span className='font-semibold'>{expiredAsos}</span>
-              </div>
-              <div className='flex justify-between items-center'>
+              </Link>
+              <Link
+                href='#'
+                className='flex items-center justify-between rounded-md p-2 hover:bg-muted'
+              >
                 <span className='text-muted-foreground'>
                   Total de colaboradores PCD
                 </span>
                 <span className='font-semibold'>{pcdEmployees}</span>
-              </div>
+              </Link>
             </CardContent>
           </Card>
         </div>
