@@ -166,78 +166,12 @@ export default function UnitsPage() {
     })
   }, [units, searchTerm, statusFilter])
 
-  const renderUnitDetails = (unit: Unit | null) => (
-    <ScrollArea className='h-[60vh] pr-6'>
-      <div className='grid gap-4 py-4'>
-        <div className='space-y-1'>
-          <p className='text-sm font-medium text-muted-foreground'>Nome</p>
-          <p>{unit?.name}</p>
-        </div>
-        <div className='space-y-1'>
-          <p className='text-sm font-medium text-muted-foreground'>Descrição</p>
-          <p>{unit?.description}</p>
-        </div>
-
-        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-          <div className='space-y-1'>
-            <p className='text-sm font-medium text-muted-foreground'>CNPJ</p>
-            <p>{unit?.cnpj}</p>
-          </div>
-          <div className='space-y-1'>
-            <p className='text-sm font-medium text-muted-foreground'>Endereço</p>
-            <p>{unit?.address}</p>
-          </div>
-          <div className='space-y-1'>
-            <p className='text-sm font-medium text-muted-foreground'>CNAE</p>
-            <p>{unit?.cnae}</p>
-          </div>
-          <div className='space-y-1'>
-            <p className='text-sm font-medium text-muted-foreground'>
-              Grau de Risco
-            </p>
-            <p>{unit?.riskLevel}</p>
-          </div>
-        </div>
-
-        <div className='space-y-4 pt-4 border-t'>
-          <h3 className='font-medium text-lg'>Responsáveis</h3>
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-            <div className='space-y-1'>
-              <p className='text-sm font-medium text-muted-foreground'>
-                Responsável Legal
-              </p>
-              <p>{unit?.legalResponsible}</p>
-            </div>
-            <div className='space-y-1'>
-              <p className='text-sm font-medium text-muted-foreground'>
-                Responsável pelo PGR
-              </p>
-              <p>{unit?.pgrResponsible}</p>
-            </div>
-            <div className='space-y-1'>
-              <p className='text-sm font-medium text-muted-foreground'>
-                Responsável pelo LTCAT
-              </p>
-              <p>{unit?.ltcatResponsible}</p>
-            </div>
-            <div className='space-y-1'>
-              <p className='text-sm font-medium text-muted-foreground'>
-                Responsável pelo PCMSO
-              </p>
-              <p>{unit?.pcmsoResponsible}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </ScrollArea>
-  )
-
   const renderUnitForm = (unit: Unit | null) => (
     <ScrollArea className='h-[60vh] pr-6'>
       <div className='grid gap-4 py-4'>
         <div className='space-y-2'>
           <Label htmlFor='name'>Nome</Label>
-          <Input id='name' name='name' defaultValue={unit?.name} required />
+          <Input id='name' name='name' defaultValue={unit?.name} required disabled={!isEditing} />
         </div>
         <div className='space-y-2'>
           <Label htmlFor='description'>Descrição</Label>
@@ -245,13 +179,14 @@ export default function UnitsPage() {
             id='description'
             name='description'
             defaultValue={unit?.description}
+            disabled={!isEditing}
           />
         </div>
 
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
           <div className='space-y-2'>
             <Label htmlFor='cnpj'>CNPJ</Label>
-            <Input id='cnpj' name='cnpj' defaultValue={unit?.cnpj} />
+            <Input id='cnpj' name='cnpj' defaultValue={unit?.cnpj} disabled={!isEditing} />
           </div>
           <div className='space-y-2'>
             <Label htmlFor='address'>Endereço</Label>
@@ -260,11 +195,12 @@ export default function UnitsPage() {
               name='address'
               defaultValue={unit?.address}
               required
+              disabled={!isEditing}
             />
           </div>
           <div className='space-y-2'>
             <Label htmlFor='cnae'>CNAE</Label>
-            <Input id='cnae' name='cnae' defaultValue={unit?.cnae} />
+            <Input id='cnae' name='cnae' defaultValue={unit?.cnae} disabled={!isEditing} />
           </div>
           <div className='space-y-2'>
             <Label htmlFor='riskLevel'>Grau de Risco</Label>
@@ -272,6 +208,7 @@ export default function UnitsPage() {
               id='riskLevel'
               name='riskLevel'
               defaultValue={unit?.riskLevel}
+              disabled={!isEditing}
             />
           </div>
         </div>
@@ -285,6 +222,7 @@ export default function UnitsPage() {
                 id='legalResponsible'
                 name='legalResponsible'
                 defaultValue={unit?.legalResponsible}
+                disabled={!isEditing}
               />
             </div>
             <div className='space-y-2'>
@@ -293,6 +231,7 @@ export default function UnitsPage() {
                 id='pgrResponsible'
                 name='pgrResponsible'
                 defaultValue={unit?.pgrResponsible}
+                disabled={!isEditing}
               />
             </div>
             <div className='space-y-2'>
@@ -301,6 +240,7 @@ export default function UnitsPage() {
                 id='ltcatResponsible'
                 name='ltcatResponsible'
                 defaultValue={unit?.ltcatResponsible}
+                disabled={!isEditing}
               />
             </div>
             <div className='space-y-2'>
@@ -309,6 +249,7 @@ export default function UnitsPage() {
                 id='pcmsoResponsible'
                 name='pcmsoResponsible'
                 defaultValue={unit?.pcmsoResponsible}
+                disabled={!isEditing}
               />
             </div>
           </div>
@@ -623,16 +564,12 @@ export default function UnitsPage() {
                 : 'Visualize os detalhes da unidade.'}
             </DialogDescription>
           </DialogHeader>
-          {isEditing ? (
-            <form
-              id={`update-unit-form-${currentUnit?.id}`}
-              onSubmit={handleUpdateUnit}
-            >
-              {renderUnitForm(currentUnit)}
-            </form>
-          ) : (
-            renderUnitDetails(currentUnit)
-          )}
+          <form
+            id={`update-unit-form-${currentUnit?.id}`}
+            onSubmit={handleUpdateUnit}
+          >
+            {renderUnitForm(currentUnit)}
+          </form>
           <DialogFooter>
             {isEditing ? (
               <>
@@ -650,7 +587,10 @@ export default function UnitsPage() {
               <>
                 <Button
                   variant='outline'
-                  onClick={() => setIsDetailOpen(false)}
+                  onClick={() => {
+                    setIsDetailOpen(false)
+                    setIsEditing(false)
+                  }}
                 >
                   Fechar
                 </Button>
