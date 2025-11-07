@@ -103,8 +103,10 @@ export default function SectorsPage() {
   const handleAddSector = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
+    const code = formData.get('code') as string
     const newSector: Sector = {
       id: `SEC-${Date.now().toString().slice(-4)}`,
+      code: code || `SEC-${Date.now().toString().slice(-4)}`,
       name: formData.get('name') as string,
       description: formData.get('description') as string,
       unitId: formData.get('unitId') as string,
@@ -143,9 +145,15 @@ export default function SectorsPage() {
           </SelectContent>
         </Select>
       </div>
-      <div className='space-y-2'>
-        <Label htmlFor='name'>Nome do Setor</Label>
-        <Input id='name' name='name' required />
+      <div className='grid grid-cols-3 gap-4'>
+        <div className='space-y-2 col-span-2'>
+          <Label htmlFor='name'>Nome do Setor</Label>
+          <Input id='name' name='name' required />
+        </div>
+         <div className='space-y-2'>
+          <Label htmlFor='code'>Código</Label>
+          <Input id='code' name='code' placeholder='Opcional' />
+        </div>
       </div>
       <div className='space-y-2'>
         <Label htmlFor='description'>Descrição</Label>
