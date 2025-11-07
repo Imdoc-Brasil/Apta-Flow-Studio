@@ -44,11 +44,9 @@ import {
   initialEpiData,
   initialEpiStock,
   initialEpiDeliveries,
-  initialCaRiskMapping,
   type Epi,
   type EpiStock,
   type EpiDelivery,
-  type CaRiskMapping,
 } from './data'
 import { initialEmployeesData } from '../employees/data'
 import {
@@ -66,7 +64,6 @@ export default function EpisPage() {
   const [epiData, setEpiData] = useState(initialEpiData)
   const [epiStock, setEpiStock] = useState(initialEpiStock)
   const [epiDeliveries, setEpiDeliveries] = useState(initialEpiDeliveries)
-  const [caRiskMapping, setCaRiskMapping] = useState(initialCaRiskMapping)
 
   const [isEpiDialogOpen, setIsEpiDialogOpen] = useState(false)
   const [isDeliveryDialogOpen, setIsDeliveryDialogOpen] = useState(false)
@@ -262,11 +259,10 @@ export default function EpisPage() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue='catalog'>
-            <TabsList className='grid w-full grid-cols-4'>
+            <TabsList className='grid w-full grid-cols-3'>
               <TabsTrigger value='catalog'>Catálogo de EPIs</TabsTrigger>
               <TabsTrigger value='delivery'>Gestão de Entrega</TabsTrigger>
               <TabsTrigger value='stock'>Controle de Estoque</TabsTrigger>
-              <TabsTrigger value='mapping'>C.A x Riscos</TabsTrigger>
             </TabsList>
 
             {/* Tab: Catálogo de EPIs */}
@@ -667,35 +663,6 @@ export default function EpisPage() {
                 </CardContent>
               </Card>
             </TabsContent>
-
-            {/* Tab: C.A x Riscos */}
-            <TabsContent value='mapping'>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Tabela de C.A x Riscos</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>CA</TableHead>
-                        <TableHead>EPI</TableHead>
-                        <TableHead>Risco Associado</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {caRiskMapping.map((mapping) => (
-                        <TableRow key={mapping.ca}>
-                          <TableCell>{mapping.ca}</TableCell>
-                          <TableCell>{mapping.epiName}</TableCell>
-                          <TableCell>{mapping.risk}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
@@ -733,5 +700,3 @@ export default function EpisPage() {
     </>
   )
 }
-
-    

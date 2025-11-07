@@ -75,21 +75,6 @@ export const initialEpiDeliveries = [
   },
 ]
 
-export const initialCaRiskMapping = [
-  { ca: '12345', epiName: 'Protetor auricular tipo concha', risk: 'Ruído' },
-  {
-    ca: '67890',
-    epiName: 'Luva de segurança para proteção contra agentes mecânicos',
-    risk: 'Agentes Abrasivos e Escoriantes',
-  },
-  {
-    ca: '11223',
-    epiName: 'Respirador purificador de ar',
-    risk: 'Poeiras e Névoas',
-  },
-]
-
 export type Epi = (typeof initialEpiData)[0]
 export type EpiStock = (typeof initialEpiStock)[0]
 export type EpiDelivery = (typeof initialEpiDeliveries)[0]
-export type CaRiskMapping = (typeof initialCaRiskMapping)[0]
