@@ -44,6 +44,8 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Separator } from '@/components/ui/separator'
 
 export default function RolesPage() {
   const [roles, setRoles] = useState(initialRolesData)
@@ -73,6 +75,10 @@ export default function RolesPage() {
   const handleAddRole = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
+    const additionalWorkstationIds = initialEnvironmentsData
+      .map((env) => env.id)
+      .filter((id) => formData.get(`additional-${id}`) === 'on')
+
     const newRole: Role = {
       id: `ROLE-${Date.now().toString().slice(-4)}`,
       name: formData.get('name') as string,
@@ -81,7 +87,8 @@ export default function RolesPage() {
       description: formData.get('description') as string,
       activities: formData.get('activities') as string,
       requirements: formData.get('requirements') as string,
-      environmentId: formData.get('environmentId') as string,
+      mainWorkstationId: formData.get('mainWorkstationId') as string,
+      additionalWorkstationIds,
       requiredExams: formData.get('requiredExams') as string,
     }
     setRoles((prev) => [...prev, newRole])
@@ -155,8 +162,10 @@ export default function RolesPage() {
                       </Select>
                     </div>
                     <div className='space-y-2'>
-                      <Label htmlFor='environmentId'>Posto de Trabalho</Label>
-                      <Select name='environmentId'>
+                      <Label htmlFor='mainWorkstationId'>
+                        Posto de Trabalho Principal
+                      </Label>
+                      <Select name='mainWorkstationId'>
                         <SelectTrigger>
                           <SelectValue placeholder='Selecione o posto de trabalho principal (opcional)' />
                         </SelectTrigger>
@@ -169,6 +178,32 @@ export default function RolesPage() {
                         </SelectContent>
                       </Select>
                     </div>
+
+                    <div className='space-y-4'>
+                      <Separator />
+                      <Label className='font-semibold'>
+                        Outros Postos de Trabalho Associados
+                      </Label>
+                      <ScrollArea className='h-40 rounded-md border p-4'>
+                        <div className='space-y-2'>
+                          {initialEnvironmentsData.map((env) => (
+                            <div
+                              key={`additional-${env.id}`}
+                              className='flex items-center gap-2'
+                            >
+                              <Checkbox
+                                id={`additional-${env.id}`}
+                                name={`additional-${env.id}`}
+                              />
+                              <Label htmlFor={`additional-${env.id}`}>
+                                {env.name}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </div>
+
                     <div className='space-y-2'>
                       <Label htmlFor='description'>Descrição Sumária</Label>
                       <Textarea

@@ -129,11 +129,11 @@ export default function EmployeesPage() {
       return { employee, role, sector: null, unit: null, environment: null }
 
     const unit = getUnitById(sector.unitId)
-    const environment = role.environmentId
-      ? getEnvironmentById(role.environmentId)
+    const mainWorkstation = role.mainWorkstationId
+      ? getEnvironmentById(role.mainWorkstationId)
       : null
 
-    return { employee, role, sector, unit, environment }
+    return { employee, role, sector, unit, mainWorkstation }
   }
 
   const currentEmployeeDetails = useMemo(
@@ -602,9 +602,9 @@ export default function EmployeesPage() {
                 </div>
                 <div className='space-y-1'>
                   <p className='text-sm font-medium text-muted-foreground'>
-                    Posto de Trabalho
+                    Posto de Trabalho Principal
                   </p>
-                  <p>{currentEmployeeDetails.environment?.name || 'N/A'}</p>
+                  <p>{currentEmployeeDetails.mainWorkstation?.name || 'N/A'}</p>
                 </div>
                 <div className='space-y-1'>
                   <p className='text-sm font-medium text-muted-foreground'>

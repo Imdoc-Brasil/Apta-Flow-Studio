@@ -7,7 +7,8 @@ export interface Role {
   cbo: string
   activities: string
   requirements: string
-  environmentId?: string
+  mainWorkstationId?: string
+  additionalWorkstationIds?: string[]
   requiredExams?: string
 }
 
@@ -20,7 +21,7 @@ export const initialRolesData: Role[] = [
     cbo: '2525-05',
     activities: 'Contas a pagar e receber, conciliação bancária, relatórios.',
     requirements: 'Superior em Administração ou Contabilidade, Excel avançado.',
-    environmentId: 'ENV-01', // Sala da Diretoria
+    mainWorkstationId: 'ENV-01', // Sala da Diretoria
     requiredExams: 'ASO Admissional, Periódico.',
   },
   {
@@ -31,7 +32,7 @@ export const initialRolesData: Role[] = [
     cbo: '7825-10',
     activities: 'Operar prensa, setup de ferramentas, inspeção de peças.',
     requirements: 'Ensino Médio, Curso de Mecânica Básica, NR-12.',
-    environmentId: 'ENV-02', // Esteira de Montagem 1
+    mainWorkstationId: 'ENV-02', // Esteira de Montagem 1
     requiredExams: 'Audiometria, Acuidade Visual.',
   },
   {
