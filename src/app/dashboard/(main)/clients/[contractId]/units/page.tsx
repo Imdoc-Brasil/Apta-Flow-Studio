@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
@@ -100,7 +101,7 @@ export default function UnitsPage() {
       if (client && inheritData) {
         setFormState((prev) => ({
           ...prev,
-          name: client.name,
+          name: '', // Don't inherit name
           cnpj: client.cnpj,
           address: client.address,
           cnae: client.cnae,
@@ -111,23 +112,7 @@ export default function UnitsPage() {
       }
     }
   }, [isAddDialogOpen, inheritData, client])
-
-  // Load data into form when opening Detail/Edit Dialog
-  useEffect(() => {
-    if (currentUnit) {
-      setFormState(currentUnit)
-    } else {
-      resetFormState()
-    }
-  }, [currentUnit])
-
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target
-    setFormState((prev) => ({ ...prev, [name]: value }))
-  }
-
+  
   const handleAddUnit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const newUnit: Unit = {
@@ -144,10 +129,26 @@ export default function UnitsPage() {
   const handleUpdateUnit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!currentUnit) return
+    const formData = new FormData(event.currentTarget);
+    const updatedData = {
+      name: formData.get('name') as string,
+      description: formData.get('description') as string,
+      cnpj: formData.get('cnpj') as string,
+      address: formData.get('address') as string,
+      cnae: formData.get('cnae') as string,
+      riskLevel: formData.get('riskLevel') as string,
+      legalResponsible: formData.get('legalResponsible') as string,
+      pgrResponsible: formData.get('pgrResponsible') as string,
+      ltcatResponsible: formData.get('ltcatResponsible') as string,
+      pcmsoResponsible: formData.get('pcmsoResponsible') as string,
+    }
+
     setUnits((prev) =>
-      prev.map((u) => (u.id === currentUnit.id ? { ...u, ...formState } : u))
+      prev.map((u) => (u.id === currentUnit.id ? { ...u, ...updatedData } : u))
     )
     setIsEditing(false)
+    // We need to update currentUnit as well to see the changes immediately
+    setCurrentUnit(prev => prev ? { ...prev, ...updatedData } : null)
   }
 
   const openDetailDialog = (unit: Unit) => {
@@ -167,31 +168,17 @@ export default function UnitsPage() {
   }, [units, searchTerm, statusFilter])
 
   const renderUnitForm = (
+    unit: Unit | null,
     isEditing: boolean,
-    isForAddDialog: boolean = false
   ) => (
     <ScrollArea className='h-[60vh] pr-6'>
       <div className='grid gap-4 py-4'>
-        {isForAddDialog && (
-          <div className='flex items-center space-x-2 mb-4'>
-            <Checkbox
-              id='inherit'
-              checked={inheritData}
-              onCheckedChange={(checked) => setInheritData(checked as boolean)}
-            />
-            <Label htmlFor='inherit' className='cursor-pointer'>
-              Herdar dados da empresa principal
-            </Label>
-          </div>
-        )}
-
         <div className='space-y-2'>
           <Label htmlFor='name'>Nome</Label>
           <Input
             id='name'
             name='name'
-            value={formState.name}
-            onChange={handleInputChange}
+            defaultValue={unit?.name}
             readOnly={!isEditing}
             required
           />
@@ -201,8 +188,7 @@ export default function UnitsPage() {
           <Textarea
             id='description'
             name='description'
-            value={formState.description}
-            onChange={handleInputChange}
+            defaultValue={unit?.description}
             readOnly={!isEditing}
           />
         </div>
@@ -213,8 +199,7 @@ export default function UnitsPage() {
             <Input
               id='cnpj'
               name='cnpj'
-              value={formState.cnpj}
-              onChange={handleInputChange}
+              defaultValue={unit?.cnpj}
               readOnly={!isEditing}
             />
           </div>
@@ -223,8 +208,7 @@ export default function UnitsPage() {
             <Input
               id='address'
               name='address'
-              value={formState.address}
-              onChange={handleInputChange}
+              defaultValue={unit?.address}
               readOnly={!isEditing}
               required
             />
@@ -234,8 +218,7 @@ export default function UnitsPage() {
             <Input
               id='cnae'
               name='cnae'
-              value={formState.cnae}
-              onChange={handleInputChange}
+              defaultValue={unit?.cnae}
               readOnly={!isEditing}
             />
           </div>
@@ -244,8 +227,7 @@ export default function UnitsPage() {
             <Input
               id='riskLevel'
               name='riskLevel'
-              value={formState.riskLevel}
-              onChange={handleInputChange}
+              defaultValue={unit?.riskLevel}
               readOnly={!isEditing}
             />
           </div>
@@ -259,8 +241,7 @@ export default function UnitsPage() {
               <Input
                 id='legalResponsible'
                 name='legalResponsible'
-                value={formState.legalResponsible}
-                onChange={handleInputChange}
+                defaultValue={unit?.legalResponsible}
                 readOnly={!isEditing}
               />
             </div>
@@ -269,8 +250,7 @@ export default function UnitsPage() {
               <Input
                 id='pgrResponsible'
                 name='pgrResponsible'
-                value={formState.pgrResponsible}
-                onChange={handleInputChange}
+                defaultValue={unit?.pgrResponsible}
                 readOnly={!isEditing}
               />
             </div>
@@ -279,8 +259,7 @@ export default function UnitsPage() {
               <Input
                 id='ltcatResponsible'
                 name='ltcatResponsible'
-                value={formState.ltcatResponsible}
-                onChange={handleInputChange}
+                defaultValue={unit?.ltcatResponsible}
                 readOnly={!isEditing}
               />
             </div>
@@ -289,8 +268,7 @@ export default function UnitsPage() {
               <Input
                 id='pcmsoResponsible'
                 name='pcmsoResponsible'
-                value={formState.pcmsoResponsible}
-                onChange={handleInputChange}
+                defaultValue={unit?.pcmsoResponsible}
                 readOnly={!isEditing}
               />
             </div>
@@ -329,7 +307,122 @@ export default function UnitsPage() {
                   </DialogDescription>
                 </DialogHeader>
                 <form id='add-unit-form' onSubmit={handleAddUnit}>
-                  {renderUnitForm(true, true)}
+                   <ScrollArea className='h-[60vh] pr-6'>
+                    <div className='grid gap-4 py-4'>
+                        <div className='flex items-center space-x-2 mb-4'>
+                            <Checkbox
+                            id='inherit'
+                            checked={inheritData}
+                            onCheckedChange={(checked) => setInheritData(checked as boolean)}
+                            />
+                            <Label htmlFor='inherit' className='cursor-pointer'>
+                            Herdar dados da empresa principal
+                            </Label>
+                        </div>
+
+                        <div className='space-y-2'>
+                            <Label htmlFor='name'>Nome</Label>
+                            <Input
+                                id='name'
+                                name='name'
+                                value={formState.name}
+                                onChange={(e) => setFormState(prev => ({...prev, name: e.target.value}))}
+                                required
+                            />
+                        </div>
+                        <div className='space-y-2'>
+                            <Label htmlFor='description'>Descrição</Label>
+                            <Textarea
+                                id='description'
+                                name='description'
+                                value={formState.description}
+                                onChange={(e) => setFormState(prev => ({...prev, description: e.target.value}))}
+                            />
+                        </div>
+
+                        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                          <div className='space-y-2'>
+                              <Label htmlFor='cnpj'>CNPJ</Label>
+                              <Input
+                              id='cnpj'
+                              name='cnpj'
+                              value={formState.cnpj}
+                              onChange={(e) => setFormState(prev => ({...prev, cnpj: e.target.value}))}
+                              />
+                          </div>
+                          <div className='space-y-2'>
+                              <Label htmlFor='address'>Endereço</Label>
+                              <Input
+                              id='address'
+                              name='address'
+                              value={formState.address}
+                              onChange={(e) => setFormState(prev => ({...prev, address: e.target.value}))}
+                              required
+                              />
+                          </div>
+                          <div className='space-y-2'>
+                              <Label htmlFor='cnae'>CNAE</Label>
+                              <Input
+                              id='cnae'
+                              name='cnae'
+                              value={formState.cnae}
+                              onChange={(e) => setFormState(prev => ({...prev, cnae: e.target.value}))}
+                              />
+                          </div>
+                          <div className='space-y-2'>
+                              <Label htmlFor='riskLevel'>Grau de Risco</Label>
+                              <Input
+                              id='riskLevel'
+                              name='riskLevel'
+                              value={formState.riskLevel}
+                              onChange={(e) => setFormState(prev => ({...prev, riskLevel: e.target.value}))}
+                              />
+                          </div>
+                        </div>
+
+                        <div className='space-y-4 pt-4 border-t'>
+                          <h3 className='font-medium text-lg'>Responsáveis</h3>
+                          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                              <div className='space-y-2'>
+                                  <Label htmlFor='legalResponsible'>Responsável Legal</Label>
+                                  <Input
+                                  id='legalResponsible'
+                                  name='legalResponsible'
+                                  value={formState.legalResponsible}
+                                  onChange={(e) => setFormState(prev => ({...prev, legalResponsible: e.target.value}))}
+                                  />
+                              </div>
+                              <div className='space-y-2'>
+                                  <Label htmlFor='pgrResponsible'>Responsável pelo PGR</Label>
+                                  <Input
+                                  id='pgrResponsible'
+                                  name='pgrResponsible'
+                                  value={formState.pgrResponsible}
+                                  onChange={(e) => setFormState(prev => ({...prev, pgrResponsible: e.target.value}))}
+                                  />
+                              </div>
+                              <div className='space-y-2'>
+                                  <Label htmlFor='ltcatResponsible'>Responsável pelo LTCAT</Label>
+                                  <Input
+                                  id='ltcatResponsible'
+                                  name='ltcatResponsible'
+                                  value={formState.ltcatResponsible}
+                                  onChange={(e) => setFormState(prev => ({...prev, ltcatResponsible: e.target.value}))}
+                                  />
+                              </div>
+                              <div className='space-y-2'>
+                                  <Label htmlFor='pcmsoResponsible'>Responsável pelo PCMSO</Label>
+                                  <Input
+                                  id='pcmsoResponsible'
+                                  name='pcmsoResponsible'
+                                  value={formState.pcmsoResponsible}
+                                  onChange={(e) => setFormState(prev => ({...prev, pcmsoResponsible: e.target.value}))}
+                                  />
+                              </div>
+                          </div>
+                        </div>
+                    </div>
+                  </ScrollArea>
                 </form>
                 <DialogFooter>
                   <Button
@@ -435,7 +528,7 @@ export default function UnitsPage() {
             id={`update-unit-form-${currentUnit?.id}`}
             onSubmit={handleUpdateUnit}
           >
-            {renderUnitForm(isEditing)}
+            {renderUnitForm(currentUnit, isEditing)}
           </form>
           <DialogFooter>
             {isEditing ? (
