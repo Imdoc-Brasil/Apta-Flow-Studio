@@ -46,11 +46,12 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
+import Link from 'next/link'
 
 type TrainingModality = 'Online' | 'Presencial' | 'Híbrido'
 type TrainingType = 'NR' | 'Uso de EPI' | 'Procedimento Interno' | 'Outro'
 
-interface Training {
+export interface Training {
   id: string
   title: string
   description: string
@@ -160,7 +161,7 @@ export default function TrainingsPage() {
                       />
                     </div>
                     <div className='grid grid-cols-2 gap-4'>
-                       <div className='space-y-2'>
+                      <div className='space-y-2'>
                         <Label htmlFor='type'>Tipo</Label>
                         <Select name='type' required>
                           <SelectTrigger>
@@ -168,7 +169,9 @@ export default function TrainingsPage() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value='NR'>NR</SelectItem>
-                            <SelectItem value='Uso de EPI'>Uso de EPI</SelectItem>
+                            <SelectItem value='Uso de EPI'>
+                              Uso de EPI
+                            </SelectItem>
                             <SelectItem value='Procedimento Interno'>
                               Procedimento Interno
                             </SelectItem>
@@ -176,7 +179,7 @@ export default function TrainingsPage() {
                           </SelectContent>
                         </Select>
                       </div>
-                       <div className='space-y-2'>
+                      <div className='space-y-2'>
                         <Label htmlFor='modality'>Modalidade</Label>
                         <Select name='modality' required>
                           <SelectTrigger>
@@ -192,7 +195,7 @@ export default function TrainingsPage() {
                         </Select>
                       </div>
                     </div>
-                     <div className='space-y-2'>
+                    <div className='space-y-2'>
                       <Label htmlFor='workload'>Carga Horária (horas)</Label>
                       <Input
                         id='workload'
@@ -233,7 +236,9 @@ export default function TrainingsPage() {
               <TableRow>
                 <TableHead>Título</TableHead>
                 <TableHead className='hidden sm:table-cell'>Tipo</TableHead>
-                <TableHead className='hidden md:table-cell'>Modalidade</TableHead>
+                <TableHead className='hidden md:table-cell'>
+                  Modalidade
+                </TableHead>
                 <TableHead>Carga Horária</TableHead>
                 <TableHead>
                   <span className='sr-only'>Ações</span>
@@ -242,13 +247,23 @@ export default function TrainingsPage() {
             </TableHeader>
             <TableBody>
               {trainings.map((training) => (
-                <TableRow key={training.id}>
-                  <TableCell className='font-medium'>{training.title}</TableCell>
+                <TableRow
+                  key={training.id}
+                  className='cursor-pointer hover:bg-muted/50'
+                >
+                  <TableCell className='font-medium'>
+                    <Link
+                      href={`/dashboard/trainings/${training.id}`}
+                      className='hover:underline'
+                    >
+                      {training.title}
+                    </Link>
+                  </TableCell>
                   <TableCell className='hidden sm:table-cell'>
                     <Badge variant='secondary'>{training.type}</Badge>
                   </TableCell>
-                   <TableCell className='hidden md:table-cell'>
-                     <Badge variant='outline'>{training.modality}</Badge>
+                  <TableCell className='hidden md:table-cell'>
+                    <Badge variant='outline'>{training.modality}</Badge>
                   </TableCell>
                   <TableCell>{training.workload}h</TableCell>
                   <TableCell>
@@ -265,15 +280,13 @@ export default function TrainingsPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align='end'>
                         <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                        <DropdownMenuItem>
-                          Editar Módulos
+                        <DropdownMenuItem asChild>
+                          <Link href={`/dashboard/trainings/${training.id}`}>
+                            Editar Módulos
+                          </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          Ver Matrículas
-                        </DropdownMenuItem>
-                         <DropdownMenuItem>
-                          Editar
-                        </DropdownMenuItem>
+                        <DropdownMenuItem>Ver Matrículas</DropdownMenuItem>
+                        <DropdownMenuItem>Editar</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -286,3 +299,4 @@ export default function TrainingsPage() {
     </>
   )
 }
+export type { Training, TrainingModality, TrainingType } from './[trainingId]/page'
