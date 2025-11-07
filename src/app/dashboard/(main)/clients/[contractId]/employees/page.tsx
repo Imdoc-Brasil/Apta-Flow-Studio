@@ -1,7 +1,14 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import { MoreHorizontal, PlusCircle, Search, Filter } from 'lucide-react'
+import {
+  MoreHorizontal,
+  PlusCircle,
+  Search,
+  Filter,
+  List,
+  LayoutGrid,
+} from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
   Card,
@@ -9,6 +16,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from '@/components/ui/card'
 import {
   DropdownMenu,
@@ -101,6 +109,7 @@ export default function EmployeesPage() {
     'Férias',
     'Desligado',
   ])
+  const [viewMode, setViewMode] = useState<'list' | 'card'>('list')
 
   const getRoleById = (roleId: string) =>
     initialRolesData.find((r) => r.id === roleId)
@@ -305,6 +314,61 @@ export default function EmployeesPage() {
     </div>
   )
 
+  const renderEmployeeActions = (employee: Employee) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          aria-haspopup='true'
+          size='icon'
+          variant='ghost'
+          onClick={(e) => e.stopPropagation()}
+        >
+          <MoreHorizontal className='h-4 w-4' />
+          <span className='sr-only'>Alternar menu</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align='end'
+        onClick={(e) => e.stopPropagation()}
+      >
+        <DropdownMenuLabel>Ações</DropdownMenuLabel>
+        <DropdownMenuItem onClick={() => openEditDialog(employee)}>
+          Editar
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>Alterar Status</DropdownMenuSubTrigger>
+          <DropdownMenuPortal>
+            <DropdownMenuSubContent>
+              <DropdownMenuItem
+                onClick={() => handleChangeStatus(employee.id, 'Ativo')}
+              >
+                Ativo
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleChangeStatus(employee.id, 'Férias')}
+              >
+                Férias
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleChangeStatus(employee.id, 'Desligado')}
+              >
+                Desligado
+              </DropdownMenuItem>
+            </DropdownMenuSubContent>
+          </DropdownMenuPortal>
+        </DropdownMenuSub>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className='text-destructive'
+          onClick={() => openDeleteDialog(employee)}
+        >
+          Excluir
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+
   return (
     <>
       <Card>
@@ -357,63 +421,136 @@ export default function EmployeesPage() {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size='sm' className='h-8 gap-1'>
-                  <PlusCircle className='h-3.5 w-3.5' />
-                  <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
-                    Adicionar Colaborador
-                  </span>
+            <div className='flex items-center gap-2'>
+              <div className='flex items-center gap-1 rounded-lg bg-muted p-1'>
+                <Button
+                  variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                  size='icon'
+                  className='h-8 w-8'
+                  onClick={() => setViewMode('list')}
+                >
+                  <List className='h-4 w-4' />
                 </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Adicionar Novo Colaborador</DialogTitle>
-                  <DialogDescription>
-                    Preencha os detalhes para adicionar um novo colaborador.
-                  </DialogDescription>
-                </DialogHeader>
-                <form id='add-employee-form' onSubmit={handleAddEmployee}>
-                  {renderEmployeeForm()}
-                </form>
-                <DialogFooter>
-                  <Button
-                    variant='outline'
-                    onClick={() => setIsAddDialogOpen(false)}
-                  >
-                    Cancelar
+                <Button
+                  variant={viewMode === 'card' ? 'secondary' : 'ghost'}
+                  size='icon'
+                  className='h-8 w-8'
+                  onClick={() => setViewMode('card')}
+                >
+                  <LayoutGrid className='h-4 w-4' />
+                </Button>
+              </div>
+              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size='sm' className='h-8 gap-1'>
+                    <PlusCircle className='h-3.5 w-3.5' />
+                    <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
+                      Adicionar Colaborador
+                    </span>
                   </Button>
-                  <Button type='submit' form='add-employee-form'>
-                    Salvar
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Adicionar Novo Colaborador</DialogTitle>
+                    <DialogDescription>
+                      Preencha os detalhes para adicionar um novo colaborador.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form id='add-employee-form' onSubmit={handleAddEmployee}>
+                    {renderEmployeeForm()}
+                  </form>
+                  <DialogFooter>
+                    <Button
+                      variant='outline'
+                      onClick={() => setIsAddDialogOpen(false)}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button type='submit' form='add-employee-form'>
+                      Salvar
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Colaborador</TableHead>
-                <TableHead className='hidden md:table-cell'>Cargo</TableHead>
-                <TableHead className='hidden sm:table-cell'>Admissão</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>
-                  <span className='sr-only'>Ações</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+          {viewMode === 'list' ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Colaborador</TableHead>
+                  <TableHead className='hidden md:table-cell'>Cargo</TableHead>
+                  <TableHead className='hidden sm:table-cell'>
+                    Admissão
+                  </TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>
+                    <span className='sr-only'>Ações</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredEmployees.map((employee) => (
+                  <TableRow
+                    key={employee.id}
+                    onClick={() => openDetailDialog(employee)}
+                    className='cursor-pointer'
+                  >
+                    <TableCell>
+                      <div className='flex items-center gap-3'>
+                        <Avatar className='h-9 w-9'>
+                          <AvatarImage
+                            src={employee.avatar}
+                            alt={employee.name}
+                          />
+                          <AvatarFallback>
+                            {employee.name
+                              .split(' ')
+                              .map((n) => n[0])
+                              .join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className='grid gap-1'>
+                          <p className='font-medium leading-none'>
+                            {employee.name}
+                          </p>
+                          <p className='text-sm text-muted-foreground'>
+                            {employee.email}
+                          </p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className='hidden md:table-cell'>
+                      {getRoleById(employee.roleId)?.name || 'N/A'}
+                    </TableCell>
+                    <TableCell className='hidden sm:table-cell'>
+                      <ClientSideDateFormatter
+                        dateString={employee.admissionDate}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusBadgeVariant(employee.status)}>
+                        {employee.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{renderEmployeeActions(employee)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
               {filteredEmployees.map((employee) => (
-                <TableRow
+                <Card
                   key={employee.id}
-                  onClick={() => openDetailDialog(employee)}
                   className='cursor-pointer'
+                  onClick={() => openDetailDialog(employee)}
                 >
-                  <TableCell>
-                    <div className='flex items-center gap-3'>
-                      <Avatar className='h-9 w-9'>
+                  <CardHeader>
+                    <div className='flex items-center justify-between'>
+                      <Avatar className='h-12 w-12'>
                         <AvatarImage
                           src={employee.avatar}
                           alt={employee.name}
@@ -425,97 +562,22 @@ export default function EmployeesPage() {
                             .join('')}
                         </AvatarFallback>
                       </Avatar>
-                      <div className='grid gap-1'>
-                        <p className='font-medium leading-none'>
-                          {employee.name}
-                        </p>
-                        <p className='text-sm text-muted-foreground'>
-                          {employee.email}
-                        </p>
-                      </div>
+                      {renderEmployeeActions(employee)}
                     </div>
-                  </TableCell>
-                  <TableCell className='hidden md:table-cell'>
-                    {getRoleById(employee.roleId)?.name || 'N/A'}
-                  </TableCell>
-                  <TableCell className='hidden sm:table-cell'>
-                    <ClientSideDateFormatter
-                      dateString={employee.admissionDate}
-                    />
-                  </TableCell>
-                  <TableCell>
+                    <CardTitle className='pt-2'>{employee.name}</CardTitle>
+                    <CardDescription>
+                      {getRoleById(employee.roleId)?.name || 'N/A'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardFooter>
                     <Badge variant={getStatusBadgeVariant(employee.status)}>
                       {employee.status}
                     </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          aria-haspopup='true'
-                          size='icon'
-                          variant='ghost'
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <MoreHorizontal className='h-4 w-4' />
-                          <span className='sr-only'>Alternar menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align='end'
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                        <DropdownMenuItem
-                          onClick={() => openEditDialog(employee)}
-                        >
-                          Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuSub>
-                          <DropdownMenuSubTrigger>
-                            Alterar Status
-                          </DropdownMenuSubTrigger>
-                          <DropdownMenuPortal>
-                            <DropdownMenuSubContent>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleChangeStatus(employee.id, 'Ativo')
-                                }
-                              >
-                                Ativo
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleChangeStatus(employee.id, 'Férias')
-                                }
-                              >
-                                Férias
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleChangeStatus(employee.id, 'Desligado')
-                                }
-                              >
-                                Desligado
-                              </DropdownMenuItem>
-                            </DropdownMenuSubContent>
-                          </DropdownMenuPortal>
-                        </DropdownMenuSub>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className='text-destructive'
-                          onClick={() => openDeleteDialog(employee)}
-                        >
-                          Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
+                  </CardFooter>
+                </Card>
               ))}
-            </TableBody>
-          </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -674,3 +736,5 @@ export default function EmployeesPage() {
   )
 }
 export type { Employee, EmployeeStatus } from './data'
+
+    
