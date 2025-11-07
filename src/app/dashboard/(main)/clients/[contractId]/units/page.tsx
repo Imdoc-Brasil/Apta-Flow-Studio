@@ -632,5 +632,3 @@ export default function UnitsPage() {
     </>
   )
 }
-
-    
