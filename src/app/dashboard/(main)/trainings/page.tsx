@@ -66,7 +66,8 @@ export const initialTrainingsData: Training[] = [
   {
     id: 'TRN-NR-01-A',
     title: 'NR-01 - Integração de Segurança do Trabalho',
-    description: 'Treinamento inicial para todos os trabalhadores sobre os riscos ocupacionais (conforme PGR) e medidas de prevenção.',
+    description:
+      'Treinamento inicial para todos os trabalhadores sobre os riscos ocupacionais (conforme PGR) e medidas de prevenção.',
     type: 'NR',
     modality: 'Híbrido',
     workload: 6,
@@ -75,7 +76,8 @@ export const initialTrainingsData: Training[] = [
   {
     id: 'TRN-NR-01-B',
     title: 'NR-01 - Capacitação sobre Assédio e Diversidade',
-    description: 'Treinamento sobre prevenção e combate ao assédio sexual e a outras formas de violência no trabalho.',
+    description:
+      'Treinamento sobre prevenção e combate ao assédio sexual e a outras formas de violência no trabalho.',
     type: 'NR',
     modality: 'Híbrido',
     workload: 1, // Carga horária não especificada, 1h como placeholder
@@ -84,7 +86,8 @@ export const initialTrainingsData: Training[] = [
   {
     id: 'TRN-NR-05',
     title: 'NR-05 - CIPA (Comissão Interna de Prevenção de Acidentes)',
-    description: 'Treinamento para membros eleitos e designados da CIPA. Carga horária varia com o grau de risco da empresa.',
+    description:
+      'Treinamento para membros eleitos e designados da CIPA. Carga horária varia com o grau de risco da empresa.',
     type: 'NR',
     modality: 'Híbrido',
     workload: 20, // Usando a maior carga horária como padrão
@@ -93,7 +96,8 @@ export const initialTrainingsData: Training[] = [
   {
     id: 'TRN-NR-06',
     title: 'NR-06 - Uso, Guarda e Conservação de EPI',
-    description: 'Treinamento para todos os trabalhadores sobre o correto uso, guarda e conservação dos Equipamentos de Proteção Individual.',
+    description:
+      'Treinamento para todos os trabalhadores sobre o correto uso, guarda e conservação dos Equipamentos de Proteção Individual.',
     type: 'Uso de EPI',
     modality: 'Híbrido',
     workload: 2, // Carga horária não especificada, 2h como placeholder
@@ -102,7 +106,8 @@ export const initialTrainingsData: Training[] = [
   {
     id: 'TRN-NR-10-BAS',
     title: 'NR-10 - Segurança em Eletricidade (Básico)',
-    description: 'Treinamento básico para trabalhadores que interagem com instalações elétricas.',
+    description:
+      'Treinamento básico para trabalhadores que interagem com instalações elétricas.',
     type: 'NR',
     modality: 'Híbrido',
     workload: 40,
@@ -111,7 +116,8 @@ export const initialTrainingsData: Training[] = [
   {
     id: 'TRN-NR-10-SEP',
     title: 'NR-10 - Segurança no Sistema Elétrico de Potência (SEP)',
-    description: 'Treinamento complementar para trabalhos em alta tensão (SEP).',
+    description:
+      'Treinamento complementar para trabalhos em alta tensão (SEP).',
     type: 'NR',
     modality: 'Híbrido',
     workload: 40,
@@ -120,7 +126,8 @@ export const initialTrainingsData: Training[] = [
   {
     id: 'TRN-NR-11',
     title: 'NR-11 - Operação de Empilhadeira',
-    description: 'Treinamento para capacitação de operadores de empilhadeira e equipamentos de transporte de materiais.',
+    description:
+      'Treinamento para capacitação de operadores de empilhadeira e equipamentos de transporte de materiais.',
     type: 'NR',
     modality: 'Híbrido',
     workload: 16,
@@ -129,7 +136,8 @@ export const initialTrainingsData: Training[] = [
   {
     id: 'TRN-NR-12',
     title: 'NR-12 - Segurança em Máquinas e Equipamentos',
-    description: 'Treinamento para operadores e profissionais de manutenção de máquinas e equipamentos.',
+    description:
+      'Treinamento para operadores e profissionais de manutenção de máquinas e equipamentos.',
     type: 'NR',
     modality: 'Híbrido',
     workload: 8,
@@ -138,7 +146,8 @@ export const initialTrainingsData: Training[] = [
   {
     id: 'TRN-NR-17',
     title: 'NR-17 - Ergonomia',
-    description: 'Treinamento para trabalhadores sobre a adaptação das condições de trabalho às suas características psicofisiológicas.',
+    description:
+      'Treinamento para trabalhadores sobre a adaptação das condições de trabalho às suas características psicofisiológicas.',
     type: 'NR',
     modality: 'Online',
     workload: 2,
@@ -147,7 +156,8 @@ export const initialTrainingsData: Training[] = [
   {
     id: 'TRN-NR-18',
     title: 'NR-18 - Indústria da Construção (Admissional)',
-    description: 'Treinamento admissional para trabalhadores da indústria da construção.',
+    description:
+      'Treinamento admissional para trabalhadores da indústria da construção.',
     type: 'NR',
     modality: 'Híbrido',
     workload: 4,
@@ -156,7 +166,8 @@ export const initialTrainingsData: Training[] = [
   {
     id: 'TRN-NR-20',
     title: 'NR-20 - Segurança com Inflamáveis e Combustíveis',
-    description: 'Treinamento para trabalhadores em instalações com manuseio de inflamáveis e combustíveis.',
+    description:
+      'Treinamento para trabalhadores em instalações com manuseio de inflamáveis e combustíveis.',
     type: 'NR',
     modality: 'Híbrido',
     workload: 8, // Varia de 4 a 16h, usando 8h como um valor comum
@@ -165,7 +176,8 @@ export const initialTrainingsData: Training[] = [
   {
     id: 'TRN-NR-23',
     title: 'NR-23 - Brigada de Incêndio',
-    description: 'Treinamento para formação de brigadistas de incêndio, preparando-os para atuar na prevenção e combate a princípios de incêndio.',
+    description:
+      'Treinamento para formação de brigadistas de incêndio, preparando-os para atuar na prevenção e combate a princípios de incêndio.',
     type: 'NR',
     modality: 'Híbrido',
     workload: 8, // Varia conforme o plano, 8h como padrão
@@ -174,7 +186,8 @@ export const initialTrainingsData: Training[] = [
   {
     id: 'TRN-NR-32-BAS',
     title: 'NR-32 - Segurança em Serviços de Saúde (Básico)',
-    description: 'Capacitação sobre riscos biológicos, químicos e físicos em serviços de saúde.',
+    description:
+      'Capacitação sobre riscos biológicos, químicos e físicos em serviços de saúde.',
     type: 'NR',
     modality: 'Híbrido',
     workload: 8,
@@ -183,7 +196,8 @@ export const initialTrainingsData: Training[] = [
   {
     id: 'TRN-NR-32-RES',
     title: 'NR-32 - Gerenciamento de Resíduos de Saúde (PGRSS)',
-    description: 'Treinamento sobre o correto manejo, segregação, acondicionamento e descarte de resíduos de serviços de saúde.',
+    description:
+      'Treinamento sobre o correto manejo, segregação, acondicionamento e descarte de resíduos de serviços de saúde.',
     type: 'NR',
     modality: 'Híbrido',
     workload: 4,
@@ -192,7 +206,8 @@ export const initialTrainingsData: Training[] = [
   {
     id: 'TRN-NR-32-QTP',
     title: 'NR-32 - Prevenção com Quimioterápicos',
-    description: 'Capacitação para manuseio seguro de quimioterápicos antineoplásicos.',
+    description:
+      'Capacitação para manuseio seguro de quimioterápicos antineoplásicos.',
     type: 'NR',
     modality: 'Híbrido',
     workload: 4,
@@ -201,7 +216,8 @@ export const initialTrainingsData: Training[] = [
   {
     id: 'TRN-NR-32-RAD',
     title: 'NR-32 - Prevenção com Radiações Ionizantes',
-    description: 'Treinamento específico para trabalhadores expostos a radiações ionizantes em serviços de saúde.',
+    description:
+      'Treinamento específico para trabalhadores expostos a radiações ionizantes em serviços de saúde.',
     type: 'NR',
     modality: 'Híbrido',
     workload: 8,
@@ -210,7 +226,8 @@ export const initialTrainingsData: Training[] = [
   {
     id: 'TRN-NR-33-AUT',
     title: 'NR-33 - Espaços Confinados (Trabalhadores e Vigias)',
-    description: 'Capacitação para trabalhadores autorizados e vigias em espaços confinados.',
+    description:
+      'Capacitação para trabalhadores autorizados e vigias em espaços confinados.',
     type: 'NR',
     modality: 'Híbrido',
     workload: 16,
@@ -219,7 +236,8 @@ export const initialTrainingsData: Training[] = [
   {
     id: 'TRN-NR-33-SUP',
     title: 'NR-33 - Espaços Confinados (Supervisores)',
-    description: 'Capacitação para Supervisores de Entrada em espaços confinados.',
+    description:
+      'Capacitação para Supervisores de Entrada em espaços confinados.',
     type: 'NR',
     modality: 'Híbrido',
     workload: 40,
@@ -228,7 +246,8 @@ export const initialTrainingsData: Training[] = [
   {
     id: 'TRN-NR-35',
     title: 'NR-35 - Trabalho em Altura',
-    description: 'Capacitação para planejamento, organização e execução de trabalho em altura com segurança.',
+    description:
+      'Capacitação para planejamento, organização e execução de trabalho em altura com segurança.',
     type: 'NR',
     modality: 'Híbrido',
     workload: 8,
@@ -237,7 +256,8 @@ export const initialTrainingsData: Training[] = [
   {
     id: 'TRN-ISO-45001-INT',
     title: 'Interpretação da Norma ISO 45001',
-    description: 'Entendimento dos requisitos do Sistema de Gestão de SST para gestores e equipes.',
+    description:
+      'Entendimento dos requisitos do Sistema de Gestão de SST para gestores e equipes.',
     type: 'Outro',
     modality: 'Híbrido',
     workload: 16,
@@ -246,7 +266,8 @@ export const initialTrainingsData: Training[] = [
   {
     id: 'TRN-ISO-45001-AUD',
     title: 'Auditor Interno ISO 45001',
-    description: 'Capacitação para realizar auditorias internas no sistema de gestão de SST.',
+    description:
+      'Capacitação para realizar auditorias internas no sistema de gestão de SST.',
     type: 'Outro',
     modality: 'Híbrido',
     workload: 24,
@@ -255,7 +276,8 @@ export const initialTrainingsData: Training[] = [
   {
     id: 'TRN-BPM-APR',
     title: 'Análise Preliminar de Riscos (APR) / DDS',
-    description: 'Metodologias de identificação de perigos e riscos antes do início das tarefas.',
+    description:
+      'Metodologias de identificação de perigos e riscos antes do início das tarefas.',
     type: 'Procedimento Interno',
     modality: 'Presencial',
     workload: 4,
@@ -264,7 +286,8 @@ export const initialTrainingsData: Training[] = [
   {
     id: 'TRN-BPM-PS',
     title: 'Primeiros Socorros Avançado',
-    description: 'Capacitação detalhada para atendimento a emergências específicas da atividade.',
+    description:
+      'Capacitação detalhada para atendimento a emergências específicas da atividade.',
     type: 'Outro',
     modality: 'Presencial',
     workload: 8,
@@ -273,7 +296,8 @@ export const initialTrainingsData: Training[] = [
   {
     id: 'TRN-BPM-ERG-AV',
     title: 'Ergonomia Avançada / Treinamento Postural',
-    description: 'Prevenção de DORT/LER, postura correta no trabalho e introdução à ginástica laboral.',
+    description:
+      'Prevenção de DORT/LER, postura correta no trabalho e introdução à ginástica laboral.',
     type: 'Outro',
     modality: 'Híbrido',
     workload: 4,
@@ -282,7 +306,8 @@ export const initialTrainingsData: Training[] = [
   {
     id: 'TRN-BPM-GC',
     title: 'Gestão de Crises e Planos de Emergência',
-    description: 'Atuação coordenada em situações de emergência grave (vazamentos, desastres, etc.).',
+    description:
+      'Atuação coordenada em situações de emergência grave (vazamentos, desastres, etc.).',
     type: 'Outro',
     modality: 'Presencial',
     workload: 16,
@@ -291,7 +316,8 @@ export const initialTrainingsData: Training[] = [
   {
     id: 'TRN-BPM-TC',
     title: 'Treinamento Comportamental em Segurança',
-    description: 'Foco em cultura de segurança, percepção de risco e atitudes preventivas.',
+    description:
+      'Foco em cultura de segurança, percepção de risco e atitudes preventivas.',
     type: 'Outro',
     modality: 'Presencial',
     workload: 8,
@@ -306,8 +332,37 @@ export const initialTrainingsData: Training[] = [
     workload: 8,
     validity: 24,
   },
+  {
+    id: 'TRN-ONA-SP',
+    title: 'ONA - Segurança do Paciente (6 Metas)',
+    description:
+      'Capacitação sobre as 6 Metas Internacionais de Segurança do Paciente para acreditação ONA.',
+    type: 'Outro',
+    modality: 'Híbrido',
+    workload: 8,
+    validity: 12,
+  },
+  {
+    id: 'TRN-ONA-CCIH',
+    title: 'ONA - Controle de Infecção Hospitalar',
+    description:
+      'Treinamento sobre prevenção e controle de infecções, higienização das mãos e uso de EPIs conforme diretrizes da CCIH.',
+    type: 'Outro',
+    modality: 'Híbrido',
+    workload: 8,
+    validity: 12,
+  },
+  {
+    id: 'TRN-ONA-GR',
+    title: 'ONA - Gerenciamento de Riscos Assistenciais',
+    description:
+      'Metodologias para identificação, análise e tratamento de riscos relacionados à assistência ao paciente.',
+    type: 'Procedimento Interno',
+    modality: 'Híbrido',
+    workload: 16,
+    validity: 12,
+  },
 ]
-
 
 export default function TrainingsPage() {
   const [trainings, setTrainings] = useState(initialTrainingsData)
@@ -407,28 +462,30 @@ export default function TrainingsPage() {
                         </Select>
                       </div>
                     </div>
-                     <div className='grid grid-cols-2 gap-4'>
-                        <div className='space-y-2'>
-                          <Label htmlFor='workload'>Carga Horária (horas)</Label>
-                          <Input
-                            id='workload'
-                            name='workload'
-                            type='number'
-                            placeholder='Ex: 8'
-                            required
-                          />
-                        </div>
-                        <div className='space-y-2'>
-                          <Label htmlFor='validity'>Validade (meses)</Label>
-                           <Input
-                            id='validity'
-                            name='validity'
-                            type='number'
-                            placeholder='0 para indeterminada'
-                            required
-                          />
-                        </div>
-                     </div>
+                    <div className='grid grid-cols-2 gap-4'>
+                      <div className='space-y-2'>
+                        <Label htmlFor='workload'>
+                          Carga Horária (horas)
+                        </Label>
+                        <Input
+                          id='workload'
+                          name='workload'
+                          type='number'
+                          placeholder='Ex: 8'
+                          required
+                        />
+                      </div>
+                      <div className='space-y-2'>
+                        <Label htmlFor='validity'>Validade (meses)</Label>
+                        <Input
+                          id='validity'
+                          name='validity'
+                          type='number'
+                          placeholder='0 para indeterminada'
+                          required
+                        />
+                      </div>
+                    </div>
                     <div className='space-y-2'>
                       <Label htmlFor='description'>Descrição Geral</Label>
                       <Textarea
@@ -491,7 +548,11 @@ export default function TrainingsPage() {
                     <Badge variant='outline'>{training.modality}</Badge>
                   </TableCell>
                   <TableCell>{training.workload}h</TableCell>
-                  <TableCell>{training.validity > 0 ? `${training.validity} meses` : 'Indeterminada'}</TableCell>
+                  <TableCell>
+                    {training.validity > 0
+                      ? `${training.validity} meses`
+                      : 'Indeterminada'}
+                  </TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -526,4 +587,3 @@ export default function TrainingsPage() {
   )
 }
 export type { Training, TrainingModality, TrainingType }
-
