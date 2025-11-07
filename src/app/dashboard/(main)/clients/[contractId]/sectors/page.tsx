@@ -19,6 +19,7 @@ import {
   ArrowRight,
   LayoutGrid,
   List,
+  Filter,
 } from 'lucide-react'
 import {
   Table,
@@ -37,6 +38,14 @@ import {
   DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -53,7 +62,7 @@ export default function SectorsPage() {
   const { toast } = useToast()
   const contractId = params.contractId as string
   const searchParams = useSearchParams()
-  const selectedUnitId = searchParams.get('unitId')
+  const urlUnitId = searchParams.get('unitId')
 
   const [sectors, setSectors] = useState(initialSectorsData)
   const [isAddSectorDialogOpen, setIsAddSectorDialogOpen] = useState(false)
@@ -61,6 +70,9 @@ export default function SectorsPage() {
   const [editingSector, setEditingSector] = useState<Sector | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
+  const [unitFilter, setUnitFilter] = useState<string[]>(
+    urlUnitId ? [urlUnitId] : []
+  )
 
   useEffect(() => {
     // This is an empty effect to force a re-render and fix chunk loading issues.
@@ -68,8 +80,8 @@ export default function SectorsPage() {
 
   const filteredSectors = useMemo(() => {
     let filtered = sectors
-    if (selectedUnitId) {
-      filtered = filtered.filter((sector) => sector.unitId === selectedUnitId)
+    if (unitFilter.length > 0) {
+      filtered = filtered.filter((sector) => unitFilter.includes(sector.unitId))
     }
     if (searchTerm) {
       filtered = filtered.filter(
@@ -79,7 +91,7 @@ export default function SectorsPage() {
       )
     }
     return filtered
-  }, [sectors, selectedUnitId, searchTerm])
+  }, [sectors, unitFilter, searchTerm])
 
   const handleAddSector = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -92,13 +104,16 @@ export default function SectorsPage() {
     }
     setSectors((prev) => [...prev, newSector])
     setIsAddSectorDialogOpen(false)
-    toast({ title: 'Setor Adicionado!', description: `O setor "${newSector.name}" foi criado.` })
+    toast({
+      title: 'Setor Adicionado!',
+      description: `O setor "${newSector.name}" foi criado.`,
+    })
   }
-  
+
   const handleEditSector = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if (!editingSector) return
-    
+
     const formData = new FormData(e.currentTarget)
     const updatedSector: Sector = {
       ...editingSector,
@@ -106,20 +121,26 @@ export default function SectorsPage() {
       description: formData.get('description') as string,
     }
 
-    setSectors(prev => prev.map(s => s.id === editingSector.id ? updatedSector : s))
+    setSectors((prev) =>
+      prev.map((s) => (s.id === editingSector.id ? updatedSector : s))
+    )
     setIsEditSectorDialogOpen(false)
     setEditingSector(null)
-    toast({ title: 'Setor Atualizado!', description: `O setor "${updatedSector.name}" foi atualizado.` })
+    toast({
+      title: 'Setor Atualizado!',
+      description: `O setor "${updatedSector.name}" foi atualizado.`,
+    })
   }
 
   const getUnitName = (unitId: string) => {
     return initialUnitsData.find((unit) => unit.id === unitId)?.name || 'N/A'
   }
 
-  const selectedUnitName = selectedUnitId
-    ? getUnitName(selectedUnitId)
-    : 'Todos os Setores'
-    
+  const selectedUnitName =
+    unitFilter.length === 1
+      ? getUnitName(unitFilter[0])
+      : 'Todos os Setores'
+
   const openEditDialog = (sector: Sector) => {
     setEditingSector(sector)
     setIsEditSectorDialogOpen(true)
@@ -133,13 +154,9 @@ export default function SectorsPage() {
           id='unitId'
           name='unitId'
           readOnly
-          defaultValue={getUnitName(sector?.unitId || selectedUnitId || '')}
+          defaultValue={getUnitName(sector?.unitId || urlUnitId || '')}
         />
-        <input
-          type='hidden'
-          name='unitId'
-          value={sector?.unitId || selectedUnitId || ''}
-        />
+        <input type='hidden' name='unitId' value={sector?.unitId || urlUnitId || ''} />
       </div>
       <div className='space-y-2'>
         <Label htmlFor='name'>Nome do Setor</Label>
@@ -147,7 +164,11 @@ export default function SectorsPage() {
       </div>
       <div className='space-y-2'>
         <Label htmlFor='description'>Descrição</Label>
-        <Textarea id='description' name='description' defaultValue={sector?.description} />
+        <Textarea
+          id='description'
+          name='description'
+          defaultValue={sector?.description}
+        />
       </div>
     </div>
   )
@@ -188,7 +209,11 @@ export default function SectorsPage() {
                 onOpenChange={setIsAddSectorDialogOpen}
               >
                 <DialogTrigger asChild>
-                  <Button size='sm' className='h-8 gap-1'>
+                  <Button
+                    size='sm'
+                    className='h-8 gap-1'
+                    disabled={!urlUnitId}
+                  >
                     <PlusCircle className='h-3.5 w-3.5' />
                     <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
                       Adicionar Setor
@@ -217,16 +242,43 @@ export default function SectorsPage() {
               </Dialog>
             </div>
           </div>
-          <div className='pt-4'>
-            <div className='relative'>
+          <div className='pt-4 flex items-center gap-2'>
+            <div className='relative flex-1'>
               <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
               <Input
                 placeholder='Buscar setor...'
-                className='pl-8'
+                className='pl-8 w-full'
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant='outline' size='sm' className='h-10 gap-1'>
+                  <Filter className='h-3.5 w-3.5' />
+                  <span className='sr-only sm:not-sr-only'>Filtrar</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end'>
+                <DropdownMenuLabel>Filtrar por Unidade</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {initialUnitsData.map((unit) => (
+                  <DropdownMenuCheckboxItem
+                    key={unit.id}
+                    checked={unitFilter.includes(unit.id)}
+                    onCheckedChange={(checked) => {
+                      setUnitFilter((prev) =>
+                        checked
+                          ? [...prev, unit.id]
+                          : prev.filter((id) => id !== unit.id)
+                      )
+                    }}
+                  >
+                    {unit.name}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </CardHeader>
         <CardContent>
@@ -237,11 +289,16 @@ export default function SectorsPage() {
                   key={sector.id}
                   className='flex flex-col hover:shadow-md transition-shadow'
                 >
-                  <div className='flex-grow cursor-pointer' onClick={() => openEditDialog(sector)}>
+                  <div
+                    className='flex-grow cursor-pointer'
+                    onClick={() => openEditDialog(sector)}
+                  >
                     <CardHeader>
                       <CardTitle>{sector.name}</CardTitle>
                       <CardDescription>
-                        <Badge variant='outline'>{getUnitName(sector.unitId)}</Badge>
+                        <Badge variant='outline'>
+                          {getUnitName(sector.unitId)}
+                        </Badge>
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -268,7 +325,9 @@ export default function SectorsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Setor</TableHead>
-                  <TableHead className='hidden md:table-cell'>Unidade</TableHead>
+                  <TableHead className='hidden md:table-cell'>
+                    Unidade
+                  </TableHead>
                   <TableHead className='hidden sm:table-cell'>
                     Colaboradores
                   </TableHead>
@@ -297,7 +356,11 @@ export default function SectorsPage() {
                     </TableCell>
                     <TableCell className='hidden sm:table-cell'>-</TableCell>
                     <TableCell>
-                      <Button aria-haspopup='true' size='icon' variant='ghost'>
+                      <Button
+                        aria-haspopup='true'
+                        size='icon'
+                        variant='ghost'
+                      >
                         <MoreHorizontal className='h-4 w-4' />
                         <span className='sr-only'>Alternar menu</span>
                       </Button>
@@ -319,7 +382,7 @@ export default function SectorsPage() {
                 <Button
                   className='mt-4'
                   onClick={() => setIsAddSectorDialogOpen(true)}
-                  disabled={!selectedUnitId}
+                  disabled={!urlUnitId}
                 >
                   Adicionar Setor
                 </Button>
@@ -328,15 +391,18 @@ export default function SectorsPage() {
           )}
         </CardContent>
       </Card>
-      
+
       {/* Edit Dialog */}
-      <Dialog open={isEditSectorDialogOpen} onOpenChange={setIsEditSectorDialogOpen}>
+      <Dialog
+        open={isEditSectorDialogOpen}
+        onOpenChange={setIsEditSectorDialogOpen}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Editar Setor</DialogTitle>
-             <DialogDescription>
-                Visualize e atualize os detalhes do setor.
-              </DialogDescription>
+            <DialogDescription>
+              Visualize e atualize os detalhes do setor.
+            </DialogDescription>
           </DialogHeader>
           <form id='edit-sector-form' onSubmit={handleEditSector}>
             {renderSectorForm(editingSector)}
