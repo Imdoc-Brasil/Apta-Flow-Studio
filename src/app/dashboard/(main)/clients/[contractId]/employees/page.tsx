@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState, useMemo } from 'react'
@@ -67,6 +68,7 @@ import type { Employee, EmployeeStatus } from './data'
 import { initialRolesData } from '../roles/data'
 import { initialSectorsData } from '../sectors/data'
 import { initialUnitsData } from '../units/data'
+import { initialEnvironmentsData } from '../environments/data'
 import { Separator } from '@/components/ui/separator'
 
 export default function EmployeesPage() {
@@ -83,31 +85,44 @@ export default function EmployeesPage() {
     'Desligado',
   ])
 
-  const getRoleById = (roleId: string) => initialRolesData.find(r => r.id === roleId);
-  const getSectorById = (sectorId: string) => initialSectorsData.find(s => s.id === sectorId);
-  const getUnitById = (unitId: string) => initialUnitsData.find(u => u.id === unitId);
+  const getRoleById = (roleId: string) =>
+    initialRolesData.find((r) => r.id === roleId)
+  const getSectorById = (sectorId: string) =>
+    initialSectorsData.find((s) => s.id === sectorId)
+  const getUnitById = (unitId: string) =>
+    initialUnitsData.find((u) => u.id === unitId)
+  const getEnvironmentById = (envId: string) =>
+    initialEnvironmentsData.find((e) => e.id === envId)
 
   const getEmployeeDetails = (employee: Employee | null) => {
-    if (!employee) return null;
-    
-    const role = getRoleById(employee.roleId);
-    if (!role) return { employee, role: null, sector: null, unit: null };
-    
-    const sector = getSectorById(role.sectorId);
-    if (!sector) return { employee, role, sector: null, unit: null };
+    if (!employee) return null
 
-    const unit = getUnitById(sector.unitId);
-    return { employee, role, sector, unit };
+    const role = getRoleById(employee.roleId)
+    if (!role)
+      return { employee, role: null, sector: null, unit: null, environment: null }
+
+    const sector = getSectorById(role.sectorId)
+    if (!sector)
+      return { employee, role, sector: null, unit: null, environment: null }
+
+    const unit = getUnitById(sector.unitId)
+    const environment = role.environmentId
+      ? getEnvironmentById(role.environmentId)
+      : null
+      
+    return { employee, role, sector, unit, environment }
   }
 
-  const currentEmployeeDetails = useMemo(() => getEmployeeDetails(currentEmployee), [currentEmployee]);
-
+  const currentEmployeeDetails = useMemo(
+    () => getEmployeeDetails(currentEmployee),
+    [currentEmployee]
+  )
 
   const filteredEmployees = useMemo(() => {
     return employees
       .filter((employee) => {
         const term = searchTerm.toLowerCase()
-        const role = getRoleById(employee.roleId);
+        const role = getRoleById(employee.roleId)
         if (!term) return true
         return (
           employee.name.toLowerCase().includes(term) ||
@@ -227,18 +242,18 @@ export default function EmployeesPage() {
         <Label htmlFor='roleId' className='text-right'>
           Cargo
         </Label>
-         <Select name='roleId' defaultValue={employee?.roleId} required>
-            <SelectTrigger className='col-span-3'>
-              <SelectValue placeholder='Selecione o cargo' />
-            </SelectTrigger>
-            <SelectContent>
-              {initialRolesData.map((role) => (
-                <SelectItem key={role.id} value={role.id}>
-                  {role.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <Select name='roleId' defaultValue={employee?.roleId} required>
+          <SelectTrigger className='col-span-3'>
+            <SelectValue placeholder='Selecione o cargo' />
+          </SelectTrigger>
+          <SelectContent>
+            {initialRolesData.map((role) => (
+              <SelectItem key={role.id} value={role.id}>
+                {role.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <div className='grid grid-cols-4 items-center gap-4'>
         <Label htmlFor='email' className='text-right'>
@@ -509,7 +524,7 @@ export default function EmployeesPage() {
 
       {/* Detail Dialog */}
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className='sm:max-w-md'>
+        <DialogContent className='sm:max-w-xl'>
           <DialogHeader>
             <DialogTitle>Detalhes do Colaborador</DialogTitle>
           </DialogHeader>
@@ -529,7 +544,9 @@ export default function EmployeesPage() {
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className='font-bold text-xl'>{currentEmployeeDetails.employee.name}</p>
+                  <p className='font-bold text-xl'>
+                    {currentEmployeeDetails.employee.name}
+                  </p>
                   <p className='text-sm text-muted-foreground'>
                     {currentEmployeeDetails.employee.email}
                   </p>
@@ -541,34 +558,54 @@ export default function EmployeesPage() {
 
               <Separator />
 
-               <div className='grid grid-cols-2 gap-4'>
-                  <div className='space-y-1'>
-                    <p className='text-sm font-medium text-muted-foreground'>Cargo</p>
-                    <p>{currentEmployeeDetails.role?.name || 'N/A'}</p>
-                  </div>
-                  <div className='space-y-1'>
-                    <p className='text-sm font-medium text-muted-foreground'>Setor</p>
-                    <p>{currentEmployeeDetails.sector?.name || 'N/A'}</p>
-                  </div>
-                   <div className='space-y-1'>
-                    <p className='text-sm font-medium text-muted-foreground'>Unidade</p>
-                    <p>{currentEmployeeDetails.unit?.name || 'N/A'}</p>
-                  </div>
-                   <div className='space-y-1'>
-                    <p className='text-sm font-medium text-muted-foreground'>Status</p>
-                     <Badge variant={getStatusBadgeVariant(currentEmployeeDetails.employee.status)}>
-                      {currentEmployeeDetails.employee.status}
-                    </Badge>
-                  </div>
-                   <div className='space-y-1'>
-                    <p className='text-sm font-medium text-muted-foreground'>Data de Admissão</p>
-                     <p>
-                      {new Date(
-                        currentEmployeeDetails.employee.admissionDate
-                      ).toLocaleDateString('pt-BR')}
-                    </p>
-                  </div>
-               </div>
+              <div className='grid grid-cols-2 gap-x-4 gap-y-6'>
+                <div className='space-y-1'>
+                  <p className='text-sm font-medium text-muted-foreground'>
+                    Cargo
+                  </p>
+                  <p>{currentEmployeeDetails.role?.name || 'N/A'}</p>
+                </div>
+                <div className='space-y-1'>
+                  <p className='text-sm font-medium text-muted-foreground'>
+                    Setor
+                  </p>
+                  <p>{currentEmployeeDetails.sector?.name || 'N/A'}</p>
+                </div>
+                <div className='space-y-1'>
+                  <p className='text-sm font-medium text-muted-foreground'>
+                    Unidade
+                  </p>
+                  <p>{currentEmployeeDetails.unit?.name || 'N/A'}</p>
+                </div>
+                 <div className='space-y-1'>
+                  <p className='text-sm font-medium text-muted-foreground'>
+                    Posto de Trabalho
+                  </p>
+                  <p>{currentEmployeeDetails.environment?.name || 'N/A'}</p>
+                </div>
+                <div className='space-y-1'>
+                  <p className='text-sm font-medium text-muted-foreground'>
+                    Status
+                  </p>
+                  <Badge
+                    variant={getStatusBadgeVariant(
+                      currentEmployeeDetails.employee.status
+                    )}
+                  >
+                    {currentEmployeeDetails.employee.status}
+                  </Badge>
+                </div>
+                <div className='space-y-1'>
+                  <p className='text-sm font-medium text-muted-foreground'>
+                    Data de Admissão
+                  </p>
+                  <p>
+                    {new Date(
+                      currentEmployeeDetails.employee.admissionDate
+                    ).toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+              </div>
 
               <Separator />
 
@@ -576,7 +613,6 @@ export default function EmployeesPage() {
               <div className='text-center text-sm text-muted-foreground pt-4'>
                 Futuras informações de SST (EPIs, Exames) aparecerão aqui.
               </div>
-
             </div>
           )}
           <DialogFooter>
