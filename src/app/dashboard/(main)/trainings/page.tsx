@@ -64,36 +64,45 @@ export interface Training {
 
 export const initialTrainingsData: Training[] = [
   {
-    id: 'TRN-NR-01',
-    title: 'NR-01 - Disposições Gerais e GRO',
-    description: 'Treinamento sobre os riscos ocupacionais (PGR), medidas de prevenção e assédio.',
+    id: 'TRN-NR-01-A',
+    title: 'NR-01 - Integração de Segurança do Trabalho',
+    description: 'Treinamento inicial para todos os trabalhadores sobre os riscos ocupacionais (conforme PGR) e medidas de prevenção.',
     type: 'NR',
     modality: 'Híbrido',
-    workload: 2,
-    validity: 12, // Periódico anual para assédio
+    workload: 6,
+    validity: 0, // Reciclagem em caso de alteração de riscos ou acidentes
+  },
+  {
+    id: 'TRN-NR-01-B',
+    title: 'NR-01 - Capacitação sobre Assédio e Diversidade',
+    description: 'Treinamento sobre prevenção e combate ao assédio sexual e a outras formas de violência no trabalho.',
+    type: 'NR',
+    modality: 'Híbrido',
+    workload: 1, // Carga horária não especificada, 1h como placeholder
+    validity: 12,
   },
   {
     id: 'TRN-NR-05',
-    title: 'NR-05 - CIPA',
-    description: 'Treinamento para membros eleitos e designados da CIPA.',
+    title: 'NR-05 - CIPA (Comissão Interna de Prevenção de Acidentes)',
+    description: 'Treinamento para membros eleitos e designados da CIPA. Carga horária varia com o grau de risco da empresa.',
     type: 'NR',
-    modality: 'Presencial',
-    workload: 20,
+    modality: 'Híbrido',
+    workload: 20, // Usando a maior carga horária como padrão
     validity: 12,
   },
   {
     id: 'TRN-NR-06',
-    title: 'NR-06 - Uso de EPI',
-    description: 'Treinamento sobre o uso, guarda e conservação de Equipamentos de Proteção Individual.',
+    title: 'NR-06 - Uso, Guarda e Conservação de EPI',
+    description: 'Treinamento para todos os trabalhadores sobre o correto uso, guarda e conservação dos Equipamentos de Proteção Individual.',
     type: 'Uso de EPI',
-    modality: 'Presencial',
-    workload: 2,
+    modality: 'Híbrido',
+    workload: 2, // Carga horária não especificada, 2h como placeholder
     validity: 0, // Indeterminada, reciclagem quando necessário
   },
   {
-    id: 'TRN-NR-10',
+    id: 'TRN-NR-10-BAS',
     title: 'NR-10 - Segurança em Eletricidade (Básico)',
-    description: 'Treinamento básico para trabalhadores que interagem com eletricidade.',
+    description: 'Treinamento básico para trabalhadores que interagem com instalações elétricas.',
     type: 'NR',
     modality: 'Híbrido',
     workload: 40,
@@ -102,88 +111,88 @@ export const initialTrainingsData: Training[] = [
     {
     id: 'TRN-NR-10-SEP',
     title: 'NR-10 - Segurança no Sistema Elétrico de Potência (SEP)',
-    description: 'Treinamento complementar para trabalhos em alta tensão.',
+    description: 'Treinamento complementar para trabalhos em alta tensão (SEP).',
     type: 'NR',
-    modality: 'Presencial',
+    modality: 'Híbrido',
     workload: 40,
     validity: 24,
   },
   {
     id: 'TRN-NR-11',
     title: 'NR-11 - Operação de Empilhadeira',
-    description: 'Treinamento para operadores de empilhadeiras e equipamentos de transporte.',
+    description: 'Treinamento para capacitação de operadores de empilhadeira e equipamentos de transporte de materiais.',
     type: 'NR',
-    modality: 'Presencial',
+    modality: 'Híbrido',
     workload: 16,
-    validity: 0, // Indeterminada, reciclagem quando necessário
-  },
-    {
-    id: 'TRN-NR-12',
-    title: 'NR-12 - Segurança em Máquinas e Equipamentos',
-    description: 'Treinamento para operadores e profissionais de manutenção de máquinas.',
-    type: 'NR',
-    modality: 'Presencial',
-    workload: 8,
-    validity: 24,
+    validity: 0, // Indeterminada, reciclagem necessária em caso de acidentes ou mudanças.
   },
   {
+    id: 'TRN-NR-12',
+    title: 'NR-12 - Segurança em Máquinas e Equipamentos',
+    description: 'Treinamento para operadores e profissionais de manutenção de máquinas e equipamentos.',
+    type: 'NR',
+    modality: 'Híbrido',
+    workload: 8,
+    validity: 0, // Indeterminada, reciclagem conforme necessidade
+  },
+    {
     id: 'TRN-NR-17',
     title: 'NR-17 - Ergonomia',
-    description: 'Treinamento para trabalhadores expostos a riscos ergonômicos.',
+    description: 'Treinamento para trabalhadores sobre a adaptação das condições de trabalho às suas características psicofisiológicas.',
     type: 'NR',
     modality: 'Online',
     workload: 2,
-    validity: 0, // Indeterminada, reciclagem recomendada
+    validity: 0, // Indeterminada, reciclagem recomendada a cada 2 anos
   },
   {
     id: 'TRN-NR-18',
-    title: 'NR-18 - Indústria da Construção',
-    description: 'Treinamento admissional e periódico para trabalhadores da construção civil.',
+    title: 'NR-18 - Indústria da Construção (Admissional)',
+    description: 'Treinamento admissional para trabalhadores da indústria da construção.',
     type: 'NR',
-    modality: 'Presencial',
-    workload: 6,
+    modality: 'Híbrido',
+    workload: 4,
     validity: 24,
   },
   {
     id: 'TRN-NR-20',
     title: 'NR-20 - Segurança com Inflamáveis e Combustíveis',
-    description: 'Treinamento para trabalhadores em instalações com inflamáveis.',
+    description: 'Treinamento para trabalhadores em instalações com manuseio de inflamáveis e combustíveis.',
     type: 'NR',
     modality: 'Híbrido',
-    workload: 8,
-    validity: 36, // Básico
+    workload: 8, // Varia de 4 a 16h, usando 8h como um valor comum
+    validity: 36, // Para o curso básico
   },
-  {
+    {
     id: 'TRN-NR-23',
     title: 'NR-23 - Brigada de Incêndio',
-    description: 'Treinamento para formação de brigadistas de incêndio.',
+    description: 'Treinamento para formação de brigadistas de incêndio, preparando-os para atuar na prevenção e combate a princípios de incêndio.',
     type: 'NR',
-    modality: 'Presencial',
-    workload: 8,
+    modality: 'Híbrido',
+    workload: 8, // Varia conforme o plano, 8h como padrão
     validity: 12,
   },
   {
-    id: 'TRN-NR-33',
+    id: 'TRN-NR-33-AUT',
     title: 'NR-33 - Espaços Confinados (Trabalhadores e Vigias)',
-    description: 'Treinamento para trabalhadores autorizados e vigias em espaços confinados.',
+    description: 'Capacitação para trabalhadores autorizados e vigias em espaços confinados.',
     type: 'NR',
-    modality: 'Presencial',
+    modality: 'Híbrido',
     workload: 16,
     validity: 12,
   },
-    {
+  {
     id: 'TRN-NR-33-SUP',
     title: 'NR-33 - Espaços Confinados (Supervisores)',
-    description: 'Treinamento para supervisores de entrada em espaços confinados.',
+    description: 'Capacitação para Supervisores de Entrada em espaços confinados.',
     type: 'NR',
-    modality: 'Presencial',
+    modality: 'Híbrido',
     workload: 40,
     validity: 12,
   },
   {
     id: 'TRN-NR-35',
     title: 'NR-35 - Trabalho em Altura',
-    description: 'Capacitação para planejamento, organização e execução de trabalho em altura.',
+    description: 'Capacitação para planejamento, organização e execução de trabalho em altura com segurança.',
     type: 'NR',
     modality: 'Híbrido',
     workload: 8,
@@ -307,7 +316,7 @@ export default function TrainingsPage() {
                             id='validity'
                             name='validity'
                             type='number'
-                            placeholder='Ex: 12'
+                            placeholder='0 para indeterminada'
                             required
                           />
                         </div>
@@ -374,7 +383,7 @@ export default function TrainingsPage() {
                     <Badge variant='outline'>{training.modality}</Badge>
                   </TableCell>
                   <TableCell>{training.workload}h</TableCell>
-                  <TableCell>{training.validity > 0 ? `${training.validity} meses` : 'N/A'}</TableCell>
+                  <TableCell>{training.validity > 0 ? `${training.validity} meses` : 'Indeterminada'}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
