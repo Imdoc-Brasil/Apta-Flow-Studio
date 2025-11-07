@@ -46,6 +46,7 @@ import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Separator } from '@/components/ui/separator'
+import { initialActivitiesData } from '../activities/data'
 
 export default function RolesPage() {
   const [roles, setRoles] = useState(initialRolesData)
@@ -85,7 +86,7 @@ export default function RolesPage() {
       cbo: formData.get('cbo') as string,
       sectorId: formData.get('sectorId') as string,
       description: formData.get('description') as string,
-      activities: formData.get('activities') as string,
+      activities: formData.getAll('activities') as string[],
       requirements: formData.get('requirements') as string,
       mainWorkstationId: formData.get('mainWorkstationId') as string,
       additionalWorkstationIds,
@@ -214,11 +215,18 @@ export default function RolesPage() {
                     </div>
                     <div className='space-y-2'>
                       <Label htmlFor='activities'>Atividades Principais</Label>
-                      <Textarea
-                        id='activities'
-                        name='activities'
-                        placeholder='Liste as tarefas diárias e responsabilidades.'
-                      />
+                       <Select name='activities' multiple>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Selecione as atividades do catálogo' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {initialActivitiesData.map((activity) => (
+                             <SelectItem key={activity.id} value={activity.name}>
+                              {activity.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className='space-y-2'>
                       <Label htmlFor='requirements'>
