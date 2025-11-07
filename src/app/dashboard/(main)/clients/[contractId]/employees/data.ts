@@ -3,7 +3,7 @@ export type EmployeeStatus = 'Ativo' | 'Férias' | 'Desligado'
 export interface Employee {
   id: string
   name: string
-  role: string
+  roleId: string
   email: string
   phone: string
   status: EmployeeStatus
@@ -15,7 +15,7 @@ export const initialEmployeesData: Employee[] = [
   {
     id: 'EMP-001',
     name: 'João da Silva',
-    role: 'Técnico de Segurança do Trabalho',
+    roleId: 'ROLE-03', // Almoxarife
     email: 'joao.silva@example.com',
     phone: '(11) 98765-4321',
     status: 'Ativo',
@@ -25,7 +25,7 @@ export const initialEmployeesData: Employee[] = [
   {
     id: 'EMP-002',
     name: 'Maria Oliveira',
-    role: 'Engenheira de Segurança do Trabalho',
+    roleId: 'ROLE-02', // Operador de Máquinas
     email: 'maria.oliveira@example.com',
     phone: '(21) 91234-5678',
     status: 'Ativo',
@@ -35,7 +35,7 @@ export const initialEmployeesData: Employee[] = [
   {
     id: 'EMP-003',
     name: 'Carlos Pereira',
-    role: 'Médico do Trabalho',
+    roleId: 'ROLE-01', // Analista Financeiro
     email: 'carlos.pereira@example.com',
     phone: '(31) 99999-8888',
     status: 'Férias',
@@ -45,7 +45,7 @@ export const initialEmployeesData: Employee[] = [
   {
     id: 'EMP-004',
     name: 'Ana Costa',
-    role: 'Auxiliar Administrativo',
+    roleId: 'ROLE-01', // Analista Financeiro
     email: 'ana.costa@example.com',
     phone: '(51) 98877-6655',
     status: 'Desligado',
