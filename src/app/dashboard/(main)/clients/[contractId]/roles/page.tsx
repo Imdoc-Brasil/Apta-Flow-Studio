@@ -34,6 +34,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { initialRolesData, type Role } from './data'
 import { initialSectorsData, type Sector } from '../sectors/data'
 import { initialUnitsData, type Unit } from '../units/data'
+import { initialEnvironmentsData } from '../environments/data'
 import {
   Select,
   SelectContent,
@@ -43,6 +44,7 @@ import {
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 import { Badge } from '@/components/ui/badge'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 export default function RolesPage() {
   const [roles, setRoles] = useState(initialRolesData)
@@ -75,9 +77,13 @@ export default function RolesPage() {
     const newRole: Role = {
       id: `ROLE-${Date.now().toString().slice(-4)}`,
       name: formData.get('name') as string,
-      description: formData.get('description') as string,
-      sectorId: formData.get('sectorId') as string,
       cbo: formData.get('cbo') as string,
+      sectorId: formData.get('sectorId') as string,
+      description: formData.get('description') as string,
+      activities: formData.get('activities') as string,
+      requirements: formData.get('requirements') as string,
+      environmentId: formData.get('environmentId') as string,
+      requiredExams: formData.get('requiredExams') as string,
     }
     setRoles((prev) => [...prev, newRole])
     setIsAddDialogOpen(false)
@@ -114,7 +120,7 @@ export default function RolesPage() {
                 </span>
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className='sm:max-w-2xl'>
               <DialogHeader>
                 <DialogTitle>Adicionar Novo Cargo</DialogTitle>
                 <DialogDescription>
@@ -122,39 +128,82 @@ export default function RolesPage() {
                 </DialogDescription>
               </DialogHeader>
               <form id='add-role-form' onSubmit={handleAddRole}>
-                <div className='grid gap-4 py-4'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='name'>Nome do Cargo</Label>
-                    <Input id='name' name='name' required />
+                <ScrollArea className='h-[70vh]'>
+                  <div className='grid gap-6 p-4'>
+                    <div className='grid grid-cols-2 gap-4'>
+                      <div className='space-y-2'>
+                        <Label htmlFor='name'>Nome do Cargo</Label>
+                        <Input id='name' name='name' required />
+                      </div>
+                      <div className='space-y-2'>
+                        <Label htmlFor='cbo'>CBO</Label>
+                        <Input id='cbo' name='cbo' placeholder='Ex: 2525-05' />
+                      </div>
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='sectorId'>Setor</Label>
+                      <Select name='sectorId' required>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Selecione o setor' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {sectorsWithUnit.map((sector) => (
+                            <SelectItem key={sector.id} value={sector.id}>
+                              {sector.name} ({sector.unitName})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='environmentId'>Ambiente de Trabalho</Label>
+                      <Select name='environmentId'>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Selecione o ambiente principal (opcional)' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {initialEnvironmentsData.map((env) => (
+                            <SelectItem key={env.id} value={env.id}>
+                              {env.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='description'>Descrição Sumária</Label>
+                      <Textarea
+                        id='description'
+                        name='description'
+                        placeholder='Descreva as principais atribuições do cargo'
+                      />
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='activities'>Atividades Principais</Label>
+                      <Textarea
+                        id='activities'
+                        name='activities'
+                        placeholder='Liste as tarefas diárias e responsabilidades.'
+                      />
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='requirements'>Requisitos/Qualificações</Label>
+                      <Textarea
+                        id='requirements'
+                        name='requirements'
+                        placeholder='Liste competências, treinamentos obrigatórios (NRs), certificações, etc.'
+                      />
+                    </div>
+                     <div className='space-y-2'>
+                      <Label htmlFor='requiredExams'>Exames Médicos (PCMSO)</Label>
+                      <Input
+                        id='requiredExams'
+                        name='requiredExams'
+                        placeholder='Ex: ASO, Audiometria, Acuidade Visual...'
+                      />
+                    </div>
                   </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='cbo'>CBO</Label>
-                    <Input id='cbo' name='cbo' placeholder='Ex: 2525-05' />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='sectorId'>Setor</Label>
-                    <Select name='sectorId' required>
-                      <SelectTrigger>
-                        <SelectValue placeholder='Selecione o setor' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sectorsWithUnit.map((sector) => (
-                          <SelectItem key={sector.id} value={sector.id}>
-                            {sector.name} ({sector.unitName})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='description'>Descrição</Label>
-                    <Textarea
-                      id='description'
-                      name='description'
-                      placeholder='Descreva as principais atribuições do cargo'
-                    />
-                  </div>
-                </div>
+                </ScrollArea>
               </form>
               <DialogFooter>
                 <Button
