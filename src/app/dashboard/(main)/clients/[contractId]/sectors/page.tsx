@@ -257,43 +257,43 @@ export default function SectorsPage() {
           {viewMode === 'card' ? (
             <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
               {filteredSectors.map((sector) => (
-                 <Link key={sector.id} href={`/dashboard/clients/${contractId}/sectors/${sector.id}`} className='block'>
-                    <Card
-                      className='flex flex-col h-full hover:shadow-md transition-shadow cursor-pointer'
-                    >
-                      <CardHeader>
-                        <CardTitle>{sector.name}</CardTitle>
-                        <CardDescription>
-                          <Badge variant='outline'>
-                            {getUnitName(sector.unitId)}
-                          </Badge>
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className='flex-grow'>
-                        <p className='text-sm text-muted-foreground line-clamp-2'>
-                          {sector.description}
-                        </p>
-                      </CardContent>
-                      <CardFooter className='flex-col lg:flex-row items-center gap-2'>
-                        <Button asChild className='w-full' variant='outline' size='sm'>
-                          <Link
-                            href={`/dashboard/clients/${contractId}/roles?sectorId=${sector.id}`}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            Ver Cargos <ArrowRight className='ml-2 h-4 w-4' />
-                          </Link>
-                        </Button>
-                         <Button asChild className='w-full' variant='outline' size='sm'>
-                          <Link
-                            href={`/dashboard/clients/${contractId}/environments?sectorId=${sector.id}`}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            Ver Ambientes <ArrowRight className='ml-2 h-4 w-4' />
-                          </Link>
-                        </Button>
-                      </CardFooter>
-                    </Card>
-                 </Link>
+                <Card
+                  key={sector.id}
+                  onClick={() => router.push(`/dashboard/clients/${contractId}/sectors/${sector.id}`)}
+                  className='flex flex-col h-full hover:shadow-md transition-shadow cursor-pointer'
+                >
+                  <CardHeader>
+                    <CardTitle>{sector.name}</CardTitle>
+                    <CardDescription>
+                      <Badge variant='outline'>
+                        {getUnitName(sector.unitId)}
+                      </Badge>
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className='flex-grow'>
+                    <p className='text-sm text-muted-foreground line-clamp-2'>
+                      {sector.description}
+                    </p>
+                  </CardContent>
+                  <CardFooter className='flex-col lg:flex-row items-center gap-2'>
+                    <Button asChild className='w-full' variant='outline' size='sm'>
+                      <Link
+                        href={`/dashboard/clients/${contractId}/roles?sectorId=${sector.id}`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Ver Cargos <ArrowRight className='ml-2 h-4 w-4' />
+                      </Link>
+                    </Button>
+                     <Button asChild className='w-full' variant='outline' size='sm'>
+                      <Link
+                        href={`/dashboard/clients/${contractId}/environments?sectorId=${sector.id}`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Ver Ambientes <ArrowRight className='ml-2 h-4 w-4' />
+                      </Link>
+                    </Button>
+                  </CardFooter>
+                </Card>
               ))}
             </div>
           ) : (
