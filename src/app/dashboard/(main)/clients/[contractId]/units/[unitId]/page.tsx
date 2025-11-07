@@ -38,6 +38,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { useState } from 'react'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { useToast } from '@/hooks/use-toast'
 
 const getUnitById = (unitId: string): Unit | undefined => {
   return initialUnitsData.find((unit) => unit.id === unitId)
@@ -45,9 +46,10 @@ const getUnitById = (unitId: string): Unit | undefined => {
 
 export default function UnitDetailsPage() {
   const params = useParams()
+  const { toast } = useToast()
   const contractId = params.contractId as string
   const unitId = params.unitId as string
-  const unit = getUnitById(unitId)
+  const [currentUnit, setCurrentUnit] = useState(() => getUnitById(unitId))
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
@@ -71,7 +73,18 @@ export default function UnitDetailsPage() {
   const expiredTrainings = 0 // Placeholder
   const expiredVaccines = 0 // Placeholder
 
-  if (!unit) {
+  const handleEditUnit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    // Here you would typically handle form submission to your backend
+    // For now, we'll just show a success toast and close the dialog
+    toast({
+      title: 'Sucesso!',
+      description: 'As informações da unidade foram atualizadas.',
+    })
+    setIsEditDialogOpen(false)
+  }
+
+  if (!currentUnit) {
     return (
       <div className='flex flex-col items-center justify-center h-full text-center'>
         <h2 className='text-2xl font-bold'>Unidade não encontrada</h2>
@@ -231,7 +244,7 @@ export default function UnitDetailsPage() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant='ghost' className='gap-1 text-xl font-semibold'>
-                {unit.name}
+                {currentUnit.name}
                 <ChevronDown className='h-4 w-4' />
               </Button>
             </DropdownMenuTrigger>
@@ -253,7 +266,7 @@ export default function UnitDetailsPage() {
           </DropdownMenu>
 
           <Badge variant='outline' className='ml-auto sm:ml-0'>
-            {unit.type}
+            {currentUnit.type}
           </Badge>
           <div className='hidden items-center gap-2 md:ml-auto md:flex'>
             <Button
@@ -271,39 +284,39 @@ export default function UnitDetailsPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Detalhes da Unidade</CardTitle>
-                <CardDescription>{unit.description}</CardDescription>
+                <CardDescription>{currentUnit.description}</CardDescription>
               </CardHeader>
               <CardContent className='grid gap-4 sm:grid-cols-2 md:grid-cols-3'>
                 <div className='space-y-1'>
                   <p className='text-sm font-medium text-muted-foreground'>
                     CNPJ
                   </p>
-                  <p>{unit.cnpj}</p>
+                  <p>{currentUnit.cnpj}</p>
                 </div>
                 <div className='space-y-1'>
                   <p className='text-sm font-medium text-muted-foreground'>
                     CNAE
                   </p>
-                  <p>{unit.cnae}</p>
+                  <p>{currentUnit.cnae}</p>
                 </div>
                 <div className='space-y-1'>
                   <p className='text-sm font-medium text-muted-foreground'>
                     Grau de Risco
                   </p>
-                  <p>{unit.riskLevel}</p>
+                  <p>{currentUnit.riskLevel}</p>
                 </div>
-                {unit.cno && (
+                {currentUnit.cno && (
                   <div className='space-y-1'>
                     <p className='text-sm font-medium text-muted-foreground'>
                       CNO
                     </p>
-                    <p>{unit.cno}</p>
+                    <p>{currentUnit.cno}</p>
                   </div>
                 )}
               </CardContent>
             </Card>
 
-            {unit.contractingCompany && (
+            {currentUnit.contractingCompany && (
               <Card>
                 <CardHeader>
                   <CardTitle>Empresa Contratante</CardTitle>
@@ -313,25 +326,25 @@ export default function UnitDetailsPage() {
                     <p className='text-sm font-medium text-muted-foreground'>
                       Razão Social
                     </p>
-                    <p>{unit.contractingCompany.name}</p>
+                    <p>{currentUnit.contractingCompany.name}</p>
                   </div>
                   <div className='space-y-1'>
                     <p className='text-sm font-medium text-muted-foreground'>
                       CNPJ
                     </p>
-                    <p>{unit.contractingCompany.cnpj}</p>
+                    <p>{currentUnit.contractingCompany.cnpj}</p>
                   </div>
                   <div className='space-y-1'>
                     <p className='text-sm font-medium text-muted-foreground'>
                       CNAE
                     </p>
-                    <p>{unit.contractingCompany.cnae}</p>
+                    <p>{currentUnit.contractingCompany.cnae}</p>
                   </div>
                   <div className='space-y-1'>
                     <p className='text-sm font-medium text-muted-foreground'>
                       Grau de Risco
                     </p>
-                    <p>{unit.contractingCompany.riskLevel}</p>
+                    <p>{currentUnit.contractingCompany.riskLevel}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -346,39 +359,39 @@ export default function UnitDetailsPage() {
                   <p className='text-sm font-medium text-muted-foreground'>
                     Endereço
                   </p>
-                  <p>{unit.propertyInfo.address}</p>
+                  <p>{currentUnit.propertyInfo.address}</p>
                 </div>
                 <div className='space-y-1'>
                   <p className='text-sm font-medium text-muted-foreground'>
                     Bairro
                   </p>
-                  <p>{unit.propertyInfo.neighborhood}</p>
+                  <p>{currentUnit.propertyInfo.neighborhood}</p>
                 </div>
                 <div className='space-y-1'>
                   <p className='text-sm font-medium text-muted-foreground'>
                     CEP
                   </p>
-                  <p>{unit.propertyInfo.zipCode}</p>
+                  <p>{currentUnit.propertyInfo.zipCode}</p>
                 </div>
                 <div className='space-y-1'>
                   <p className='text-sm font-medium text-muted-foreground'>
                     Cidade / Estado
                   </p>
                   <p>
-                    {unit.propertyInfo.city} / {unit.propertyInfo.state}
+                    {currentUnit.propertyInfo.city} / {currentUnit.propertyInfo.state}
                   </p>
                 </div>
                 <div className='space-y-1'>
                   <p className='text-sm font-medium text-muted-foreground'>
                     Área Total
                   </p>
-                  <p>{unit.propertyInfo.totalArea}</p>
+                  <p>{currentUnit.propertyInfo.totalArea}</p>
                 </div>
                 <div className='space-y-1'>
                   <p className='text-sm font-medium text-muted-foreground'>
                     Área Construída
                   </p>
-                  <p>{unit.propertyInfo.builtArea}</p>
+                  <p>{currentUnit.propertyInfo.builtArea}</p>
                 </div>
               </CardContent>
             </Card>
@@ -392,25 +405,25 @@ export default function UnitDetailsPage() {
                   <p className='text-sm font-medium text-muted-foreground'>
                     Responsável Legal
                   </p>
-                  <p>{unit.legalResponsible}</p>
+                  <p>{currentUnit.legalResponsible}</p>
                 </div>
                 <div className='space-y-1'>
                   <p className='text-sm font-medium text-muted-foreground'>
                     Responsável pelo PGR
                   </p>
-                  <p>{unit.pgrResponsible}</p>
+                  <p>{currentUnit.pgrResponsible}</p>
                 </div>
                 <div className='space-y-1'>
                   <p className='text-sm font-medium text-muted-foreground'>
                     Responsável pelo LTCAT
                   </p>
-                  <p>{unit.ltcatResponsible}</p>
+                  <p>{currentUnit.ltcatResponsible}</p>
                 </div>
                 <div className='space-y-1'>
                   <p className='text-sm font-medium text-muted-foreground'>
                     Responsável pelo PCMSO
                   </p>
-                  <p>{unit.pcmsoResponsible}</p>
+                  <p>{currentUnit.pcmsoResponsible}</p>
                 </div>
               </CardContent>
             </Card>
@@ -513,7 +526,9 @@ export default function UnitDetailsPage() {
               Atualize as informações desta unidade.
             </DialogDescription>
           </DialogHeader>
-          <form id='edit-unit-form'>{renderEditForm(unit)}</form>
+          <form id='edit-unit-form' onSubmit={handleEditUnit}>
+            {renderEditForm(currentUnit)}
+          </form>
           <DialogFooter>
             <Button
               variant='outline'
