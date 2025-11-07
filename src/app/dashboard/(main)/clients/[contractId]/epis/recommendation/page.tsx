@@ -25,6 +25,7 @@ import {
   getHazardById,
 } from '@/app/dashboard/(main)/clients/[contractId]/pgr/page'
 import { initialEmployeesData } from '../../employees/data'
+import { initialRolesData } from '../../roles/data'
 import { initialSectorsData } from '../../sectors/data'
 import { initialUnitsData } from '../../units/data'
 import { initialGheData } from '../../ghe/data'
@@ -50,8 +51,9 @@ export default function RecommendationMatrixPage() {
   const [selectedAssociationValue, setSelectedAssociationValue] = useState('')
 
   const uniqueRoles = [
-    ...new Set(initialEmployeesData.map((employee) => employee.role)),
-  ]
+    ...new Set(initialEmployeesData.map((employee) => employee.roleId)),
+  ].map(roleId => initialRolesData.find(r => r.id === roleId)).filter(Boolean);
+  
   const inventoryRisks = initialInventory
     .filter((inv) => inv.unitId === selectedUnit)
     .map((inv) => getHazardById(inv.hazardId))
@@ -137,8 +139,8 @@ export default function RecommendationMatrixPage() {
             </SelectTrigger>
             <SelectContent>
               {uniqueRoles.map((role) => (
-                <SelectItem key={role} value={role}>
-                  {role}
+                <SelectItem key={role!.id} value={role!.id}>
+                  {role!.name}
                 </SelectItem>
               ))}
             </SelectContent>
