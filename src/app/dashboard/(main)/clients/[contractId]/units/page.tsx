@@ -112,7 +112,7 @@ export default function UnitsPage() {
       }
     }
   }, [isAddDialogOpen, inheritData, client])
-  
+
   const handleAddUnit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const newUnit: Unit = {
@@ -129,7 +129,7 @@ export default function UnitsPage() {
   const handleUpdateUnit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!currentUnit) return
-    const formData = new FormData(event.currentTarget);
+    const formData = new FormData(event.currentTarget)
     const updatedData = {
       name: formData.get('name') as string,
       description: formData.get('description') as string,
@@ -146,9 +146,8 @@ export default function UnitsPage() {
     setUnits((prev) =>
       prev.map((u) => (u.id === currentUnit.id ? { ...u, ...updatedData } : u))
     )
+    setCurrentUnit((prev) => (prev ? { ...prev, ...updatedData } : null))
     setIsEditing(false)
-    // We need to update currentUnit as well to see the changes immediately
-    setCurrentUnit(prev => prev ? { ...prev, ...updatedData } : null)
   }
 
   const openDetailDialog = (unit: Unit) => {
@@ -167,21 +166,78 @@ export default function UnitsPage() {
     })
   }, [units, searchTerm, statusFilter])
 
-  const renderUnitForm = (
-    unit: Unit | null,
-    isEditing: boolean,
-  ) => (
+  const renderUnitDetails = (unit: Unit | null) => (
+    <ScrollArea className='h-[60vh] pr-6'>
+      <div className='grid gap-4 py-4'>
+        <div className='space-y-1'>
+          <p className='text-sm font-medium text-muted-foreground'>Nome</p>
+          <p>{unit?.name}</p>
+        </div>
+        <div className='space-y-1'>
+          <p className='text-sm font-medium text-muted-foreground'>Descrição</p>
+          <p>{unit?.description}</p>
+        </div>
+
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+          <div className='space-y-1'>
+            <p className='text-sm font-medium text-muted-foreground'>CNPJ</p>
+            <p>{unit?.cnpj}</p>
+          </div>
+          <div className='space-y-1'>
+            <p className='text-sm font-medium text-muted-foreground'>Endereço</p>
+            <p>{unit?.address}</p>
+          </div>
+          <div className='space-y-1'>
+            <p className='text-sm font-medium text-muted-foreground'>CNAE</p>
+            <p>{unit?.cnae}</p>
+          </div>
+          <div className='space-y-1'>
+            <p className='text-sm font-medium text-muted-foreground'>
+              Grau de Risco
+            </p>
+            <p>{unit?.riskLevel}</p>
+          </div>
+        </div>
+
+        <div className='space-y-4 pt-4 border-t'>
+          <h3 className='font-medium text-lg'>Responsáveis</h3>
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div className='space-y-1'>
+              <p className='text-sm font-medium text-muted-foreground'>
+                Responsável Legal
+              </p>
+              <p>{unit?.legalResponsible}</p>
+            </div>
+            <div className='space-y-1'>
+              <p className='text-sm font-medium text-muted-foreground'>
+                Responsável pelo PGR
+              </p>
+              <p>{unit?.pgrResponsible}</p>
+            </div>
+            <div className='space-y-1'>
+              <p className='text-sm font-medium text-muted-foreground'>
+                Responsável pelo LTCAT
+              </p>
+              <p>{unit?.ltcatResponsible}</p>
+            </div>
+            <div className='space-y-1'>
+              <p className='text-sm font-medium text-muted-foreground'>
+                Responsável pelo PCMSO
+              </p>
+              <p>{unit?.pcmsoResponsible}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ScrollArea>
+  )
+
+  const renderUnitForm = (unit: Unit | null) => (
     <ScrollArea className='h-[60vh] pr-6'>
       <div className='grid gap-4 py-4'>
         <div className='space-y-2'>
           <Label htmlFor='name'>Nome</Label>
-          <Input
-            id='name'
-            name='name'
-            defaultValue={unit?.name}
-            disabled={!isEditing}
-            required
-          />
+          <Input id='name' name='name' defaultValue={unit?.name} required />
         </div>
         <div className='space-y-2'>
           <Label htmlFor='description'>Descrição</Label>
@@ -189,19 +245,13 @@ export default function UnitsPage() {
             id='description'
             name='description'
             defaultValue={unit?.description}
-            disabled={!isEditing}
           />
         </div>
 
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
           <div className='space-y-2'>
             <Label htmlFor='cnpj'>CNPJ</Label>
-            <Input
-              id='cnpj'
-              name='cnpj'
-              defaultValue={unit?.cnpj}
-              disabled={!isEditing}
-            />
+            <Input id='cnpj' name='cnpj' defaultValue={unit?.cnpj} />
           </div>
           <div className='space-y-2'>
             <Label htmlFor='address'>Endereço</Label>
@@ -209,18 +259,12 @@ export default function UnitsPage() {
               id='address'
               name='address'
               defaultValue={unit?.address}
-              disabled={!isEditing}
               required
             />
           </div>
           <div className='space-y-2'>
             <Label htmlFor='cnae'>CNAE</Label>
-            <Input
-              id='cnae'
-              name='cnae'
-              defaultValue={unit?.cnae}
-              disabled={!isEditing}
-            />
+            <Input id='cnae' name='cnae' defaultValue={unit?.cnae} />
           </div>
           <div className='space-y-2'>
             <Label htmlFor='riskLevel'>Grau de Risco</Label>
@@ -228,7 +272,6 @@ export default function UnitsPage() {
               id='riskLevel'
               name='riskLevel'
               defaultValue={unit?.riskLevel}
-              disabled={!isEditing}
             />
           </div>
         </div>
@@ -242,7 +285,6 @@ export default function UnitsPage() {
                 id='legalResponsible'
                 name='legalResponsible'
                 defaultValue={unit?.legalResponsible}
-                disabled={!isEditing}
               />
             </div>
             <div className='space-y-2'>
@@ -251,7 +293,6 @@ export default function UnitsPage() {
                 id='pgrResponsible'
                 name='pgrResponsible'
                 defaultValue={unit?.pgrResponsible}
-                disabled={!isEditing}
               />
             </div>
             <div className='space-y-2'>
@@ -260,7 +301,6 @@ export default function UnitsPage() {
                 id='ltcatResponsible'
                 name='ltcatResponsible'
                 defaultValue={unit?.ltcatResponsible}
-                disabled={!isEditing}
               />
             </div>
             <div className='space-y-2'>
@@ -269,7 +309,6 @@ export default function UnitsPage() {
                 id='pcmsoResponsible'
                 name='pcmsoResponsible'
                 defaultValue={unit?.pcmsoResponsible}
-                disabled={!isEditing}
               />
             </div>
           </div>
@@ -307,120 +346,180 @@ export default function UnitsPage() {
                   </DialogDescription>
                 </DialogHeader>
                 <form id='add-unit-form' onSubmit={handleAddUnit}>
-                   <ScrollArea className='h-[60vh] pr-6'>
+                  <ScrollArea className='h-[60vh] pr-6'>
                     <div className='grid gap-4 py-4'>
-                        <div className='flex items-center space-x-2 mb-4'>
-                            <Checkbox
-                            id='inherit'
-                            checked={inheritData}
-                            onCheckedChange={(checked) => setInheritData(checked as boolean)}
-                            />
-                            <Label htmlFor='inherit' className='cursor-pointer'>
-                            Herdar dados da empresa principal
-                            </Label>
-                        </div>
+                      <div className='flex items-center space-x-2 mb-4'>
+                        <Checkbox
+                          id='inherit'
+                          checked={inheritData}
+                          onCheckedChange={(checked) =>
+                            setInheritData(checked as boolean)
+                          }
+                        />
+                        <Label htmlFor='inherit' className='cursor-pointer'>
+                          Herdar dados da empresa principal
+                        </Label>
+                      </div>
 
-                        <div className='space-y-2'>
-                            <Label htmlFor='name'>Nome</Label>
-                            <Input
-                                id='name'
-                                name='name'
-                                value={formState.name}
-                                onChange={(e) => setFormState(prev => ({...prev, name: e.target.value}))}
-                                required
-                            />
-                        </div>
-                        <div className='space-y-2'>
-                            <Label htmlFor='description'>Descrição</Label>
-                            <Textarea
-                                id='description'
-                                name='description'
-                                value={formState.description}
-                                onChange={(e) => setFormState(prev => ({...prev, description: e.target.value}))}
-                            />
-                        </div>
+                      <div className='space-y-2'>
+                        <Label htmlFor='name'>Nome</Label>
+                        <Input
+                          id='name'
+                          name='name'
+                          value={formState.name}
+                          onChange={(e) =>
+                            setFormState((prev) => ({
+                              ...prev,
+                              name: e.target.value,
+                            }))
+                          }
+                          required
+                        />
+                      </div>
+                      <div className='space-y-2'>
+                        <Label htmlFor='description'>Descrição</Label>
+                        <Textarea
+                          id='description'
+                          name='description'
+                          value={formState.description}
+                          onChange={(e) =>
+                            setFormState((prev) => ({
+                              ...prev,
+                              description: e.target.value,
+                            }))
+                          }
+                        />
+                      </div>
 
+                      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                        <div className='space-y-2'>
+                          <Label htmlFor='cnpj'>CNPJ</Label>
+                          <Input
+                            id='cnpj'
+                            name='cnpj'
+                            value={formState.cnpj}
+                            onChange={(e) =>
+                              setFormState((prev) => ({
+                                ...prev,
+                                cnpj: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+                        <div className='space-y-2'>
+                          <Label htmlFor='address'>Endereço</Label>
+                          <Input
+                            id='address'
+                            name='address'
+                            value={formState.address}
+                            onChange={(e) =>
+                              setFormState((prev) => ({
+                                ...prev,
+                                address: e.target.value,
+                              }))
+                            }
+                            required
+                          />
+                        </div>
+                        <div className='space-y-2'>
+                          <Label htmlFor='cnae'>CNAE</Label>
+                          <Input
+                            id='cnae'
+                            name='cnae'
+                            value={formState.cnae}
+                            onChange={(e) =>
+                              setFormState((prev) => ({
+                                ...prev,
+                                cnae: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+                        <div className='space-y-2'>
+                          <Label htmlFor='riskLevel'>Grau de Risco</Label>
+                          <Input
+                            id='riskLevel'
+                            name='riskLevel'
+                            value={formState.riskLevel}
+                            onChange={(e) =>
+                              setFormState((prev) => ({
+                                ...prev,
+                                riskLevel: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+                      </div>
+
+                      <div className='space-y-4 pt-4 border-t'>
+                        <h3 className='font-medium text-lg'>Responsáveis</h3>
                         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                           <div className='space-y-2'>
-                              <Label htmlFor='cnpj'>CNPJ</Label>
-                              <Input
-                              id='cnpj'
-                              name='cnpj'
-                              value={formState.cnpj}
-                              onChange={(e) => setFormState(prev => ({...prev, cnpj: e.target.value}))}
-                              />
+                            <Label htmlFor='legalResponsible'>
+                              Responsável Legal
+                            </Label>
+                            <Input
+                              id='legalResponsible'
+                              name='legalResponsible'
+                              value={formState.legalResponsible}
+                              onChange={(e) =>
+                                setFormState((prev) => ({
+                                  ...prev,
+                                  legalResponsible: e.target.value,
+                                }))
+                              }
+                            />
                           </div>
                           <div className='space-y-2'>
-                              <Label htmlFor='address'>Endereço</Label>
-                              <Input
-                              id='address'
-                              name='address'
-                              value={formState.address}
-                              onChange={(e) => setFormState(prev => ({...prev, address: e.target.value}))}
-                              required
-                              />
+                            <Label htmlFor='pgrResponsible'>
+                              Responsável pelo PGR
+                            </Label>
+                            <Input
+                              id='pgrResponsible'
+                              name='pgrResponsible'
+                              value={formState.pgrResponsible}
+                              onChange={(e) =>
+                                setFormState((prev) => ({
+                                  ...prev,
+                                  pgrResponsible: e.target.value,
+                                }))
+                              }
+                            />
                           </div>
                           <div className='space-y-2'>
-                              <Label htmlFor='cnae'>CNAE</Label>
-                              <Input
-                              id='cnae'
-                              name='cnae'
-                              value={formState.cnae}
-                              onChange={(e) => setFormState(prev => ({...prev, cnae: e.target.value}))}
-                              />
+                            <Label htmlFor='ltcatResponsible'>
+                              Responsável pelo LTCAT
+                            </Label>
+                            <Input
+                              id='ltcatResponsible'
+                              name='ltcatResponsible'
+                              value={formState.ltcatResponsible}
+                              onChange={(e) =>
+                                setFormState((prev) => ({
+                                  ...prev,
+                                  ltcatResponsible: e.target.value,
+                                }))
+                              }
+                            />
                           </div>
                           <div className='space-y-2'>
-                              <Label htmlFor='riskLevel'>Grau de Risco</Label>
-                              <Input
-                              id='riskLevel'
-                              name='riskLevel'
-                              value={formState.riskLevel}
-                              onChange={(e) => setFormState(prev => ({...prev, riskLevel: e.target.value}))}
-                              />
+                            <Label htmlFor='pcmsoResponsible'>
+                              Responsável pelo PCMSO
+                            </Label>
+                            <Input
+                              id='pcmsoResponsible'
+                              name='pcmsoResponsible'
+                              value={formState.pcmsoResponsible}
+                              onChange={(e) =>
+                                setFormState((prev) => ({
+                                  ...prev,
+                                  pcmsoResponsible: e.target.value,
+                                }))
+                              }
+                            />
                           </div>
                         </div>
-
-                        <div className='space-y-4 pt-4 border-t'>
-                          <h3 className='font-medium text-lg'>Responsáveis</h3>
-                          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                              <div className='space-y-2'>
-                                  <Label htmlFor='legalResponsible'>Responsável Legal</Label>
-                                  <Input
-                                  id='legalResponsible'
-                                  name='legalResponsible'
-                                  value={formState.legalResponsible}
-                                  onChange={(e) => setFormState(prev => ({...prev, legalResponsible: e.target.value}))}
-                                  />
-                              </div>
-                              <div className='space-y-2'>
-                                  <Label htmlFor='pgrResponsible'>Responsável pelo PGR</Label>
-                                  <Input
-                                  id='pgrResponsible'
-                                  name='pgrResponsible'
-                                  value={formState.pgrResponsible}
-                                  onChange={(e) => setFormState(prev => ({...prev, pgrResponsible: e.target.value}))}
-                                  />
-                              </div>
-                              <div className='space-y-2'>
-                                  <Label htmlFor='ltcatResponsible'>Responsável pelo LTCAT</Label>
-                                  <Input
-                                  id='ltcatResponsible'
-                                  name='ltcatResponsible'
-                                  value={formState.ltcatResponsible}
-                                  onChange={(e) => setFormState(prev => ({...prev, ltcatResponsible: e.target.value}))}
-                                  />
-                              </div>
-                              <div className='space-y-2'>
-                                  <Label htmlFor='pcmsoResponsible'>Responsável pelo PCMSO</Label>
-                                  <Input
-                                  id='pcmsoResponsible'
-                                  name='pcmsoResponsible'
-                                  value={formState.pcmsoResponsible}
-                                  onChange={(e) => setFormState(prev => ({...prev, pcmsoResponsible: e.target.value}))}
-                                  />
-                              </div>
-                          </div>
-                        </div>
+                      </div>
                     </div>
                   </ScrollArea>
                 </form>
@@ -524,12 +623,16 @@ export default function UnitsPage() {
                 : 'Visualize os detalhes da unidade.'}
             </DialogDescription>
           </DialogHeader>
-          <form
-            id={`update-unit-form-${currentUnit?.id}`}
-            onSubmit={handleUpdateUnit}
-          >
-            {renderUnitForm(currentUnit, isEditing)}
-          </form>
+          {isEditing ? (
+            <form
+              id={`update-unit-form-${currentUnit?.id}`}
+              onSubmit={handleUpdateUnit}
+            >
+              {renderUnitForm(currentUnit)}
+            </form>
+          ) : (
+            renderUnitDetails(currentUnit)
+          )}
           <DialogFooter>
             {isEditing ? (
               <>
@@ -562,5 +665,3 @@ export default function UnitsPage() {
     </>
   )
 }
-
-    
