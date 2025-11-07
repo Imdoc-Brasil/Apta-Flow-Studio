@@ -108,7 +108,7 @@ export const initialTrainingsData: Training[] = [
     workload: 40,
     validity: 24,
   },
-    {
+  {
     id: 'TRN-NR-10-SEP',
     title: 'NR-10 - Segurança no Sistema Elétrico de Potência (SEP)',
     description: 'Treinamento complementar para trabalhos em alta tensão (SEP).',
@@ -135,7 +135,7 @@ export const initialTrainingsData: Training[] = [
     workload: 8,
     validity: 0, // Indeterminada, reciclagem conforme necessidade
   },
-    {
+  {
     id: 'TRN-NR-17',
     title: 'NR-17 - Ergonomia',
     description: 'Treinamento para trabalhadores sobre a adaptação das condições de trabalho às suas características psicofisiológicas.',
@@ -162,7 +162,7 @@ export const initialTrainingsData: Training[] = [
     workload: 8, // Varia de 4 a 16h, usando 8h como um valor comum
     validity: 36, // Para o curso básico
   },
-    {
+  {
     id: 'TRN-NR-23',
     title: 'NR-23 - Brigada de Incêndio',
     description: 'Treinamento para formação de brigadistas de incêndio, preparando-os para atuar na prevenção e combate a princípios de incêndio.',
@@ -234,7 +234,79 @@ export const initialTrainingsData: Training[] = [
     workload: 8,
     validity: 24,
   },
-];
+  {
+    id: 'TRN-ISO-45001-INT',
+    title: 'Interpretação da Norma ISO 45001',
+    description: 'Entendimento dos requisitos do Sistema de Gestão de SST para gestores e equipes.',
+    type: 'Outro',
+    modality: 'Híbrido',
+    workload: 16,
+    validity: 0, // Reciclagem em caso de revisão da norma
+  },
+  {
+    id: 'TRN-ISO-45001-AUD',
+    title: 'Auditor Interno ISO 45001',
+    description: 'Capacitação para realizar auditorias internas no sistema de gestão de SST.',
+    type: 'Outro',
+    modality: 'Híbrido',
+    workload: 24,
+    validity: 0, // Reciclagem ou atualização conforme necessário
+  },
+  {
+    id: 'TRN-BPM-APR',
+    title: 'Análise Preliminar de Riscos (APR) / DDS',
+    description: 'Metodologias de identificação de perigos e riscos antes do início das tarefas.',
+    type: 'Procedimento Interno',
+    modality: 'Presencial',
+    workload: 4,
+    validity: 12,
+  },
+  {
+    id: 'TRN-BPM-PS',
+    title: 'Primeiros Socorros Avançado',
+    description: 'Capacitação detalhada para atendimento a emergências específicas da atividade.',
+    type: 'Outro',
+    modality: 'Presencial',
+    workload: 8,
+    validity: 12,
+  },
+  {
+    id: 'TRN-BPM-ERG-AV',
+    title: 'Ergonomia Avançada / Treinamento Postural',
+    description: 'Prevenção de DORT/LER, postura correta no trabalho e introdução à ginástica laboral.',
+    type: 'Outro',
+    modality: 'Híbrido',
+    workload: 4,
+    validity: 24,
+  },
+  {
+    id: 'TRN-BPM-GC',
+    title: 'Gestão de Crises e Planos de Emergência',
+    description: 'Atuação coordenada em situações de emergência grave (vazamentos, desastres, etc.).',
+    type: 'Outro',
+    modality: 'Presencial',
+    workload: 16,
+    validity: 12,
+  },
+  {
+    id: 'TRN-BPM-TC',
+    title: 'Treinamento Comportamental em Segurança',
+    description: 'Foco em cultura de segurança, percepção de risco e atitudes preventivas.',
+    type: 'Outro',
+    modality: 'Presencial',
+    workload: 8,
+    validity: 0, // Contínuo
+  },
+  {
+    id: 'TRN-BPM-DD',
+    title: 'Direção Defensiva para Frota',
+    description: 'Prevenção de acidentes de trânsito para motoristas da empresa.',
+    type: 'Outro',
+    modality: 'Híbrido',
+    workload: 8,
+    validity: 24,
+  },
+]
 
 
 export default function TrainingsPage() {
@@ -453,4 +525,5 @@ export default function TrainingsPage() {
     </>
   )
 }
-export type { Training, TrainingModality, TrainingType } from './[trainingId]/page'
+export type { Training, TrainingModality, TrainingType }
+
