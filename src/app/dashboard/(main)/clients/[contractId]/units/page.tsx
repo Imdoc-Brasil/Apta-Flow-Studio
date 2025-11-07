@@ -90,7 +90,16 @@ function UnitDetailDialog({
       type: formData.get('type') as UnitType,
       description: formData.get('description') as string,
       cnpj: formData.get('cnpj') as string,
-      address: formData.get('address') as string,
+      propertyInfo: {
+        address: formData.get('address') as string,
+        zipCode: formData.get('zipCode') as string,
+        neighborhood: formData.get('neighborhood') as string,
+        city: formData.get('city') as string,
+        state: formData.get('state') as string,
+        country: formData.get('country') as string,
+        totalArea: formData.get('totalArea') as string,
+        builtArea: formData.get('builtArea') as string,
+      },
       cnae: formData.get('cnae') as string,
       riskLevel: formData.get('riskLevel') as string,
       legalResponsible: formData.get('legalResponsible') as string,
@@ -98,118 +107,278 @@ function UnitDetailDialog({
       ltcatResponsible: formData.get('ltcatResponsible') as string,
       pcmsoResponsible: formData.get('pcmsoResponsible') as string,
     }
-    
-    onUnitUpdate({ ...unit, ...updatedData });
+
+    onUnitUpdate({ ...unit, ...updatedData })
     setIsEditing(false)
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-2xl'>
+      <DialogContent className='sm:max-w-3xl'>
         <DialogHeader>
-          <DialogTitle>
-            {unit?.name}
-          </DialogTitle>
-           <DialogDescription>
+          <DialogTitle>{unit?.name}</DialogTitle>
+          <DialogDescription>
             Visualize os detalhes da unidade.
           </DialogDescription>
         </DialogHeader>
 
         {isEditing ? (
-           <form id={`update-unit-form-${unit?.id}`} onSubmit={handleSubmit}>
+          <form id={`update-unit-form-${unit?.id}`} onSubmit={handleSubmit}>
             <ScrollArea className='h-[60vh] pr-6'>
-              <div className='grid gap-4 py-4'>
-                 <div className='space-y-2'>
+              <div className='grid gap-6 py-4'>
+                {/* General Info */}
+                <fieldset className='grid gap-4 rounded-lg border p-4'>
+                  <legend className='-ml-1 px-1 text-sm font-medium'>
+                    Informações Gerais
+                  </legend>
+                  <div className='space-y-2'>
                     <Label htmlFor='type'>Tipo</Label>
                     <Select name='type' defaultValue={unit?.type} required>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Selecione o tipo"/>
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="Unidade">Unidade</SelectItem>
-                            <SelectItem value="Obra">Obra</SelectItem>
-                            <SelectItem value="Contrato">Contrato</SelectItem>
-                        </SelectContent>
+                      <SelectTrigger>
+                        <SelectValue placeholder='Selecione o tipo' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='Unidade'>Unidade</SelectItem>
+                        <SelectItem value='Obra'>Obra</SelectItem>
+                        <SelectItem value='Contrato'>Contrato</SelectItem>
+                      </SelectContent>
                     </Select>
-                </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='name'>Nome</Label>
-                  <Input id='name' name='name' defaultValue={unit?.name} required />
-                </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='description'>Descrição</Label>
-                  <Textarea id='description' name='description' defaultValue={unit?.description} />
-                </div>
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='cnpj'>CNPJ</Label>
-                    <Input id='cnpj' name='cnpj' defaultValue={unit?.cnpj} />
                   </div>
                   <div className='space-y-2'>
-                    <Label htmlFor='address'>Endereço</Label>
-                    <Input id='address' name='address' defaultValue={unit?.address} required />
+                    <Label htmlFor='name'>Nome</Label>
+                    <Input
+                      id='name'
+                      name='name'
+                      defaultValue={unit?.name}
+                      required
+                    />
                   </div>
                   <div className='space-y-2'>
-                    <Label htmlFor='cnae'>CNAE</Label>
-                    <Input id='cnae' name='cnae' defaultValue={unit?.cnae} />
+                    <Label htmlFor='description'>Descrição</Label>
+                    <Textarea
+                      id='description'
+                      name='description'
+                      defaultValue={unit?.description}
+                    />
                   </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='riskLevel'>Grau de Risco</Label>
-                    <Input id='riskLevel' name='riskLevel' defaultValue={unit?.riskLevel} />
-                  </div>
-                </div>
-                <div className='space-y-4 pt-4 border-t'>
-                  <h3 className='font-medium text-lg'>Responsáveis</h3>
                   <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                     <div className='space-y-2'>
-                      <Label htmlFor='legalResponsible'>Responsável Legal</Label>
-                      <Input id='legalResponsible' name='legalResponsible' defaultValue={unit?.legalResponsible} />
+                      <Label htmlFor='cnpj'>CNPJ</Label>
+                      <Input
+                        id='cnpj'
+                        name='cnpj'
+                        defaultValue={unit?.cnpj}
+                      />
                     </div>
                     <div className='space-y-2'>
-                      <Label htmlFor='pgrResponsible'>Responsável pelo PGR</Label>
-                      <Input id='pgrResponsible' name='pgrResponsible' defaultValue={unit?.pgrResponsible} />
+                      <Label htmlFor='cnae'>CNAE</Label>
+                      <Input
+                        id='cnae'
+                        name='cnae'
+                        defaultValue={unit?.cnae}
+                      />
                     </div>
                     <div className='space-y-2'>
-                      <Label htmlFor='ltcatResponsible'>Responsável pelo LTCAT</Label>
-                      <Input id='ltcatResponsible' name='ltcatResponsible' defaultValue={unit?.ltcatResponsible} />
-                    </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='pcmsoResponsible'>Responsável pelo PCMSO</Label>
-                      <Input id='pcmsoResponsible' name='pcmsoResponsible' defaultValue={unit?.pcmsoResponsible} />
+                      <Label htmlFor='riskLevel'>Grau de Risco</Label>
+                      <Input
+                        id='riskLevel'
+                        name='riskLevel'
+                        defaultValue={unit?.riskLevel}
+                      />
                     </div>
                   </div>
-                </div>
+                </fieldset>
+
+                {/* Property Info */}
+                <fieldset className='grid gap-4 rounded-lg border p-4'>
+                  <legend className='-ml-1 px-1 text-sm font-medium'>
+                    Informações do Imóvel
+                  </legend>
+                   <div className='space-y-2'>
+                      <Label htmlFor='address'>Endereço Completo</Label>
+                      <Input
+                        id='address'
+                        name='address'
+                        defaultValue={unit?.propertyInfo.address}
+                        required
+                      />
+                    </div>
+                  <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                    <div className='space-y-2'>
+                      <Label htmlFor='zipCode'>CEP</Label>
+                      <Input
+                        id='zipCode'
+                        name='zipCode'
+                        defaultValue={unit?.propertyInfo.zipCode}
+                      />
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='neighborhood'>Bairro</Label>
+                      <Input
+                        id='neighborhood'
+                        name='neighborhood'
+                        defaultValue={unit?.propertyInfo.neighborhood}
+                      />
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='city'>Cidade</Label>
+                      <Input id='city' name='city' defaultValue={unit?.propertyInfo.city} />
+                    </div>
+                     <div className='space-y-2'>
+                      <Label htmlFor='state'>Estado</Label>
+                      <Input id='state' name='state' defaultValue={unit?.propertyInfo.state} />
+                    </div>
+                     <div className='space-y-2'>
+                      <Label htmlFor='country'>País</Label>
+                      <Input id='country' name='country' defaultValue={unit?.propertyInfo.country} />
+                    </div>
+                     <div className='space-y-2'>
+                      <Label htmlFor='totalArea'>Área Total</Label>
+                      <Input id='totalArea' name='totalArea' defaultValue={unit?.propertyInfo.totalArea} />
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='builtArea'>Área Construída</Label>
+                      <Input id='builtArea' name='builtArea' defaultValue={unit?.propertyInfo.builtArea} />
+                    </div>
+                  </div>
+                </fieldset>
+
+                {/* Responsibles */}
+                <fieldset className='grid gap-4 rounded-lg border p-4'>
+                  <legend className='-ml-1 px-1 text-sm font-medium'>
+                    Responsáveis
+                  </legend>
+                  <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                    <div className='space-y-2'>
+                      <Label htmlFor='legalResponsible'>
+                        Responsável Legal
+                      </Label>
+                      <Input
+                        id='legalResponsible'
+                        name='legalResponsible'
+                        defaultValue={unit?.legalResponsible}
+                      />
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='pgrResponsible'>
+                        Responsável pelo PGR
+                      </Label>
+                      <Input
+                        id='pgrResponsible'
+                        name='pgrResponsible'
+                        defaultValue={unit?.pgrResponsible}
+                      />
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='ltcatResponsible'>
+                        Responsável pelo LTCAT
+                      </Label>
+                      <Input
+                        id='ltcatResponsible'
+                        name='ltcatResponsible'
+                        defaultValue={unit?.ltcatResponsible}
+                      />
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='pcmsoResponsible'>
+                        Responsável pelo PCMSO
+                      </Label>
+                      <Input
+                        id='pcmsoResponsible'
+                        name='pcmsoResponsible'
+                        defaultValue={unit?.pcmsoResponsible}
+                      />
+                    </div>
+                  </div>
+                </fieldset>
               </div>
             </ScrollArea>
           </form>
         ) : (
           <ScrollArea className='h-[60vh] pr-6'>
-            <div className='space-y-4 text-sm py-4'>
-               <div className='space-y-1'>
-                 <Label className='font-semibold'>Tipo</Label>
-                 <p><Badge variant="secondary">{unit?.type}</Badge></p>
-              </div>
-              <div className='space-y-1'>
-                <Label className='font-semibold text-base'>Descrição</Label>
-                <p className='text-muted-foreground'>{unit?.description || '-'}</p>
+            <div className='space-y-6 text-sm py-4'>
+              <div className='space-y-4'>
+                <p>
+                  <span className='font-semibold text-base'>Tipo: </span>
+                  <Badge variant='secondary'>{unit?.type}</Badge>
+                </p>
+                <p>
+                  <span className='font-semibold text-base'>Descrição: </span>
+                  <span className='text-muted-foreground'>
+                    {unit?.description || '-'}
+                  </span>
+                </p>
               </div>
               <Separator />
-              <div className='grid grid-cols-2 gap-4'>
-                <div>
-                  <Label className='font-semibold'>CNPJ</Label>
-                  <p className='text-muted-foreground'>{unit?.cnpj || '-'}</p>
+              <div>
+                <h3 className='font-semibold text-base mb-2'>
+                  Informações Gerais
+                </h3>
+                <div className='grid grid-cols-2 gap-4'>
+                  <div>
+                    <Label className='font-semibold'>CNPJ</Label>
+                    <p className='text-muted-foreground'>{unit?.cnpj || '-'}</p>
+                  </div>
+                  <div>
+                    <Label className='font-semibold'>CNAE</Label>
+                    <p className='text-muted-foreground'>{unit?.cnae || '-'}</p>
+                  </div>
+                  <div>
+                    <Label className='font-semibold'>Grau de Risco</Label>
+                    <p className='text-muted-foreground'>
+                      {unit?.riskLevel || '-'}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <Label className='font-semibold'>Endereço</Label>
-                  <p className='text-muted-foreground'>{unit?.address || '-'}</p>
-                </div>
-                <div>
-                  <Label className='font-semibold'>CNAE</Label>
-                  <p className='text-muted-foreground'>{unit?.cnae || '-'}</p>
-                </div>
-                <div>
-                  <Label className='font-semibold'>Grau de Risco</Label>
-                  <p className='text-muted-foreground'>{unit?.riskLevel || '-'}</p>
+              </div>
+              <Separator />
+              <div>
+                <h3 className='font-semibold text-base mb-2'>
+                  Informações do Imóvel
+                </h3>
+                <div className='grid grid-cols-2 gap-4'>
+                  <div className='col-span-2'>
+                    <Label className='font-semibold'>Endereço Completo</Label>
+                    <p className='text-muted-foreground'>
+                      {unit?.propertyInfo.address || '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className='font-semibold'>CEP</Label>
+                    <p className='text-muted-foreground'>
+                      {unit?.propertyInfo.zipCode || '-'}
+                    </p>
+                  </div>
+                   <div>
+                    <Label className='font-semibold'>Bairro</Label>
+                    <p className='text-muted-foreground'>
+                      {unit?.propertyInfo.neighborhood || '-'}
+                    </p>
+                  </div>
+                   <div>
+                    <Label className='font-semibold'>Cidade</Label>
+                    <p className='text-muted-foreground'>
+                      {unit?.propertyInfo.city || '-'}
+                    </p>
+                  </div>
+                   <div>
+                    <Label className='font-semibold'>Estado</Label>
+                    <p className='text-muted-foreground'>
+                      {unit?.propertyInfo.state || '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className='font-semibold'>Área Total</Label>
+                    <p className='text-muted-foreground'>
+                      {unit?.propertyInfo.totalArea || '-'}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className='font-semibold'>Área Construída</Label>
+                    <p className='text-muted-foreground'>
+                      {unit?.propertyInfo.builtArea || '-'}
+                    </p>
+                  </div>
                 </div>
               </div>
               <Separator />
@@ -218,19 +387,31 @@ function UnitDetailDialog({
                 <div className='grid grid-cols-2 gap-4'>
                   <div>
                     <Label className='font-semibold'>Responsável Legal</Label>
-                    <p className='text-muted-foreground'>{unit?.legalResponsible || '-'}</p>
+                    <p className='text-muted-foreground'>
+                      {unit?.legalResponsible || '-'}
+                    </p>
                   </div>
                   <div>
                     <Label className='font-semibold'>Responsável pelo PGR</Label>
-                    <p className='text-muted-foreground'>{unit?.pgrResponsible || '-'}</p>
+                    <p className='text-muted-foreground'>
+                      {unit?.pgrResponsible || '-'}
+                    </p>
                   </div>
                   <div>
-                    <Label className='font-semibold'>Responsável pelo LTCAT</Label>
-                    <p className='text-muted-foreground'>{unit?.ltcatResponsible || '-'}</p>
+                    <Label className='font-semibold'>
+                      Responsável pelo LTCAT
+                    </Label>
+                    <p className='text-muted-foreground'>
+                      {unit?.ltcatResponsible || '-'}
+                    </p>
                   </div>
                   <div>
-                    <Label className='font-semibold'>Responsável pelo PCMSO</Label>
-                    <p className='text-muted-foreground'>{unit?.pcmsoResponsible || '-'}</p>
+                    <Label className='font-semibold'>
+                      Responsável pelo PCMSO
+                    </Label>
+                    <p className='text-muted-foreground'>
+                      {unit?.pcmsoResponsible || '-'}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -282,7 +463,16 @@ export default function UnitsPage() {
     type: 'Unidade',
     description: '',
     cnpj: '',
-    address: '',
+    propertyInfo: {
+      address: '',
+      zipCode: '',
+      neighborhood: '',
+      city: '',
+      state: '',
+      country: 'Brasil',
+      totalArea: '',
+      builtArea: '',
+    },
     cnae: '',
     riskLevel: '',
     legalResponsible: '',
@@ -297,7 +487,16 @@ export default function UnitsPage() {
       type: 'Unidade',
       description: '',
       cnpj: '',
-      address: '',
+      propertyInfo: {
+        address: '',
+        zipCode: '',
+        neighborhood: '',
+        city: '',
+        state: '',
+        country: 'Brasil',
+        totalArea: '',
+        builtArea: '',
+      },
       cnae: '',
       riskLevel: '',
       legalResponsible: '',
@@ -316,7 +515,10 @@ export default function UnitsPage() {
           name: '',
           type: prev.type,
           cnpj: client.cnpj,
-          address: client.address,
+          propertyInfo: {
+            ...prev.propertyInfo,
+            address: client.address, // Note: client has only one address field
+          },
           cnae: client.cnae,
           riskLevel: client.riskLevel,
         }))
@@ -390,7 +592,9 @@ export default function UnitsPage() {
               </DialogTrigger>
               <DialogContent className='sm:max-w-2xl'>
                 <DialogHeader>
-                  <DialogTitle>Adicionar Nova Unidade/Obra/Contrato</DialogTitle>
+                  <DialogTitle>
+                    Adicionar Nova Unidade/Obra/Contrato
+                  </DialogTitle>
                   <DialogDescription>
                     Preencha os detalhes da nova estrutura.
                   </DialogDescription>
@@ -465,65 +669,89 @@ export default function UnitsPage() {
                         />
                       </div>
 
-                      <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                      {/* Property Info */}
+                      <fieldset className='grid gap-4 rounded-lg border p-4'>
+                        <legend className='-ml-1 px-1 text-sm font-medium'>
+                          Informações do Imóvel
+                        </legend>
                         <div className='space-y-2'>
-                          <Label htmlFor='cnpj'>CNPJ</Label>
+                          <Label htmlFor='add-address'>
+                            Endereço Completo
+                          </Label>
                           <Input
-                            id='cnpj'
-                            name='cnpj'
-                            value={formState.cnpj}
-                            onChange={(e) =>
-                              setFormState((prev) => ({
-                                ...prev,
-                                cnpj: e.target.value,
-                              }))
-                            }
-                          />
-                        </div>
-                        <div className='space-y-2'>
-                          <Label htmlFor='address'>Endereço</Label>
-                          <Input
-                            id='address'
+                            id='add-address'
                             name='address'
-                            value={formState.address}
-                            onChange={(e) =>
-                              setFormState((prev) => ({
-                                ...prev,
-                                address: e.target.value,
-                              }))
-                            }
+                            value={formState.propertyInfo.address}
+                             onChange={(e) => setFormState(prev => ({...prev, propertyInfo: {...prev.propertyInfo, address: e.target.value}}))}
                             required
                           />
                         </div>
-                        <div className='space-y-2'>
-                          <Label htmlFor='cnae'>CNAE</Label>
-                          <Input
-                            id='cnae'
-                            name='cnae'
-                            value={formState.cnae}
-                            onChange={(e) =>
-                              setFormState((prev) => ({
-                                ...prev,
-                                cnae: e.target.value,
-                              }))
-                            }
-                          />
+                        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                          <div className='space-y-2'>
+                            <Label htmlFor='add-zipCode'>CEP</Label>
+                            <Input
+                              id='add-zipCode'
+                              name='zipCode'
+                              value={formState.propertyInfo.zipCode}
+                              onChange={(e) => setFormState(prev => ({...prev, propertyInfo: {...prev.propertyInfo, zipCode: e.target.value}}))}
+                            />
+                          </div>
+                          <div className='space-y-2'>
+                            <Label htmlFor='add-neighborhood'>Bairro</Label>
+                            <Input
+                              id='add-neighborhood'
+                              name='neighborhood'
+                              value={formState.propertyInfo.neighborhood}
+                              onChange={(e) => setFormState(prev => ({...prev, propertyInfo: {...prev.propertyInfo, neighborhood: e.target.value}}))}
+                            />
+                          </div>
+                          <div className='space-y-2'>
+                            <Label htmlFor='add-city'>Cidade</Label>
+                            <Input
+                              id='add-city'
+                              name='city'
+                              value={formState.propertyInfo.city}
+                              onChange={(e) => setFormState(prev => ({...prev, propertyInfo: {...prev.propertyInfo, city: e.target.value}}))}
+                            />
+                          </div>
+                          <div className='space-y-2'>
+                            <Label htmlFor='add-state'>Estado</Label>
+                            <Input
+                              id='add-state'
+                              name='state'
+                              value={formState.propertyInfo.state}
+                              onChange={(e) => setFormState(prev => ({...prev, propertyInfo: {...prev.propertyInfo, state: e.target.value}}))}
+                            />
+                          </div>
+                          <div className='space-y-2'>
+                            <Label htmlFor='add-country'>País</Label>
+                            <Input
+                              id='add-country'
+                              name='country'
+                              value={formState.propertyInfo.country}
+                              onChange={(e) => setFormState(prev => ({...prev, propertyInfo: {...prev.propertyInfo, country: e.target.value}}))}
+                            />
+                          </div>
+                           <div className='space-y-2'>
+                            <Label htmlFor='add-totalArea'>Área Total</Label>
+                            <Input
+                              id='add-totalArea'
+                              name='totalArea'
+                              value={formState.propertyInfo.totalArea}
+                              onChange={(e) => setFormState(prev => ({...prev, propertyInfo: {...prev.propertyInfo, totalArea: e.target.value}}))}
+                            />
+                          </div>
+                          <div className='space-y-2'>
+                            <Label htmlFor='add-builtArea'>Área Construída</Label>
+                            <Input
+                              id='add-builtArea'
+                              name='builtArea'
+                              value={formState.propertyInfo.builtArea}
+                              onChange={(e) => setFormState(prev => ({...prev, propertyInfo: {...prev.propertyInfo, builtArea: e.target.value}}))}
+                            />
+                          </div>
                         </div>
-                        <div className='space-y-2'>
-                          <Label htmlFor='riskLevel'>Grau de Risco</Label>
-                          <Input
-                            id='riskLevel'
-                            name='riskLevel'
-                            value={formState.riskLevel}
-                            onChange={(e) =>
-                              setFormState((prev) => ({
-                                ...prev,
-                                riskLevel: e.target.value,
-                              }))
-                            }
-                          />
-                        </div>
-                      </div>
+                      </fieldset>
 
                       <div className='space-y-4 pt-4 border-t'>
                         <h3 className='font-medium text-lg'>Responsáveis</h3>
@@ -634,7 +862,7 @@ export default function UnitsPage() {
                         <CardTitle>{unit.name}</CardTitle>
                         <Badge variant='outline'>{unit.type}</Badge>
                       </div>
-                      <CardDescription>{unit.address}</CardDescription>
+                      <CardDescription>{unit.propertyInfo.address}</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <p className='text-sm text-muted-foreground'>

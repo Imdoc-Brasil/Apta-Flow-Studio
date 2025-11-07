@@ -1,5 +1,16 @@
 export type UnitType = 'Unidade' | 'Obra' | 'Contrato'
 
+export interface PropertyInfo {
+  address: string
+  zipCode: string
+  neighborhood: string
+  city: string
+  state: string
+  country: string
+  totalArea: string
+  builtArea: string
+}
+
 export const initialUnitsData = [
   {
     id: 'UNIT-001',
@@ -7,7 +18,16 @@ export const initialUnitsData = [
     type: 'Unidade' as UnitType,
     description: 'Sede administrativa e operações centrais.',
     cnpj: '12.345.678/0001-99',
-    address: '123 Tech Avenue, Silicon Valley, CA',
+    propertyInfo: {
+      address: 'Rua das Flores, 123, Sala 101',
+      zipCode: '01234-567',
+      neighborhood: 'Centro',
+      city: 'São Paulo',
+      state: 'SP',
+      country: 'Brasil',
+      totalArea: '1000m²',
+      builtArea: '800m²',
+    },
     status: 'Ativa',
     cnae: '62.01-5-01',
     riskLevel: '3',
@@ -22,7 +42,16 @@ export const initialUnitsData = [
     type: 'Unidade' as UnitType,
     description: 'Foco em vendas e suporte ao cliente regional.',
     cnpj: '12.345.678/0002-88',
-    address: '456 Ocean Drive, Rio de Janeiro, RJ',
+    propertyInfo: {
+      address: 'Avenida Atlântica, 456',
+      zipCode: '22070-002',
+      neighborhood: 'Copacabana',
+      city: 'Rio de Janeiro',
+      state: 'RJ',
+      country: 'Brasil',
+      totalArea: '500m²',
+      builtArea: '400m²',
+    },
     status: 'Ativa',
     cnae: '62.01-5-01',
     riskLevel: '3',
@@ -37,7 +66,16 @@ export const initialUnitsData = [
     type: 'Obra' as UnitType,
     description: 'Construção do novo centro comercial na Av. Paulista.',
     cnpj: '12.345.678/0001-99', // CNPJ da Matriz
-    address: 'Av. Paulista, 1000, São Paulo, SP',
+    propertyInfo: {
+      address: 'Av. Paulista, 1000',
+      zipCode: '01310-100',
+      neighborhood: 'Bela Vista',
+      city: 'São Paulo',
+      state: 'SP',
+      country: 'Brasil',
+      totalArea: '5000m²',
+      builtArea: '20000m² (em construção)',
+    },
     status: 'Ativa',
     cnae: '41.20-4-00',
     riskLevel: '4',

@@ -9,7 +9,7 @@ export const initialClientsData = [
     cnae: '62.01-5-01',
     riskLevel: '3',
     contact: 'contact@innovateinc.com',
-    address: '123 Tech Avenue, Silicon Valley, CA',
+    address: 'Rua das Flores, 123, Sala 101, Centro, São Paulo, SP, 01234-567',
   },
   {
     contractId: 'CTR-2024-002',
