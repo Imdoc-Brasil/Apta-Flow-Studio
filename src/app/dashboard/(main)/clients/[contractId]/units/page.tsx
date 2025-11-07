@@ -47,6 +47,7 @@ import { Textarea } from '@/components/ui/textarea'
 import Link from 'next/link'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { initialUnitsData, type Unit } from './data'
+import { Separator } from '@/components/ui/separator'
 
 const getClientById = (contractId: string) => {
   return initialClientsData.find((client) => client.contractId === contractId)
@@ -165,98 +166,6 @@ export default function UnitsPage() {
       return matchesSearch && matchesStatus
     })
   }, [units, searchTerm, statusFilter])
-
-  const renderUnitForm = (unit: Unit | null) => (
-    <ScrollArea className='h-[60vh] pr-6'>
-      <div className='grid gap-4 py-4'>
-        <div className='space-y-2'>
-          <Label htmlFor='name'>Nome</Label>
-          <Input id='name' name='name' defaultValue={unit?.name} required disabled={!isEditing} />
-        </div>
-        <div className='space-y-2'>
-          <Label htmlFor='description'>Descrição</Label>
-          <Textarea
-            id='description'
-            name='description'
-            defaultValue={unit?.description}
-            disabled={!isEditing}
-          />
-        </div>
-
-        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-          <div className='space-y-2'>
-            <Label htmlFor='cnpj'>CNPJ</Label>
-            <Input id='cnpj' name='cnpj' defaultValue={unit?.cnpj} disabled={!isEditing} />
-          </div>
-          <div className='space-y-2'>
-            <Label htmlFor='address'>Endereço</Label>
-            <Input
-              id='address'
-              name='address'
-              defaultValue={unit?.address}
-              required
-              disabled={!isEditing}
-            />
-          </div>
-          <div className='space-y-2'>
-            <Label htmlFor='cnae'>CNAE</Label>
-            <Input id='cnae' name='cnae' defaultValue={unit?.cnae} disabled={!isEditing} />
-          </div>
-          <div className='space-y-2'>
-            <Label htmlFor='riskLevel'>Grau de Risco</Label>
-            <Input
-              id='riskLevel'
-              name='riskLevel'
-              defaultValue={unit?.riskLevel}
-              disabled={!isEditing}
-            />
-          </div>
-        </div>
-
-        <div className='space-y-4 pt-4 border-t'>
-          <h3 className='font-medium text-lg'>Responsáveis</h3>
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-            <div className='space-y-2'>
-              <Label htmlFor='legalResponsible'>Responsável Legal</Label>
-              <Input
-                id='legalResponsible'
-                name='legalResponsible'
-                defaultValue={unit?.legalResponsible}
-                disabled={!isEditing}
-              />
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='pgrResponsible'>Responsável pelo PGR</Label>
-              <Input
-                id='pgrResponsible'
-                name='pgrResponsible'
-                defaultValue={unit?.pgrResponsible}
-                disabled={!isEditing}
-              />
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='ltcatResponsible'>Responsável pelo LTCAT</Label>
-              <Input
-                id='ltcatResponsible'
-                name='ltcatResponsible'
-                defaultValue={unit?.ltcatResponsible}
-                disabled={!isEditing}
-              />
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='pcmsoResponsible'>Responsável pelo PCMSO</Label>
-              <Input
-                id='pcmsoResponsible'
-                name='pcmsoResponsible'
-                defaultValue={unit?.pcmsoResponsible}
-                disabled={!isEditing}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    </ScrollArea>
-  )
 
   return (
     <>
@@ -564,12 +473,120 @@ export default function UnitsPage() {
                 : 'Visualize os detalhes da unidade.'}
             </DialogDescription>
           </DialogHeader>
-          <form
-            id={`update-unit-form-${currentUnit?.id}`}
-            onSubmit={handleUpdateUnit}
-          >
-            {renderUnitForm(currentUnit)}
-          </form>
+
+          {isEditing ? (
+            <form
+              id={`update-unit-form-${currentUnit?.id}`}
+              onSubmit={handleUpdateUnit}
+            >
+              <ScrollArea className='h-[60vh] pr-6'>
+                <div className='grid gap-4 py-4'>
+                  <div className='space-y-2'>
+                    <Label htmlFor='name'>Nome</Label>
+                    <Input id='name' name='name' defaultValue={currentUnit?.name} required />
+                  </div>
+                  <div className='space-y-2'>
+                    <Label htmlFor='description'>Descrição</Label>
+                    <Textarea
+                      id='description'
+                      name='description'
+                      defaultValue={currentUnit?.description}
+                    />
+                  </div>
+                  <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                    <div className='space-y-2'>
+                      <Label htmlFor='cnpj'>CNPJ</Label>
+                      <Input id='cnpj' name='cnpj' defaultValue={currentUnit?.cnpj} />
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='address'>Endereço</Label>
+                      <Input id='address' name='address' defaultValue={currentUnit?.address} required />
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='cnae'>CNAE</Label>
+                      <Input id='cnae' name='cnae' defaultValue={currentUnit?.cnae} />
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='riskLevel'>Grau de Risco</Label>
+                      <Input id='riskLevel' name='riskLevel' defaultValue={currentUnit?.riskLevel} />
+                    </div>
+                  </div>
+                  <div className='space-y-4 pt-4 border-t'>
+                    <h3 className='font-medium text-lg'>Responsáveis</h3>
+                    <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                      <div className='space-y-2'>
+                        <Label htmlFor='legalResponsible'>Responsável Legal</Label>
+                        <Input id='legalResponsible' name='legalResponsible' defaultValue={currentUnit?.legalResponsible} />
+                      </div>
+                      <div className='space-y-2'>
+                        <Label htmlFor='pgrResponsible'>Responsável pelo PGR</Label>
+                        <Input id='pgrResponsible' name='pgrResponsible' defaultValue={currentUnit?.pgrResponsible} />
+                      </div>
+                      <div className='space-y-2'>
+                        <Label htmlFor='ltcatResponsible'>Responsável pelo LTCAT</Label>
+                        <Input id='ltcatResponsible' name='ltcatResponsible' defaultValue={currentUnit?.ltcatResponsible} />
+                      </div>
+                      <div className='space-y-2'>
+                        <Label htmlFor='pcmsoResponsible'>Responsável pelo PCMSO</Label>
+                        <Input id='pcmsoResponsible' name='pcmsoResponsible' defaultValue={currentUnit?.pcmsoResponsible} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </ScrollArea>
+            </form>
+          ) : (
+             <ScrollArea className='h-[60vh] pr-6'>
+                <div className='space-y-4 text-sm'>
+                  <div>
+                    <Label className='font-semibold'>Descrição</Label>
+                    <p className='text-muted-foreground'>{currentUnit?.description || '-'}</p>
+                  </div>
+                  <Separator/>
+                   <div className='grid grid-cols-2 gap-4'>
+                      <div>
+                        <Label className='font-semibold'>CNPJ</Label>
+                        <p className='text-muted-foreground'>{currentUnit?.cnpj || '-'}</p>
+                      </div>
+                       <div>
+                        <Label className='font-semibold'>Endereço</Label>
+                        <p className='text-muted-foreground'>{currentUnit?.address || '-'}</p>
+                      </div>
+                       <div>
+                        <Label className='font-semibold'>CNAE</Label>
+                        <p className='text-muted-foreground'>{currentUnit?.cnae || '-'}</p>
+                      </div>
+                       <div>
+                        <Label className='font-semibold'>Grau de Risco</Label>
+                        <p className='text-muted-foreground'>{currentUnit?.riskLevel || '-'}</p>
+                      </div>
+                   </div>
+                   <Separator/>
+                    <div>
+                        <h3 className='font-semibold text-base mb-2'>Responsáveis</h3>
+                        <div className='grid grid-cols-2 gap-4'>
+                             <div>
+                                <Label className='font-semibold'>Responsável Legal</Label>
+                                <p className='text-muted-foreground'>{currentUnit?.legalResponsible || '-'}</p>
+                             </div>
+                             <div>
+                                <Label className='font-semibold'>Responsável pelo PGR</Label>
+                                <p className='text-muted-foreground'>{currentUnit?.pgrResponsible || '-'}</p>
+                             </div>
+                              <div>
+                                <Label className='font-semibold'>Responsável pelo LTCAT</Label>
+                                <p className='text-muted-foreground'>{currentUnit?.ltcatResponsible || '-'}</p>
+                             </div>
+                              <div>
+                                <Label className='font-semibold'>Responsável pelo PCMSO</Label>
+                                <p className='text-muted-foreground'>{currentUnit?.pcmsoResponsible || '-'}</p>
+                             </div>
+                        </div>
+                    </div>
+                </div>
+            </ScrollArea>
+          )}
+
           <DialogFooter>
             {isEditing ? (
               <>
