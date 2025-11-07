@@ -93,7 +93,8 @@ export default function UnitsPage() {
     })
     setInheritData(false)
   }
-  
+
+  // Load data into form when opening Add Dialog
   useEffect(() => {
     if (isAddDialogOpen) {
       if (client && inheritData) {
@@ -111,6 +112,7 @@ export default function UnitsPage() {
     }
   }, [isAddDialogOpen, inheritData, client])
 
+  // Load data into form when opening Detail/Edit Dialog
   useEffect(() => {
     if (currentUnit) {
       setFormState(currentUnit)
@@ -118,7 +120,6 @@ export default function UnitsPage() {
       resetFormState()
     }
   }, [currentUnit])
-
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -148,7 +149,7 @@ export default function UnitsPage() {
     )
     setIsEditing(false)
   }
-  
+
   const openDetailDialog = (unit: Unit) => {
     setCurrentUnit(unit)
     setIsDetailOpen(true)
@@ -165,7 +166,10 @@ export default function UnitsPage() {
     })
   }, [units, searchTerm, statusFilter])
 
-  const renderUnitForm = (isEditing: boolean, isForAddDialog: boolean = false) => (
+  const renderUnitForm = (
+    isEditing: boolean,
+    isForAddDialog: boolean = false
+  ) => (
     <ScrollArea className='h-[60vh] pr-6'>
       <div className='grid gap-4 py-4'>
         {isForAddDialog && (
@@ -351,29 +355,35 @@ export default function UnitsPage() {
           {filteredUnits.length > 0 ? (
             <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
               {filteredUnits.map((unit) => (
-                  <Card key={unit.id} className='flex flex-col hover:shadow-md transition-shadow'>
-                      <div className='flex-grow cursor-pointer' onClick={() => openDetailDialog(unit)}>
-                        <CardHeader>
-                          <CardTitle>{unit.name}</CardTitle>
-                          <CardDescription>{unit.address}</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <p className='text-sm text-muted-foreground'>
-                            {unit.description}
-                          </p>
-                        </CardContent>
-                      </div>
-                    <CardFooter>
-                      <Button asChild className='w-full' variant='outline'>
-                        <Link
-                          href={`/dashboard/clients/${contractId}/sectors?unitId=${unit.id}`}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          Ver Setores <ArrowRight className='ml-2 h-4 w-4' />
-                        </Link>
-                      </Button>
-                    </CardFooter>
-                  </Card>
+                <Card
+                  key={unit.id}
+                  className='flex flex-col hover:shadow-md transition-shadow'
+                >
+                  <div
+                    className='flex-grow cursor-pointer'
+                    onClick={() => openDetailDialog(unit)}
+                  >
+                    <CardHeader>
+                      <CardTitle>{unit.name}</CardTitle>
+                      <CardDescription>{unit.address}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className='text-sm text-muted-foreground'>
+                        {unit.description}
+                      </p>
+                    </CardContent>
+                  </div>
+                  <CardFooter>
+                    <Button asChild className='w-full' variant='outline'>
+                      <Link
+                        href={`/dashboard/clients/${contractId}/sectors?unitId=${unit.id}`}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Ver Setores <ArrowRight className='ml-2 h-4 w-4' />
+                      </Link>
+                    </Button>
+                  </CardFooter>
+                </Card>
               ))}
             </div>
           ) : (
@@ -385,7 +395,10 @@ export default function UnitsPage() {
                 <p className='text-sm text-muted-foreground'>
                   Ajuste seus filtros ou adicione uma nova unidade.
                 </p>
-                <Button className='mt-4' onClick={() => setIsAddDialogOpen(true)}>
+                <Button
+                  className='mt-4'
+                  onClick={() => setIsAddDialogOpen(true)}
+                >
                   Adicionar Unidade
                 </Button>
               </div>
@@ -393,41 +406,65 @@ export default function UnitsPage() {
           )}
         </CardContent>
       </Card>
-      
-       {/* Detail/Edit Dialog */}
-       <Dialog open={isDetailOpen} onOpenChange={(isOpen) => {
-           if (!isOpen) {
-               setIsDetailOpen(false)
-               setIsEditing(false)
-               setCurrentUnit(null)
-           } else {
-               setIsDetailOpen(true)
-           }
-       }}>
-          <DialogContent className='sm:max-w-2xl'>
-            <DialogHeader>
-              <DialogTitle>{isEditing ? "Editar" : "Detalhes da"} Unidade</DialogTitle>
-              <DialogDescription>
-                {isEditing ? "Atualize os detalhes da unidade." : "Visualize os detalhes da unidade."}
-              </DialogDescription>
-            </DialogHeader>
-            <form id={`update-unit-form-${currentUnit?.id}`} onSubmit={handleUpdateUnit}>
-              {renderUnitForm(isEditing)}
-            </form>
-            <DialogFooter>
-                {isEditing ? (
-                    <>
-                        <Button variant='outline' onClick={() => setIsEditing(false)}>Cancelar</Button>
-                        <Button type='submit' form={`update-unit-form-${currentUnit?.id}`}>Salvar Alterações</Button>
-                    </>
-                ) : (
-                    <>
-                        <Button variant='outline' onClick={() => setIsDetailOpen(false)}>Fechar</Button>
-                        <Button onClick={() => setIsEditing(true)}><Pencil className='mr-2 h-4 w-4'/> Editar</Button>
-                    </>
-                )}
-            </DialogFooter>
-          </DialogContent>
+
+      {/* Detail/Edit Dialog */}
+      <Dialog
+        open={isDetailOpen}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setIsDetailOpen(false)
+            setIsEditing(false)
+            setCurrentUnit(null)
+          } else {
+            setIsDetailOpen(true)
+          }
+        }}
+      >
+        <DialogContent className='sm:max-w-2xl'>
+          <DialogHeader>
+            <DialogTitle>
+              {isEditing ? 'Editar' : 'Detalhes da'} Unidade
+            </DialogTitle>
+            <DialogDescription>
+              {isEditing
+                ? 'Atualize os detalhes da unidade.'
+                : 'Visualize os detalhes da unidade.'}
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            id={`update-unit-form-${currentUnit?.id}`}
+            onSubmit={handleUpdateUnit}
+          >
+            {renderUnitForm(isEditing)}
+          </form>
+          <DialogFooter>
+            {isEditing ? (
+              <>
+                <Button variant='outline' onClick={() => setIsEditing(false)}>
+                  Cancelar
+                </Button>
+                <Button
+                  type='submit'
+                  form={`update-unit-form-${currentUnit?.id}`}
+                >
+                  Salvar Alterações
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  variant='outline'
+                  onClick={() => setIsDetailOpen(false)}
+                >
+                  Fechar
+                </Button>
+                <Button onClick={() => setIsEditing(true)}>
+                  <Pencil className='mr-2 h-4 w-4' /> Editar
+                </Button>
+              </>
+            )}
+          </DialogFooter>
+        </DialogContent>
       </Dialog>
     </>
   )
