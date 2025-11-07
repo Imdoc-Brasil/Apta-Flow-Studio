@@ -445,9 +445,9 @@ export default function UnitsPage() {
                   <CardFooter>
                     <Button asChild className='w-full' variant='outline'>
                       <Link
-                        href={`/dashboard/clients/${contractId}/sectors?unitId=${unit.id}`}
+                        href={`/dashboard/clients/${contractId}/units/${unit.id}`}
                       >
-                        Gerenciar Setores <ArrowRight className='ml-2 h-4 w-4' />
+                        Gerenciar Unidade <ArrowRight className='ml-2 h-4 w-4' />
                       </Link>
                     </Button>
                   </CardFooter>
