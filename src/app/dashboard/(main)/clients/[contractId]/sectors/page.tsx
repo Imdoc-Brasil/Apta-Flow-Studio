@@ -56,6 +56,13 @@ import { initialSectorsData, type Sector } from './data'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import { useToast } from '@/hooks/use-toast'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 export default function SectorsPage() {
   const params = useParams()
@@ -67,7 +74,7 @@ export default function SectorsPage() {
 
   const [sectors, setSectors] = useState(initialSectorsData)
   const [isAddSectorDialogOpen, setIsAddSectorDialogOpen] = useState(false)
-  
+
   const [searchTerm, setSearchTerm] = useState('')
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
   const [unitFilter, setUnitFilter] = useState<string[]>(
@@ -123,13 +130,18 @@ export default function SectorsPage() {
     <div className='grid gap-4 py-4'>
       <div className='space-y-2'>
         <Label htmlFor='unitId'>Unidade</Label>
-        <Input
-          id='unitId'
-          name='unitId'
-          readOnly
-          defaultValue={getUnitName(urlUnitId || '')}
-        />
-        <input type='hidden' name='unitId' value={urlUnitId || ''} />
+        <Select name='unitId' defaultValue={urlUnitId || ''} required>
+          <SelectTrigger>
+            <SelectValue placeholder='Selecione a unidade' />
+          </SelectTrigger>
+          <SelectContent>
+            {initialUnitsData.map((unit) => (
+              <SelectItem key={unit.id} value={unit.id}>
+                {unit.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <div className='space-y-2'>
         <Label htmlFor='name'>Nome do Setor</Label>
@@ -137,10 +149,7 @@ export default function SectorsPage() {
       </div>
       <div className='space-y-2'>
         <Label htmlFor='description'>Descrição</Label>
-        <Textarea
-          id='description'
-          name='description'
-        />
+        <Textarea id='description' name='description' />
       </div>
     </div>
   )
@@ -181,11 +190,7 @@ export default function SectorsPage() {
                 onOpenChange={setIsAddSectorDialogOpen}
               >
                 <DialogTrigger asChild>
-                  <Button
-                    size='sm'
-                    className='h-8 gap-1'
-                    disabled={!urlUnitId}
-                  >
+                  <Button size='sm' className='h-8 gap-1'>
                     <PlusCircle className='h-3.5 w-3.5' />
                     <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
                       Adicionar Setor
@@ -259,7 +264,11 @@ export default function SectorsPage() {
               {filteredSectors.map((sector) => (
                 <Card
                   key={sector.id}
-                  onClick={() => router.push(`/dashboard/clients/${contractId}/sectors/${sector.id}`)}
+                  onClick={() =>
+                    router.push(
+                      `/dashboard/clients/${contractId}/sectors/${sector.id}`
+                    )
+                  }
                   className='flex flex-col h-full hover:shadow-md transition-shadow cursor-pointer'
                 >
                   <CardHeader>
@@ -276,7 +285,12 @@ export default function SectorsPage() {
                     </p>
                   </CardContent>
                   <CardFooter className='flex-col lg:flex-row items-center gap-2'>
-                    <Button asChild className='w-full' variant='outline' size='sm'>
+                    <Button
+                      asChild
+                      className='w-full'
+                      variant='outline'
+                      size='sm'
+                    >
                       <Link
                         href={`/dashboard/clients/${contractId}/roles?sectorId=${sector.id}`}
                         onClick={(e) => e.stopPropagation()}
@@ -284,7 +298,12 @@ export default function SectorsPage() {
                         Ver Cargos <ArrowRight className='ml-2 h-4 w-4' />
                       </Link>
                     </Button>
-                     <Button asChild className='w-full' variant='outline' size='sm'>
+                    <Button
+                      asChild
+                      className='w-full'
+                      variant='outline'
+                      size='sm'
+                    >
                       <Link
                         href={`/dashboard/clients/${contractId}/environments?sectorId=${sector.id}`}
                         onClick={(e) => e.stopPropagation()}
@@ -314,7 +333,15 @@ export default function SectorsPage() {
               </TableHeader>
               <TableBody>
                 {filteredSectors.map((sector) => (
-                   <TableRow key={sector.id} onClick={() => router.push(`/dashboard/clients/${contractId}/sectors/${sector.id}`)} className='cursor-pointer'>
+                  <TableRow
+                    key={sector.id}
+                    onClick={() =>
+                      router.push(
+                        `/dashboard/clients/${contractId}/sectors/${sector.id}`
+                      )
+                    }
+                    className='cursor-pointer'
+                  >
                     <TableCell>
                       <div className='font-medium'>{sector.name}</div>
                       <div className='hidden text-sm text-muted-foreground md:inline'>
@@ -354,7 +381,6 @@ export default function SectorsPage() {
                 <Button
                   className='mt-4'
                   onClick={() => setIsAddSectorDialogOpen(true)}
-                  disabled={!urlUnitId}
                 >
                   Adicionar Setor
                 </Button>
