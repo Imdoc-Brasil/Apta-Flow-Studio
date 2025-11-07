@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { MoreHorizontal, PlusCircle, Search } from 'lucide-react'
+import { MoreHorizontal, PlusCircle, Search, Trash2 } from 'lucide-react'
 import {
   Card,
   CardContent,
@@ -52,6 +52,8 @@ export default function RolesPage() {
   const [roles, setRoles] = useState(initialRolesData)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
+  const [formActivities, setFormActivities] = useState<string[]>([])
+  const [activityInput, setActivityInput] = useState('')
   const { toast } = useToast()
 
   const sectorsWithUnit = useMemo(() => {
@@ -73,6 +75,17 @@ export default function RolesPage() {
     )
   }, [roles, searchTerm])
 
+  const handleAddActivity = () => {
+    if (activityInput.trim() && !formActivities.includes(activityInput.trim())) {
+      setFormActivities([...formActivities, activityInput.trim()])
+      setActivityInput('')
+    }
+  }
+
+  const handleRemoveActivity = (activityToRemove: string) => {
+    setFormActivities(formActivities.filter(activity => activity !== activityToRemove))
+  }
+
   const handleAddRole = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
@@ -86,7 +99,7 @@ export default function RolesPage() {
       cbo: formData.get('cbo') as string,
       sectorId: formData.get('sectorId') as string,
       description: formData.get('description') as string,
-      activities: formData.getAll('activities') as string[],
+      activities: formActivities,
       requirements: formData.get('requirements') as string,
       mainWorkstationId: formData.get('mainWorkstationId') as string,
       additionalWorkstationIds,
@@ -94,6 +107,7 @@ export default function RolesPage() {
     }
     setRoles((prev) => [...prev, newRole])
     setIsAddDialogOpen(false)
+    setFormActivities([])
     toast({
       title: 'Cargo Adicionado!',
       description: `O cargo "${newRole.name}" foi adicionado.`,
@@ -120,7 +134,7 @@ export default function RolesPage() {
           </div>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button size='sm' className='h-8 gap-1'>
+              <Button size='sm' className='h-8 gap-1' onClick={() => setFormActivities([])}>
                 <PlusCircle className='h-3.5 w-3.5' />
                 <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
                   Adicionar Cargo
@@ -215,18 +229,32 @@ export default function RolesPage() {
                     </div>
                     <div className='space-y-2'>
                       <Label htmlFor='activities'>Atividades Principais</Label>
-                       <Select name='activities' multiple>
-                        <SelectTrigger>
-                          <SelectValue placeholder='Selecione as atividades do catálogo' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {initialActivitiesData.map((activity) => (
-                             <SelectItem key={activity.id} value={activity.name}>
-                              {activity.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="flex gap-2">
+                        <Input
+                          id='activities'
+                          name='activities'
+                          value={activityInput}
+                          onChange={(e) => setActivityInput(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault()
+                              handleAddActivity()
+                            }
+                          }}
+                          placeholder='Digite uma atividade e tecle Enter'
+                        />
+                         <Button type="button" onClick={handleAddActivity}>Adicionar</Button>
+                      </div>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {formActivities.map((activity) => (
+                          <Badge key={activity} variant="secondary" className="flex items-center gap-1">
+                            {activity}
+                            <button type="button" onClick={() => handleRemoveActivity(activity)} className="rounded-full hover:bg-background/50">
+                              <Trash2 className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
                     <div className='space-y-2'>
                       <Label htmlFor='requirements'>
