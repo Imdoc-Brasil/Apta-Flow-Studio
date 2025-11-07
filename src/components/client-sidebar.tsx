@@ -1,4 +1,3 @@
-
 'use client'
 
 import Link from 'next/link'
@@ -82,6 +81,11 @@ export function ClientSidebar() {
       href: `${basePath}/activities`,
       label: 'Atividades',
       icon: ClipboardList,
+    },
+    {
+      href: `${basePath}/machines`,
+      label: 'Máquinas e Equipamentos',
+      icon: Factory,
     },
   ]
 
