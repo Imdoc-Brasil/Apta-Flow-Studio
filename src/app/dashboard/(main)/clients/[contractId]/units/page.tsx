@@ -17,6 +17,7 @@ import {
   Search,
   Filter,
   ArrowRight,
+  Pencil,
 } from 'lucide-react'
 import {
   Dialog,
@@ -57,7 +58,9 @@ export default function UnitsPage() {
 
   const [units, setUnits] = useState(initialUnitsData)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [editingUnit, setEditingUnit] = useState<Unit | null>(null)
+  const [isDetailOpen, setIsDetailOpen] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [currentUnit, setCurrentUnit] = useState<Unit | null>(null)
   const [inheritData, setInheritData] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string[]>(['Ativa'])
@@ -109,12 +112,12 @@ export default function UnitsPage() {
   }, [isAddDialogOpen, inheritData, client])
 
   useEffect(() => {
-    if (editingUnit) {
-      setFormState(editingUnit)
+    if (currentUnit) {
+      setFormState(currentUnit)
     } else {
       resetFormState()
     }
-  }, [editingUnit])
+  }, [currentUnit])
 
 
   const handleInputChange = (
@@ -139,15 +142,16 @@ export default function UnitsPage() {
 
   const handleUpdateUnit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!editingUnit) return
+    if (!currentUnit) return
     setUnits((prev) =>
-      prev.map((u) => (u.id === editingUnit.id ? { ...u, ...formState } : u))
+      prev.map((u) => (u.id === currentUnit.id ? { ...u, ...formState } : u))
     )
-    setEditingUnit(null)
+    setIsEditing(false)
   }
   
-  const openEditDialog = (unit: Unit) => {
-    setEditingUnit(unit)
+  const openDetailDialog = (unit: Unit) => {
+    setCurrentUnit(unit)
+    setIsDetailOpen(true)
   }
 
   const filteredUnits = useMemo(() => {
@@ -161,10 +165,10 @@ export default function UnitsPage() {
     })
   }, [units, searchTerm, statusFilter])
 
-  const renderUnitForm = (isEditing: boolean) => (
+  const renderUnitForm = (isEditing: boolean, isForAddDialog: boolean = false) => (
     <ScrollArea className='h-[60vh] pr-6'>
       <div className='grid gap-4 py-4'>
-        {!isEditing && (
+        {isForAddDialog && (
           <div className='flex items-center space-x-2 mb-4'>
             <Checkbox
               id='inherit'
@@ -184,6 +188,7 @@ export default function UnitsPage() {
             name='name'
             value={formState.name}
             onChange={handleInputChange}
+            readOnly={!isEditing}
             required
           />
         </div>
@@ -194,6 +199,7 @@ export default function UnitsPage() {
             name='description'
             value={formState.description}
             onChange={handleInputChange}
+            readOnly={!isEditing}
           />
         </div>
 
@@ -205,6 +211,7 @@ export default function UnitsPage() {
               name='cnpj'
               value={formState.cnpj}
               onChange={handleInputChange}
+              readOnly={!isEditing}
             />
           </div>
           <div className='space-y-2'>
@@ -214,6 +221,7 @@ export default function UnitsPage() {
               name='address'
               value={formState.address}
               onChange={handleInputChange}
+              readOnly={!isEditing}
               required
             />
           </div>
@@ -224,6 +232,7 @@ export default function UnitsPage() {
               name='cnae'
               value={formState.cnae}
               onChange={handleInputChange}
+              readOnly={!isEditing}
             />
           </div>
           <div className='space-y-2'>
@@ -233,6 +242,7 @@ export default function UnitsPage() {
               name='riskLevel'
               value={formState.riskLevel}
               onChange={handleInputChange}
+              readOnly={!isEditing}
             />
           </div>
         </div>
@@ -247,6 +257,7 @@ export default function UnitsPage() {
                 name='legalResponsible'
                 value={formState.legalResponsible}
                 onChange={handleInputChange}
+                readOnly={!isEditing}
               />
             </div>
             <div className='space-y-2'>
@@ -256,6 +267,7 @@ export default function UnitsPage() {
                 name='pgrResponsible'
                 value={formState.pgrResponsible}
                 onChange={handleInputChange}
+                readOnly={!isEditing}
               />
             </div>
             <div className='space-y-2'>
@@ -265,6 +277,7 @@ export default function UnitsPage() {
                 name='ltcatResponsible'
                 value={formState.ltcatResponsible}
                 onChange={handleInputChange}
+                readOnly={!isEditing}
               />
             </div>
             <div className='space-y-2'>
@@ -274,6 +287,7 @@ export default function UnitsPage() {
                 name='pcmsoResponsible'
                 value={formState.pcmsoResponsible}
                 onChange={handleInputChange}
+                readOnly={!isEditing}
               />
             </div>
           </div>
@@ -311,7 +325,7 @@ export default function UnitsPage() {
                   </DialogDescription>
                 </DialogHeader>
                 <form id='add-unit-form' onSubmit={handleAddUnit}>
-                  {renderUnitForm(false)}
+                  {renderUnitForm(true, true)}
                 </form>
                 <DialogFooter>
                   <Button
@@ -337,10 +351,8 @@ export default function UnitsPage() {
           {filteredUnits.length > 0 ? (
             <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
               {filteredUnits.map((unit) => (
-                <Dialog key={unit.id} onOpenChange={(isOpen) => !isOpen && setEditingUnit(null)}>
-                  <Card className='flex flex-col hover:shadow-md transition-shadow'>
-                    <DialogTrigger asChild>
-                       <div className='flex-grow cursor-pointer' onClick={() => openEditDialog(unit)}>
+                  <Card key={unit.id} className='flex flex-col hover:shadow-md transition-shadow'>
+                      <div className='flex-grow cursor-pointer' onClick={() => openDetailDialog(unit)}>
                         <CardHeader>
                           <CardTitle>{unit.name}</CardTitle>
                           <CardDescription>{unit.address}</CardDescription>
@@ -351,7 +363,6 @@ export default function UnitsPage() {
                           </p>
                         </CardContent>
                       </div>
-                    </DialogTrigger>
                     <CardFooter>
                       <Button asChild className='w-full' variant='outline'>
                         <Link
@@ -363,29 +374,6 @@ export default function UnitsPage() {
                       </Button>
                     </CardFooter>
                   </Card>
-                   <DialogContent className='sm:max-w-2xl'>
-                    <DialogHeader>
-                      <DialogTitle>Editar Unidade</DialogTitle>
-                      <DialogDescription>
-                        Visualize e atualize os detalhes da unidade.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <form id={`update-unit-form-${unit.id}`} onSubmit={handleUpdateUnit}>
-                      {renderUnitForm(true)}
-                    </form>
-                    <DialogFooter>
-                      <Button
-                        variant='outline'
-                        onClick={() => setEditingUnit(null)}
-                      >
-                        Cancelar
-                      </Button>
-                      <Button type='submit' form={`update-unit-form-${unit.id}`}>
-                        Salvar Alterações
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
               ))}
             </div>
           ) : (
@@ -405,6 +393,42 @@ export default function UnitsPage() {
           )}
         </CardContent>
       </Card>
+      
+       {/* Detail/Edit Dialog */}
+       <Dialog open={isDetailOpen} onOpenChange={(isOpen) => {
+           if (!isOpen) {
+               setIsDetailOpen(false)
+               setIsEditing(false)
+               setCurrentUnit(null)
+           } else {
+               setIsDetailOpen(true)
+           }
+       }}>
+          <DialogContent className='sm:max-w-2xl'>
+            <DialogHeader>
+              <DialogTitle>{isEditing ? "Editar" : "Detalhes da"} Unidade</DialogTitle>
+              <DialogDescription>
+                {isEditing ? "Atualize os detalhes da unidade." : "Visualize os detalhes da unidade."}
+              </DialogDescription>
+            </DialogHeader>
+            <form id={`update-unit-form-${currentUnit?.id}`} onSubmit={handleUpdateUnit}>
+              {renderUnitForm(isEditing)}
+            </form>
+            <DialogFooter>
+                {isEditing ? (
+                    <>
+                        <Button variant='outline' onClick={() => setIsEditing(false)}>Cancelar</Button>
+                        <Button type='submit' form={`update-unit-form-${currentUnit?.id}`}>Salvar Alterações</Button>
+                    </>
+                ) : (
+                    <>
+                        <Button variant='outline' onClick={() => setIsDetailOpen(false)}>Fechar</Button>
+                        <Button onClick={() => setIsEditing(true)}><Pencil className='mr-2 h-4 w-4'/> Editar</Button>
+                    </>
+                )}
+            </DialogFooter>
+          </DialogContent>
+      </Dialog>
     </>
   )
 }
