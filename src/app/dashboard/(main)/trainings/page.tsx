@@ -59,6 +59,7 @@ export interface Training {
   type: TrainingType
   modality: TrainingModality
   workload: number // in hours
+  validity: number // in months
 }
 
 export const initialTrainingsData: Training[] = [
@@ -70,6 +71,7 @@ export const initialTrainingsData: Training[] = [
     type: 'NR',
     modality: 'Híbrido',
     workload: 8,
+    validity: 24,
   },
   {
     id: 'TRN-002',
@@ -79,6 +81,7 @@ export const initialTrainingsData: Training[] = [
     type: 'Uso de EPI',
     modality: 'Online',
     workload: 1,
+    validity: 12,
   },
   {
     id: 'TRN-003',
@@ -87,6 +90,7 @@ export const initialTrainingsData: Training[] = [
     type: 'NR',
     modality: 'Presencial',
     workload: 40,
+    validity: 24,
   },
   {
     id: 'TRN-004',
@@ -96,6 +100,7 @@ export const initialTrainingsData: Training[] = [
     type: 'Procedimento Interno',
     modality: 'Presencial',
     workload: 4,
+    validity: 12,
   },
 ]
 
@@ -115,6 +120,7 @@ export default function TrainingsPage() {
       type: formData.get('type') as TrainingType,
       modality: formData.get('modality') as TrainingModality,
       workload: Number(formData.get('workload')),
+      validity: Number(formData.get('validity')),
     }
 
     setTrainings((prev) => [newTraining, ...prev])
@@ -196,16 +202,28 @@ export default function TrainingsPage() {
                         </Select>
                       </div>
                     </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='workload'>Carga Horária (horas)</Label>
-                      <Input
-                        id='workload'
-                        name='workload'
-                        type='number'
-                        placeholder='Ex: 8'
-                        required
-                      />
-                    </div>
+                     <div className='grid grid-cols-2 gap-4'>
+                        <div className='space-y-2'>
+                          <Label htmlFor='workload'>Carga Horária (horas)</Label>
+                          <Input
+                            id='workload'
+                            name='workload'
+                            type='number'
+                            placeholder='Ex: 8'
+                            required
+                          />
+                        </div>
+                        <div className='space-y-2'>
+                          <Label htmlFor='validity'>Validade (meses)</Label>
+                           <Input
+                            id='validity'
+                            name='validity'
+                            type='number'
+                            placeholder='Ex: 12'
+                            required
+                          />
+                        </div>
+                     </div>
                     <div className='space-y-2'>
                       <Label htmlFor='description'>Descrição Geral</Label>
                       <Textarea
@@ -241,6 +259,7 @@ export default function TrainingsPage() {
                   Modalidade
                 </TableHead>
                 <TableHead>Carga Horária</TableHead>
+                <TableHead>Validade</TableHead>
                 <TableHead>
                   <span className='sr-only'>Ações</span>
                 </TableHead>
@@ -267,6 +286,7 @@ export default function TrainingsPage() {
                     <Badge variant='outline'>{training.modality}</Badge>
                   </TableCell>
                   <TableCell>{training.workload}h</TableCell>
+                  <TableCell>{training.validity} meses</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
