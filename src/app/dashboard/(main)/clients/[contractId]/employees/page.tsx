@@ -77,6 +77,8 @@ import { initialSectorsData } from '../sectors/data'
 import { initialUnitsData } from '../units/data'
 import { initialEnvironmentsData } from '../environments/data'
 import { Separator } from '@/components/ui/separator'
+import { useRouter } from 'next/navigation'
+import { useParams } from 'next/navigation'
 
 // Componente para formatar datas com segurança no cliente
 function ClientSideDateFormatter({ dateString }: { dateString: string }) {
@@ -100,7 +102,6 @@ export default function EmployeesPage() {
   const [employees, setEmployees] = useState(initialEmployeesData)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [isDetailOpen, setIsDetailOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [currentEmployee, setCurrentEmployee] = useState<Employee | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -110,45 +111,12 @@ export default function EmployeesPage() {
     'Desligado',
   ])
   const [viewMode, setViewMode] = useState<'list' | 'card'>('list')
+  const router = useRouter()
+  const params = useParams()
+  const contractId = params.contractId as string
 
   const getRoleById = (roleId: string) =>
     initialRolesData.find((r) => r.id === roleId)
-  const getSectorById = (sectorId: string) =>
-    initialSectorsData.find((s) => s.id === sectorId)
-  const getUnitById = (unitId: string) =>
-    initialUnitsData.find((u) => u.id === unitId)
-  const getEnvironmentById = (envId: string) =>
-    initialEnvironmentsData.find((e) => e.id === envId)
-
-  const getEmployeeDetails = (employee: Employee | null) => {
-    if (!employee) return null
-
-    const role = getRoleById(employee.roleId)
-    if (!role)
-      return {
-        employee,
-        role: null,
-        sector: null,
-        unit: null,
-        mainWorkstation: null,
-      }
-
-    const sector = getSectorById(role.sectorId)
-    if (!sector)
-      return { employee, role, sector: null, unit: null, mainWorkstation: null }
-
-    const unit = getUnitById(sector.unitId)
-    const mainWorkstation = role.mainWorkstationId
-      ? getEnvironmentById(role.mainWorkstationId)
-      : null
-
-    return { employee, role, sector, unit, mainWorkstation }
-  }
-
-  const currentEmployeeDetails = useMemo(
-    () => getEmployeeDetails(currentEmployee),
-    [currentEmployee]
-  )
 
   const filteredEmployees = useMemo(() => {
     return employees
@@ -233,9 +201,8 @@ export default function EmployeesPage() {
     setIsEditDialogOpen(true)
   }
 
-  const openDetailDialog = (employee: Employee) => {
-    setCurrentEmployee(employee)
-    setIsDetailOpen(true)
+  const handleRowClick = (employeeId: string) => {
+    router.push(`/dashboard/clients/${contractId}/employees/${employeeId}`)
   }
 
   const openDeleteDialog = (employee: Employee) => {
@@ -495,7 +462,7 @@ export default function EmployeesPage() {
                 {filteredEmployees.map((employee) => (
                   <TableRow
                     key={employee.id}
-                    onClick={() => openDetailDialog(employee)}
+                    onClick={() => handleRowClick(employee.id)}
                     className='cursor-pointer'
                   >
                     <TableCell>
@@ -546,7 +513,7 @@ export default function EmployeesPage() {
                 <Card
                   key={employee.id}
                   className='cursor-pointer'
-                  onClick={() => openDetailDialog(employee)}
+                  onClick={() => handleRowClick(employee.id)}
                 >
                   <CardHeader>
                     <div className='flex items-center justify-between'>
@@ -607,106 +574,6 @@ export default function EmployeesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Detail Dialog */}
-      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-        <DialogContent className='sm:max-w-xl'>
-          <DialogHeader>
-            <DialogTitle>Detalhes do Colaborador</DialogTitle>
-          </DialogHeader>
-          {currentEmployeeDetails?.employee && (
-            <div className='grid gap-4 py-4'>
-              <div className='flex items-center gap-4'>
-                <Avatar className='h-20 w-20'>
-                  <AvatarImage
-                    src={currentEmployeeDetails.employee.avatar}
-                    alt={currentEmployeeDetails.employee.name}
-                  />
-                  <AvatarFallback>
-                    {currentEmployeeDetails.employee.name
-                      .split(' ')
-                      .map((n) => n[0])
-                      .join('')}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className='font-bold text-xl'>
-                    {currentEmployeeDetails.employee.name}
-                  </p>
-                  <p className='text-sm text-muted-foreground'>
-                    {currentEmployeeDetails.employee.email}
-                  </p>
-                  <p className='text-sm text-muted-foreground'>
-                    {currentEmployeeDetails.employee.phone}
-                  </p>
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className='grid grid-cols-2 gap-x-4 gap-y-6'>
-                <div className='space-y-1'>
-                  <p className='text-sm font-medium text-muted-foreground'>
-                    Cargo
-                  </p>
-                  <p>{currentEmployeeDetails.role?.name || 'N/A'}</p>
-                </div>
-                <div className='space-y-1'>
-                  <p className='text-sm font-medium text-muted-foreground'>
-                    Setor
-                  </p>
-                  <p>{currentEmployeeDetails.sector?.name || 'N/A'}</p>
-                </div>
-                <div className='space-y-1'>
-                  <p className='text-sm font-medium text-muted-foreground'>
-                    Unidade
-                  </p>
-                  <p>{currentEmployeeDetails.unit?.name || 'N/A'}</p>
-                </div>
-                <div className='space-y-1'>
-                  <p className='text-sm font-medium text-muted-foreground'>
-                    Posto de Trabalho Principal
-                  </p>
-                  <p>{currentEmployeeDetails.mainWorkstation?.name || 'N/A'}</p>
-                </div>
-                <div className='space-y-1'>
-                  <p className='text-sm font-medium text-muted-foreground'>
-                    Status
-                  </p>
-                  <Badge
-                    variant={getStatusBadgeVariant(
-                      currentEmployeeDetails.employee.status
-                    )}
-                  >
-                    {currentEmployeeDetails.employee.status}
-                  </Badge>
-                </div>
-                <div className='space-y-1'>
-                  <p className='text-sm font-medium text-muted-foreground'>
-                    Data de Admissão
-                  </p>
-                  <p>
-                    <ClientSideDateFormatter
-                      dateString={
-                        currentEmployeeDetails.employee.admissionDate
-                      }
-                    />
-                  </p>
-                </div>
-              </div>
-
-              <Separator />
-
-              {/* Future sections for EPIs, Exams, etc. can go here */}
-              <div className='text-center text-sm text-muted-foreground pt-4'>
-                Futuras informações de SST (EPIs, Exames) aparecerão aqui.
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button onClick={() => setIsDetailOpen(false)}>Fechar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog
