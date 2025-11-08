@@ -65,6 +65,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { initialUnitsData } from '../units/data'
 
 export default function ProcessesPage() {
   const [processes, setProcesses] = useState(initialProcessesData)
@@ -365,21 +366,18 @@ export default function ProcessesPage() {
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label htmlFor='primarySector'>Setor Principal</Label>
-                    <Select
-                      name='primarySector'
-                      defaultValue={editingProcess?.primarySector}
-                      required
+                    <Label htmlFor='abrangencia'>Abrangência</Label>
+                     <Select
+                      name='abrangencia'
+                      defaultValue='setor'
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder='Selecione o setor' />
+                        <SelectValue placeholder='Selecione a abrangência' />
                       </SelectTrigger>
                       <SelectContent>
-                        {initialSectorsData.map((sector) => (
-                          <SelectItem key={sector.id} value={sector.name}>
-                            {sector.name}
-                          </SelectItem>
-                        ))}
+                        <SelectItem value='unidade'>Unidade</SelectItem>
+                        <SelectItem value='setor'>Setor(es)</SelectItem>
+                        <SelectItem value='cargo'>Cargo(s)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
