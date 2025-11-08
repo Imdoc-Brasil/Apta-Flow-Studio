@@ -80,14 +80,22 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
   const pathname = usePathname()
 
   const getIsActive = (href: string) => {
-    return pathname.startsWith(href) && (href !== '/dashboard' || pathname === '/dashboard')
+    return (
+      pathname.startsWith(href) &&
+      (href !== '/dashboard' || pathname === '/dashboard')
+    )
   }
 
   const isSaudeActive = getIsActive('/dashboard/health')
   const [isSaudeOpen, setIsSaudeOpen] = useState(isSaudeActive)
+  const [isExamesClinicosOpen, setIsExamesClinicosOpen] = useState(
+    getIsActive('/dashboard/health/clinical-exams')
+  )
 
   useEffect(() => {
     if (isSaudeActive) setIsSaudeOpen(true)
+    if (getIsActive('/dashboard/health/clinical-exams'))
+      setIsExamesClinicosOpen(true)
   }, [pathname, isSaudeActive])
 
   return (
@@ -136,25 +144,33 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
                 {saudeSubNavItems.map((item) => (
                   <li key={item.label}>
                     {item.subItems.length > 0 ? (
-                       <Collapsible>
+                      <Collapsible
+                        open={isExamesClinicosOpen}
+                        onOpenChange={setIsExamesClinicosOpen}
+                      >
                         <CollapsibleTrigger asChild>
-                           <Link href={item.href} className='block'>
-                             <SidebarMenuButton
-                               isActive={getIsActive(item.href)}
-                               tooltip={item.label}
-                               className='h-8 w-full justify-between'
-                             >
-                               <div className='flex items-center gap-2'>
-                                 <item.icon />
-                                 <span>{item.label}</span>
-                               </div>
-                               <ChevronRight className={cn('h-4 w-4 transition-transform')} />
-                             </SidebarMenuButton>
-                           </Link>
+                           <div className="w-full">
+                            <SidebarMenuButton
+                              isActive={getIsActive(item.href)}
+                              tooltip={item.label}
+                              className='h-8 w-full justify-between'
+                            >
+                              <div className='flex items-center gap-2'>
+                                <item.icon />
+                                <span>{item.label}</span>
+                              </div>
+                              <ChevronRight
+                                className={cn(
+                                  'h-4 w-4 transition-transform',
+                                  isExamesClinicosOpen && 'rotate-90'
+                                )}
+                              />
+                            </SidebarMenuButton>
+                          </div>
                         </CollapsibleTrigger>
                         <CollapsibleContent asChild>
                           <ul className='pl-6 pt-1 space-y-1'>
-                            {item.subItems.map(subItem => (
+                            {item.subItems.map((subItem) => (
                               <li key={subItem.label}>
                                 <Link href={subItem.href}>
                                   <SidebarMenuButton
@@ -173,13 +189,13 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
                     ) : (
                       <Link href={item.href}>
                         <SidebarMenuButton
-                           isActive={getIsActive(item.href)}
-                           tooltip={item.label}
-                           className='h-8'
-                         >
-                           <item.icon />
-                           <span>{item.label}</span>
-                         </SidebarMenuButton>
+                          isActive={getIsActive(item.href)}
+                          tooltip={item.label}
+                          className='h-8'
+                        >
+                          <item.icon />
+                          <span>{item.label}</span>
+                        </SidebarMenuButton>
                       </Link>
                     )}
                   </li>
