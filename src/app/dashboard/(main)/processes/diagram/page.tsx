@@ -48,7 +48,6 @@ const nodeTypes = {
   decision: DecisionNode,
 }
 
-// Diagram examples are kept, but the initial state is now empty.
 const exampleProcessNodes: Node[] = [
   {
     id: '1',
