@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/select'
 import { initialHazardData } from '@/app/dashboard/(main)/risks/page'
 import { useToast } from '@/hooks/use-toast'
-import { Save, FileSignature, Printer } from 'lucide-react'
+import { Save, FileSignature, Printer, Pencil } from 'lucide-react'
 import { useState } from 'react'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Separator } from '@/components/ui/separator'
@@ -30,6 +30,7 @@ import { Separator } from '@/components/ui/separator'
 export default function ClinicalEvaluationPage() {
   const { toast } = useToast()
   const [isPeriodic, setIsPeriodic] = useState('nao')
+  const [isEditing, setIsEditing] = useState(false)
 
   const handleSaveSettings = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -39,6 +40,13 @@ export default function ClinicalEvaluationPage() {
       description:
         'As configurações da avaliação clínica foram salvas com sucesso.',
     })
+    setIsEditing(false)
+  }
+
+  const handleCancel = () => {
+    // Here you might want to reset form state to its original values
+    setIsEditing(false)
+    // For now, just toggles the state
   }
 
   return (
@@ -62,8 +70,8 @@ export default function ClinicalEvaluationPage() {
                 <CardTitle>Parâmetros da Avaliação Clínica</CardTitle>
                 <CardDescription>
                   Defina os detalhes, regras e campos padrão para esta avaliação.
-                  Estas são as configurações globais que as empresas clientes herdarão,
-                   mas poderão ser personalizadas posteriormente.
+                  Estas são as configurações globais que as empresas clientes
+                  herdarão, mas poderão ser personalizadas posteriormente.
                 </CardDescription>
               </CardHeader>
               <CardContent className='space-y-6'>
@@ -74,6 +82,7 @@ export default function ClinicalEvaluationPage() {
                       id='name'
                       name='name'
                       defaultValue='Avaliação Clínica Ocupacional'
+                      disabled={!isEditing}
                       required
                     />
                   </div>
@@ -83,6 +92,7 @@ export default function ClinicalEvaluationPage() {
                       id='esocialCode'
                       name='esocialCode'
                       defaultValue='0201'
+                      disabled={!isEditing}
                       required
                     />
                   </div>
@@ -95,106 +105,143 @@ export default function ClinicalEvaluationPage() {
                     name='description'
                     placeholder='Descreva o objetivo desta avaliação.'
                     defaultValue='Realizada para avaliar as condições Clínicas e Físico Mentais do paciente quanto a aptidão do colaborador para a função, considerando os riscos ocupacionais.'
+                    disabled={!isEditing}
                   />
                 </div>
-                
+
                 <fieldset className='space-y-4 rounded-lg border p-4'>
-                    <legend className='-ml-1 px-1 text-sm font-medium'>
-                      Aplicabilidade (Quando o exame deve ser realizado)
-                    </legend>
-                    
+                  <legend className='-ml-1 px-1 text-sm font-medium'>
+                    Aplicabilidade (Quando o exame deve ser realizado)
+                  </legend>
+
+                  <div className='flex items-center justify-between'>
+                    <Label>Admissional</Label>
+                    <RadioGroup
+                      defaultValue='sim'
+                      className='flex items-center gap-4'
+                      disabled={!isEditing}
+                    >
+                      <div className='flex items-center space-x-2'>
+                        <RadioGroupItem value='sim' id='admissional-sim' />
+                        <Label htmlFor='admissional-sim'>Sim</Label>
+                      </div>
+                      <div className='flex items-center space-x-2'>
+                        <RadioGroupItem value='nao' id='admissional-nao' />
+                        <Label htmlFor='admissional-nao'>Não</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  <Separator />
+
+                  <div className='space-y-4'>
                     <div className='flex items-center justify-between'>
-                        <Label>Admissional</Label>
-                        <RadioGroup defaultValue='sim' className='flex items-center gap-4'>
-                            <div className='flex items-center space-x-2'>
-                                <RadioGroupItem value='sim' id='admissional-sim' />
-                                <Label htmlFor='admissional-sim'>Sim</Label>
-                            </div>
-                            <div className='flex items-center space-x-2'>
-                                <RadioGroupItem value='nao' id='admissional-nao' />
-                                <Label htmlFor='admissional-nao'>Não</Label>
-                            </div>
-                        </RadioGroup>
-                    </div>
-
-                    <Separator />
-                    
-                    <div className='space-y-4'>
-                        <div className='flex items-center justify-between'>
-                            <Label>Periódico</Label>
-                             <RadioGroup value={isPeriodic} onValueChange={setIsPeriodic} className='flex items-center gap-4'>
-                                <div className='flex items-center space-x-2'>
-                                    <RadioGroupItem value='sim' id='periodico-sim' />
-                                    <Label htmlFor='periodico-sim'>Sim</Label>
-                                </div>
-                                <div className='flex items-center space-x-2'>
-                                    <RadioGroupItem value='nao' id='periodico-nao' />
-                                    <Label htmlFor='periodico-nao'>Não</Label>
-                                </div>
-                            </RadioGroup>
+                      <Label>Periódico</Label>
+                      <RadioGroup
+                        value={isPeriodic}
+                        onValueChange={setIsPeriodic}
+                        className='flex items-center gap-4'
+                        disabled={!isEditing}
+                      >
+                        <div className='flex items-center space-x-2'>
+                          <RadioGroupItem value='sim' id='periodico-sim' />
+                          <Label htmlFor='periodico-sim'>Sim</Label>
                         </div>
-                        {isPeriodic === 'sim' && (
-                            <div className='grid grid-cols-2 gap-4 pl-6 pt-2 animate-in fade-in-0 zoom-in-95'>
-                                 <div className='space-y-2'>
-                                    <Label htmlFor='periodicidade-1'>1ª Periodicidade (meses)</Label>
-                                    <Input id='periodicidade-1' name='periodicidade-1' type='number' placeholder='Ex: 6'/>
-                                 </div>
-                                 <div className='space-y-2'>
-                                    <Label htmlFor='periodicidade-2'>Periodicidade Subsequente (meses)</Label>
-                                    <Input id='periodicidade-2' name='periodicidade-2' type='number' placeholder='Ex: 12'/>
-                                 </div>
-                            </div>
-                        )}
+                        <div className='flex items-center space-x-2'>
+                          <RadioGroupItem value='nao' id='periodico-nao' />
+                          <Label htmlFor='periodico-nao'>Não</Label>
+                        </div>
+                      </RadioGroup>
                     </div>
-                    
-                    <Separator />
-                    
-                     <div className='flex items-center justify-between'>
-                        <Label>Mudança de Risco</Label>
-                        <RadioGroup defaultValue='sim' className='flex items-center gap-4'>
-                            <div className='flex items-center space-x-2'>
-                                <RadioGroupItem value='sim' id='mudanca-sim' />
-                                <Label htmlFor='mudanca-sim'>Sim</Label>
-                            </div>
-                            <div className='flex items-center space-x-2'>
-                                <RadioGroupItem value='nao' id='mudanca-nao' />
-                                <Label htmlFor='mudanca-nao'>Não</Label>
-                            </div>
-                        </RadioGroup>
-                    </div>
-                    
-                    <Separator />
-                    
-                     <div className='flex items-center justify-between'>
-                        <Label>Retorno ao Trabalho</Label>
-                        <RadioGroup defaultValue='sim' className='flex items-center gap-4'>
-                            <div className='flex items-center space-x-2'>
-                                <RadioGroupItem value='sim' id='retorno-sim' />
-                                <Label htmlFor='retorno-sim'>Sim</Label>
-                            </div>
-                            <div className='flex items-center space-x-2'>
-                                <RadioGroupItem value='nao' id='retorno-nao' />
-                                <Label htmlFor='retorno-nao'>Não</Label>
-                            </div>
-                        </RadioGroup>
-                    </div>
-                    
-                     <Separator />
-                    
-                     <div className='flex items-center justify-between'>
-                        <Label>Demissional</Label>
-                        <RadioGroup defaultValue='sim' className='flex items-center gap-4'>
-                            <div className='flex items-center space-x-2'>
-                                <RadioGroupItem value='sim' id='demissional-sim' />
-                                <Label htmlFor='demissional-sim'>Sim</Label>
-                            </div>
-                            <div className='flex items-center space-x-2'>
-                                <RadioGroupItem value='nao' id='demissional-nao' />
-                                <Label htmlFor='demissional-nao'>Não</Label>
-                            </div>
-                        </RadioGroup>
-                    </div>
+                    {isPeriodic === 'sim' && (
+                      <div className='grid grid-cols-2 gap-4 pl-6 pt-2 animate-in fade-in-0 zoom-in-95'>
+                        <div className='space-y-2'>
+                          <Label htmlFor='periodicidade-1'>
+                            1ª Periodicidade (meses)
+                          </Label>
+                          <Input
+                            id='periodicidade-1'
+                            name='periodicidade-1'
+                            type='number'
+                            placeholder='Ex: 6'
+                            disabled={!isEditing}
+                          />
+                        </div>
+                        <div className='space-y-2'>
+                          <Label htmlFor='periodicidade-2'>
+                            Periodicidade Subsequente (meses)
+                          </Label>
+                          <Input
+                            id='periodicidade-2'
+                            name='periodicidade-2'
+                            type='number'
+                            placeholder='Ex: 12'
+                            disabled={!isEditing}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
+                  <Separator />
+
+                  <div className='flex items-center justify-between'>
+                    <Label>Mudança de Risco</Label>
+                    <RadioGroup
+                      defaultValue='sim'
+                      className='flex items-center gap-4'
+                      disabled={!isEditing}
+                    >
+                      <div className='flex items-center space-x-2'>
+                        <RadioGroupItem value='sim' id='mudanca-sim' />
+                        <Label htmlFor='mudanca-sim'>Sim</Label>
+                      </div>
+                      <div className='flex items-center space-x-2'>
+                        <RadioGroupItem value='nao' id='mudanca-nao' />
+                        <Label htmlFor='mudanca-nao'>Não</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  <Separator />
+
+                  <div className='flex items-center justify-between'>
+                    <Label>Retorno ao Trabalho</Label>
+                    <RadioGroup
+                      defaultValue='sim'
+                      className='flex items-center gap-4'
+                      disabled={!isEditing}
+                    >
+                      <div className='flex items-center space-x-2'>
+                        <RadioGroupItem value='sim' id='retorno-sim' />
+                        <Label htmlFor='retorno-sim'>Sim</Label>
+                      </div>
+                      <div className='flex items-center space-x-2'>
+                        <RadioGroupItem value='nao' id='retorno-nao' />
+                        <Label htmlFor='retorno-nao'>Não</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+
+                  <Separator />
+
+                  <div className='flex items-center justify-between'>
+                    <Label>Demissional</Label>
+                    <RadioGroup
+                      defaultValue='sim'
+                      className='flex items-center gap-4'
+                      disabled={!isEditing}
+                    >
+                      <div className='flex items-center space-x-2'>
+                        <RadioGroupItem value='sim' id='demissional-sim' />
+                        <Label htmlFor='demissional-sim'>Sim</Label>
+                      </div>
+                      <div className='flex items-center space-x-2'>
+                        <RadioGroupItem value='nao' id='demissional-nao' />
+                        <Label htmlFor='demissional-nao'>Não</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
                 </fieldset>
 
                 <div className='space-y-2'>
@@ -204,12 +251,13 @@ export default function ClinicalEvaluationPage() {
                     name='recommendations'
                     placeholder='Adicione recomendações que podem ser sugeridas ao médico.'
                     defaultValue='- Manter hábitos de vida saudáveis.\n- Realizar pausas durante a jornada de trabalho.\n- Utilizar corretamente os EPIs fornecidos.'
+                    disabled={!isEditing}
                   />
                 </div>
 
                 <div className='space-y-2'>
                   <Label htmlFor='linkedRisk'>Risco Vinculado (Opcional)</Label>
-                  <Select name='linkedRisk'>
+                  <Select name='linkedRisk' disabled={!isEditing}>
                     <SelectTrigger>
                       <SelectValue placeholder='Selecione um risco do catálogo para vincular' />
                     </SelectTrigger>
@@ -224,11 +272,23 @@ export default function ClinicalEvaluationPage() {
                   </Select>
                 </div>
               </CardContent>
-              <CardFooter className='border-t px-6 py-4'>
-                <Button type='submit'>
-                  <Save className='mr-2 h-4 w-4' />
-                  Salvar Configurações
-                </Button>
+              <CardFooter className='border-t px-6 py-4 justify-end gap-2'>
+                {isEditing ? (
+                  <>
+                    <Button variant='outline' onClick={handleCancel}>
+                      Cancelar
+                    </Button>
+                    <Button type='submit'>
+                      <Save className='mr-2 h-4 w-4' />
+                      Salvar Configurações
+                    </Button>
+                  </>
+                ) : (
+                  <Button type='button' onClick={() => setIsEditing(true)}>
+                    <Pencil className='mr-2 h-4 w-4' />
+                    Editar
+                  </Button>
+                )}
               </CardFooter>
             </Card>
           </form>
