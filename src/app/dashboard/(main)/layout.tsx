@@ -22,9 +22,19 @@ export default function DashboardLayout({
         <Sidebar>
           <DashboardNav />
         </Sidebar>
-        <div className='flex flex-col sm:pl-14 group-data-[state=expanded]:sm:pl-72 transition-all duration-200'>
+        <div className='flex flex-col sm:gap-4 sm:py-4 sm:pl-14 group-data-[state=expanded]:sm:pl-72 transition-all duration-300'>
           <header className='sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6'>
-            <SidebarTrigger className='sm:hidden' />
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button size='icon' variant='outline' className='sm:hidden'>
+                  <PanelLeft className='h-5 w-5' />
+                  <span className='sr-only'>Toggle Menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side='left' className='sm:max-w-xs'>
+                <DashboardNav isSheet={true} />
+              </SheetContent>
+            </Sheet>
             <div className='relative ml-auto flex-1 md:grow-0'>
               {/* This can be a global search in the future */}
             </div>
