@@ -21,13 +21,67 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { PlusCircle, FolderOpen, MousePointerSquareDashed } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+
+// Custom node to allow editing
+const EditableNode = ({ id, data, isConnectable }: { id: string; data: { label: string }; isConnectable: boolean }) => {
+  const [isEditing, setIsEditing] = useState(false)
+  const [label, setLabel] = useState(data.label)
+  const { setNodes } = useReactFlow()
+
+  const handleDoubleClick = () => {
+    setIsEditing(true)
+  }
+
+  const handleBlur = () => {
+    setIsEditing(false)
+    setNodes((nds) =>
+      nds.map((node) => {
+        if (node.id === id) {
+          node.data = { ...node.data, label }
+        }
+        return node
+      })
+    )
+  }
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLabel(e.target.value)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleBlur()
+    }
+  }
+
+  return (
+    <div onDoubleClick={handleDoubleClick} className='p-2'>
+      {isEditing ? (
+        <Input
+          type='text'
+          value={label}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+          autoFocus
+          className='nodrag' // Prevents dragging while editing
+        />
+      ) : (
+        <div style={{ padding: '10px', border: '1px solid #ddd', borderRadius: '5px' }}>
+          {label}
+        </div>
+      )}
+    </div>
+  )
+}
 
 // Custom diamond-shaped node for decisions
-const DecisionNode = ({ data }: { data: { label: string } }) => {
+const DecisionNode = ({ id, data, isConnectable }: { id: string; data: { label: string }; isConnectable: boolean }) => {
   return (
     <div
       style={{
-        width: 100,
+        width: 150,
         height: 100,
         backgroundColor: '#fff',
         border: '1px solid #000',
@@ -37,7 +91,7 @@ const DecisionNode = ({ data }: { data: { label: string } }) => {
         alignItems: 'center',
       }}
     >
-      <div style={{ transform: 'rotate(-45deg)', textAlign: 'center' }}>
+      <div style={{ transform: 'rotate(-45deg)', textAlign: 'center', padding: '10px' }}>
         {data.label}
       </div>
     </div>
@@ -46,6 +100,9 @@ const DecisionNode = ({ data }: { data: { label: string } }) => {
 
 const nodeTypes = {
   decision: DecisionNode,
+  default: EditableNode,
+  input: EditableNode,
+  output: EditableNode,
 }
 
 const exampleProcessNodes: Node[] = [
@@ -156,9 +213,9 @@ export default function ProcessDiagramPage() {
     const newNodeId = `node_${(nodes.length + 1).toString()}`
     const newNode: Node = {
       id: newNodeId,
-      // Position new nodes in the center of the viewport
       position: { x: Math.random() * 400, y: Math.random() * 400 },
       data: { label: `Nova Etapa` },
+      type: 'default',
     }
     setNodes((nds) => nds.concat(newNode))
   }
