@@ -130,12 +130,12 @@ export default function EmployeesPage() {
         role: null,
         sector: null,
         unit: null,
-        environment: null,
+        mainWorkstation: null,
       }
 
     const sector = getSectorById(role.sectorId)
     if (!sector)
-      return { employee, role, sector: null, unit: null, environment: null }
+      return { employee, role, sector: null, unit: null, mainWorkstation: null }
 
     const unit = getUnitById(sector.unitId)
     const mainWorkstation = role.mainWorkstationId
@@ -736,5 +736,3 @@ export default function EmployeesPage() {
   )
 }
 export type { Employee, EmployeeStatus } from './data'
-
-    
