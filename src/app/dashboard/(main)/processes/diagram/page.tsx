@@ -48,7 +48,8 @@ const nodeTypes = {
   decision: DecisionNode,
 }
 
-const initialNodes: Node[] = [
+// Diagram examples are kept, but the initial state is now empty.
+const exampleProcessNodes: Node[] = [
   {
     id: '1',
     type: 'input',
@@ -73,7 +74,7 @@ const initialNodes: Node[] = [
   },
 ]
 
-const initialEdges: Edge[] = [
+const exampleProcessEdges: Edge[] = [
   { id: 'e1-2', source: '1', target: '2', type: 'smoothstep' },
   { id: 'e2-3', source: '2', target: '3', type: 'smoothstep' },
   { id: 'e3-4', source: '3', target: '4', type: 'smoothstep' },
@@ -133,8 +134,8 @@ const salesProcessEdges: Edge[] = [
 ]
 
 export default function ProcessDiagramPage() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
+  const [nodes, setNodes, onNodesChange] = useNodesState([]) // Start with empty nodes
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]) // Start with empty edges
 
   const onConnect = useCallback(
     (params: Edge | Connection) =>
@@ -177,7 +178,7 @@ export default function ProcessDiagramPage() {
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem
-                onClick={() => loadDiagram(initialNodes, initialEdges)}
+                onClick={() => loadDiagram(exampleProcessNodes, exampleProcessEdges)}
               >
                 Processo de Exemplo
               </DropdownMenuItem>
