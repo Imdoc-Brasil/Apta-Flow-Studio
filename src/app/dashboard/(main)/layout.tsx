@@ -7,6 +7,7 @@ import { DashboardNav } from '@/components/dashboard-nav'
 import { UserNav } from '@/components/user-nav'
 import {
   Sidebar,
+  SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar'
@@ -22,7 +23,7 @@ export default function DashboardLayout({
         <Sidebar>
           <DashboardNav />
         </Sidebar>
-        <div className='flex flex-col sm:gap-4 sm:py-4 sm:pl-14 transition-all duration-300 group-data-[state=expanded]:sm:pl-72'>
+        <SidebarInset>
           <header className='sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6'>
             <SidebarTrigger className='sm:flex hidden' />
             <Sheet>
@@ -44,7 +45,7 @@ export default function DashboardLayout({
           <main className='flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6'>
             {children}
           </main>
-        </div>
+        </SidebarInset>
       </div>
     </SidebarProvider>
   )
