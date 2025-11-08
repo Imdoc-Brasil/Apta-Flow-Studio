@@ -115,11 +115,9 @@ export default function ProcessesPage() {
       obligations: formObligations,
       steps: formSteps.map((step, index) => ({
         ...step,
-        name: formData.get(`step-name-${index}`) as string,
+        name: formData.get(`step-activity-${index}`) as string, // Agora pega da atividade
         description: formData.get(`step-description-${index}`) as string,
-        responsibleRole: formData.get(
-          `step-responsible-${index}`
-        ) as string,
+        responsibleRole: formData.get(`step-sector-${index}`) as string, // Armazena o setor como responsável
         isControlPoint: formData.get(`control-point-${index}`) === 'on',
       })),
     }
@@ -161,9 +159,9 @@ export default function ProcessesPage() {
   }
 
   const handleObligationChange = (sigla: string) => {
-    setFormObligations(prev => 
-      prev.includes(sigla) 
-        ? prev.filter(s => s !== sigla)
+    setFormObligations((prev) =>
+      prev.includes(sigla)
+        ? prev.filter((s) => s !== sigla)
         : [...prev, sigla]
     )
   }
@@ -368,7 +366,7 @@ export default function ProcessesPage() {
                     placeholder='Descreva o porquê deste processo existir.'
                   />
                 </div>
-                
+
                 <fieldset className='grid grid-cols-1 md:grid-cols-2 gap-4 rounded-lg border p-4'>
                   <legend className='-ml-1 px-1 text-sm font-medium'>
                     Categorização
@@ -392,30 +390,39 @@ export default function ProcessesPage() {
                         <SelectItem value='PRT'>
                           PRT - Procedimento para Realização de Atividade
                         </SelectItem>
-                         <SelectItem value='PI'>
-                          PI - Processo Interno
-                        </SelectItem>
+                        <SelectItem value='PI'>Processo Interno</SelectItem>
                         <SelectItem value='Outro'>Outro</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className='space-y-2'>
-                    <Label htmlFor='obligations'>Obrigações Vinculadas (opcional)</Label>
+                    <Label htmlFor='obligations'>
+                      Obrigações Vinculadas (opcional)
+                    </Label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className='w-full justify-start text-left font-normal'>
-                          {formObligations.length > 0 ? `${formObligations.length} selecionada(s)` : 'Selecione as obrigações'}
+                        <Button
+                          variant='outline'
+                          className='w-full justify-start text-left font-normal'
+                        >
+                          {formObligations.length > 0
+                            ? `${formObligations.length} selecionada(s)`
+                            : 'Selecione as obrigações'}
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent className="w-96" align="start">
-                        <DropdownMenuLabel>Selecione as obrigações</DropdownMenuLabel>
+                      <DropdownMenuContent className='w-96' align='start'>
+                        <DropdownMenuLabel>
+                          Selecione as obrigações
+                        </DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <ScrollArea className='h-64'>
                           {sstPrograms.map((program) => (
                             <DropdownMenuCheckboxItem
                               key={program.sigla}
                               checked={formObligations.includes(program.sigla)}
-                              onCheckedChange={() => handleObligationChange(program.sigla)}
+                              onCheckedChange={() =>
+                                handleObligationChange(program.sigla)
+                              }
                               onSelect={(e) => e.preventDefault()} // Keep menu open
                             >
                               {program.sigla} - {program.documento}
@@ -424,24 +431,37 @@ export default function ProcessesPage() {
                         </ScrollArea>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                     <div className="flex flex-wrap gap-1 mt-2">
-                        {formObligations.map((ob) => (
-                          <Badge key={ob} variant="secondary" className="flex items-center gap-1">
-                            {ob}
-                            <button type="button" onClick={() => handleObligationChange(ob)} className="rounded-full hover:bg-background/50">
-                              <X className="h-3 w-3" />
-                            </button>
-                          </Badge>
-                        ))}
-                      </div>
+                    <div className='flex flex-wrap gap-1 mt-2'>
+                      {formObligations.map((ob) => (
+                        <Badge
+                          key={ob}
+                          variant='secondary'
+                          className='flex items-center gap-1'
+                        >
+                          {ob}
+                          <button
+                            type='button'
+                            onClick={() => handleObligationChange(ob)}
+                            className='rounded-full hover:bg-background/50'
+                          >
+                            <X className='h-3 w-3' />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
-                   <div className='flex items-center space-x-2 md:col-span-2'>
-                    <Checkbox id='isCritical' name='isCritical' defaultChecked={editingProcess?.isCritical} />
+                  <div className='flex items-center space-x-2 md:col-span-2'>
+                    <Checkbox
+                      id='isCritical'
+                      name='isCritical'
+                      defaultChecked={editingProcess?.isCritical}
+                    />
                     <Label
                       htmlFor='isCritical'
                       className='text-sm font-medium leading-none'
                     >
-                      Este é um processo crítico? (impacto em segurança, qualidade ou operação)
+                      Este é um processo crítico? (impacto em segurança,
+                      qualidade ou operação)
                     </Label>
                   </div>
                   <div className='flex items-center space-x-2 md:col-span-2'>
@@ -471,33 +491,44 @@ export default function ProcessesPage() {
                           {index + 1}
                         </div>
                         <div className='flex-grow space-y-2'>
-                          <Input
-                            name={`step-name-${index}`}
-                            defaultValue={step.name}
-                            placeholder='Nome da etapa/atividade'
-                            required
-                          />
+                          <div className='grid grid-cols-2 gap-4'>
+                            <Select name={`step-sector-${index}`}>
+                              <SelectTrigger>
+                                <SelectValue placeholder='Selecione o Setor' />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {initialSectorsData.map((sector) => (
+                                  <SelectItem
+                                    key={sector.id}
+                                    value={sector.name}
+                                  >
+                                    {sector.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Select name={`step-activity-${index}`} required>
+                              <SelectTrigger>
+                                <SelectValue placeholder='Selecione a Atividade' />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {initialActivitiesData.map((activity) => (
+                                  <SelectItem
+                                    key={activity.id}
+                                    value={activity.name}
+                                  >
+                                    {activity.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
                           <Textarea
                             name={`step-description-${index}`}
                             defaultValue={step.description}
                             placeholder='Descrição da atividade (opcional)'
                             rows={2}
                           />
-                          <Select
-                            name={`step-responsible-${index}`}
-                            defaultValue={step.responsibleRole}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder='Selecione o cargo responsável' />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {initialRolesData.map((role) => (
-                                <SelectItem key={role.id} value={role.name}>
-                                  {role.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
                           <div className='flex items-center space-x-2 pt-2'>
                             <Checkbox
                               id={`control-point-${index}`}
