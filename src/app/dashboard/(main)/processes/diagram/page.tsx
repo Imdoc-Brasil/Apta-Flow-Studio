@@ -56,7 +56,7 @@ export default function ProcessDiagramPage() {
   )
 
   return (
-    <div className='flex h-full flex-col gap-4'>
+    <div className='flex h-[calc(100vh-10rem)] flex-col gap-4'>
       <div className='flex items-center justify-between'>
         <div>
           <h1 className='font-headline text-3xl font-bold'>
@@ -69,7 +69,6 @@ export default function ProcessDiagramPage() {
       </div>
       <div
         className='flex-1 rounded-lg border bg-background'
-        style={{ height: '75vh' }}
       >
         <ReactFlow
           nodes={nodes}
