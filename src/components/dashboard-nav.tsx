@@ -16,6 +16,7 @@ import {
   HardHat,
   GraduationCap,
   GitFork,
+  HeartPulse,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -30,6 +31,7 @@ const navItems = [
   { href: '/dashboard/employees', icon: Users, label: 'Staffs' },
   { href: '/dashboard/profiles', icon: HardHat, label: 'Perfis' },
   { href: '/dashboard/services', icon: ClipboardList, label: 'Serviços' },
+  { href: '/dashboard/health', icon: HeartPulse, label: 'Saúde' },
   { href: '/dashboard/risks', icon: ShieldAlert, label: 'Riscos' },
   { href: '/dashboard/trainings', icon: GraduationCap, label: 'Treinamentos' },
   { href: '/dashboard/documents', icon: FileText, label: 'Documentos' },
