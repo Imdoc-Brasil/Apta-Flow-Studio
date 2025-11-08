@@ -23,16 +23,21 @@ import {
 import { initialHazardData } from '@/app/dashboard/(main)/risks/page'
 import { useToast } from '@/hooks/use-toast'
 import { Save, FileSignature, Printer } from 'lucide-react'
+import { useState } from 'react'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { Separator } from '@/components/ui/separator'
 
 export default function ClinicalEvaluationPage() {
   const { toast } = useToast()
+  const [isPeriodic, setIsPeriodic] = useState('nao')
 
   const handleSaveSettings = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     // Logic to save settings would go here
     toast({
       title: 'Configurações Salvas!',
-      description: 'As configurações da avaliação clínica foram salvas com sucesso.',
+      description:
+        'As configurações da avaliação clínica foram salvas com sucesso.',
     })
   }
 
@@ -57,6 +62,8 @@ export default function ClinicalEvaluationPage() {
                 <CardTitle>Parâmetros da Avaliação Clínica</CardTitle>
                 <CardDescription>
                   Defina os detalhes, regras e campos padrão para esta avaliação.
+                  Estas são as configurações globais que as empresas clientes herdarão,
+                   mas poderão ser personalizadas posteriormente.
                 </CardDescription>
               </CardHeader>
               <CardContent className='space-y-6'>
@@ -87,27 +94,111 @@ export default function ClinicalEvaluationPage() {
                     id='description'
                     name='description'
                     placeholder='Descreva o objetivo desta avaliação.'
-                    defaultValue='Realizada para avaliar a aptidão do colaborador para a função, considerando os riscos ocupacionais.'
+                    defaultValue='Realizada para avaliar as condições Clínicas e Físico Mentais do paciente quanto a aptidão do colaborador para a função, considerando os riscos ocupacionais.'
                   />
                 </div>
+                
+                <fieldset className='space-y-4 rounded-lg border p-4'>
+                    <legend className='-ml-1 px-1 text-sm font-medium'>
+                      Aplicabilidade (Quando o exame deve ser realizado)
+                    </legend>
+                    
+                    <div className='flex items-center justify-between'>
+                        <Label>Admissional</Label>
+                        <RadioGroup defaultValue='sim' className='flex items-center gap-4'>
+                            <div className='flex items-center space-x-2'>
+                                <RadioGroupItem value='sim' id='admissional-sim' />
+                                <Label htmlFor='admissional-sim'>Sim</Label>
+                            </div>
+                            <div className='flex items-center space-x-2'>
+                                <RadioGroupItem value='nao' id='admissional-nao' />
+                                <Label htmlFor='admissional-nao'>Não</Label>
+                            </div>
+                        </RadioGroup>
+                    </div>
+
+                    <Separator />
+                    
+                    <div className='space-y-4'>
+                        <div className='flex items-center justify-between'>
+                            <Label>Periódico</Label>
+                             <RadioGroup value={isPeriodic} onValueChange={setIsPeriodic} className='flex items-center gap-4'>
+                                <div className='flex items-center space-x-2'>
+                                    <RadioGroupItem value='sim' id='periodico-sim' />
+                                    <Label htmlFor='periodico-sim'>Sim</Label>
+                                </div>
+                                <div className='flex items-center space-x-2'>
+                                    <RadioGroupItem value='nao' id='periodico-nao' />
+                                    <Label htmlFor='periodico-nao'>Não</Label>
+                                </div>
+                            </RadioGroup>
+                        </div>
+                        {isPeriodic === 'sim' && (
+                            <div className='grid grid-cols-2 gap-4 pl-6 pt-2 animate-in fade-in-0 zoom-in-95'>
+                                 <div className='space-y-2'>
+                                    <Label htmlFor='periodicidade-1'>1ª Periodicidade (após admissional)</Label>
+                                    <Input id='periodicidade-1' name='periodicidade-1' placeholder='Ex: 6 meses'/>
+                                 </div>
+                                 <div className='space-y-2'>
+                                    <Label htmlFor='periodicidade-2'>Periodicidade Subsequente</Label>
+                                    <Input id='periodicidade-2' name='periodicidade-2' placeholder='Ex: 12 meses'/>
+                                 </div>
+                            </div>
+                        )}
+                    </div>
+                    
+                    <Separator />
+                    
+                     <div className='flex items-center justify-between'>
+                        <Label>Mudança de Risco</Label>
+                        <RadioGroup defaultValue='sim' className='flex items-center gap-4'>
+                            <div className='flex items-center space-x-2'>
+                                <RadioGroupItem value='sim' id='mudanca-sim' />
+                                <Label htmlFor='mudanca-sim'>Sim</Label>
+                            </div>
+                            <div className='flex items-center space-x-2'>
+                                <RadioGroupItem value='nao' id='mudanca-nao' />
+                                <Label htmlFor='mudanca-nao'>Não</Label>
+                            </div>
+                        </RadioGroup>
+                    </div>
+                    
+                    <Separator />
+                    
+                     <div className='flex items-center justify-between'>
+                        <Label>Retorno ao Trabalho</Label>
+                        <RadioGroup defaultValue='sim' className='flex items-center gap-4'>
+                            <div className='flex items-center space-x-2'>
+                                <RadioGroupItem value='sim' id='retorno-sim' />
+                                <Label htmlFor='retorno-sim'>Sim</Label>
+                            </div>
+                            <div className='flex items-center space-x-2'>
+                                <RadioGroupItem value='nao' id='retorno-nao' />
+                                <Label htmlFor='retorno-nao'>Não</Label>
+                            </div>
+                        </RadioGroup>
+                    </div>
+                    
+                     <Separator />
+                    
+                     <div className='flex items-center justify-between'>
+                        <Label>Demissional</Label>
+                        <RadioGroup defaultValue='sim' className='flex items-center gap-4'>
+                            <div className='flex items-center space-x-2'>
+                                <RadioGroupItem value='sim' id='demissional-sim' />
+                                <Label htmlFor='demissional-sim'>Sim</Label>
+                            </div>
+                            <div className='flex items-center space-x-2'>
+                                <RadioGroupItem value='nao' id='demissional-nao' />
+                                <Label htmlFor='demissional-nao'>Não</Label>
+                            </div>
+                        </RadioGroup>
+                    </div>
+
+                </fieldset>
 
                 <div className='space-y-2'>
-                  <Label htmlFor='instructions'>
-                    Instruções (Quando e como deve ser feito)
-                  </Label>
-                  <Textarea
-                    id='instructions'
-                    name='instructions'
-                    placeholder='Detalhe o procedimento, critérios e periodicidade.'
-                    defaultValue='Deve ser realizada no exame admissional, periódico, de retorno ao trabalho, mudança de risco e demissional, conforme prazos do PCMSO.'
-                    className='h-24'
-                  />
-                </div>
-
-                <div className='space-y-2'>
-                  <Label htmlFor='recommendations'>
-                    Recomendações Padrão
-                  </Label>
+                  <Label htmlFor='recommendations'>Recomendações Padrão</Label>
                   <Textarea
                     id='recommendations'
                     name='recommendations'
