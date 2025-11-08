@@ -60,24 +60,24 @@ export default function EmployeeDetailsPage() {
   const contractId = params.contractId as string
   const employeeId = params.employeeId as string
 
-  const employee = useMemo(() => getEmployeeById(employeeId), [employeeId])
+  const employeeData = useMemo(() => getEmployeeById(employeeId), [employeeId])
 
   const employeeDetails = useMemo(() => {
-    if (!employee) return null
+    if (!employeeData) return null
 
-    const role = initialRolesData.find((r) => r.id === employee.roleId)
-    if (!role) return { employee, role: null, sector: null, unit: null }
+    const role = initialRolesData.find((r) => r.id === employeeData.roleId)
+    if (!role) return { employee: employeeData, role: null, sector: null, unit: null }
 
     const sector = initialSectorsData.find((s) => s.id === role.sectorId)
-    if (!sector) return { employee, role, sector: null, unit: null }
+    if (!sector) return { employee: employeeData, role, sector: null, unit: null }
 
     const unit = initialUnitsData.find((u) => u.id === sector.unitId)
     const mainWorkstation = role.mainWorkstationId
       ? initialEnvironmentsData.find((e) => e.id === role.mainWorkstationId)
       : null
 
-    return { employee, role, sector, unit, mainWorkstation }
-  }, [employee])
+    return { employee: employeeData, role, sector, unit, mainWorkstation }
+  }, [employeeData])
 
   if (!employeeDetails) {
     return (
