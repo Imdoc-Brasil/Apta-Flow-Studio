@@ -550,7 +550,6 @@ const SidebarMenuButton = React.forwardRef<
         {...props}
       >
         {children}
-        <span className={cn(state === "collapsed" && "group-data-[collapsible=icon]:hidden")}>{props.title}</span>
       </Comp>
     )
 

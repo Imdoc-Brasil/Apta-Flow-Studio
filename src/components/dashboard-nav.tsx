@@ -1,3 +1,4 @@
+
 'use client'
 
 import Link from 'next/link'
@@ -114,7 +115,7 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
                 tooltip={item.label}
               >
                 <item.icon />
-                <span>{item.label}</span>
+                <span className='group-data-[collapsible=icon]:hidden'>{item.label}</span>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
@@ -129,11 +130,11 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
               >
                 <div className='flex items-center gap-2'>
                   <HeartPulse />
-                  <span>Sistema de Saúde</span>
+                  <span className='group-data-[collapsible=icon]:hidden'>Sistema de Saúde</span>
                 </div>
                 <ChevronRight
                   className={cn(
-                    'h-4 w-4 transition-transform',
+                    'h-4 w-4 transition-transform group-data-[collapsible=icon]:hidden',
                     isSaudeOpen && 'rotate-90'
                   )}
                 />
@@ -157,11 +158,11 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
                             >
                               <div className='flex items-center gap-2'>
                                 <item.icon />
-                                <span>{item.label}</span>
+                                <span className='group-data-[collapsible=icon]:hidden'>{item.label}</span>
                               </div>
                               <ChevronRight
                                 className={cn(
-                                  'h-4 w-4 transition-transform',
+                                  'h-4 w-4 transition-transform group-data-[collapsible=icon]:hidden',
                                   isExamesClinicosOpen && 'rotate-90'
                                 )}
                               />
@@ -178,7 +179,7 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
                                     tooltip={subItem.label}
                                     className='h-8'
                                   >
-                                    <span>{subItem.label}</span>
+                                    <span className='group-data-[collapsible=icon]:hidden'>{subItem.label}</span>
                                   </SidebarMenuButton>
                                 </Link>
                               </li>
@@ -194,7 +195,7 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
                           className='h-8'
                         >
                           <item.icon />
-                          <span>{item.label}</span>
+                          <span className='group-data-[collapsible=icon]:hidden'>{item.label}</span>
                         </SidebarMenuButton>
                       </Link>
                     )}
