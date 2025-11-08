@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useState } from 'react'
+import React, { useCallback, useState, useEffect } from 'react'
 import ReactFlow, {
   useNodesState,
   useEdgesState,
@@ -194,7 +194,14 @@ const nodeTypes = {
   decision: DecisionNode,
 }
 
-const exampleProcessNodes: Node[] = []
+const exampleProcessNodes: Node[] = [
+  {
+    id: '1',
+    type: 'custom',
+    data: { label: 'Início', onAddNode: () => {} },
+    position: { x: 250, y: 5 },
+  },
+]
 
 const exampleProcessEdges: Edge[] = []
 
@@ -252,7 +259,7 @@ function DiagramCanvas() {
     [project, setNodes, addNodeFromSource]
   )
 
-  React.useEffect(() => {
+  useEffect(() => {
     const addInitialNodes = () => {
       const nodesWithCallback = exampleProcessNodes.map((node) => ({
         ...node,
@@ -260,14 +267,17 @@ function DiagramCanvas() {
           ...node.data,
           onAddNode: addNodeFromSource,
         },
-      }))
-      setNodes(nodesWithCallback)
-      setEdges(exampleProcessEdges)
+      }));
+      setNodes(nodesWithCallback);
+      setEdges(exampleProcessEdges);
+      setDiagramName('Processo de Exemplo');
+    };
+  
+    if (nodes.length === 0) {
+      addInitialNodes();
     }
-    if (nodes.length === 0 && edges.length === 0) {
-      addInitialNodes()
-    }
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleNewDiagram = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
