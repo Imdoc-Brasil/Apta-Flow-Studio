@@ -68,26 +68,27 @@ const saudeSubNavItems = [
       },
     ],
   },
-  { href: '/dashboard/health/lab-exams', label: 'Exames Laboratoriais', icon: FlaskConical, subItems: [] },
+  {
+    href: '/dashboard/health/lab-exams',
+    label: 'Exames Laboratoriais',
+    icon: FlaskConical,
+    subItems: [],
+  },
 ]
 
 export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
   const pathname = usePathname()
 
-  const getIsActive = (href: string, isSub?: boolean) => {
-    if (isSub) {
-      return pathname === href
-    }
+  const getIsActive = (href: string) => {
     return pathname.startsWith(href) && (href !== '/dashboard' || pathname === '/dashboard')
   }
-  
+
   const isSaudeActive = getIsActive('/dashboard/health')
   const [isSaudeOpen, setIsSaudeOpen] = useState(isSaudeActive)
-  
+
   useEffect(() => {
     if (isSaudeActive) setIsSaudeOpen(true)
   }, [pathname, isSaudeActive])
-
 
   return (
     <>
@@ -110,7 +111,7 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
             </Link>
           </SidebarMenuItem>
         ))}
-         <SidebarMenuItem>
+        <SidebarMenuItem>
           <Collapsible open={isSaudeOpen} onOpenChange={setIsSaudeOpen}>
             <CollapsibleTrigger asChild>
               <SidebarMenuButton
@@ -132,42 +133,55 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
             </CollapsibleTrigger>
             <CollapsibleContent asChild>
               <ul className='pl-6 pt-1 space-y-1'>
-                 {saudeSubNavItems.map((item) => (
+                {saudeSubNavItems.map((item) => (
                   <li key={item.label}>
-                     <Collapsible>
-                      <CollapsibleTrigger className='w-full'>
-                         <SidebarMenuButton
-                           isActive={getIsActive(item.href)}
-                           tooltip={item.label}
-                           className='h-8 w-full justify-between'
-                         >
-                           <div className='flex items-center gap-2'>
-                             <item.icon />
-                             <span>{item.label}</span>
-                           </div>
-                           {item.subItems.length > 0 && <ChevronRight className={cn('h-4 w-4 transition-transform')} />}
-                         </SidebarMenuButton>
-                      </CollapsibleTrigger>
-                       {item.subItems.length > 0 && (
+                    {item.subItems.length > 0 ? (
+                       <Collapsible>
+                        <CollapsibleTrigger asChild>
+                           <Link href={item.href} className='block'>
+                             <SidebarMenuButton
+                               isActive={getIsActive(item.href)}
+                               tooltip={item.label}
+                               className='h-8 w-full justify-between'
+                             >
+                               <div className='flex items-center gap-2'>
+                                 <item.icon />
+                                 <span>{item.label}</span>
+                               </div>
+                               <ChevronRight className={cn('h-4 w-4 transition-transform')} />
+                             </SidebarMenuButton>
+                           </Link>
+                        </CollapsibleTrigger>
                         <CollapsibleContent asChild>
-                           <ul className='pl-6 pt-1 space-y-1'>
+                          <ul className='pl-6 pt-1 space-y-1'>
                             {item.subItems.map(subItem => (
                               <li key={subItem.label}>
                                 <Link href={subItem.href}>
-                                   <SidebarMenuButton
-                                     isActive={getIsActive(subItem.href, true)}
-                                     tooltip={subItem.label}
-                                     className='h-8'
-                                   >
-                                     <span>{subItem.label}</span>
-                                   </SidebarMenuButton>
+                                  <SidebarMenuButton
+                                    isActive={pathname === subItem.href}
+                                    tooltip={subItem.label}
+                                    className='h-8'
+                                  >
+                                    <span>{subItem.label}</span>
+                                  </SidebarMenuButton>
                                 </Link>
                               </li>
                             ))}
-                           </ul>
+                          </ul>
                         </CollapsibleContent>
-                       )}
-                     </Collapsible>
+                      </Collapsible>
+                    ) : (
+                      <Link href={item.href}>
+                        <SidebarMenuButton
+                           isActive={getIsActive(item.href)}
+                           tooltip={item.label}
+                           className='h-8'
+                         >
+                           <item.icon />
+                           <span>{item.label}</span>
+                         </SidebarMenuButton>
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>
