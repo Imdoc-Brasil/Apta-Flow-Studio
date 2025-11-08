@@ -136,12 +136,12 @@ export default function ClinicalEvaluationPage() {
                         {isPeriodic === 'sim' && (
                             <div className='grid grid-cols-2 gap-4 pl-6 pt-2 animate-in fade-in-0 zoom-in-95'>
                                  <div className='space-y-2'>
-                                    <Label htmlFor='periodicidade-1'>1ª Periodicidade (após admissional)</Label>
-                                    <Input id='periodicidade-1' name='periodicidade-1' placeholder='Ex: 6 meses'/>
+                                    <Label htmlFor='periodicidade-1'>1ª Periodicidade (meses)</Label>
+                                    <Input id='periodicidade-1' name='periodicidade-1' type='number' placeholder='Ex: 6'/>
                                  </div>
                                  <div className='space-y-2'>
-                                    <Label htmlFor='periodicidade-2'>Periodicidade Subsequente</Label>
-                                    <Input id='periodicidade-2' name='periodicidade-2' placeholder='Ex: 12 meses'/>
+                                    <Label htmlFor='periodicidade-2'>Periodicidade Subsequente (meses)</Label>
+                                    <Input id='periodicidade-2' name='periodicidade-2' type='number' placeholder='Ex: 12'/>
                                  </div>
                             </div>
                         )}
