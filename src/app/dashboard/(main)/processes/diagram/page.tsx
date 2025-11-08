@@ -162,7 +162,7 @@ const DecisionNode = ({
       <Handle type='source' position={Position.Right} id='right' />
       <Handle type='target' position={Position.Left} id='left' />
       <Handle type='source' position={Position.Bottom} id='bottom'>
-         <button
+        <button
           onClick={() => data.onAddNode(id)}
           className='absolute left-1/2 -translate-x-1/2 -bottom-4 bg-primary text-white rounded-full p-0.5 rotate-[-45deg]'
           title='Adicionar nó conectado'
@@ -227,24 +227,6 @@ function DiagramCanvas() {
     [setEdges]
   )
 
-  const createNode = useCallback(
-    (type: 'custom' | 'decision', x: number, y: number) => {
-      const newNodeId = `node_${Date.now()}`
-      const newNode: Node = {
-        id: newNodeId,
-        type,
-        position: project({ x, y }),
-        data: {
-          label: type === 'decision' ? 'Decisão' : `Nova Etapa`,
-          onAddNode: addNodeFromSource,
-        },
-      }
-      setNodes((nds) => nds.concat(newNode))
-      return newNode
-    },
-    [project, setNodes]
-  )
-
   const addNodeFromSource = useCallback(
     (sourceNodeId: string) => {
       const sourceNode = nodes.find((n) => n.id === sourceNodeId)
@@ -264,10 +246,28 @@ function DiagramCanvas() {
       }
       setEdges((eds) => addEdge(newEdge, eds))
     },
-    [nodes, createNode, setEdges]
+    [nodes, project, setNodes, setEdges]
   )
 
-  const addInitialNodes = useCallback(() => {
+  const createNode = useCallback(
+    (type: 'custom' | 'decision', x: number, y: number) => {
+      const newNodeId = `node_${Date.now()}`
+      const newNode: Node = {
+        id: newNodeId,
+        type,
+        position: project({ x, y }),
+        data: {
+          label: type === 'decision' ? 'Decisão' : `Nova Etapa`,
+          onAddNode: addNodeFromSource,
+        },
+      }
+      setNodes((nds) => nds.concat(newNode))
+      return newNode
+    },
+    [project, setNodes, addNodeFromSource]
+  )
+
+  React.useEffect(() => {
     const initialNodesWithCallback = exampleProcessNodes.map((node) => ({
       ...node,
       data: {
@@ -277,11 +277,7 @@ function DiagramCanvas() {
     }))
     setNodes(initialNodesWithCallback)
     setEdges(exampleProcessEdges)
-  }, [setNodes, setEdges, addNodeFromSource])
-
-  React.useEffect(() => {
-    addInitialNodes()
-  }, [addInitialNodes])
+  }, []) // Empty dependency array to run only once on mount
 
   const handleNewDiagram = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -316,6 +312,7 @@ function DiagramCanvas() {
       description: `O diagrama "${diagramName}" foi salvo com sucesso.`,
     })
   }
+
   return (
     <div className='flex h-[calc(100vh-10rem)] flex-col gap-4'>
       <div className='flex items-center justify-between'>
@@ -401,7 +398,7 @@ function DiagramCanvas() {
             <MousePointerSquareDashed className='mr-2 h-4 w-4' />
             Adicionar Nó de Etapa
           </Button>
-           <Button
+          <Button
             className='w-full'
             variant='outline'
             onClick={() => addNode('decision')}
