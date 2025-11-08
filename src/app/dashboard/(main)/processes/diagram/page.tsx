@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback } from 'react'
+import React, { useCallback, useState } from 'react'
 import ReactFlow, {
   useNodesState,
   useEdgesState,
@@ -12,8 +12,15 @@ import ReactFlow, {
   type Edge,
   type Node,
 } from 'reactflow'
-
 import 'reactflow/dist/style.css'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { PlusCircle, FolderOpen } from 'lucide-react'
 
 const initialNodes: Node[] = [
   {
@@ -41,10 +48,26 @@ const initialNodes: Node[] = [
 ]
 
 const initialEdges: Edge[] = [
-  { id: 'e1-2', source: '1', target: '2' },
-  { id: 'e2-3', source: '2', target: '3' },
-  { id: 'e3-4', source: '3', target: '4' },
+  { id: 'e1-2', source: '1', target: '2', animated: true },
+  { id: 'e2-3', source: '2', target: '3', animated: true },
+  { id: 'e3-4', source: '3', target: '4', animated: true },
 ]
+
+const salesProcessNodes: Node[] = [
+  { id: 's1', type: 'input', data: { label: 'Lead Recebido' }, position: { x: 100, y: 50 } },
+  { id: 's2', data: { label: 'Qualificação' }, position: { x: 100, y: 150 } },
+  { id: 's3', data: { label: 'Apresentação da Proposta' }, position: { x: 300, y: 150 } },
+  { id: 's4', data: { label: 'Negociação' }, position: { x: 300, y: 250 } },
+  { id: 's5', type: 'output', data: { label: 'Venda Fechada' }, position: { x: 300, y: 350 } },
+]
+
+const salesProcessEdges: Edge[] = [
+  { id: 'es1-2', source: 's1', target: 's2' },
+  { id: 'es2-3', source: 's2', target: 's3' },
+  { id: 'es3-4', source: 's3', target: 's4' },
+  { id: 'es4-5', source: 's4', target: 's5' },
+]
+
 
 export default function ProcessDiagramPage() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
@@ -54,6 +77,16 @@ export default function ProcessDiagramPage() {
     (params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)),
     [setEdges]
   )
+
+  const handleNewDiagram = () => {
+    setNodes([])
+    setEdges([])
+  }
+
+  const loadDiagram = (newNodes: Node[], newEdges: Edge[]) => {
+    setNodes(newNodes)
+    setEdges(newEdges)
+  }
 
   return (
     <div className='flex h-[calc(100vh-10rem)] flex-col gap-4'>
@@ -66,10 +99,30 @@ export default function ProcessDiagramPage() {
             Arraste e conecte os nós para montar seu fluxo de processo.
           </p>
         </div>
+        <div className='flex gap-2'>
+            <Button variant='outline' onClick={handleNewDiagram}>
+              <PlusCircle className='mr-2 h-4 w-4'/>
+              Novo Diagrama
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button>
+                  <FolderOpen className='mr-2 h-4 w-4'/>
+                  Abrir Diagrama
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => loadDiagram(initialNodes, initialEdges)}>
+                  Processo de Exemplo
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => loadDiagram(salesProcessNodes, salesProcessEdges)}>
+                  Processo de Vendas
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
       </div>
-      <div
-        className='flex-1 rounded-lg border bg-background'
-      >
+      <div className='flex-1 rounded-lg border bg-background'>
         <ReactFlow
           nodes={nodes}
           edges={edges}
