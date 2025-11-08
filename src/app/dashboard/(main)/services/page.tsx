@@ -75,49 +75,184 @@ const initialMedicalExams = [
 
 const sstPrograms = [
   {
-    code: 'SST-01',
-    service: 'PCMSO',
-    quantity: 1,
-    unitPrice: 'R$ 800,00',
-    total: 'R$ 800,00',
-    validity: '12 meses',
-    destination: 'Unidade/Setores/Cargos',
+    sigla: 'PGR',
+    documento: 'Programa de Gerenciamento de Riscos',
+    baseLegal: 'NR 1',
+    aplicabilidade: 'Obrigatório para quase todas as empresas',
+    vigencia:
+      'Revisão: Mínimo a cada 2 anos (para empresas sem acidentes graves) ou sempre que houver alterações nos riscos (modificações de processos, tecnologias, etc.). Arquivamento: Mínimo de 20 anos.',
+    valor: 'Sob Consulta',
   },
   {
-    code: 'SST-02',
-    service: 'PGR',
-    quantity: 1,
-    unitPrice: 'R$ 1.200,00',
-    total: 'R$ 1.200,00',
-    validity: '24 meses',
-    destination: 'Unidade/Setores/Cargos',
+    sigla: 'PCMSO',
+    documento: 'Programa de Controle Médico de Saúde Ocupacional',
+    baseLegal: 'NR 7',
+    aplicabilidade: 'Obrigatório para quase todas as empresas',
+    vigencia:
+      'Revisão/Planejamento: Anual. Arquivamento: O relatório analítico anual deve ser arquivado por, no mínimo, 20 anos.',
+    valor: 'Sob Consulta',
   },
   {
-    code: 'SST-03',
-    service: 'LTCAT',
-    quantity: 1,
-    unitPrice: 'R$ 1.500,00',
-    total: 'R$ 1.500,00',
-    validity: 'Indefinido',
-    destination: 'Unidade/Setores/Cargos',
+    sigla: 'ASO',
+    documento: 'Atestado de Saúde Ocupacional',
+    baseLegal: 'NR 7',
+    aplicabilidade: 'Obrigatório para todos os empregados',
+    vigencia:
+      'Vigência: Varia. Exame periódico geralmente é anual, mas pode ser bienal ou semestral dependendo do risco/idade. Arquivamento: Mínimo de 20 anos após o desligamento do trabalhador.',
+    valor: 'Sob Consulta',
   },
   {
-    code: 'SST-04',
-    service: 'AET',
-    quantity: 1,
-    unitPrice: 'R$ 2.000,00',
-    total: 'R$ 2.000,00',
-    validity: 'Indefinido',
-    destination: 'Unidade/Setores/Cargos',
+    sigla: 'OS',
+    documento: 'Ordem de Serviço de SST',
+    baseLegal: 'NR 1',
+    aplicabilidade: 'Obrigatório para todos os empregadores',
+    vigencia:
+      'Vigência: Deve ser atualizada sempre que houver alteração nos riscos ou nas medidas preventivas. Arquivamento: Indeterminado ou enquanto o trabalhador estiver na empresa.',
+    valor: 'Sob Consulta',
   },
   {
-    code: 'SST-05',
-    service: 'Assistência Técnica a Perícia',
-    quantity: 1,
-    unitPrice: 'Sob Consulta',
-    total: 'Sob Consulta',
-    validity: '60 dias',
-    destination: 'Processo Judicial',
+    sigla: '(Ficha EPI)',
+    documento: 'Ficha ou Registro de Entrega de EPI',
+    baseLegal: 'NR 6 e NR 1',
+    aplicabilidade: 'Obrigatório para todos os empregadores que fornecem EPIs',
+    vigencia:
+      'Vigência: Emitida a cada entrega de EPI. Arquivamento: Mínimo de 20 anos (sugerido junto ao ASO/PPP) para fins de comprovação.',
+    valor: 'Sob Consulta',
+  },
+  {
+    sigla: 'PPP',
+    documento: 'Perfil Profissiográfico Previdenciário',
+    baseLegal: '(Previdenciária - INSS)',
+    aplicabilidade: 'Obrigatório para todas as empresas',
+    vigencia:
+      'Vigência: Preenchido na rescisão do contrato ou sempre que solicitado. Arquivamento: Indeterminado (para sempre), pois é um documento histórico do trabalhador para o INSS.',
+    valor: 'Sob Consulta',
+  },
+  {
+    sigla: 'LTCAT',
+    documento: 'Laudo Técnico das Condições Ambientais do Trabalho',
+    baseLegal: '(Previdenciária - INSS)',
+    aplicabilidade: 'Obrigatório para empresas com exposição a agentes nocivos',
+    vigencia:
+      'Vigência: Não tem validade fixa. Deve ser revisado sempre que houver alteração no ambiente ou processo de trabalho. Arquivamento: Indeterminado.',
+    valor: 'Sob Consulta',
+  },
+  {
+    sigla: 'AET',
+    documento: 'Análise Ergonômica do Trabalho',
+    baseLegal: 'NR 17',
+    aplicabilidade: 'Obrigatório para atividades com riscos ergonômicos',
+    vigencia:
+      'Vigência: Não tem validade fixa. Deve ser revisada quando houver alterações significativas nas condições de trabalho (layout, máquinas, métodos).',
+    valor: 'Sob Consulta',
+  },
+  {
+    sigla: '(Laudo)',
+    documento: 'Laudo de Insalubridade',
+    baseLegal: 'NR 15',
+    aplicabilidade: 'Obrigatório se houver suspeita de exposição',
+    vigencia:
+      'Vigência: Não tem validade fixa. Deve ser revisado sempre que houver mudanças no ambiente ou processo de trabalho que possam alterar o nível de exposição.',
+    valor: 'Sob Consulta',
+  },
+  {
+    sigla: '(Laudo)',
+    documento: 'Laudo de Periculosidade',
+    baseLegal: 'NR 16',
+    aplicabilidade: 'Obrigatório se houver suspeita de atividades perigosas',
+    vigencia:
+      'Vigência: Não tem validade fixa. Deve ser revisado sempre que houver mudanças no ambiente ou processo de trabalho que possam alterar a condição de periculosidade.',
+    valor: 'Sob Consulta',
+  },
+  {
+    sigla: '(Certificado)',
+    documento: 'Certificado de Treinamento e Capacitação',
+    baseLegal: 'NRs diversas',
+    aplicabilidade: 'Obrigatório (registros de treinamentos específicos)',
+    vigencia:
+      'Vigência: Varia conforme a NR. Ex: NR 10 (bienal), NR 33 (anual), NR 35 (anual). Arquivamento: Pelo menos 20 anos (sugerido).',
+    valor: 'Sob Consulta',
+  },
+  {
+    sigla: '(Atas/Docs)',
+    documento: 'CIPA - (Atas, Calendário e Eleição)',
+    baseLegal: 'NR 5',
+    aplicabilidade: 'Obrigatório para empresas com 20+ empregados',
+    vigencia:
+      'Vigência: A gestão da CIPA tem duração de 1 ano. Arquivamento: Atas de eleição e posse: 20 anos; Atas de reuniões ordinárias/extraordinárias: 5 anos.',
+    valor: 'Sob Consulta',
+  },
+  {
+    sigla: 'PT',
+    documento: 'Permissão para o Trabalho',
+    baseLegal: 'NRs diversas (ex: 10, 34, 35)',
+    aplicabilidade: 'Obrigatório para atividades de alto risco',
+    vigencia:
+      'Vigência: Válida apenas para a duração da atividade específica para a qual foi emitida (geralmente diária ou por turno). Arquivamento: Mínimo de 5 anos (NR 10 sugere 5 anos).',
+    valor: 'Sob Consulta',
+  },
+  {
+    sigla: 'PPR',
+    documento: 'Programa de Proteção Respiratória',
+    baseLegal: '(Fundacentro/ NR 9)',
+    aplicabilidade: 'Obrigatório onde os trabalhadores utilizam respiradores',
+    vigencia: 'Revisão: Anual, no mínimo, ou sempre que necessário.',
+    valor: 'Sob Consulta',
+  },
+  {
+    sigla: 'PCA',
+    documento: 'Programa de Conservação Auditiva',
+    baseLegal: '(Fundacentro/ NR 9)',
+    aplicabilidade:
+      'Obrigatório para empresas com exposição a níveis de ruído elevados',
+    vigencia: 'Revisão: Anual, no mínimo, ou sempre que necessário.',
+    valor: 'Sob Consulta',
+  },
+  {
+    sigla: 'PGRTR',
+    documento: 'Programa de Gerenciamento de Riscos no Trabalho Rural',
+    baseLegal: 'NR 31',
+    aplicabilidade: 'Obrigatório para empregadores rurais/aquicultura',
+    vigencia:
+      'Revisão: Mínimo a cada 2 anos ou sempre que houver alterações (similar ao PGR). Arquivamento: Mínimo de 20 anos.',
+    valor: 'Sob Consulta',
+  },
+  {
+    sigla: 'PGRSS',
+    documento: 'Programa de Gerenciamento de Resíduos de Serviços de Saúde',
+    baseLegal: 'NR 32',
+    aplicabilidade: 'Obrigatório para serviços de saúde',
+    vigencia:
+      'Revisão: Não tem validade fixa, deve ser revisado em caso de alterações. Arquivamento: 20 anos (sugerido).',
+    valor: 'Sob Consulta',
+  },
+  {
+    sigla: '(Inventário)',
+    documento: 'Inventário de Máquinas e Equipamentos',
+    baseLegal: 'NR 12',
+    aplicabilidade: 'Obrigatório para indústrias e empresas que possuem máquinas',
+    vigencia: 'Vigência: Deve ser mantido atualizado.',
+    valor: 'Sob Consulta',
+  },
+  {
+    sigla: '(Prontuário)',
+    documento: 'Prontuário de Instalações Elétricas',
+    baseLegal: 'NR 10',
+    aplicabilidade:
+      'Obrigatório para empresas com instalações elétricas e serviços com eletricidade',
+    vigencia:
+      'Vigência: Deve ser mantido atualizado com as inspeções e manutenções.',
+    valor: 'Sob Consulta',
+  },
+  {
+    sigla: '(Prontuário)',
+    documento: 'Documentação de Caldeiras, Vasos de Pressão',
+    baseLegal: 'NR 13',
+    aplicabilidade:
+      'Obrigatório para empresas que possuem caldeiras, vasos de pressão, tubulações e tanques',
+    vigencia:
+      'Vigência: Os relatórios de inspeção têm validade definida na NR-13 (ex: 1 a 3 anos, dependendo do equipamento/categoria).',
+    valor: 'Sob Consulta',
   },
 ]
 
@@ -375,23 +510,25 @@ export default function ServicesPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Código</TableHead>
-                    <TableHead>Serviço</TableHead>
+                    <TableHead>Sigla</TableHead>
+                    <TableHead>Programa/Documento</TableHead>
+                    <TableHead>Base Legal</TableHead>
+                    <TableHead>Aplicabilidade</TableHead>
+                    <TableHead>Vigência e Arquivamento</TableHead>
                     <TableHead>Valor Unitário</TableHead>
-                    <TableHead>Vigência</TableHead>
-                    <TableHead>Destinado a</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {sstPrograms.map((program) => (
-                    <TableRow key={program.code}>
+                    <TableRow key={program.sigla}>
                       <TableCell className='font-medium'>
-                        {program.code}
+                        {program.sigla}
                       </TableCell>
-                      <TableCell>{program.service}</TableCell>
-                      <TableCell>{program.unitPrice}</TableCell>
-                      <TableCell>{program.validity}</TableCell>
-                      <TableCell>{program.destination}</TableCell>
+                      <TableCell>{program.documento}</TableCell>
+                      <TableCell>{program.baseLegal}</TableCell>
+                      <TableCell>{program.aplicabilidade}</TableCell>
+                      <TableCell>{program.vigencia}</TableCell>
+                      <TableCell>{program.valor}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
