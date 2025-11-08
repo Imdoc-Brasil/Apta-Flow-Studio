@@ -1,15 +1,14 @@
-import Link from 'next/link'
-import { PanelLeft } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
-import { Logo } from '@/components/logo'
 import { DashboardNav } from '@/components/dashboard-nav'
-import { UserNav } from '@/components/user-nav'
 import {
   Sidebar,
+  SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from '@/components/ui/sidebar'
+import { UserNav } from '@/components/user-nav'
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { Button } from '@/components/ui/button'
+import { PanelLeft } from 'lucide-react'
 
 export default function DashboardLayout({
   children,
@@ -19,7 +18,7 @@ export default function DashboardLayout({
   return (
     <SidebarProvider>
       <div className='group flex min-h-screen w-full flex-row bg-muted/40'>
-        <Sidebar>
+        <Sidebar collapsible='icon'>
           <DashboardNav />
         </Sidebar>
         <div className='flex flex-1 flex-col sm:pl-14 group-data-[state=expanded]:sm:pl-72 transition-all duration-300'>
