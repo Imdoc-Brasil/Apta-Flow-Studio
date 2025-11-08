@@ -444,6 +444,15 @@ export default function ProcessesPage() {
                       Este é um processo crítico? (impacto em segurança, qualidade ou operação)
                     </Label>
                   </div>
+                  <div className='flex items-center space-x-2 md:col-span-2'>
+                    <Checkbox id='isRiskSource' name='isRiskSource' />
+                    <Label
+                      htmlFor='isRiskSource'
+                      className='text-sm font-medium leading-none'
+                    >
+                      Este processo é uma fonte geradora de risco?
+                    </Label>
+                  </div>
                 </fieldset>
 
                 <Separator />
