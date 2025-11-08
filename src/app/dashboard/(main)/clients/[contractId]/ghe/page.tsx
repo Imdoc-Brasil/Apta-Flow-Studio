@@ -62,9 +62,11 @@ import { useRouter, useParams } from 'next/navigation'
 export default function GhePage() {
   const [ghes, setGhes] = useState(initialGheData)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
+  const [selectedGhe, setSelectedGhe] = useState<GHE | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [unitFilter, setUnitFilter] = useState<string[]>([])
-  const [viewMode, setViewMode] = useState<'card' | 'list'>('list')
+  const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
   const { toast } = useToast()
   const router = useRouter()
   const params = useParams()
@@ -104,6 +106,11 @@ export default function GhePage() {
 
   const getUnitName = (unitId: string) => {
     return initialUnitsData.find((unit) => unit.id === unitId)?.name || 'N/A'
+  }
+
+  const handleOpenDetails = (ghe: GHE) => {
+    setSelectedGhe(ghe)
+    setIsDetailDialogOpen(true)
   }
 
   return (
@@ -174,10 +181,7 @@ export default function GhePage() {
                   <LayoutGrid className='h-4 w-4' />
                 </Button>
               </div>
-              <Dialog
-                open={isAddDialogOpen}
-                onOpenChange={setIsAddDialogOpen}
-              >
+              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogTrigger asChild>
                   <Button size='sm' className='h-8 gap-1'>
                     <PlusCircle className='h-3.5 w-3.5' />
@@ -247,70 +251,82 @@ export default function GhePage() {
           </div>
         </CardHeader>
         <CardContent>
-          {viewMode === 'list' ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome do GHE</TableHead>
-                  <TableHead className='hidden md:table-cell'>
-                    Descrição
-                  </TableHead>
-                  <TableHead className='hidden sm:table-cell'>
-                    Unidade
-                  </TableHead>
-                  <TableHead>
-                    <span className='sr-only'>Ações</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredGhes.map((ghe) => (
-                  <TableRow key={ghe.id} className='cursor-pointer'>
-                    <TableCell className='font-medium'>{ghe.name}</TableCell>
-                    <TableCell className='hidden md:table-cell'>
-                      {ghe.description}
-                    </TableCell>
-                    <TableCell className='hidden sm:table-cell'>
-                      <Badge variant='outline'>{getUnitName(ghe.unitId)}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        aria-haspopup='true'
-                        size='icon'
-                        variant='ghost'
+          {filteredGhes.length > 0 ? (
+            <>
+              {viewMode === 'list' ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nome do GHE</TableHead>
+                      <TableHead className='hidden md:table-cell'>
+                        Descrição
+                      </TableHead>
+                      <TableHead className='hidden sm:table-cell'>
+                        Unidade
+                      </TableHead>
+                      <TableHead>
+                        <span className='sr-only'>Ações</span>
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredGhes.map((ghe) => (
+                      <TableRow
+                        key={ghe.id}
+                        className='cursor-pointer'
+                        onClick={() => handleOpenDetails(ghe)}
                       >
-                        <MoreHorizontal className='h-4 w-4' />
-                        <span className='sr-only'>Alternar menu</span>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                        <TableCell className='font-medium'>{ghe.name}</TableCell>
+                        <TableCell className='hidden md:table-cell'>
+                          {ghe.description}
+                        </TableCell>
+                        <TableCell className='hidden sm:table-cell'>
+                          <Badge variant='outline'>
+                            {getUnitName(ghe.unitId)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            aria-haspopup='true'
+                            size='icon'
+                            variant='ghost'
+                          >
+                            <MoreHorizontal className='h-4 w-4' />
+                            <span className='sr-only'>Alternar menu</span>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
+                  {filteredGhes.map((ghe) => (
+                    <Card
+                      key={ghe.id}
+                      className='cursor-pointer hover:shadow-md transition-shadow'
+                      onClick={() => handleOpenDetails(ghe)}
+                    >
+                      <CardHeader>
+                        <CardTitle>{ghe.name}</CardTitle>
+                        <CardDescription>
+                          <Badge variant='outline'>
+                            {getUnitName(ghe.unitId)}
+                          </Badge>
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p className='line-clamp-3 text-sm text-muted-foreground'>
+                          {ghe.description}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </>
           ) : (
-            <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
-              {filteredGhes.map((ghe) => (
-                <Card key={ghe.id} className='cursor-pointer'>
-                  <CardHeader>
-                    <CardTitle>{ghe.name}</CardTitle>
-                    <CardDescription>
-                      <Badge variant='outline'>{getUnitName(ghe.unitId)}</Badge>
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className='line-clamp-3 text-sm text-muted-foreground'>
-                      {ghe.description}
-                    </p>
-                  </CardContent>
-                   <CardFooter>
-                     <Button variant="ghost" size="sm">Ver detalhes</Button>
-                   </CardFooter>
-                </Card>
-              ))}
-            </div>
-          )}
-          {filteredGhes.length === 0 && (
-             <div className='flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm h-96'>
+            <div className='flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm h-96'>
               <div className='flex flex-col items-center gap-1 text-center'>
                 <h3 className='text-2xl font-bold tracking-tight'>
                   Nenhum GHE encontrado
@@ -329,6 +345,25 @@ export default function GhePage() {
           )}
         </CardContent>
       </Card>
+      
+      <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{selectedGhe?.name}</DialogTitle>
+             <DialogDescription>
+              <Badge variant="outline">{getUnitName(selectedGhe?.unitId || '')}</Badge>
+            </DialogDescription>
+          </DialogHeader>
+          <div className='py-4'>
+            <p className='text-sm text-muted-foreground'>{selectedGhe?.description}</p>
+            {/* Aqui podem entrar mais detalhes do GHE, como riscos associados, colaboradores, etc. */}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDetailDialogOpen(false)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </>
   )
 }
