@@ -7,12 +7,17 @@ export interface ProcessStep {
   isControlPoint: boolean
 }
 
+export type ProcessType = 'POP' | 'PP' | 'PRS' | 'PRT' | 'PI' | 'Outro'
+
 export interface Process {
   id: string
   name: string
   objective: string
   primarySector: string
   steps: ProcessStep[]
+  type: ProcessType
+  obligations: string[]
+  isCritical: boolean
 }
 
 export const initialProcessesData: Process[] = [
@@ -59,5 +64,8 @@ export const initialProcessesData: Process[] = [
         isControlPoint: true,
       },
     ],
+    type: 'PRS',
+    obligations: ['NR-12'],
+    isCritical: true,
   },
 ]
