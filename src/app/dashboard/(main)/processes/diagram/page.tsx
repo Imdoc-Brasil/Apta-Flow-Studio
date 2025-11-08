@@ -30,6 +30,7 @@ import {
   MousePointerSquareDashed,
   Save,
   Plus,
+  Diamond,
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import {
@@ -43,6 +44,7 @@ import {
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
+import { cn } from '@/lib/utils'
 
 // Custom node to allow editing and quick connection
 const CustomNode = ({
@@ -123,8 +125,73 @@ const CustomNode = ({
   )
 }
 
+const DecisionNode = ({
+  id,
+  data,
+}: {
+  id: string
+  data: { label: string; onAddNode: (sourceNodeId: string) => void }
+  isConnectable: boolean
+}) => {
+  const [isEditing, setIsEditing] = useState(false)
+  const [label, setLabel] = useState(data.label)
+  const { setNodes } = useReactFlow()
+
+  const handleDoubleClick = () => setIsEditing(true)
+  const handleBlur = () => {
+    setIsEditing(false)
+    setNodes((nds) =>
+      nds.map((node) =>
+        node.id === id ? { ...node, data: { ...node.data, label } } : node
+      )
+    )
+  }
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setLabel(e.target.value)
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') handleBlur()
+  }
+
+  return (
+    <div
+      onDoubleClick={handleDoubleClick}
+      className='bg-background border-2 border-amber-500 p-4'
+      style={{ transform: 'rotate(45deg)' }}
+    >
+      <Handle type='target' position={Position.Top} id='top' />
+      <Handle type='source' position={Position.Right} id='right' />
+      <Handle type='target' position={Position.Left} id='left' />
+      <Handle type='source' position={Position.Bottom} id='bottom'>
+         <button
+          onClick={() => data.onAddNode(id)}
+          className='absolute left-1/2 -translate-x-1/2 -bottom-4 bg-primary text-white rounded-full p-0.5 rotate-[-45deg]'
+          title='Adicionar nó conectado'
+        >
+          <Plus size={12} />
+        </button>
+      </Handle>
+
+      <div style={{ transform: 'rotate(-45deg)' }} className='nodrag'>
+        {isEditing ? (
+          <Input
+            value={label}
+            onChange={handleChange}
+            onBlur={handleBlur}
+            onKeyDown={handleKeyDown}
+            className='w-32'
+            autoFocus
+          />
+        ) : (
+          <div className='w-32 text-center'>{label}</div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 const nodeTypes = {
   custom: CustomNode,
+  decision: DecisionNode,
 }
 
 const exampleProcessNodes: Node[] = [
@@ -150,7 +217,7 @@ function DiagramCanvas() {
   const [nodes, setNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
   const [isNewDiagramOpen, setIsNewDiagramOpen] = useState(false)
-  const [diagramName, setDiagramName] = useState('Novo Diagrama')
+  const [diagramName, setDiagramName] = useState('Processo de Exemplo')
   const { toast } = useToast()
   const { project } = useReactFlow()
 
@@ -161,26 +228,21 @@ function DiagramCanvas() {
   )
 
   const createNode = useCallback(
-    (sourceNode: Node | null, x: number, y: number) => {
+    (type: 'custom' | 'decision', x: number, y: number) => {
       const newNodeId = `node_${Date.now()}`
       const newNode: Node = {
         id: newNodeId,
-        type: 'custom',
+        type,
         position: project({ x, y }),
         data: {
-          label: `Nova Etapa`,
-          onAddNode: (id) => {
-            const source = nodes.find((n) => n.id === id)
-            if (source) {
-              createNode(source, source.position.x, source.position.y + 150)
-            }
-          },
+          label: type === 'decision' ? 'Decisão' : `Nova Etapa`,
+          onAddNode: addNodeFromSource,
         },
       }
       setNodes((nds) => nds.concat(newNode))
       return newNode
     },
-    [project, setNodes, nodes]
+    [project, setNodes]
   )
 
   const addNodeFromSource = useCallback(
@@ -189,7 +251,7 @@ function DiagramCanvas() {
       if (!sourceNode) return
 
       const newNode = createNode(
-        sourceNode,
+        'custom',
         sourceNode.position.x,
         sourceNode.position.y + 150
       )
@@ -205,24 +267,21 @@ function DiagramCanvas() {
     [nodes, createNode, setEdges]
   )
 
-  const addInitialNodes = useCallback(
-    (onAddNode: (id: string) => void) => {
-      const initialNodesWithCallback = exampleProcessNodes.map((node) => ({
-        ...node,
-        data: {
-          ...node.data,
-          onAddNode,
-        },
-      }))
-      setNodes(initialNodesWithCallback)
-      setEdges(exampleProcessEdges)
-    },
-    [setNodes, setEdges]
-  )
+  const addInitialNodes = useCallback(() => {
+    const initialNodesWithCallback = exampleProcessNodes.map((node) => ({
+      ...node,
+      data: {
+        ...node.data,
+        onAddNode: addNodeFromSource,
+      },
+    }))
+    setNodes(initialNodesWithCallback)
+    setEdges(exampleProcessEdges)
+  }, [setNodes, setEdges, addNodeFromSource])
 
   React.useEffect(() => {
-    addInitialNodes(addNodeFromSource)
-  }, []) // Run only once on mount
+    addInitialNodes()
+  }, [addInitialNodes])
 
   const handleNewDiagram = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -247,18 +306,8 @@ function DiagramCanvas() {
     setDiagramName(name)
   }
 
-  const addNode = () => {
-    const newNodeId = `node_${nodes.length + 1}`
-    const newNode: Node = {
-      id: newNodeId,
-      type: 'custom',
-      position: { x: Math.random() * 200 + 100, y: Math.random() * 200 },
-      data: {
-        label: `Nova Etapa`,
-        onAddNode: addNodeFromSource,
-      },
-    }
-    setNodes((nds) => nds.concat(newNode))
+  const addNode = (type: 'custom' | 'decision') => {
+    createNode(type, Math.random() * 200 + 100, Math.random() * 200)
   }
 
   const handleSave = () => {
@@ -342,11 +391,23 @@ function DiagramCanvas() {
         </div>
       </div>
       <div className='flex flex-1 gap-4'>
-        <div className='w-64 rounded-lg border bg-background p-4'>
-          <h3 className='font-semibold mb-4'>Adicionar Nós</h3>
-          <Button className='w-full' variant='outline' onClick={addNode}>
+        <div className='w-64 rounded-lg border bg-background p-4 space-y-4'>
+          <h3 className='font-semibold'>Adicionar Nós</h3>
+          <Button
+            className='w-full'
+            variant='outline'
+            onClick={() => addNode('custom')}
+          >
             <MousePointerSquareDashed className='mr-2 h-4 w-4' />
             Adicionar Nó de Etapa
+          </Button>
+           <Button
+            className='w-full'
+            variant='outline'
+            onClick={() => addNode('decision')}
+          >
+            <Diamond className='mr-2 h-4 w-4' />
+            Adicionar Nó de Decisão
           </Button>
         </div>
         <div className='flex-1 rounded-lg border bg-background'>
