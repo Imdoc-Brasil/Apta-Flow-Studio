@@ -8,6 +8,7 @@ import {
   Filter,
   LayoutGrid,
   List,
+  Users,
 } from 'lucide-react'
 import {
   Card,
@@ -48,6 +49,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { initialGheData, type GHE } from './data'
 import { initialUnitsData } from '../units/data'
+import { initialRolesData } from '../roles/data'
 import {
   Select,
   SelectContent,
@@ -58,6 +60,8 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { Badge } from '@/components/ui/badge'
 import { useRouter, useParams } from 'next/navigation'
+import { Checkbox } from '@/components/ui/checkbox'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 export default function GhePage() {
   const [ghes, setGhes] = useState(initialGheData)
@@ -90,11 +94,16 @@ export default function GhePage() {
   const handleAddGhe = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
+    const roleIds = initialRolesData
+      .map((role) => role.id)
+      .filter((id) => formData.get(`role-${id}`) === 'on')
+
     const newGhe: GHE = {
       id: `GHE-${Date.now().toString().slice(-3)}`,
       name: formData.get('name') as string,
       description: formData.get('description') as string,
       unitId: formData.get('unitId') as string,
+      roleIds: roleIds,
     }
     setGhes((prev) => [...prev, newGhe])
     setIsAddDialogOpen(false)
@@ -106,6 +115,10 @@ export default function GhePage() {
 
   const getUnitName = (unitId: string) => {
     return initialUnitsData.find((unit) => unit.id === unitId)?.name || 'N/A'
+  }
+
+  const getRoleName = (roleId: string) => {
+    return initialRolesData.find((role) => role.id === roleId)?.name || 'N/A'
   }
 
   const handleOpenDetails = (ghe: GHE) => {
@@ -190,7 +203,7 @@ export default function GhePage() {
                     </span>
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className='sm:max-w-lg'>
                   <DialogHeader>
                     <DialogTitle>Adicionar Novo GHE</DialogTitle>
                     <DialogDescription>
@@ -231,6 +244,30 @@ export default function GhePage() {
                           placeholder='Descreva as características deste grupo'
                           required
                         />
+                      </div>
+                      <div className='space-y-2'>
+                        <Label>Cargos Incluídos</Label>
+                        <ScrollArea className='h-32 rounded-md border'>
+                          <div className='p-4 space-y-2'>
+                            {initialRolesData.map((role) => (
+                              <div
+                                key={role.id}
+                                className='flex items-center gap-2'
+                              >
+                                <Checkbox
+                                  id={`role-${role.id}`}
+                                  name={`role-${role.id}`}
+                                />
+                                <Label
+                                  htmlFor={`role-${role.id}`}
+                                  className='font-normal'
+                                >
+                                  {role.name}
+                                </Label>
+                              </div>
+                            ))}
+                          </div>
+                        </ScrollArea>
                       </div>
                     </div>
                   </form>
@@ -278,7 +315,9 @@ export default function GhePage() {
                       >
                         <TableCell className='font-medium'>{ghe.name}</TableCell>
                         <TableCell className='hidden md:table-cell'>
-                          {ghe.description}
+                          <p className='line-clamp-1 text-sm text-muted-foreground'>
+                            {ghe.description}
+                          </p>
                         </TableCell>
                         <TableCell className='hidden sm:table-cell'>
                           <Badge variant='outline'>
@@ -304,7 +343,7 @@ export default function GhePage() {
                   {filteredGhes.map((ghe) => (
                     <Card
                       key={ghe.id}
-                      className='cursor-pointer hover:shadow-md transition-shadow'
+                      className='cursor-pointer hover:shadow-md transition-shadow flex flex-col'
                       onClick={() => handleOpenDetails(ghe)}
                     >
                       <CardHeader>
@@ -315,11 +354,17 @@ export default function GhePage() {
                           </Badge>
                         </CardDescription>
                       </CardHeader>
-                      <CardContent>
+                      <CardContent className='flex-grow'>
                         <p className='line-clamp-3 text-sm text-muted-foreground'>
                           {ghe.description}
                         </p>
                       </CardContent>
+                      <CardFooter>
+                        <div className='flex items-center text-sm text-muted-foreground'>
+                           <Users className='h-4 w-4 mr-2' />
+                           {ghe.roleIds.length} cargos incluídos
+                        </div>
+                      </CardFooter>
                     </Card>
                   ))}
                 </div>
@@ -345,25 +390,45 @@ export default function GhePage() {
           )}
         </CardContent>
       </Card>
-      
+
       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{selectedGhe?.name}</DialogTitle>
-            <div className='pt-2'>
-              <Badge variant="outline">{getUnitName(selectedGhe?.unitId || '')}</Badge>
-            </div>
+            <DialogDescription>
+               <Badge variant='outline'>
+                {getUnitName(selectedGhe?.unitId || '')}
+              </Badge>
+            </DialogDescription>
           </DialogHeader>
-          <div className='py-4'>
-            <p className='text-sm text-muted-foreground'>{selectedGhe?.description}</p>
-            {/* Aqui podem entrar mais detalhes do GHE, como riscos associados, colaboradores, etc. */}
+          <div className='py-4 space-y-4'>
+            <div>
+              <h4 className='font-semibold text-sm'>Descrição</h4>
+              <p className='text-sm text-muted-foreground'>
+                {selectedGhe?.description}
+              </p>
+            </div>
+             {selectedGhe && selectedGhe.roleIds.length > 0 && (
+              <div>
+                <h4 className='font-semibold text-sm'>Cargos Incluídos</h4>
+                <div className='flex flex-wrap gap-2 mt-2'>
+                  {selectedGhe.roleIds.map(roleId => (
+                    <Badge key={roleId} variant="secondary">{getRoleName(roleId)}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDetailDialogOpen(false)}>Fechar</Button>
+            <Button
+              variant='outline'
+              onClick={() => setIsDetailDialogOpen(false)}
+            >
+              Fechar
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
     </>
   )
 }
