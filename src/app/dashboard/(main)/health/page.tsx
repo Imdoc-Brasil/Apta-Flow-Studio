@@ -14,7 +14,7 @@ export default function HealthPage() {
     <div className='grid flex-1 auto-rows-max gap-4'>
       <div className='flex items-center gap-4'>
         <h1 className='flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0'>
-          Gestão de Saúde
+          Sistema de Saúde
         </h1>
       </div>
       <Card>
@@ -30,7 +30,7 @@ export default function HealthPage() {
             <div className='flex flex-col items-center gap-1 text-center'>
               <Stethoscope className='h-12 w-12 text-muted-foreground' />
               <h3 className='text-2xl font-bold tracking-tight'>
-                Bem-vindo à Gestão de Saúde
+                Bem-vindo ao Sistema de Saúde
               </h3>
               <p className='text-sm text-muted-foreground'>
                 Utilize este espaço para configurar e gerenciar todos os
