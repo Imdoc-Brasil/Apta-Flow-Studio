@@ -20,7 +20,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { PlusCircle, FolderOpen } from 'lucide-react'
+import { PlusCircle, FolderOpen, MousePointerSquareDashed } from 'lucide-react'
 
 // Custom diamond-shaped node for decisions
 const DecisionNode = ({ data }: { data: { label: string } }) => {
@@ -133,8 +133,8 @@ const salesProcessEdges: Edge[] = [
 ]
 
 export default function ProcessDiagramPage() {
-  const [nodes, setNodes, onNodesChange] = useNodesState([]) // Start with empty nodes
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]) // Start with empty edges
+  const [nodes, setNodes, onNodesChange] = useNodesState(exampleProcessNodes)
+  const [edges, setEdges, onEdgesChange] = useEdgesState(exampleProcessEdges)
 
   const onConnect = useCallback(
     (params: Edge | Connection) =>
@@ -150,6 +150,17 @@ export default function ProcessDiagramPage() {
   const loadDiagram = (newNodes: Node[], newEdges: Edge[]) => {
     setNodes(newNodes)
     setEdges(newEdges)
+  }
+
+  const addNode = () => {
+    const newNodeId = `node_${(nodes.length + 1).toString()}`
+    const newNode: Node = {
+      id: newNodeId,
+      // Position new nodes in the center of the viewport
+      position: { x: Math.random() * 400, y: Math.random() * 400 },
+      data: { label: `Nova Etapa` },
+    }
+    setNodes((nds) => nds.concat(newNode))
   }
 
   return (
@@ -192,20 +203,29 @@ export default function ProcessDiagramPage() {
           </DropdownMenu>
         </div>
       </div>
-      <div className='flex-1 rounded-lg border bg-background'>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          nodeTypes={nodeTypes}
-          fitView
-        >
-          <Controls />
-          <MiniMap />
-          <Background variant='dots' gap={12} size={1} />
-        </ReactFlow>
+      <div className='flex flex-1 gap-4'>
+        <div className='w-64 rounded-lg border bg-background p-4'>
+            <h3 className='font-semibold mb-4'>Adicionar Nós</h3>
+            <Button className='w-full' variant='outline' onClick={addNode}>
+                <MousePointerSquareDashed className='mr-2 h-4 w-4' />
+                Adicionar Nó de Etapa
+            </Button>
+        </div>
+        <div className='flex-1 rounded-lg border bg-background'>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            nodeTypes={nodeTypes}
+            fitView
+          >
+            <Controls />
+            <MiniMap />
+            <Background variant='dots' gap={12} size={1} />
+          </ReactFlow>
+        </div>
       </div>
     </div>
   )
