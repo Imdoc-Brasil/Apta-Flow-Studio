@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   Card,
   CardContent,
@@ -17,6 +17,11 @@ import {
   CheckCircle,
   ArrowRight,
   Trash2,
+  List,
+  LayoutGrid,
+  Search,
+  Filter,
+  MoreHorizontal,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -46,6 +51,14 @@ import {
 import { Checkbox } from '@/components/ui/checkbox'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { initialActivitiesData } from '../activities/data'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 export default function ProcessesPage() {
   const [processes, setProcesses] = useState(initialProcessesData)
@@ -53,6 +66,23 @@ export default function ProcessesPage() {
   const [editingProcess, setEditingProcess] = useState<Process | null>(null)
   const [formSteps, setFormSteps] = useState<ProcessStep[]>([])
   const { toast } = useToast()
+
+  const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
+  const [searchTerm, setSearchTerm] = useState('')
+  const [sectorFilter, setSectorFilter] = useState<string[]>([])
+
+  const uniqueSectors = [...new Set(initialProcessesData.map(p => p.primarySector))]
+
+  const filteredProcesses = useMemo(() => {
+    return processes.filter(process => {
+        const matchesSearch = process.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                              process.objective.toLowerCase().includes(searchTerm.toLowerCase())
+        
+        const matchesSector = sectorFilter.length === 0 || sectorFilter.includes(process.primarySector)
+
+        return matchesSearch && matchesSector
+    })
+  }, [processes, searchTerm, sectorFilter])
 
   const handleProcessSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -121,15 +151,79 @@ export default function ProcessesPage() {
             Gerencie os processos de negócio, procedimentos e fluxos de
             trabalho da empresa.
           </CardDescription>
-          <div className='flex justify-end pt-4'>
-            <Button onClick={() => openProcessDialog(null)}>
-              <PlusCircle className='mr-2 h-4 w-4' /> Adicionar Processo
-            </Button>
+          <div className='flex items-center justify-between pt-4'>
+            <div className='flex items-center gap-2'>
+              <div className='relative w-full max-w-sm'>
+                <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
+                <Input
+                  type='search'
+                  placeholder='Buscar por nome do processo...'
+                  className='pl-8'
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    className='h-10 gap-1 text-sm'
+                  >
+                    <Filter className='h-3.5 w-3.5' />
+                    <span className='sr-only sm:not-sr-only'>Filtrar</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align='end'>
+                  <DropdownMenuLabel>Filtrar por Setor</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {uniqueSectors.map((sector) => (
+                    <DropdownMenuCheckboxItem
+                      key={sector}
+                      checked={sectorFilter.includes(sector)}
+                      onCheckedChange={(checked) => {
+                        setSectorFilter((prev) =>
+                          checked
+                            ? [...prev, sector]
+                            : prev.filter((s) => s !== sector)
+                        )
+                      }}
+                    >
+                      {sector}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+             <div className='flex items-center gap-2'>
+              <div className='flex items-center gap-1 rounded-lg bg-muted p-1'>
+                <Button
+                  variant={viewMode === 'list' ? 'secondary' : 'ghost'}
+                  size='icon'
+                  className='h-8 w-8'
+                  onClick={() => setViewMode('list')}
+                >
+                  <List className='h-4 w-4' />
+                </Button>
+                <Button
+                  variant={viewMode === 'card' ? 'secondary' : 'ghost'}
+                  size='icon'
+                  className='h-8 w-8'
+                  onClick={() => setViewMode('card')}
+                >
+                  <LayoutGrid className='h-4 w-4' />
+                </Button>
+              </div>
+              <Button onClick={() => openProcessDialog(null)}>
+                <PlusCircle className='mr-2 h-4 w-4' /> Adicionar Processo
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
+        {viewMode === 'card' ? (
           <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
-            {processes.map((process) => (
+            {filteredProcesses.map((process) => (
               <Card
                 key={process.id}
                 className='flex flex-col hover:shadow-lg transition-shadow cursor-pointer'
@@ -155,6 +249,45 @@ export default function ProcessesPage() {
               </Card>
             ))}
           </div>
+          ) : (
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Processo</TableHead>
+                        <TableHead>Setor Principal</TableHead>
+                        <TableHead>Etapas</TableHead>
+                        <TableHead><span className="sr-only">Ações</span></TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {filteredProcesses.map(process => (
+                        <TableRow key={process.id} onClick={() => openProcessDialog(process)} className="cursor-pointer">
+                            <TableCell className="font-medium">{process.name}</TableCell>
+                            <TableCell><Badge variant="outline">{process.primarySector}</Badge></TableCell>
+                            <TableCell>{process.steps.length}</TableCell>
+                            <TableCell>
+                                <Button variant="ghost" size="icon">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+          )}
+
+          {filteredProcesses.length === 0 && (
+             <div className='flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm h-96'>
+                <div className='flex flex-col items-center gap-1 text-center'>
+                    <h3 className='text-2xl font-bold tracking-tight'>Nenhum processo encontrado</h3>
+                    <p className='text-sm text-muted-foreground'>Ajuste os filtros ou adicione um novo processo.</p>
+                     <Button className='mt-4' onClick={() => openProcessDialog(null)}>
+                        Adicionar Processo
+                    </Button>
+                </div>
+             </div>
+          )}
+
         </CardContent>
       </Card>
 
