@@ -29,6 +29,7 @@ import { Separator } from '@/components/ui/separator'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Badge } from '@/components/ui/badge'
 
 export default function ClinicalEvaluationPage() {
   const { toast } = useToast()
@@ -102,7 +103,7 @@ export default function ClinicalEvaluationPage() {
           Configuração da Avaliação Clínica
         </h1>
       </div>
-      <Tabs defaultValue='settings'>
+      <Tabs defaultValue='form-model'>
         <TabsList>
           <TabsTrigger value='settings'>Configurações</TabsTrigger>
           <TabsTrigger value='form-model'>Modelo da Ficha</TabsTrigger>
@@ -381,7 +382,7 @@ export default function ClinicalEvaluationPage() {
                     </div>
                 </FieldsetGroup>
 
-                <FieldsetGroup title="Seção 03: Tipo de Ficha (Admissional)">
+                <FieldsetGroup title="Seção 03: Anamnese (Exame Admissional)">
                    <p className='text-sm text-muted-foreground'>As seções a seguir são específicas para o exame admissional.</p>
                    {/* Subseção 01 */}
                    <div className='space-y-4 rounded-md border p-4'>
