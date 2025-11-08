@@ -23,12 +23,21 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { PlusCircle, FolderOpen, MousePointerSquareDashed } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
 
 // Custom node to allow editing
 const EditableNode = ({
   id,
   data,
-  isConnectable,
 }: {
   id: string
   data: { label: string }
@@ -92,15 +101,7 @@ const EditableNode = ({
 }
 
 // Custom diamond-shaped node for decisions
-const DecisionNode = ({
-  id,
-  data,
-  isConnectable,
-}: {
-  id: string
-  data: { label: string }
-  isConnectable: boolean
-}) => {
+const DecisionNode = ({ data }: { data: { label: string } }) => {
   return (
     <div
       style={{
@@ -221,6 +222,7 @@ const salesProcessEdges: Edge[] = [
 export default function ProcessDiagramPage() {
   const [nodes, setNodes, onNodesChange] = useNodesState(exampleProcessNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(exampleProcessEdges)
+  const [isNewDiagramOpen, setIsNewDiagramOpen] = useState(false)
 
   const onConnect = useCallback(
     (params: Edge | Connection) =>
@@ -231,6 +233,7 @@ export default function ProcessDiagramPage() {
   const handleNewDiagram = () => {
     setNodes([])
     setEdges([])
+    setIsNewDiagramOpen(false)
   }
 
   const loadDiagram = (newNodes: Node[], newEdges: Edge[]) => {
@@ -261,10 +264,42 @@ export default function ProcessDiagramPage() {
           </p>
         </div>
         <div className='flex gap-2'>
-          <Button variant='outline' onClick={handleNewDiagram}>
-            <PlusCircle className='mr-2 h-4 w-4' />
-            Novo Diagrama
-          </Button>
+          <Dialog open={isNewDiagramOpen} onOpenChange={setIsNewDiagramOpen}>
+            <DialogTrigger asChild>
+              <Button variant='outline'>
+                <PlusCircle className='mr-2 h-4 w-4' />
+                Novo Diagrama
+              </Button>
+            </DialogTrigger>
+            <DialogContent className='sm:max-w-md'>
+              <DialogHeader>
+                <DialogTitle>Criar Novo Diagrama</DialogTitle>
+                <DialogDescription>
+                  Dê um nome ao seu novo diagrama de processo.
+                </DialogDescription>
+              </DialogHeader>
+              <div className='grid gap-4 py-4'>
+                <Label htmlFor='diagram-name'>Nome do Diagrama</Label>
+                <Input
+                  id='diagram-name'
+                  placeholder='Ex: Processo de Onboarding'
+                />
+              </div>
+              <DialogFooter>
+                <Button
+                  type='button'
+                  variant='outline'
+                  onClick={() => setIsNewDiagramOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button type='button' onClick={handleNewDiagram}>
+                  Criar
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button>
