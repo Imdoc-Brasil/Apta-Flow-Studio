@@ -1,4 +1,3 @@
-
 'use client'
 
 import Link from 'next/link'
@@ -65,7 +64,7 @@ const saudeSubNavItems = [
       },
       {
         href: '/dashboard/health/clinical-exams/psychosocial',
-        label: 'Avaliação Psicossocial',
+        label: 'TESTE: SRQ 20',
       },
     ],
   },
