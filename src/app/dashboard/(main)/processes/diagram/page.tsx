@@ -14,6 +14,7 @@ import ReactFlow, {
   useReactFlow,
   Handle,
   Position,
+  ReactFlowProvider,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { Button } from '@/components/ui/button'
@@ -83,8 +84,15 @@ const CustomNode = ({
   }
 
   return (
-    <div onDoubleClick={handleDoubleClick} className='p-2 bg-background rounded-md border-2 border-stone-400'>
-      <Handle type="target" position={Position.Top} className="w-16 !bg-teal-500" />
+    <div
+      onDoubleClick={handleDoubleClick}
+      className='p-2 bg-background rounded-md border-2 border-stone-400'
+    >
+      <Handle
+        type='target'
+        position={Position.Top}
+        className='w-16 !bg-teal-500'
+      />
       {isEditing ? (
         <Input
           type='text'
@@ -96,21 +104,19 @@ const CustomNode = ({
           className='nodrag'
         />
       ) : (
-        <div className='px-4 py-2 rounded-md'>
-          {label}
-        </div>
+        <div className='px-4 py-2 rounded-md'>{label}</div>
       )}
       <Handle
-        type="source"
+        type='source'
         position={Position.Bottom}
-        className="w-16 !bg-teal-500"
+        className='w-16 !bg-teal-500'
       >
         <button
-            onClick={() => data.onAddNode(id)}
-            className="absolute left-1/2 -translate-x-1/2 -bottom-4 bg-primary text-white rounded-full p-0.5"
-            title="Adicionar nó conectado"
+          onClick={() => data.onAddNode(id)}
+          className='absolute left-1/2 -translate-x-1/2 -bottom-4 bg-primary text-white rounded-full p-0.5'
+          title='Adicionar nó conectado'
         >
-            <Plus size={12} />
+          <Plus size={12} />
         </button>
       </Handle>
     </div>
@@ -140,8 +146,7 @@ const exampleProcessEdges: Edge[] = [
   { id: 'e1-2', source: '1', target: '2', type: 'smoothstep' },
 ]
 
-
-export default function ProcessDiagramPage() {
+function DiagramCanvas() {
   const [nodes, setNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
   const [isNewDiagramOpen, setIsNewDiagramOpen] = useState(false)
@@ -156,7 +161,7 @@ export default function ProcessDiagramPage() {
   )
 
   const createNode = useCallback(
-    (sourceNode: Node, x: number, y: number) => {
+    (sourceNode: Node | null, x: number, y: number) => {
       const newNodeId = `node_${Date.now()}`
       const newNode: Node = {
         id: newNodeId,
@@ -165,9 +170,9 @@ export default function ProcessDiagramPage() {
         data: {
           label: `Nova Etapa`,
           onAddNode: (id) => {
-            const source = nodes.find(n => n.id === id)
+            const source = nodes.find((n) => n.id === id)
             if (source) {
-                 createNode(source, source.position.x, source.position.y + 150)
+              createNode(source, source.position.x, source.position.y + 150)
             }
           },
         },
@@ -178,37 +183,46 @@ export default function ProcessDiagramPage() {
     [project, setNodes, nodes]
   )
 
-  const addNodeFromSource = useCallback((sourceNodeId: string) => {
-      const sourceNode = nodes.find(n => n.id === sourceNodeId);
-      if (!sourceNode) return;
+  const addNodeFromSource = useCallback(
+    (sourceNodeId: string) => {
+      const sourceNode = nodes.find((n) => n.id === sourceNodeId)
+      if (!sourceNode) return
 
-      const newNode = createNode(sourceNode, sourceNode.position.x, sourceNode.position.y + 150);
+      const newNode = createNode(
+        sourceNode,
+        sourceNode.position.x,
+        sourceNode.position.y + 150
+      )
 
       const newEdge: Edge = {
-          id: `e${sourceNodeId}-${newNode.id}`,
-          source: sourceNodeId,
-          target: newNode.id,
-          type: 'smoothstep',
-      };
-      setEdges((eds) => addEdge(newEdge, eds));
-  }, [nodes, createNode, setEdges]);
-  
-  
-   const addInitialNodes = useCallback((onAddNode: (id: string) => void) => {
-    const initialNodesWithCallback = exampleProcessNodes.map(node => ({
+        id: `e${sourceNodeId}-${newNode.id}`,
+        source: sourceNodeId,
+        target: newNode.id,
+        type: 'smoothstep',
+      }
+      setEdges((eds) => addEdge(newEdge, eds))
+    },
+    [nodes, createNode, setEdges]
+  )
+
+  const addInitialNodes = useCallback(
+    (onAddNode: (id: string) => void) => {
+      const initialNodesWithCallback = exampleProcessNodes.map((node) => ({
         ...node,
         data: {
-            ...node.data,
-            onAddNode
-        }
-    }));
-    setNodes(initialNodesWithCallback);
-    setEdges(exampleProcessEdges);
-  }, [setNodes, setEdges]);
+          ...node.data,
+          onAddNode,
+        },
+      }))
+      setNodes(initialNodesWithCallback)
+      setEdges(exampleProcessEdges)
+    },
+    [setNodes, setEdges]
+  )
 
   React.useEffect(() => {
-    addInitialNodes(addNodeFromSource);
-  }, []); // Run only once on mount
+    addInitialNodes(addNodeFromSource)
+  }, []) // Run only once on mount
 
   const handleNewDiagram = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -221,12 +235,12 @@ export default function ProcessDiagramPage() {
   }
 
   const loadDiagram = (newNodes: Node[], newEdges: Edge[], name: string) => {
-    const nodesWithCallback = newNodes.map(node => ({
-        ...node,
-        data: {
-            ...node.data,
-            onAddNode: addNodeFromSource,
-        }
+    const nodesWithCallback = newNodes.map((node) => ({
+      ...node,
+      data: {
+        ...node.data,
+        onAddNode: addNodeFromSource,
+      },
     }))
     setNodes(nodesWithCallback)
     setEdges(newEdges)
@@ -239,10 +253,10 @@ export default function ProcessDiagramPage() {
       id: newNodeId,
       type: 'custom',
       position: { x: Math.random() * 200 + 100, y: Math.random() * 200 },
-      data: { 
-          label: `Nova Etapa`,
-          onAddNode: addNodeFromSource,
-       },
+      data: {
+        label: `Nova Etapa`,
+        onAddNode: addNodeFromSource,
+      },
     }
     setNodes((nds) => nds.concat(newNode))
   }
@@ -253,7 +267,6 @@ export default function ProcessDiagramPage() {
       description: `O diagrama "${diagramName}" foi salvo com sucesso.`,
     })
   }
-
   return (
     <div className='flex h-[calc(100vh-10rem)] flex-col gap-4'>
       <div className='flex items-center justify-between'>
@@ -311,7 +324,11 @@ export default function ProcessDiagramPage() {
             <DropdownMenuContent>
               <DropdownMenuItem
                 onClick={() =>
-                  loadDiagram(exampleProcessNodes, exampleProcessEdges, 'Processo de Exemplo')
+                  loadDiagram(
+                    exampleProcessNodes,
+                    exampleProcessEdges,
+                    'Processo de Exemplo'
+                  )
                 }
               >
                 Processo Simples
@@ -349,5 +366,13 @@ export default function ProcessDiagramPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ProcessDiagramPage() {
+  return (
+    <ReactFlowProvider>
+      <DiagramCanvas />
+    </ReactFlowProvider>
   )
 }
