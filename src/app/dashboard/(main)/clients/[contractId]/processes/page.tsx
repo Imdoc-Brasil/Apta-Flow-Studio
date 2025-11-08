@@ -67,6 +67,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { initialUnitsData } from '../units/data'
 
+type ScopeType = 'unidade' | 'setor' | 'cargo'
+
 export default function ProcessesPage() {
   const [processes, setProcesses] = useState(initialProcessesData)
   const [isProcessDialogOpen, setIsProcessDialogOpen] = useState(false)
@@ -79,6 +81,9 @@ export default function ProcessesPage() {
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
   const [searchTerm, setSearchTerm] = useState('')
   const [sectorFilter, setSectorFilter] = useState<string[]>([])
+  const [formScope, setFormScope] = useState<ScopeType>('setor')
+  const [selectedScopeItems, setSelectedScopeItems] = useState<string[]>([])
+
 
   const uniqueSectors = [
     ...new Set(initialProcessesData.map((p) => p.primarySector)),
@@ -107,7 +112,8 @@ export default function ProcessesPage() {
       id: processId,
       name: formData.get('name') as string,
       objective: formData.get('objective') as string,
-      primarySector: formData.get('primarySector') as string,
+      // This needs to be updated to handle the new scope logic
+      primarySector: selectedScopeItems.join(', '),
       type: formData.get('type') as ProcessType,
       isCritical: formData.get('isCritical') === 'on',
       obligations: formObligations,
@@ -140,6 +146,9 @@ export default function ProcessesPage() {
     setEditingProcess(process)
     setFormSteps(process ? [...process.steps] : [])
     setFormObligations(process ? [...process.obligations] : [])
+    // Reset scope fields
+    setFormScope('setor');
+    setSelectedScopeItems([]);
     setIsProcessDialogOpen(true)
   }
 
@@ -173,6 +182,54 @@ export default function ProcessesPage() {
       formObligations.filter((ob) => ob !== obligationToRemove)
     )
   }
+  
+  const renderScopeSelector = () => {
+    let items: { id: string; name: string }[] = []
+    let placeholder = ''
+    
+    switch (formScope) {
+      case 'unidade':
+        items = initialUnitsData
+        placeholder = 'Selecione a(s) unidade(s)'
+        break
+      case 'setor':
+        items = initialSectorsData
+        placeholder = 'Selecione o(s) setor(es)'
+        break
+      case 'cargo':
+        items = initialRolesData
+        placeholder = 'Selecione o(s) cargo(s)'
+        break
+      default:
+        return null
+    }
+
+    return (
+       <div className='space-y-2'>
+        <Label>Itens de Abrangência</Label>
+         <Select
+          value={selectedScopeItems.join(',')}
+          onValueChange={(value) => setSelectedScopeItems(value.split(','))}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder={placeholder} />
+          </SelectTrigger>
+          <SelectContent>
+            {/* This would need a multi-select component. Simulating with single for now */}
+            {items.map(item => (
+              <SelectItem key={item.id} value={item.name}>
+                {item.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+         <p className="text-xs text-muted-foreground">
+            A seleção múltipla será implementada com um componente aprimorado.
+          </p>
+      </div>
+    )
+  }
+
 
   return (
     <>
@@ -355,32 +412,14 @@ export default function ProcessesPage() {
           <form id='process-form' onSubmit={handleProcessSubmit}>
             <ScrollArea className='h-[70vh]'>
               <div className='space-y-6 p-1 pr-4'>
-                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='name'>Nome do Processo</Label>
-                    <Input
-                      id='name'
-                      name='name'
-                      defaultValue={editingProcess?.name}
-                      required
-                    />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='abrangencia'>Abrangência</Label>
-                     <Select
-                      name='abrangencia'
-                      defaultValue='setor'
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder='Selecione a abrangência' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value='unidade'>Unidade</SelectItem>
-                        <SelectItem value='setor'>Setor(es)</SelectItem>
-                        <SelectItem value='cargo'>Cargo(s)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='name'>Nome do Processo</Label>
+                  <Input
+                    id='name'
+                    name='name'
+                    defaultValue={editingProcess?.name}
+                    required
+                  />
                 </div>
 
                 <div className='space-y-2'>
@@ -392,7 +431,32 @@ export default function ProcessesPage() {
                     placeholder='Descreva o porquê deste processo existir.'
                   />
                 </div>
-                
+                 <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                    <div className='space-y-2'>
+                      <Label htmlFor='abrangencia'>Abrangência</Label>
+                      <Select
+                        name='abrangencia'
+                        value={formScope}
+                        onValueChange={(value) => {
+                          setFormScope(value as ScopeType)
+                          setSelectedScopeItems([]) // Reset selection on change
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder='Selecione a abrangência' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value='unidade'>Unidade</SelectItem>
+                          <SelectItem value='setor'>Setor(es)</SelectItem>
+                          <SelectItem value='cargo'>Cargo(s)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                     <div className='space-y-2'>
+                       {renderScopeSelector()}
+                    </div>
+                  </div>
+
                 <fieldset className='grid grid-cols-1 md:grid-cols-2 gap-4 rounded-lg border p-4'>
                   <legend className='-ml-1 px-1 text-sm font-medium'>
                     Categorização
