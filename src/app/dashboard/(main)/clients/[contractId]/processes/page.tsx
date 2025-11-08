@@ -462,29 +462,16 @@ export default function ProcessesPage() {
                           {index + 1}
                         </div>
                         <div className='flex-grow space-y-2'>
-                          <Select
+                          <Input
                             name={`step-name-${index}`}
                             defaultValue={step.name}
+                            placeholder='Nome da etapa/atividade'
                             required
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder='Selecione a atividade padrão' />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {initialActivitiesData.map((activity) => (
-                                <SelectItem
-                                  key={activity.id}
-                                  value={activity.name}
-                                >
-                                  {activity.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          />
                           <Textarea
                             name={`step-description-${index}`}
                             defaultValue={step.description}
-                            placeholder='Descrição da atividade (opcional, pode vir do catálogo)'
+                            placeholder='Descrição da atividade (opcional)'
                             rows={2}
                           />
                           <Select
