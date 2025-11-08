@@ -9,6 +9,7 @@ import {
   LayoutGrid,
   List,
   Users,
+  X,
 } from 'lucide-react'
 import {
   Card,
@@ -62,6 +63,7 @@ import { Badge } from '@/components/ui/badge'
 import { useRouter, useParams } from 'next/navigation'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Separator } from '@/components/ui/separator'
 
 export default function GhePage() {
   const [ghes, setGhes] = useState(initialGheData)
@@ -75,6 +77,36 @@ export default function GhePage() {
   const router = useRouter()
   const params = useParams()
   const contractId = params.contractId as string
+
+  // States for the list builder
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([])
+  const [roleSearchTerm, setRoleSearchTerm] = useState('')
+
+  const availableRoles = useMemo(() => {
+    return initialRolesData.filter(
+      (role) =>
+        !selectedRoles.includes(role.id) &&
+        role.name.toLowerCase().includes(roleSearchTerm.toLowerCase())
+    )
+  }, [selectedRoles, roleSearchTerm])
+
+  const currentSelectedRoles = useMemo(() => {
+    return initialRolesData.filter((role) => selectedRoles.includes(role.id))
+  }, [selectedRoles])
+
+  const handleSelectRole = (roleId: string) => {
+    setSelectedRoles((prev) => [...prev, roleId])
+  }
+
+  const handleRemoveRole = (roleId: string) => {
+    setSelectedRoles((prev) => prev.filter((id) => id !== roleId))
+  }
+
+  const resetRoleSelection = () => {
+    setSelectedRoles([])
+    setRoleSearchTerm('')
+  }
+
 
   const filteredGhes = useMemo(() => {
     let filtered = ghes
@@ -94,19 +126,26 @@ export default function GhePage() {
   const handleAddGhe = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
-    const roleIds = initialRolesData
-      .map((role) => role.id)
-      .filter((id) => formData.get(`role-${id}`) === 'on')
+   
+    if (selectedRoles.length === 0) {
+        toast({
+            variant: "destructive",
+            title: "Nenhum cargo selecionado",
+            description: "Por favor, inclua pelo menos um cargo no GHE."
+        })
+        return
+    }
 
     const newGhe: GHE = {
       id: `GHE-${Date.now().toString().slice(-3)}`,
       name: formData.get('name') as string,
       description: formData.get('description') as string,
       unitId: formData.get('unitId') as string,
-      roleIds: roleIds,
+      roleIds: selectedRoles,
     }
     setGhes((prev) => [...prev, newGhe])
     setIsAddDialogOpen(false)
+    resetRoleSelection()
     toast({
       title: 'GHE Adicionado!',
       description: `O grupo "${newGhe.name}" foi adicionado.`,
@@ -124,6 +163,11 @@ export default function GhePage() {
   const handleOpenDetails = (ghe: GHE) => {
     setSelectedGhe(ghe)
     setIsDetailDialogOpen(true)
+  }
+
+  const openAddDialog = () => {
+    resetRoleSelection()
+    setIsAddDialogOpen(true)
   }
 
   return (
@@ -196,14 +240,14 @@ export default function GhePage() {
               </div>
               <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button size='sm' className='h-8 gap-1'>
+                  <Button size='sm' className='h-8 gap-1' onClick={openAddDialog}>
                     <PlusCircle className='h-3.5 w-3.5' />
                     <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
                       Adicionar GHE
                     </span>
                   </Button>
                 </DialogTrigger>
-                <DialogContent className='sm:max-w-lg'>
+                <DialogContent className='sm:max-w-3xl'>
                   <DialogHeader>
                     <DialogTitle>Adicionar Novo GHE</DialogTitle>
                     <DialogDescription>
@@ -211,7 +255,8 @@ export default function GhePage() {
                     </DialogDescription>
                   </DialogHeader>
                   <form id='add-ghe-form' onSubmit={handleAddGhe}>
-                    <div className='grid gap-4 py-4'>
+                     <ScrollArea className="h-[70vh]">
+                    <div className='grid gap-6 p-4'>
                       <div className='space-y-2'>
                         <Label htmlFor='name'>Nome do GHE</Label>
                         <Input
@@ -245,31 +290,56 @@ export default function GhePage() {
                           required
                         />
                       </div>
-                      <div className='space-y-2'>
+                     <div className='space-y-2'>
                         <Label>Cargos Incluídos</Label>
-                        <ScrollArea className='h-32 rounded-md border'>
-                          <div className='p-4 space-y-2'>
-                            {initialRolesData.map((role) => (
-                              <div
-                                key={role.id}
-                                className='flex items-center gap-2'
-                              >
-                                <Checkbox
-                                  id={`role-${role.id}`}
-                                  name={`role-${role.id}`}
-                                />
-                                <Label
-                                  htmlFor={`role-${role.id}`}
-                                  className='font-normal'
-                                >
-                                  {role.name}
-                                </Label>
+                        <div className='grid grid-cols-2 gap-4'>
+                          {/* Coluna da Esquerda: Disponíveis */}
+                          <div className='rounded-md border p-4 space-y-2'>
+                              <div className='relative'>
+                                  <Search className='absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
+                                  <Input 
+                                      placeholder='Buscar cargo...'
+                                      className='pl-8'
+                                      value={roleSearchTerm}
+                                      onChange={(e) => setRoleSearchTerm(e.target.value)}
+                                  />
                               </div>
-                            ))}
+                              <ScrollArea className='h-48'>
+                                  <div className='space-y-2'>
+                                  {availableRoles.map(role => (
+                                      <div key={role.id} className='flex items-center justify-between text-sm p-2 rounded-md hover:bg-muted'>
+                                          <span>{role.name}</span>
+                                          <Button type='button' size='sm' variant='outline' onClick={() => handleSelectRole(role.id)}>Incluir</Button>
+                                      </div>
+                                  ))}
+                                  {availableRoles.length === 0 && <p className='text-center text-xs text-muted-foreground pt-4'>Nenhum cargo encontrado.</p>}
+                                  </div>
+                              </ScrollArea>
                           </div>
-                        </ScrollArea>
+                          
+                          {/* Coluna da Direita: Selecionados */}
+                          <div className='rounded-md border p-4 space-y-2'>
+                               <h4 className='font-medium text-sm'>Selecionados ({currentSelectedRoles.length})</h4>
+                               <Separator />
+                               <ScrollArea className='h-48'>
+                                   <div className='space-y-2'>
+                                   {currentSelectedRoles.map(role => (
+                                       <div key={role.id} className='flex items-center justify-between text-sm p-2 rounded-md bg-secondary'>
+                                           <span>{role.name}</span>
+                                           <Button type='button' size='icon' variant='ghost' className='h-6 w-6' onClick={() => handleRemoveRole(role.id)}>
+                                             <X className='h-4 w-4' />
+                                           </Button>
+                                       </div>
+                                   ))}
+                                    {currentSelectedRoles.length === 0 && <p className='text-center text-xs text-muted-foreground pt-4'>Nenhum cargo selecionado.</p>}
+                                   </div>
+                               </ScrollArea>
+                          </div>
+                        </div>
                       </div>
+
                     </div>
+                    </ScrollArea>
                   </form>
                   <DialogFooter>
                     <Button
@@ -395,7 +465,7 @@ export default function GhePage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{selectedGhe?.name}</DialogTitle>
-            <DialogDescription>
+             <DialogDescription>
                <Badge variant='outline'>
                 {getUnitName(selectedGhe?.unitId || '')}
               </Badge>
