@@ -12,6 +12,8 @@ import ReactFlow, {
   type Edge,
   type Node,
   useReactFlow,
+  Handle,
+  Position,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { Button } from '@/components/ui/button'
@@ -21,7 +23,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { PlusCircle, FolderOpen, MousePointerSquareDashed, Save } from 'lucide-react'
+import {
+  PlusCircle,
+  FolderOpen,
+  MousePointerSquareDashed,
+  Save,
+  Plus,
+} from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import {
   Dialog,
@@ -35,13 +43,13 @@ import {
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 
-// Custom node to allow editing
-const EditableNode = ({
+// Custom node to allow editing and quick connection
+const CustomNode = ({
   id,
   data,
 }: {
   id: string
-  data: { label: string }
+  data: { label: string; onAddNode: (sourceNodeId: string) => void }
   isConnectable: boolean
 }) => {
   const [isEditing, setIsEditing] = useState(false)
@@ -75,7 +83,8 @@ const EditableNode = ({
   }
 
   return (
-    <div onDoubleClick={handleDoubleClick} className='p-2'>
+    <div onDoubleClick={handleDoubleClick} className='p-2 bg-background rounded-md border-2 border-stone-400'>
+      <Handle type="target" position={Position.Top} className="w-16 !bg-teal-500" />
       {isEditing ? (
         <Input
           type='text'
@@ -84,141 +93,53 @@ const EditableNode = ({
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           autoFocus
-          className='nodrag' // Prevents dragging while editing
+          className='nodrag'
         />
       ) : (
-        <div
-          style={{
-            padding: '10px',
-            border: '1px solid #ddd',
-            borderRadius: '5px',
-          }}
-        >
+        <div className='px-4 py-2 rounded-md'>
           {label}
         </div>
       )}
-    </div>
-  )
-}
-
-// Custom diamond-shaped node for decisions
-const DecisionNode = ({ data }: { data: { label: string } }) => {
-  return (
-    <div
-      style={{
-        width: 150,
-        height: 100,
-        backgroundColor: '#fff',
-        border: '1px solid #000',
-        transform: 'rotate(45deg)',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}
-    >
-      <div
-        style={{
-          transform: 'rotate(-45deg)',
-          textAlign: 'center',
-          padding: '10px',
-        }}
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="w-16 !bg-teal-500"
       >
-        {data.label}
-      </div>
+        <button
+            onClick={() => data.onAddNode(id)}
+            className="absolute left-1/2 -translate-x-1/2 -bottom-4 bg-primary text-white rounded-full p-0.5"
+            title="Adicionar nó conectado"
+        >
+            <Plus size={12} />
+        </button>
+      </Handle>
     </div>
   )
 }
 
 const nodeTypes = {
-  decision: DecisionNode,
-  default: EditableNode,
-  input: EditableNode,
-  output: EditableNode,
+  custom: CustomNode,
 }
 
 const exampleProcessNodes: Node[] = [
   {
     id: '1',
-    type: 'input',
+    type: 'custom',
     data: { label: 'Início do Processo' },
     position: { x: 250, y: 5 },
   },
   {
     id: '2',
+    type: 'custom',
     data: { label: 'Etapa 1' },
-    position: { x: 250, y: 100 },
-  },
-  {
-    id: '3',
-    data: { label: 'Etapa 2' },
-    position: { x: 250, y: 200 },
-  },
-  {
-    id: '4',
-    type: 'output',
-    data: { label: 'Fim do Processo' },
-    position: { x: 250, y: 300 },
+    position: { x: 250, y: 150 },
   },
 ]
 
 const exampleProcessEdges: Edge[] = [
   { id: 'e1-2', source: '1', target: '2', type: 'smoothstep' },
-  { id: 'e2-3', source: '2', target: '3', type: 'smoothstep' },
-  { id: 'e3-4', source: '3', target: '4', type: 'smoothstep' },
 ]
 
-const salesProcessNodes: Node[] = [
-  {
-    id: 's1',
-    type: 'input',
-    data: { label: 'Lead Recebido' },
-    position: { x: 150, y: 50 },
-  },
-  { id: 's2', data: { label: 'Qualificação' }, position: { x: 150, y: 150 } },
-  {
-    id: 's3',
-    type: 'decision', // Using the custom decision node
-    data: { label: 'Lead Qualificado?' },
-    position: { x: 150, y: 250 },
-  },
-  {
-    id: 's4',
-    data: { label: 'Apresentação da Proposta' },
-    position: { x: 350, y: 200 },
-  },
-  {
-    id: 's5',
-    type: 'output',
-    data: { label: 'Venda Fechada' },
-    position: { x: 350, y: 350 },
-  },
-  {
-    id: 's6',
-    type: 'output',
-    data: { label: 'Lead Descartado' },
-    position: { x: 150, y: 450 },
-  },
-]
-
-const salesProcessEdges: Edge[] = [
-  { id: 'es1-2', source: 's1', target: 's2', type: 'smoothstep' },
-  { id: 'es2-3', source: 's2', target: 's3', type: 'smoothstep' },
-  {
-    id: 'es3-4',
-    source: 's3',
-    target: 's4',
-    type: 'smoothstep',
-    label: 'Sim',
-  },
-  { id: 'es4-5', source: 's4', target: 's5', type: 'smoothstep' },
-  {
-    id: 'es3-6',
-    source: 's3',
-    target: 's6',
-    type: 'smoothstep',
-    label: 'Não',
-  },
-]
 
 export default function ProcessDiagramPage() {
   const [nodes, setNodes, onNodesChange] = useNodesState([])
@@ -226,12 +147,68 @@ export default function ProcessDiagramPage() {
   const [isNewDiagramOpen, setIsNewDiagramOpen] = useState(false)
   const [diagramName, setDiagramName] = useState('Novo Diagrama')
   const { toast } = useToast()
+  const { project } = useReactFlow()
 
   const onConnect = useCallback(
     (params: Edge | Connection) =>
       setEdges((eds) => addEdge({ ...params, type: 'smoothstep' }, eds)),
     [setEdges]
   )
+
+  const createNode = useCallback(
+    (sourceNode: Node, x: number, y: number) => {
+      const newNodeId = `node_${Date.now()}`
+      const newNode: Node = {
+        id: newNodeId,
+        type: 'custom',
+        position: project({ x, y }),
+        data: {
+          label: `Nova Etapa`,
+          onAddNode: (id) => {
+            const source = nodes.find(n => n.id === id)
+            if (source) {
+                 createNode(source, source.position.x, source.position.y + 150)
+            }
+          },
+        },
+      }
+      setNodes((nds) => nds.concat(newNode))
+      return newNode
+    },
+    [project, setNodes, nodes]
+  )
+
+  const addNodeFromSource = useCallback((sourceNodeId: string) => {
+      const sourceNode = nodes.find(n => n.id === sourceNodeId);
+      if (!sourceNode) return;
+
+      const newNode = createNode(sourceNode, sourceNode.position.x, sourceNode.position.y + 150);
+
+      const newEdge: Edge = {
+          id: `e${sourceNodeId}-${newNode.id}`,
+          source: sourceNodeId,
+          target: newNode.id,
+          type: 'smoothstep',
+      };
+      setEdges((eds) => addEdge(newEdge, eds));
+  }, [nodes, createNode, setEdges]);
+  
+  
+   const addInitialNodes = useCallback((onAddNode: (id: string) => void) => {
+    const initialNodesWithCallback = exampleProcessNodes.map(node => ({
+        ...node,
+        data: {
+            ...node.data,
+            onAddNode
+        }
+    }));
+    setNodes(initialNodesWithCallback);
+    setEdges(exampleProcessEdges);
+  }, [setNodes, setEdges]);
+
+  React.useEffect(() => {
+    addInitialNodes(addNodeFromSource);
+  }, []); // Run only once on mount
 
   const handleNewDiagram = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -244,26 +221,36 @@ export default function ProcessDiagramPage() {
   }
 
   const loadDiagram = (newNodes: Node[], newEdges: Edge[], name: string) => {
-    setNodes(newNodes)
+    const nodesWithCallback = newNodes.map(node => ({
+        ...node,
+        data: {
+            ...node.data,
+            onAddNode: addNodeFromSource,
+        }
+    }))
+    setNodes(nodesWithCallback)
     setEdges(newEdges)
     setDiagramName(name)
   }
 
   const addNode = () => {
-    const newNodeId = `node_${(nodes.length + 1).toString()}`
+    const newNodeId = `node_${nodes.length + 1}`
     const newNode: Node = {
       id: newNodeId,
-      position: { x: Math.random() * 400, y: Math.random() * 400 },
-      data: { label: `Nova Etapa` },
-      type: 'default',
+      type: 'custom',
+      position: { x: Math.random() * 200 + 100, y: Math.random() * 200 },
+      data: { 
+          label: `Nova Etapa`,
+          onAddNode: addNodeFromSource,
+       },
     }
     setNodes((nds) => nds.concat(newNode))
   }
-  
+
   const handleSave = () => {
     toast({
-        title: "Diagrama Salvo!",
-        description: `O diagrama "${diagramName}" foi salvo com sucesso.`,
+      title: 'Diagrama Salvo!',
+      description: `O diagrama "${diagramName}" foi salvo com sucesso.`,
     })
   }
 
@@ -271,11 +258,9 @@ export default function ProcessDiagramPage() {
     <div className='flex h-[calc(100vh-10rem)] flex-col gap-4'>
       <div className='flex items-center justify-between'>
         <div>
-          <h1 className='font-headline text-3xl font-bold'>
-            {diagramName}
-          </h1>
+          <h1 className='font-headline text-3xl font-bold'>{diagramName}</h1>
           <p className='text-muted-foreground'>
-            Arraste e conecte os nós para montar seu fluxo de processo.
+            Dê um duplo clique em um nó para editar seu título.
           </p>
         </div>
         <div className='flex gap-2'>
@@ -320,7 +305,7 @@ export default function ProcessDiagramPage() {
             <DropdownMenuTrigger asChild>
               <Button>
                 <FolderOpen className='mr-2 h-4 w-4' />
-                Abrir Diagrama
+                Abrir Exemplo
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
@@ -329,16 +314,11 @@ export default function ProcessDiagramPage() {
                   loadDiagram(exampleProcessNodes, exampleProcessEdges, 'Processo de Exemplo')
                 }
               >
-                Processo de Exemplo
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => loadDiagram(salesProcessNodes, salesProcessEdges, 'Processo de Vendas')}
-              >
-                Processo de Vendas
+                Processo Simples
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-           <Button variant="default" onClick={handleSave}>
+          <Button variant='default' onClick={handleSave}>
             <Save className='mr-2 h-4 w-4' />
             Salvar
           </Button>
