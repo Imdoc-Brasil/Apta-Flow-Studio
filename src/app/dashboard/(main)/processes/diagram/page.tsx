@@ -264,8 +264,10 @@ function DiagramCanvas() {
       setNodes(nodesWithCallback)
       setEdges(exampleProcessEdges)
     }
-    addInitialNodes()
-  }, []) // Empty dependency array to run only once on mount
+    if (nodes.length === 0 && edges.length === 0) {
+      addInitialNodes()
+    }
+  }, [])
 
   const handleNewDiagram = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
