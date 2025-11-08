@@ -194,30 +194,15 @@ const nodeTypes = {
   decision: DecisionNode,
 }
 
-const exampleProcessNodes: Node[] = [
-  {
-    id: '1',
-    type: 'custom',
-    data: { label: 'Início do Processo' },
-    position: { x: 250, y: 5 },
-  },
-  {
-    id: '2',
-    type: 'custom',
-    data: { label: 'Etapa 1' },
-    position: { x: 250, y: 150 },
-  },
-]
+const exampleProcessNodes: Node[] = []
 
-const exampleProcessEdges: Edge[] = [
-  { id: 'e1-2', source: '1', target: '2', type: 'smoothstep' },
-]
+const exampleProcessEdges: Edge[] = []
 
 function DiagramCanvas() {
   const [nodes, setNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
   const [isNewDiagramOpen, setIsNewDiagramOpen] = useState(false)
-  const [diagramName, setDiagramName] = useState('Processo de Exemplo')
+  const [diagramName, setDiagramName] = useState('Novo Diagrama')
   const { toast } = useToast()
   const { project } = useReactFlow()
 
@@ -268,15 +253,18 @@ function DiagramCanvas() {
   )
 
   React.useEffect(() => {
-    const initialNodesWithCallback = exampleProcessNodes.map((node) => ({
-      ...node,
-      data: {
-        ...node.data,
-        onAddNode: addNodeFromSource,
-      },
-    }))
-    setNodes(initialNodesWithCallback)
-    setEdges(exampleProcessEdges)
+    const addInitialNodes = () => {
+      const nodesWithCallback = exampleProcessNodes.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          onAddNode: addNodeFromSource,
+        },
+      }))
+      setNodes(nodesWithCallback)
+      setEdges(exampleProcessEdges)
+    }
+    addInitialNodes()
   }, []) // Empty dependency array to run only once on mount
 
   const handleNewDiagram = (event: React.FormEvent<HTMLFormElement>) => {
