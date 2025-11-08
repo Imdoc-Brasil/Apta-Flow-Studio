@@ -21,7 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { PlusCircle, FolderOpen, MousePointerSquareDashed } from 'lucide-react'
+import { PlusCircle, FolderOpen, MousePointerSquareDashed, Save } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import {
   Dialog,
@@ -33,6 +33,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
+import { useToast } from '@/hooks/use-toast'
 
 // Custom node to allow editing
 const EditableNode = ({
@@ -220,9 +221,11 @@ const salesProcessEdges: Edge[] = [
 ]
 
 export default function ProcessDiagramPage() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(exampleProcessNodes)
-  const [edges, setEdges, onEdgesChange] = useEdgesState(exampleProcessEdges)
+  const [nodes, setNodes, onNodesChange] = useNodesState([])
+  const [edges, setEdges, onEdgesChange] = useEdgesState([])
   const [isNewDiagramOpen, setIsNewDiagramOpen] = useState(false)
+  const [diagramName, setDiagramName] = useState('Novo Diagrama')
+  const { toast } = useToast()
 
   const onConnect = useCallback(
     (params: Edge | Connection) =>
@@ -230,15 +233,20 @@ export default function ProcessDiagramPage() {
     [setEdges]
   )
 
-  const handleNewDiagram = () => {
+  const handleNewDiagram = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const formData = new FormData(event.currentTarget)
+    const newName = formData.get('diagram-name') as string
+    setDiagramName(newName || 'Diagrama sem nome')
     setNodes([])
     setEdges([])
     setIsNewDiagramOpen(false)
   }
 
-  const loadDiagram = (newNodes: Node[], newEdges: Edge[]) => {
+  const loadDiagram = (newNodes: Node[], newEdges: Edge[], name: string) => {
     setNodes(newNodes)
     setEdges(newEdges)
+    setDiagramName(name)
   }
 
   const addNode = () => {
@@ -251,13 +259,20 @@ export default function ProcessDiagramPage() {
     }
     setNodes((nds) => nds.concat(newNode))
   }
+  
+  const handleSave = () => {
+    toast({
+        title: "Diagrama Salvo!",
+        description: `O diagrama "${diagramName}" foi salvo com sucesso.`,
+    })
+  }
 
   return (
     <div className='flex h-[calc(100vh-10rem)] flex-col gap-4'>
       <div className='flex items-center justify-between'>
         <div>
           <h1 className='font-headline text-3xl font-bold'>
-            Construtor de Diagramas
+            {diagramName}
           </h1>
           <p className='text-muted-foreground'>
             Arraste e conecte os nós para montar seu fluxo de processo.
@@ -272,31 +287,32 @@ export default function ProcessDiagramPage() {
               </Button>
             </DialogTrigger>
             <DialogContent className='sm:max-w-md'>
-              <DialogHeader>
-                <DialogTitle>Criar Novo Diagrama</DialogTitle>
-                <DialogDescription>
-                  Dê um nome ao seu novo diagrama de processo.
-                </DialogDescription>
-              </DialogHeader>
-              <div className='grid gap-4 py-4'>
-                <Label htmlFor='diagram-name'>Nome do Diagrama</Label>
-                <Input
-                  id='diagram-name'
-                  placeholder='Ex: Processo de Onboarding'
-                />
-              </div>
-              <DialogFooter>
-                <Button
-                  type='button'
-                  variant='outline'
-                  onClick={() => setIsNewDiagramOpen(false)}
-                >
-                  Cancelar
-                </Button>
-                <Button type='button' onClick={handleNewDiagram}>
-                  Criar
-                </Button>
-              </DialogFooter>
+              <form onSubmit={handleNewDiagram}>
+                <DialogHeader>
+                  <DialogTitle>Criar Novo Diagrama</DialogTitle>
+                  <DialogDescription>
+                    Dê um nome ao seu novo diagrama de processo.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className='grid gap-4 py-4'>
+                  <Label htmlFor='diagram-name'>Nome do Diagrama</Label>
+                  <Input
+                    id='diagram-name'
+                    name='diagram-name'
+                    placeholder='Ex: Processo de Onboarding'
+                  />
+                </div>
+                <DialogFooter>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    onClick={() => setIsNewDiagramOpen(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button type='submit'>Criar</Button>
+                </DialogFooter>
+              </form>
             </DialogContent>
           </Dialog>
 
@@ -310,18 +326,22 @@ export default function ProcessDiagramPage() {
             <DropdownMenuContent>
               <DropdownMenuItem
                 onClick={() =>
-                  loadDiagram(exampleProcessNodes, exampleProcessEdges)
+                  loadDiagram(exampleProcessNodes, exampleProcessEdges, 'Processo de Exemplo')
                 }
               >
                 Processo de Exemplo
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => loadDiagram(salesProcessNodes, salesProcessEdges)}
+                onClick={() => loadDiagram(salesProcessNodes, salesProcessEdges, 'Processo de Vendas')}
               >
                 Processo de Vendas
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+           <Button variant="default" onClick={handleSave}>
+            <Save className='mr-2 h-4 w-4' />
+            Salvar
+          </Button>
         </div>
       </div>
       <div className='flex flex-1 gap-4'>
