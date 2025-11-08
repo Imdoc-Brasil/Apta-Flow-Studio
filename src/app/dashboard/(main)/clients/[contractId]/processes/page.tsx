@@ -66,6 +66,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { initialUnitsData } from '../units/data'
+import { sstPrograms } from '@/app/dashboard/(main)/services/page'
 
 type ScopeType = 'unidade' | 'setor' | 'cargo'
 
@@ -75,7 +76,6 @@ export default function ProcessesPage() {
   const [editingProcess, setEditingProcess] = useState<Process | null>(null)
   const [formSteps, setFormSteps] = useState<ProcessStep[]>([])
   const [formObligations, setFormObligations] = useState<string[]>([])
-  const [obligationInput, setObligationInput] = useState('')
   const { toast } = useToast()
 
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
@@ -109,7 +109,7 @@ export default function ProcessesPage() {
       id: processId,
       name: formData.get('name') as string,
       objective: formData.get('objective') as string,
-      primarySector: formData.get('primarySector') as string,
+      primarySector: '', // Removido
       type: formData.get('type') as ProcessType,
       isCritical: formData.get('isCritical') === 'on',
       obligations: formObligations,
@@ -160,19 +160,11 @@ export default function ProcessesPage() {
     setFormSteps((prev) => prev.filter((step) => step.id !== stepId))
   }
 
-  const handleAddObligation = () => {
-    if (
-      obligationInput.trim() &&
-      !formObligations.includes(obligationInput.trim())
-    ) {
-      setFormObligations([...formObligations, obligationInput.trim()])
-      setObligationInput('')
-    }
-  }
-
-  const handleRemoveObligation = (obligationToRemove: string) => {
-    setFormObligations(
-      formObligations.filter((ob) => ob !== obligationToRemove)
+  const handleObligationChange = (sigla: string) => {
+    setFormObligations(prev => 
+      prev.includes(sigla) 
+        ? prev.filter(s => s !== sigla)
+        : [...prev, sigla]
     )
   }
 
@@ -409,26 +401,34 @@ export default function ProcessesPage() {
                   </div>
                   <div className='space-y-2'>
                     <Label htmlFor='obligations'>Obrigações Vinculadas (opcional)</Label>
-                    <div className='flex gap-2'>
-                      <Input
-                        id='obligations'
-                        value={obligationInput}
-                        onChange={(e) => setObligationInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            handleAddObligation();
-                          }
-                        }}
-                        placeholder='Ex: NR-32, ISO 9001'
-                      />
-                      <Button type='button' onClick={handleAddObligation}>Adicionar</Button>
-                    </div>
-                     <div className="flex flex-wrap gap-2 mt-2">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className='w-full justify-start text-left font-normal'>
+                          {formObligations.length > 0 ? `${formObligations.length} selecionada(s)` : 'Selecione as obrigações'}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-96" align="start">
+                        <DropdownMenuLabel>Selecione as obrigações</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <ScrollArea className='h-64'>
+                          {sstPrograms.map((program) => (
+                            <DropdownMenuCheckboxItem
+                              key={program.sigla}
+                              checked={formObligations.includes(program.sigla)}
+                              onCheckedChange={() => handleObligationChange(program.sigla)}
+                              onSelect={(e) => e.preventDefault()} // Keep menu open
+                            >
+                              {program.sigla} - {program.documento}
+                            </DropdownMenuCheckboxItem>
+                          ))}
+                        </ScrollArea>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                     <div className="flex flex-wrap gap-1 mt-2">
                         {formObligations.map((ob) => (
                           <Badge key={ob} variant="secondary" className="flex items-center gap-1">
                             {ob}
-                            <button type="button" onClick={() => handleRemoveObligation(ob)} className="rounded-full hover:bg-background/50">
+                            <button type="button" onClick={() => handleObligationChange(ob)} className="rounded-full hover:bg-background/50">
                               <X className="h-3 w-3" />
                             </button>
                           </Badge>

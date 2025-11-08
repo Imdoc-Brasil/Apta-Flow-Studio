@@ -74,7 +74,7 @@ const initialMedicalExams = [
   },
 ]
 
-const sstPrograms = [
+export const sstPrograms = [
     {
       sigla: 'PGR',
       documento: 'Programa de Gerenciamento de Riscos',
@@ -140,7 +140,7 @@ const sstPrograms = [
       valor: 'Sob Consulta',
     },
     {
-      sigla: '(Laudo)',
+      sigla: 'Laudo Insalubridade',
       documento: 'Laudo de Insalubridade',
       baseLegal: 'NR 15',
       aplicabilidade: 'Obrigatório se houver suspeita de exposição',
@@ -148,7 +148,7 @@ const sstPrograms = [
       valor: 'Sob Consulta',
     },
     {
-      sigla: '(Laudo)',
+      sigla: 'Laudo Periculosidade',
       documento: 'Laudo de Periculosidade',
       baseLegal: 'NR 16',
       aplicabilidade: 'Obrigatório se houver suspeita de atividades perigosas',
@@ -156,7 +156,7 @@ const sstPrograms = [
       valor: 'Sob Consulta',
     },
     {
-      sigla: '(Certificado)',
+      sigla: 'Certificado Treinamento',
       documento: 'Certificado de Treinamento e Capacitação',
       baseLegal: 'NRs diversas',
       aplicabilidade: 'Obrigatório (registros de treinamentos específicos)',
@@ -164,7 +164,7 @@ const sstPrograms = [
       valor: 'Sob Consulta',
     },
     {
-      sigla: '(Atas/Docs)',
+      sigla: 'Documentos CIPA',
       documento: 'CIPA - (Atas, Calendário e Eleição)',
       baseLegal: 'NR 5',
       aplicabilidade: 'Obrigatório para empresas com 20+ empregados',
@@ -212,7 +212,7 @@ const sstPrograms = [
       valor: 'Sob Consulta',
     },
     {
-      sigla: '(Inventário)',
+      sigla: 'Inventário Máquinas',
       documento: 'Inventário de Máquinas e Equipamentos',
       baseLegal: 'NR 12',
       aplicabilidade: 'Obrigatório para indústrias e empresas que possuem máquinas',
@@ -220,7 +220,7 @@ const sstPrograms = [
       valor: 'Sob Consulta',
     },
     {
-      sigla: '(Prontuário)',
+      sigla: 'Prontuário Elétrico',
       documento: 'Prontuário de Instalações Elétricas',
       baseLegal: 'NR 10',
       aplicabilidade: 'Obrigatório para empresas com instalações elétricas e serviços com eletricidade',
@@ -228,7 +228,7 @@ const sstPrograms = [
       valor: 'Sob Consulta',
     },
     {
-      sigla: '(Prontuário)',
+      sigla: 'Prontuário Caldeiras',
       documento: 'Documentação de Caldeiras, Vasos de Pressão',
       baseLegal: 'NR 13',
       aplicabilidade: 'Obrigatório para empresas que possuem caldeiras, vasos de pressão, tubulações e tanques',
@@ -236,6 +236,7 @@ const sstPrograms = [
       valor: 'Sob Consulta',
     },
 ]
+
 
 const technicalAdvisory = [
   {
