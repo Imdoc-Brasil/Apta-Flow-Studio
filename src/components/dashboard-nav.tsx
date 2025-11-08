@@ -15,35 +15,34 @@ import {
   ShieldAlert,
   HardHat,
   GraduationCap,
-  GitFork,
   HeartPulse,
   Stethoscope,
   ChevronRight,
+  FlaskConical,
+  FileHeart,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarTrigger,
+} from '@/components/ui/sidebar'
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { Logo } from './logo'
 
-const navItems = [
+const mainNavItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Painel' },
   { href: '/dashboard/clients', icon: Briefcase, label: 'Clientes' },
   { href: '/dashboard/employees', icon: Users, label: 'Staffs' },
   { href: '/dashboard/profiles', icon: HardHat, label: 'Perfis' },
   { href: '/dashboard/services', icon: ClipboardList, label: 'Serviços' },
-  {
-    href: '/dashboard/health',
-    icon: HeartPulse,
-    label: 'Saúde',
-  },
   { href: '/dashboard/risks', icon: ShieldAlert, label: 'Riscos' },
   { href: '/dashboard/trainings', icon: GraduationCap, label: 'Treinamentos' },
   { href: '/dashboard/documents', icon: FileText, label: 'Documentos' },
@@ -53,59 +52,129 @@ const navItems = [
   { href: '/dashboard/analytics', icon: BarChart2, label: 'Analytics' },
 ]
 
+const saudeSubNavItems = [
+  {
+    href: '/dashboard/health/clinical-exams',
+    label: 'Exames Clínicos',
+    icon: FileHeart,
+    subItems: [
+      {
+        href: '/dashboard/health/clinical-exams/evaluation',
+        label: 'Avaliação Clínica',
+      },
+      {
+        href: '/dashboard/health/clinical-exams/psychosocial',
+        label: 'Avaliação Psicossocial',
+      },
+    ],
+  },
+  { href: '/dashboard/health/lab-exams', label: 'Exames Laboratoriais', icon: FlaskConical, subItems: [] },
+]
+
 export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
   const pathname = usePathname()
 
-  const commonLinkClass =
-    'flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground'
-  const activeLinkClass = 'font-semibold text-foreground'
-
-  const getIsActive = (href: string) => {
-    return (
-      pathname.startsWith(href) &&
-      (href !== '/dashboard' || pathname === '/dashboard')
-    )
+  const getIsActive = (href: string, isSub?: boolean) => {
+    if (isSub) {
+      return pathname === href
+    }
+    return pathname.startsWith(href) && (href !== '/dashboard' || pathname === '/dashboard')
   }
+  
+  const isSaudeActive = getIsActive('/dashboard/health')
+  const [isSaudeOpen, setIsSaudeOpen] = useState(isSaudeActive)
+  
+  useEffect(() => {
+    if (isSaudeActive) setIsSaudeOpen(true)
+  }, [pathname, isSaudeActive])
 
-  if (isSheet) {
-    return (
-      <nav className='grid gap-6 text-lg font-medium'>
-        {navItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={cn(
-              commonLinkClass,
-              getIsActive(item.href) && activeLinkClass
-            )}
-          >
-            <item.icon className='h-5 w-5' />
-            {item.label}
-          </Link>
-        ))}
-      </nav>
-    )
-  }
 
   return (
-    <nav className='flex flex-col items-center gap-4 px-2 sm:py-5'>
-      {navItems.map((item) => (
-        <Tooltip key={item.href}>
-          <TooltipTrigger asChild>
-            <Link
-              href={item.href}
-              className={cn(
-                'flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8',
-                getIsActive(item.href) && 'bg-accent text-accent-foreground'
-              )}
-            >
-              <item.icon className='h-5 w-5' />
-              <span className='sr-only'>{item.label}</span>
+    <>
+      <SidebarHeader className='flex items-center justify-between'>
+        <Logo />
+        <SidebarTrigger />
+      </SidebarHeader>
+
+      <SidebarMenu>
+        {mainNavItems.map((item) => (
+          <SidebarMenuItem key={item.label}>
+            <Link href={item.href}>
+              <SidebarMenuButton
+                isActive={getIsActive(item.href)}
+                tooltip={item.label}
+              >
+                <item.icon />
+                <span>{item.label}</span>
+              </SidebarMenuButton>
             </Link>
-          </TooltipTrigger>
-          <TooltipContent side='right'>{item.label}</TooltipContent>
-        </Tooltip>
-      ))}
-    </nav>
+          </SidebarMenuItem>
+        ))}
+         <SidebarMenuItem>
+          <Collapsible open={isSaudeOpen} onOpenChange={setIsSaudeOpen}>
+            <CollapsibleTrigger asChild>
+              <SidebarMenuButton
+                isActive={isSaudeActive}
+                tooltip='Sistema de Saúde'
+                className='justify-between'
+              >
+                <div className='flex items-center gap-2'>
+                  <HeartPulse />
+                  <span>Sistema de Saúde</span>
+                </div>
+                <ChevronRight
+                  className={cn(
+                    'h-4 w-4 transition-transform',
+                    isSaudeOpen && 'rotate-90'
+                  )}
+                />
+              </SidebarMenuButton>
+            </CollapsibleTrigger>
+            <CollapsibleContent asChild>
+              <ul className='pl-6 pt-1 space-y-1'>
+                 {saudeSubNavItems.map((item) => (
+                  <li key={item.label}>
+                     <Collapsible>
+                      <CollapsibleTrigger className='w-full'>
+                         <SidebarMenuButton
+                           isActive={getIsActive(item.href)}
+                           tooltip={item.label}
+                           className='h-8 w-full justify-between'
+                         >
+                           <div className='flex items-center gap-2'>
+                             <item.icon />
+                             <span>{item.label}</span>
+                           </div>
+                           {item.subItems.length > 0 && <ChevronRight className={cn('h-4 w-4 transition-transform')} />}
+                         </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                       {item.subItems.length > 0 && (
+                        <CollapsibleContent asChild>
+                           <ul className='pl-6 pt-1 space-y-1'>
+                            {item.subItems.map(subItem => (
+                              <li key={subItem.label}>
+                                <Link href={subItem.href}>
+                                   <SidebarMenuButton
+                                     isActive={getIsActive(subItem.href, true)}
+                                     tooltip={subItem.label}
+                                     className='h-8'
+                                   >
+                                     <span>{subItem.label}</span>
+                                   </SidebarMenuButton>
+                                </Link>
+                              </li>
+                            ))}
+                           </ul>
+                        </CollapsibleContent>
+                       )}
+                     </Collapsible>
+                  </li>
+                ))}
+              </ul>
+            </CollapsibleContent>
+          </Collapsible>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    </>
   )
 }

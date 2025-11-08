@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
-import { Stethoscope } from 'lucide-react'
+import { HeartPulse } from 'lucide-react'
 
 export default function HealthPage() {
   return (
@@ -28,7 +28,7 @@ export default function HealthPage() {
         <CardContent>
           <div className='flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm h-96'>
             <div className='flex flex-col items-center gap-1 text-center'>
-              <Stethoscope className='h-12 w-12 text-muted-foreground' />
+              <HeartPulse className='h-12 w-12 text-muted-foreground' />
               <h3 className='text-2xl font-bold tracking-tight'>
                 Bem-vindo ao Sistema de Saúde
               </h3>
