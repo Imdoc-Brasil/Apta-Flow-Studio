@@ -114,7 +114,10 @@ const CustomNode = ({
         className='w-16 !bg-teal-500'
       >
         <button
-          onClick={() => data.onAddNode(id)}
+          onClick={(e) => {
+            e.stopPropagation()
+            data.onAddNode(id)
+          }}
           className='absolute left-1/2 -translate-x-1/2 -bottom-4 bg-primary text-white rounded-full p-0.5'
           title='Adicionar nó conectado'
         >
@@ -163,7 +166,10 @@ const DecisionNode = ({
       <Handle type='target' position={Position.Left} id='left' />
       <Handle type='source' position={Position.Bottom} id='bottom'>
         <button
-          onClick={() => data.onAddNode(id)}
+          onClick={(e) => {
+             e.stopPropagation()
+             data.onAddNode(id)
+          }}
           className='absolute left-1/2 -translate-x-1/2 -bottom-4 bg-primary text-white rounded-full p-0.5 rotate-[-45deg]'
           title='Adicionar nó conectado'
         >
@@ -207,42 +213,52 @@ function DiagramCanvas() {
       setEdges((eds) => addEdge({ ...params, type: 'smoothstep' }, eds)),
     [setEdges]
   )
-
-  const createNode = useCallback(
-    (type: 'custom' | 'decision', x: number, y: number, sourceNodeId?: string) => {
-      const newNodeId = `node_${Date.now()}`
-      const newNode: Node = {
-        id: newNodeId,
-        type,
-        position: project({ x, y }),
-        data: {
-          label: type === 'decision' ? 'Decisão' : `Nova Etapa`,
-          onAddNode: (id: string) => addNodeFromSource(id),
-        },
-      }
-      setNodes((nds) => nds.concat(newNode))
-
-      if (sourceNodeId) {
-        const newEdge: Edge = {
-          id: `e${sourceNodeId}-${newNodeId}`,
-          source: sourceNodeId,
-          target: newNodeId,
-          type: 'smoothstep',
-        }
-        setEdges((eds) => addEdge(newEdge, eds));
-      }
-      return newNode
-    },
-    [project, setNodes, setEdges]
-  );
   
   const addNodeFromSource = useCallback((sourceNodeId: string) => {
     const sourceNode = nodes.find((n) => n.id === sourceNodeId);
     if (!sourceNode) return;
-    createNode('custom', sourceNode.position.x, sourceNode.position.y + 150, sourceNodeId);
-  }, [nodes, createNode]);
 
+    const newNodeId = `node_${Date.now()}`
+    const newNode: Node = {
+      id: newNodeId,
+      type: 'custom',
+      position: {
+        x: sourceNode.position.x,
+        y: sourceNode.position.y + 150
+      },
+      data: {
+        label: `Nova Etapa`,
+        onAddNode: addNodeFromSource,
+      },
+    }
+    setNodes((nds) => nds.concat(newNode));
 
+    const newEdge: Edge = {
+      id: `e${sourceNodeId}-${newNodeId}`,
+      source: sourceNodeId,
+      target: newNodeId,
+      type: 'smoothstep',
+    }
+    setEdges((eds) => addEdge(newEdge, eds));
+  }, [nodes, setNodes, setEdges]);
+  
+  const createNode = useCallback(
+    (type: 'custom' | 'decision', x?: number, y?: number) => {
+      const newNodeId = `node_${Date.now()}`
+      const newNode: Node = {
+        id: newNodeId,
+        type,
+        position: project({ x: x || 150, y: y || 50 }),
+        data: {
+          label: type === 'decision' ? 'Decisão' : `Nova Etapa`,
+          onAddNode: addNodeFromSource,
+        },
+      }
+      setNodes((nds) => nds.concat(newNode))
+    },
+    [project, setNodes, addNodeFromSource]
+  )
+  
   const loadDiagram = useCallback((newNodes: Node[], newEdges: Edge[], name: string) => {
     const nodesWithCallback = newNodes.map((node) => ({
       ...node,
@@ -261,12 +277,21 @@ function DiagramCanvas() {
       {
         id: '1',
         type: 'custom',
-        data: { label: 'Início', onAddNode: addNodeFromSource },
+        data: { label: 'Início', onAddNode: () => {} }, // temp onAddNode
         position: { x: 250, y: 5 },
       },
     ]
-    loadDiagram(exampleProcessNodes, [], 'Processo de Exemplo')
-  }, [loadDiagram])
+    const nodesWithCallback = exampleProcessNodes.map(node => ({
+      ...node,
+      data: {
+        ...node.data,
+        onAddNode: addNodeFromSource
+      }
+    }));
+    setNodes(nodesWithCallback);
+    setDiagramName('Processo de Exemplo')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   
 
   const handleNewDiagram = (event: React.FormEvent<HTMLFormElement>) => {
@@ -279,9 +304,6 @@ function DiagramCanvas() {
     setIsNewDiagramOpen(false)
   }
 
-  const addNode = (type: 'custom' | 'decision') => {
-    createNode(type, Math.random() * 200 + 100, Math.random() * 200)
-  }
 
   const handleSave = () => {
     toast({
@@ -375,7 +397,7 @@ function DiagramCanvas() {
           <Button
             className='w-full'
             variant='outline'
-            onClick={() => addNode('custom')}
+            onClick={() => createNode('custom')}
           >
             <MousePointerSquareDashed className='mr-2 h-4 w-4' />
             Adicionar Nó de Etapa
@@ -383,7 +405,7 @@ function DiagramCanvas() {
           <Button
             className='w-full'
             variant='outline'
-            onClick={() => addNode('decision')}
+            onClick={() => createNode('decision')}
           >
             <Diamond className='mr-2 h-4 w-4' />
             Adicionar Nó de Decisão
