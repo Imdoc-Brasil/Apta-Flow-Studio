@@ -70,7 +70,10 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
     'flex items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground'
   const activeLinkClass = 'font-semibold text-foreground'
 
-  const getIsActive = (href: string) => {
+  const getIsActive = (href: string, isSubItem = false) => {
+    if (isSubItem) {
+        return pathname === href;
+    }
     return pathname.startsWith(href) && (href !== '/dashboard' || pathname === '/dashboard')
   }
 
@@ -105,20 +108,22 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
                 </div>
               </CollapsibleTrigger>
               <CollapsibleContent className='pl-8'>
-                {item.subItems.map((subItem) => (
-                  <Link
-                    key={subItem.href}
-                    href={subItem.href}
-                    className={cn(
-                      commonLinkClass,
-                      'mt-4',
-                       getIsActive(subItem.href) && activeLinkClass
-                    )}
-                  >
-                    <subItem.icon className='h-5 w-5' />
-                    {subItem.label}
-                  </Link>
-                ))}
+                 <ul className='flex flex-col gap-4 mt-4'>
+                    {item.subItems.map((subItem) => (
+                      <li key={subItem.href}>
+                         <Link
+                          href={subItem.href}
+                          className={cn(
+                            commonLinkClass,
+                            getIsActive(subItem.href, true) && activeLinkClass
+                          )}
+                        >
+                          <subItem.icon className='h-5 w-5' />
+                          {subItem.label}
+                        </Link>
+                      </li>
+                    ))}
+                 </ul>
               </CollapsibleContent>
             </Collapsible>
           ) : (
@@ -141,41 +146,23 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
 
   return (
     <nav className='flex flex-col items-center gap-4 px-2 sm:py-5'>
-      {navItems.map((item) =>
-        item.subItems ? (
-          <Tooltip key={item.href}>
-            <TooltipTrigger asChild>
-              <Link
-                href={item.href}
-                className={cn(
-                  'flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8',
-                  getIsActive(item.href) && 'bg-accent text-accent-foreground'
-                )}
-              >
-                <item.icon className='h-5 w-5' />
-                <span className='sr-only'>{item.label}</span>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side='right'>{item.label}</TooltipContent>
-          </Tooltip>
-        ) : (
-          <Tooltip key={item.href}>
-            <TooltipTrigger asChild>
-              <Link
-                href={item.href}
-                className={cn(
-                  'flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8',
-                  getIsActive(item.href) && 'bg-accent text-accent-foreground'
-                )}
-              >
-                <item.icon className='h-5 w-5' />
-                <span className='sr-only'>{item.label}</span>
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side='right'>{item.label}</TooltipContent>
-          </Tooltip>
-        )
-      )}
+      {navItems.map((item) => (
+        <Tooltip key={item.href}>
+          <TooltipTrigger asChild>
+            <Link
+              href={item.href}
+              className={cn(
+                'flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8',
+                getIsActive(item.href) && 'bg-accent text-accent-foreground'
+              )}
+            >
+              <item.icon className='h-5 w-5' />
+              <span className='sr-only'>{item.label}</span>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side='right'>{item.label}</TooltipContent>
+        </Tooltip>
+      ))}
     </nav>
   )
 }
