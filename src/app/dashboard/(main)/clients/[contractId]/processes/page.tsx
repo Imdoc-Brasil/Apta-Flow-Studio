@@ -81,7 +81,14 @@ export default function ProcessesPage() {
   const [sectorFilter, setSectorFilter] = useState<string[]>([])
 
   const uniqueSectors = [
-    ...new Set(initialProcessesData.map((p) => p.primarySector)),
+    ...new Set(initialProcessesData.map((p) => {
+        const firstStep = p.steps[0];
+        if (firstStep && firstStep.sectorId) {
+            const sector = initialSectorsData.find(s => s.id === firstStep.sectorId);
+            return sector?.name || 'Setor não definido';
+        }
+        return 'Setor não definido';
+    })),
   ]
 
   const filteredProcesses = useMemo(() => {
@@ -90,23 +97,37 @@ export default function ProcessesPage() {
         process.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         process.objective.toLowerCase().includes(searchTerm.toLowerCase())
 
+       const firstStep = process.steps[0];
+       let sectorName = 'Setor não definido';
+        if (firstStep && firstStep.sectorId) {
+            const sector = initialSectorsData.find(s => s.id === firstStep.sectorId);
+            sectorName = sector?.name || 'Setor não definido';
+        }
+
       const matchesSector =
         sectorFilter.length === 0 ||
-        sectorFilter.includes(process.primarySector)
+        sectorFilter.includes(sectorName)
 
       return matchesSearch && matchesSector
     })
   }, [processes, searchTerm, sectorFilter])
   
-  const handleStepChange = (index: number, field: keyof ProcessStep, value: string) => {
+  const handleStepChange = (index: number, field: keyof ProcessStep, value: string | boolean) => {
     setFormSteps(prev => {
         const newSteps = [...prev];
-        newSteps[index] = { ...newSteps[index], [field]: value };
+        const step = { ...newSteps[index] };
+        
+        if (typeof value === 'boolean' && (field === 'isControlPoint' || field === 'isRiskSource')) {
+             (step[field] as boolean | undefined) = value;
+        } else if (typeof value === 'string') {
+            (step[field as keyof Omit<ProcessStep, 'isControlPoint' | 'isRiskSource'>] as string | undefined) = value;
+        }
 
         // If sector is changed, reset the responsible role
         if (field === 'sectorId') {
-            newSteps[index].responsibleRole = '';
+            step.responsibleRole = '';
         }
+        newSteps[index] = step;
         return newSteps;
     });
   };
@@ -120,7 +141,6 @@ export default function ProcessesPage() {
       id: processId,
       name: formData.get('name') as string,
       objective: formData.get('objective') as string,
-      primarySector: '',
       type: formData.get('type') as ProcessType,
       isCritical: formData.get('isCritical') === 'on',
       obligations: formObligations,
@@ -129,6 +149,7 @@ export default function ProcessesPage() {
         name: formData.get(`step-name-${index}`) as string,
         description: formData.get(`step-description-${index}`) as string,
         isControlPoint: formData.get(`control-point-${index}`) === 'on',
+        isRiskSource: formData.get(`risk-source-${index}`) === 'on',
       })),
     }
 
@@ -160,6 +181,7 @@ export default function ProcessesPage() {
       responsibleRole: '',
       description: '',
       isControlPoint: false,
+      isRiskSource: false,
       sectorId: '',
     }
     setFormSteps((prev) => [...prev, newStep])
@@ -175,6 +197,15 @@ export default function ProcessesPage() {
         ? prev.filter((s) => s !== sigla)
         : [...prev, sigla]
     )
+  }
+  
+  const getSectorNameForProcess = (process: Process) => {
+     const firstStep = process.steps[0];
+     if (firstStep && firstStep.sectorId) {
+        const sector = initialSectorsData.find(s => s.id === firstStep.sectorId);
+        return sector?.name || 'Setor não definido';
+     }
+     return 'Setor não definido';
   }
 
   return (
@@ -267,7 +298,7 @@ export default function ProcessesPage() {
                   <CardHeader>
                     <div className='flex items-start justify-between'>
                       <Workflow className='h-8 w-8 text-muted-foreground' />
-                      <Badge variant='outline'>{process.primarySector}</Badge>
+                      <Badge variant='outline'>{getSectorNameForProcess(process)}</Badge>
                     </div>
                     <CardTitle className='pt-4'>{process.name}</CardTitle>
                   </CardHeader>
@@ -307,7 +338,7 @@ export default function ProcessesPage() {
                       {process.name}
                     </TableCell>
                     <TableCell>
-                      <Badge variant='outline'>{process.primarySector}</Badge>
+                      <Badge variant='outline'>{getSectorNameForProcess(process)}</Badge>
                     </TableCell>
                     <TableCell>{process.steps.length}</TableCell>
                     <TableCell>
@@ -563,12 +594,27 @@ export default function ProcessesPage() {
                                   id={`control-point-${index}`}
                                   name={`control-point-${index}`}
                                   defaultChecked={step.isControlPoint}
+                                  onCheckedChange={(checked) => handleStepChange(index, 'isControlPoint', !!checked)}
                                 />
                                 <Label
                                   htmlFor={`control-point-${index}`}
                                   className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
                                 >
                                   Este é um Ponto de Controle Crítico
+                                </Label>
+                              </div>
+                              <div className='flex items-center space-x-2'>
+                                <Checkbox
+                                  id={`risk-source-${index}`}
+                                  name={`risk-source-${index}`}
+                                  defaultChecked={step.isRiskSource}
+                                  onCheckedChange={(checked) => handleStepChange(index, 'isRiskSource', !!checked)}
+                                />
+                                <Label
+                                  htmlFor={`risk-source-${index}`}
+                                  className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
+                                >
+                                  Esta etapa é fonte geradora de risco?
                                 </Label>
                               </div>
                             </div>

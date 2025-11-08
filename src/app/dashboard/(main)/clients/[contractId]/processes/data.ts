@@ -6,6 +6,7 @@ export interface ProcessStep {
   responsibleRole: string // Will store Role ID
   description: string
   isControlPoint: boolean
+  isRiskSource?: boolean
   sectorId?: string // Store Sector ID
 }
 
@@ -15,7 +16,6 @@ export interface Process {
   id: string
   name: string
   objective: string
-  primarySector: string
   steps: ProcessStep[]
   type: ProcessType
   obligations: string[]
@@ -28,7 +28,6 @@ export const initialProcessesData: Process[] = [
     name: 'Manutenção Corretiva de Veículos',
     objective:
       'Garantir que os veículos retornem à operação em condições seguras e funcionais, prevenindo acidentes e novas falhas.',
-    primarySector: 'Manutenção',
     steps: [
       {
         id: 'STEP-001',
