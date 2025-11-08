@@ -495,9 +495,15 @@ export default function GhePage() {
               <div>
                 <h4 className='font-semibold text-sm'>Cargos Incluídos</h4>
                 <div className='flex flex-wrap gap-2 mt-2'>
-                  {selectedGhe.roleIds.map(roleId => (
-                    <Badge key={roleId} variant="secondary">{getRoleName(roleId)}</Badge>
-                  ))}
+                  {selectedGhe.roleIds.map(roleId => {
+                     const role = rolesWithSectors.find(r => r.id === roleId);
+                     if (!role) return null;
+                     return (
+                        <Badge key={roleId} variant="secondary">
+                            {role.name} / {role.sectorName}
+                        </Badge>
+                     )
+                  })}
                 </div>
               </div>
             )}
