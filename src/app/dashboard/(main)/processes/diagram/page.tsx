@@ -11,6 +11,7 @@ import ReactFlow, {
   type Connection,
   type Edge,
   type Node,
+  useReactFlow,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { Button } from '@/components/ui/button'
@@ -24,7 +25,15 @@ import { PlusCircle, FolderOpen, MousePointerSquareDashed } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 
 // Custom node to allow editing
-const EditableNode = ({ id, data, isConnectable }: { id: string; data: { label: string }; isConnectable: boolean }) => {
+const EditableNode = ({
+  id,
+  data,
+  isConnectable,
+}: {
+  id: string
+  data: { label: string }
+  isConnectable: boolean
+}) => {
   const [isEditing, setIsEditing] = useState(false)
   const [label, setLabel] = useState(data.label)
   const { setNodes } = useReactFlow()
@@ -68,7 +77,13 @@ const EditableNode = ({ id, data, isConnectable }: { id: string; data: { label: 
           className='nodrag' // Prevents dragging while editing
         />
       ) : (
-        <div style={{ padding: '10px', border: '1px solid #ddd', borderRadius: '5px' }}>
+        <div
+          style={{
+            padding: '10px',
+            border: '1px solid #ddd',
+            borderRadius: '5px',
+          }}
+        >
           {label}
         </div>
       )}
@@ -77,7 +92,15 @@ const EditableNode = ({ id, data, isConnectable }: { id: string; data: { label: 
 }
 
 // Custom diamond-shaped node for decisions
-const DecisionNode = ({ id, data, isConnectable }: { id: string; data: { label: string }; isConnectable: boolean }) => {
+const DecisionNode = ({
+  id,
+  data,
+  isConnectable,
+}: {
+  id: string
+  data: { label: string }
+  isConnectable: boolean
+}) => {
   return (
     <div
       style={{
@@ -91,7 +114,13 @@ const DecisionNode = ({ id, data, isConnectable }: { id: string; data: { label: 
         alignItems: 'center',
       }}
     >
-      <div style={{ transform: 'rotate(-45deg)', textAlign: 'center', padding: '10px' }}>
+      <div
+        style={{
+          transform: 'rotate(-45deg)',
+          textAlign: 'center',
+          padding: '10px',
+        }}
+      >
         {data.label}
       </div>
     </div>
@@ -245,14 +274,14 @@ export default function ProcessDiagramPage() {
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem
-                onClick={() => loadDiagram(exampleProcessNodes, exampleProcessEdges)}
+                onClick={() =>
+                  loadDiagram(exampleProcessNodes, exampleProcessEdges)
+                }
               >
                 Processo de Exemplo
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() =>
-                  loadDiagram(salesProcessNodes, salesProcessEdges)
-                }
+                onClick={() => loadDiagram(salesProcessNodes, salesProcessEdges)}
               >
                 Processo de Vendas
               </DropdownMenuItem>
@@ -262,11 +291,11 @@ export default function ProcessDiagramPage() {
       </div>
       <div className='flex flex-1 gap-4'>
         <div className='w-64 rounded-lg border bg-background p-4'>
-            <h3 className='font-semibold mb-4'>Adicionar Nós</h3>
-            <Button className='w-full' variant='outline' onClick={addNode}>
-                <MousePointerSquareDashed className='mr-2 h-4 w-4' />
-                Adicionar Nó de Etapa
-            </Button>
+          <h3 className='font-semibold mb-4'>Adicionar Nós</h3>
+          <Button className='w-full' variant='outline' onClick={addNode}>
+            <MousePointerSquareDashed className='mr-2 h-4 w-4' />
+            Adicionar Nó de Etapa
+          </Button>
         </div>
         <div className='flex-1 rounded-lg border bg-background'>
           <ReactFlow
