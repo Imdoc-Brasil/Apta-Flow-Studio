@@ -149,7 +149,7 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
                         onOpenChange={setIsExamesClinicosOpen}
                       >
                         <CollapsibleTrigger asChild>
-                           <div className="w-full">
+                          <div className='w-full'>
                             <SidebarMenuButton
                               isActive={getIsActive(item.href)}
                               tooltip={item.label}
