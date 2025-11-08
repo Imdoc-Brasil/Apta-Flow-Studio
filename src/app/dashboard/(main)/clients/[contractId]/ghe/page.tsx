@@ -51,6 +51,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { initialGheData, type GHE } from './data'
 import { initialUnitsData } from '../units/data'
 import { initialRolesData } from '../roles/data'
+import { initialSectorsData } from '../sectors/data'
 import {
   Select,
   SelectContent,
@@ -82,17 +83,33 @@ export default function GhePage() {
   const [selectedRoles, setSelectedRoles] = useState<string[]>([])
   const [roleSearchTerm, setRoleSearchTerm] = useState('')
 
+  const getRoleName = (roleId: string) => {
+    return initialRolesData.find((role) => role.id === roleId)?.name || 'N/A'
+  }
+
+  const getSectorName = (sectorId: string) => {
+    return initialSectorsData.find((sector) => sector.id === sectorId)?.name || 'N/A'
+  }
+  
+  const rolesWithSectors = useMemo(() => {
+    return initialRolesData.map(role => ({
+      ...role,
+      sectorName: getSectorName(role.sectorId)
+    }))
+  }, [])
+
   const availableRoles = useMemo(() => {
-    return initialRolesData.filter(
+    return rolesWithSectors.filter(
       (role) =>
         !selectedRoles.includes(role.id) &&
-        role.name.toLowerCase().includes(roleSearchTerm.toLowerCase())
+        (role.name.toLowerCase().includes(roleSearchTerm.toLowerCase()) ||
+         role.sectorName.toLowerCase().includes(roleSearchTerm.toLowerCase()))
     )
-  }, [selectedRoles, roleSearchTerm])
+  }, [selectedRoles, roleSearchTerm, rolesWithSectors])
 
   const currentSelectedRoles = useMemo(() => {
-    return initialRolesData.filter((role) => selectedRoles.includes(role.id))
-  }, [selectedRoles])
+    return rolesWithSectors.filter((role) => selectedRoles.includes(role.id))
+  }, [selectedRoles, rolesWithSectors])
 
   const handleSelectRole = (roleId: string) => {
     setSelectedRoles((prev) => [...prev, roleId])
@@ -154,10 +171,6 @@ export default function GhePage() {
 
   const getUnitName = (unitId: string) => {
     return initialUnitsData.find((unit) => unit.id === unitId)?.name || 'N/A'
-  }
-
-  const getRoleName = (roleId: string) => {
-    return initialRolesData.find((role) => role.id === roleId)?.name || 'N/A'
   }
 
   const handleOpenDetails = (ghe: GHE) => {
@@ -308,7 +321,7 @@ export default function GhePage() {
                                   <div className='space-y-2'>
                                   {availableRoles.map(role => (
                                       <div key={role.id} className='flex items-center justify-between text-sm p-2 rounded-md hover:bg-muted'>
-                                          <span>{role.name}</span>
+                                          <span>{role.name} / <span className='text-muted-foreground'>{role.sectorName}</span></span>
                                           <Button type='button' size='sm' variant='outline' onClick={() => handleSelectRole(role.id)}>Incluir</Button>
                                       </div>
                                   ))}
@@ -325,7 +338,7 @@ export default function GhePage() {
                                    <div className='space-y-2'>
                                    {currentSelectedRoles.map(role => (
                                        <div key={role.id} className='flex items-center justify-between text-sm p-2 rounded-md bg-secondary'>
-                                           <span>{role.name}</span>
+                                           <span>{role.name} / <span className='text-muted-foreground'>{role.sectorName}</span></span>
                                            <Button type='button' size='icon' variant='ghost' className='h-6 w-6' onClick={() => handleRemoveRole(role.id)}>
                                              <X className='h-4 w-4' />
                                            </Button>
@@ -465,7 +478,7 @@ export default function GhePage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{selectedGhe?.name}</DialogTitle>
-            <div className='pt-2'>
+             <div className='pt-2'>
               <Badge variant='outline'>
                 {getUnitName(selectedGhe?.unitId || '')}
               </Badge>
