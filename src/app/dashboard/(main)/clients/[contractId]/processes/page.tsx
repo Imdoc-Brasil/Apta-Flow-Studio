@@ -104,29 +104,32 @@ export default function ProcessesPage() {
   }, [processes, searchTerm, sectorFilter])
 
   const { availableItems, currentSelectedItems } = useMemo(() => {
-    let sourceData: { id: string, name: string }[] = []
+    let sourceData: { id: string; name: string }[] = []
     switch (formScope) {
       case 'unidade':
-        sourceData = initialUnitsData;
-        break;
+        sourceData = initialUnitsData
+        break
       case 'setor':
-        sourceData = initialSectorsData;
-        break;
+        sourceData = initialSectorsData
+        break
       case 'cargo':
-        sourceData = initialRolesData;
-        break;
+        sourceData = initialRolesData
+        break
     }
 
     const available = sourceData.filter(
       (item) =>
         !selectedScopeItems.includes(item.id) &&
         item.name.toLowerCase().includes(scopeSearchTerm.toLowerCase())
-    );
+    )
 
-    const selected = sourceData.filter(item => selectedScopeItems.includes(item.id));
-    
-    return { availableItems: available, currentSelectedItems: selected };
+    const selected = sourceData.filter((item) =>
+      selectedScopeItems.includes(item.id)
+    )
+
+    return { availableItems: available, currentSelectedItems: selected }
   }, [formScope, selectedScopeItems, scopeSearchTerm])
+
 
   const handleSelectItem = (itemId: string) => {
     setSelectedScopeItems((prev) => [...prev, itemId])
