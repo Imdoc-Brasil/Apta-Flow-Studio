@@ -376,25 +376,7 @@ export default function ProcessesPage() {
                     placeholder='Descreva o porquê deste processo existir.'
                   />
                 </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='primarySector'>Setor Principal</Label>
-                  <Select
-                    name='primarySector'
-                    defaultValue={editingProcess?.primarySector}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder='Selecione o setor principal' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {initialSectorsData.map((sector) => (
-                        <SelectItem key={sector.id} value={sector.name}>
-                          {sector.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
+                
                 <fieldset className='grid grid-cols-1 md:grid-cols-2 gap-4 rounded-lg border p-4'>
                   <legend className='-ml-1 px-1 text-sm font-medium'>
                     Categorização
