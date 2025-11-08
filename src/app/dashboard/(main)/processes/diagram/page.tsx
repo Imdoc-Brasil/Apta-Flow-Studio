@@ -22,6 +22,32 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { PlusCircle, FolderOpen } from 'lucide-react'
 
+// Custom diamond-shaped node for decisions
+const DecisionNode = ({ data }: { data: { label: string } }) => {
+  return (
+    <div
+      style={{
+        width: 100,
+        height: 100,
+        backgroundColor: '#fff',
+        border: '1px solid #000',
+        transform: 'rotate(45deg)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+    >
+      <div style={{ transform: 'rotate(-45deg)', textAlign: 'center' }}>
+        {data.label}
+      </div>
+    </div>
+  )
+}
+
+const nodeTypes = {
+  decision: DecisionNode,
+}
+
 const initialNodes: Node[] = [
   {
     id: '1',
@@ -48,33 +74,71 @@ const initialNodes: Node[] = [
 ]
 
 const initialEdges: Edge[] = [
-  { id: 'e1-2', source: '1', target: '2', animated: true },
-  { id: 'e2-3', source: '2', target: '3', animated: true },
-  { id: 'e3-4', source: '3', target: '4', animated: true },
+  { id: 'e1-2', source: '1', target: '2', type: 'smoothstep' },
+  { id: 'e2-3', source: '2', target: '3', type: 'smoothstep' },
+  { id: 'e3-4', source: '3', target: '4', type: 'smoothstep' },
 ]
 
 const salesProcessNodes: Node[] = [
-  { id: 's1', type: 'input', data: { label: 'Lead Recebido' }, position: { x: 100, y: 50 } },
-  { id: 's2', data: { label: 'Qualificação' }, position: { x: 100, y: 150 } },
-  { id: 's3', data: { label: 'Apresentação da Proposta' }, position: { x: 300, y: 150 } },
-  { id: 's4', data: { label: 'Negociação' }, position: { x: 300, y: 250 } },
-  { id: 's5', type: 'output', data: { label: 'Venda Fechada' }, position: { x: 300, y: 350 } },
+  {
+    id: 's1',
+    type: 'input',
+    data: { label: 'Lead Recebido' },
+    position: { x: 150, y: 50 },
+  },
+  { id: 's2', data: { label: 'Qualificação' }, position: { x: 150, y: 150 } },
+  {
+    id: 's3',
+    type: 'decision', // Using the custom decision node
+    data: { label: 'Lead Qualificado?' },
+    position: { x: 150, y: 250 },
+  },
+  {
+    id: 's4',
+    data: { label: 'Apresentação da Proposta' },
+    position: { x: 350, y: 200 },
+  },
+  {
+    id: 's5',
+    type: 'output',
+    data: { label: 'Venda Fechada' },
+    position: { x: 350, y: 350 },
+  },
+  {
+    id: 's6',
+    type: 'output',
+    data: { label: 'Lead Descartado' },
+    position: { x: 150, y: 450 },
+  },
 ]
 
 const salesProcessEdges: Edge[] = [
-  { id: 'es1-2', source: 's1', target: 's2' },
-  { id: 'es2-3', source: 's2', target: 's3' },
-  { id: 'es3-4', source: 's3', target: 's4' },
-  { id: 'es4-5', source: 's4', target: 's5' },
+  { id: 'es1-2', source: 's1', target: 's2', type: 'smoothstep' },
+  { id: 'es2-3', source: 's2', target: 's3', type: 'smoothstep' },
+  {
+    id: 'es3-4',
+    source: 's3',
+    target: 's4',
+    type: 'smoothstep',
+    label: 'Sim',
+  },
+  { id: 'es4-5', source: 's4', target: 's5', type: 'smoothstep' },
+  {
+    id: 'es3-6',
+    source: 's3',
+    target: 's6',
+    type: 'smoothstep',
+    label: 'Não',
+  },
 ]
-
 
 export default function ProcessDiagramPage() {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes)
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges)
 
   const onConnect = useCallback(
-    (params: Edge | Connection) => setEdges((eds) => addEdge(params, eds)),
+    (params: Edge | Connection) =>
+      setEdges((eds) => addEdge({ ...params, type: 'smoothstep' }, eds)),
     [setEdges]
   )
 
@@ -100,26 +164,32 @@ export default function ProcessDiagramPage() {
           </p>
         </div>
         <div className='flex gap-2'>
-            <Button variant='outline' onClick={handleNewDiagram}>
-              <PlusCircle className='mr-2 h-4 w-4'/>
-              Novo Diagrama
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button>
-                  <FolderOpen className='mr-2 h-4 w-4'/>
-                  Abrir Diagrama
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onClick={() => loadDiagram(initialNodes, initialEdges)}>
-                  Processo de Exemplo
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => loadDiagram(salesProcessNodes, salesProcessEdges)}>
-                  Processo de Vendas
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <Button variant='outline' onClick={handleNewDiagram}>
+            <PlusCircle className='mr-2 h-4 w-4' />
+            Novo Diagrama
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button>
+                <FolderOpen className='mr-2 h-4 w-4' />
+                Abrir Diagrama
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem
+                onClick={() => loadDiagram(initialNodes, initialEdges)}
+              >
+                Processo de Exemplo
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  loadDiagram(salesProcessNodes, salesProcessEdges)
+                }
+              >
+                Processo de Vendas
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
       <div className='flex-1 rounded-lg border bg-background'>
@@ -129,6 +199,7 @@ export default function ProcessDiagramPage() {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          nodeTypes={nodeTypes}
           fitView
         >
           <Controls />
