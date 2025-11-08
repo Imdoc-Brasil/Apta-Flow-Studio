@@ -81,9 +81,6 @@ export default function ProcessesPage() {
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
   const [searchTerm, setSearchTerm] = useState('')
   const [sectorFilter, setSectorFilter] = useState<string[]>([])
-  const [formScope, setFormScope] = useState<ScopeType>('setor')
-  const [selectedScopeItems, setSelectedScopeItems] = useState<string[]>([])
-  const [scopeSearchTerm, setScopeSearchTerm] = useState('')
 
   const uniqueSectors = [
     ...new Set(initialProcessesData.map((p) => p.primarySector)),
@@ -103,48 +100,6 @@ export default function ProcessesPage() {
     })
   }, [processes, searchTerm, sectorFilter])
 
-  const { availableItems, currentSelectedItems } = useMemo(() => {
-    let sourceData: { id: string; name: string }[] = []
-    switch (formScope) {
-      case 'unidade':
-        sourceData = initialUnitsData
-        break
-      case 'setor':
-        sourceData = initialSectorsData
-        break
-      case 'cargo':
-        sourceData = initialRolesData
-        break
-    }
-
-    const available = sourceData.filter(
-      (item) =>
-        !selectedScopeItems.includes(item.id) &&
-        item.name.toLowerCase().includes(scopeSearchTerm.toLowerCase())
-    )
-
-    const selected = sourceData.filter((item) =>
-      selectedScopeItems.includes(item.id)
-    )
-
-    return { availableItems: available, currentSelectedItems: selected }
-  }, [formScope, selectedScopeItems, scopeSearchTerm])
-
-
-  const handleSelectItem = (itemId: string) => {
-    setSelectedScopeItems((prev) => [...prev, itemId])
-  }
-
-  const handleRemoveItem = (itemId: string) => {
-    setSelectedScopeItems((prev) => prev.filter((id) => id !== itemId))
-  }
-  
-  const resetScopeSelection = () => {
-    setSelectedScopeItems([])
-    setScopeSearchTerm('')
-    setFormScope('setor')
-  }
-
   const handleProcessSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
@@ -154,11 +109,7 @@ export default function ProcessesPage() {
       id: processId,
       name: formData.get('name') as string,
       objective: formData.get('objective') as string,
-      // This needs to be updated to handle the new scope logic
-      primarySector: selectedScopeItems.map(id => {
-        const item = [...initialUnitsData, ...initialSectorsData, ...initialRolesData].find(i => i.id === id)
-        return item?.name || ''
-      }).join(', '),
+      primarySector: formData.get('primarySector') as string,
       type: formData.get('type') as ProcessType,
       isCritical: formData.get('isCritical') === 'on',
       obligations: formObligations,
@@ -191,7 +142,6 @@ export default function ProcessesPage() {
     setEditingProcess(process)
     setFormSteps(process ? [...process.steps] : [])
     setFormObligations(process ? [...process.obligations] : [])
-    resetScopeSelection()
     setIsProcessDialogOpen(true)
   }
 
@@ -225,59 +175,6 @@ export default function ProcessesPage() {
       formObligations.filter((ob) => ob !== obligationToRemove)
     )
   }
-  
-  const renderScopeSelector = () => {
-    return (
-      <div className='space-y-2'>
-        <Label>Itens de Abrangência</Label>
-        <div className="grid grid-cols-2 gap-4">
-          {/* Coluna da Esquerda: Disponíveis */}
-          <div className="rounded-md border p-4 space-y-2">
-            <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar item..."
-                className="pl-8"
-                value={scopeSearchTerm}
-                onChange={(e) => setScopeSearchTerm(e.target.value)}
-              />
-            </div>
-            <ScrollArea className="h-48">
-              <div className="space-y-2">
-                {availableItems.map(item => (
-                  <div key={item.id} className="flex items-center justify-between text-sm p-2 rounded-md hover:bg-muted">
-                    <span>{item.name}</span>
-                    <Button type="button" size="sm" variant="outline" onClick={() => handleSelectItem(item.id)}>Incluir</Button>
-                  </div>
-                ))}
-                {availableItems.length === 0 && <p className="text-center text-xs text-muted-foreground pt-4">Nenhum item encontrado.</p>}
-              </div>
-            </ScrollArea>
-          </div>
-
-          {/* Coluna da Direita: Selecionados */}
-          <div className="rounded-md border p-4 space-y-2">
-            <h4 className="font-medium text-sm">Selecionados ({currentSelectedItems.length})</h4>
-            <Separator />
-            <ScrollArea className="h-48">
-              <div className="space-y-2">
-                {currentSelectedItems.map(item => (
-                  <div key={item.id} className="flex items-center justify-between text-sm p-2 rounded-md bg-secondary">
-                    <span>{item.name}</span>
-                    <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleRemoveItem(item.id)}>
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
-                {currentSelectedItems.length === 0 && <p className="text-center text-xs text-muted-foreground pt-4">Nenhum item selecionado.</p>}
-              </div>
-            </ScrollArea>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
 
   return (
     <>
@@ -479,31 +376,24 @@ export default function ProcessesPage() {
                     placeholder='Descreva o porquê deste processo existir.'
                   />
                 </div>
-                 <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                    <div className='space-y-2'>
-                      <Label htmlFor='abrangencia'>Abrangência</Label>
-                      <Select
-                        name='abrangencia'
-                        value={formScope}
-                        onValueChange={(value) => {
-                          setFormScope(value as ScopeType)
-                          resetScopeSelection()
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder='Selecione a abrangência' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value='unidade'>Unidade</SelectItem>
-                          <SelectItem value='setor'>Setor(es)</SelectItem>
-                          <SelectItem value='cargo'>Cargo(s)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                     <div className='space-y-2'>
-                       {renderScopeSelector()}
-                    </div>
-                  </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='primarySector'>Setor Principal</Label>
+                  <Select
+                    name='primarySector'
+                    defaultValue={editingProcess?.primarySector}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder='Selecione o setor principal' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {initialSectorsData.map((sector) => (
+                        <SelectItem key={sector.id} value={sector.name}>
+                          {sector.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
                 <fieldset className='grid grid-cols-1 md:grid-cols-2 gap-4 rounded-lg border p-4'>
                   <legend className='-ml-1 px-1 text-sm font-medium'>
