@@ -465,11 +465,11 @@ export default function GhePage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{selectedGhe?.name}</DialogTitle>
-             <DialogDescription>
-               <Badge variant='outline'>
+            <div className='pt-2'>
+              <Badge variant='outline'>
                 {getUnitName(selectedGhe?.unitId || '')}
               </Badge>
-            </DialogDescription>
+            </div>
           </DialogHeader>
           <div className='py-4 space-y-4'>
             <div>
