@@ -83,7 +83,7 @@ export default function ProcessesPage() {
   const [sectorFilter, setSectorFilter] = useState<string[]>([])
   const [formScope, setFormScope] = useState<ScopeType>('setor')
   const [selectedScopeItems, setSelectedScopeItems] = useState<string[]>([])
-
+  const [scopeSearchTerm, setScopeSearchTerm] = useState('')
 
   const uniqueSectors = [
     ...new Set(initialProcessesData.map((p) => p.primarySector)),
@@ -103,6 +103,45 @@ export default function ProcessesPage() {
     })
   }, [processes, searchTerm, sectorFilter])
 
+  const { availableItems, currentSelectedItems } = useMemo(() => {
+    let sourceData: { id: string, name: string }[] = []
+    switch (formScope) {
+      case 'unidade':
+        sourceData = initialUnitsData;
+        break;
+      case 'setor':
+        sourceData = initialSectorsData;
+        break;
+      case 'cargo':
+        sourceData = initialRolesData;
+        break;
+    }
+
+    const available = sourceData.filter(
+      (item) =>
+        !selectedScopeItems.includes(item.id) &&
+        item.name.toLowerCase().includes(scopeSearchTerm.toLowerCase())
+    );
+
+    const selected = sourceData.filter(item => selectedScopeItems.includes(item.id));
+    
+    return { availableItems: available, currentSelectedItems: selected };
+  }, [formScope, selectedScopeItems, scopeSearchTerm])
+
+  const handleSelectItem = (itemId: string) => {
+    setSelectedScopeItems((prev) => [...prev, itemId])
+  }
+
+  const handleRemoveItem = (itemId: string) => {
+    setSelectedScopeItems((prev) => prev.filter((id) => id !== itemId))
+  }
+  
+  const resetScopeSelection = () => {
+    setSelectedScopeItems([])
+    setScopeSearchTerm('')
+    setFormScope('setor')
+  }
+
   const handleProcessSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
@@ -113,7 +152,10 @@ export default function ProcessesPage() {
       name: formData.get('name') as string,
       objective: formData.get('objective') as string,
       // This needs to be updated to handle the new scope logic
-      primarySector: selectedScopeItems.join(', '),
+      primarySector: selectedScopeItems.map(id => {
+        const item = [...initialUnitsData, ...initialSectorsData, ...initialRolesData].find(i => i.id === id)
+        return item?.name || ''
+      }).join(', '),
       type: formData.get('type') as ProcessType,
       isCritical: formData.get('isCritical') === 'on',
       obligations: formObligations,
@@ -146,9 +188,7 @@ export default function ProcessesPage() {
     setEditingProcess(process)
     setFormSteps(process ? [...process.steps] : [])
     setFormObligations(process ? [...process.obligations] : [])
-    // Reset scope fields
-    setFormScope('setor');
-    setSelectedScopeItems([]);
+    resetScopeSelection()
     setIsProcessDialogOpen(true)
   }
 
@@ -184,50 +224,55 @@ export default function ProcessesPage() {
   }
   
   const renderScopeSelector = () => {
-    let items: { id: string; name: string }[] = []
-    let placeholder = ''
-    
-    switch (formScope) {
-      case 'unidade':
-        items = initialUnitsData
-        placeholder = 'Selecione a(s) unidade(s)'
-        break
-      case 'setor':
-        items = initialSectorsData
-        placeholder = 'Selecione o(s) setor(es)'
-        break
-      case 'cargo':
-        items = initialRolesData
-        placeholder = 'Selecione o(s) cargo(s)'
-        break
-      default:
-        return null
-    }
-
     return (
-       <div className='space-y-2'>
+      <div className='space-y-2'>
         <Label>Itens de Abrangência</Label>
-         <Select
-          value={selectedScopeItems.join(',')}
-          onValueChange={(value) => setSelectedScopeItems(value.split(','))}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder={placeholder} />
-          </SelectTrigger>
-          <SelectContent>
-            {/* This would need a multi-select component. Simulating with single for now */}
-            {items.map(item => (
-              <SelectItem key={item.id} value={item.name}>
-                {item.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-         <p className="text-xs text-muted-foreground">
-            A seleção múltipla será implementada com um componente aprimorado.
-          </p>
+        <div className="grid grid-cols-2 gap-4">
+          {/* Coluna da Esquerda: Disponíveis */}
+          <div className="rounded-md border p-4 space-y-2">
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar item..."
+                className="pl-8"
+                value={scopeSearchTerm}
+                onChange={(e) => setScopeSearchTerm(e.target.value)}
+              />
+            </div>
+            <ScrollArea className="h-48">
+              <div className="space-y-2">
+                {availableItems.map(item => (
+                  <div key={item.id} className="flex items-center justify-between text-sm p-2 rounded-md hover:bg-muted">
+                    <span>{item.name}</span>
+                    <Button type="button" size="sm" variant="outline" onClick={() => handleSelectItem(item.id)}>Incluir</Button>
+                  </div>
+                ))}
+                {availableItems.length === 0 && <p className="text-center text-xs text-muted-foreground pt-4">Nenhum item encontrado.</p>}
+              </div>
+            </ScrollArea>
+          </div>
+
+          {/* Coluna da Direita: Selecionados */}
+          <div className="rounded-md border p-4 space-y-2">
+            <h4 className="font-medium text-sm">Selecionados ({currentSelectedItems.length})</h4>
+            <Separator />
+            <ScrollArea className="h-48">
+              <div className="space-y-2">
+                {currentSelectedItems.map(item => (
+                  <div key={item.id} className="flex items-center justify-between text-sm p-2 rounded-md bg-secondary">
+                    <span>{item.name}</span>
+                    <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleRemoveItem(item.id)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                {currentSelectedItems.length === 0 && <p className="text-center text-xs text-muted-foreground pt-4">Nenhum item selecionado.</p>}
+              </div>
+            </ScrollArea>
+          </div>
+        </div>
       </div>
-    )
+    );
   }
 
 
@@ -439,7 +484,7 @@ export default function ProcessesPage() {
                         value={formScope}
                         onValueChange={(value) => {
                           setFormScope(value as ScopeType)
-                          setSelectedScopeItems([]) // Reset selection on change
+                          resetScopeSelection()
                         }}
                       >
                         <SelectTrigger>
