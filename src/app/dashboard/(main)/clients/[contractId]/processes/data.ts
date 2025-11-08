@@ -1,10 +1,12 @@
 
+
 export interface ProcessStep {
   id: string
   name: string
-  responsibleRole: string
+  responsibleRole: string // Will store Role ID
   description: string
   isControlPoint: boolean
+  sectorId?: string // Store Sector ID
 }
 
 export type ProcessType = 'POP' | 'PP' | 'PRS' | 'PRT' | 'PI' | 'Outro'

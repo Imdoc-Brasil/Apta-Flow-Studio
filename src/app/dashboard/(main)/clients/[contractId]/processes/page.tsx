@@ -56,7 +56,6 @@ import {
 } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { initialActivitiesData } from '../activities/data'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -65,7 +64,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { initialUnitsData } from '../units/data'
 import { sstPrograms } from '@/app/dashboard/(main)/services/page'
 
 type ScopeType = 'unidade' | 'setor' | 'cargo'
@@ -99,6 +97,19 @@ export default function ProcessesPage() {
       return matchesSearch && matchesSector
     })
   }, [processes, searchTerm, sectorFilter])
+  
+  const handleStepChange = (index: number, field: keyof ProcessStep, value: string) => {
+    setFormSteps(prev => {
+        const newSteps = [...prev];
+        newSteps[index] = { ...newSteps[index], [field]: value };
+
+        // If sector is changed, reset the responsible role
+        if (field === 'sectorId') {
+            newSteps[index].responsibleRole = '';
+        }
+        return newSteps;
+    });
+  };
 
   const handleProcessSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -109,15 +120,14 @@ export default function ProcessesPage() {
       id: processId,
       name: formData.get('name') as string,
       objective: formData.get('objective') as string,
-      primarySector: '', // Removido
+      primarySector: '',
       type: formData.get('type') as ProcessType,
       isCritical: formData.get('isCritical') === 'on',
       obligations: formObligations,
       steps: formSteps.map((step, index) => ({
         ...step,
-        name: formData.get(`step-activity-${index}`) as string, // Agora pega da atividade
+        name: formData.get(`step-name-${index}`) as string,
         description: formData.get(`step-description-${index}`) as string,
-        responsibleRole: formData.get(`step-sector-${index}`) as string, // Armazena o setor como responsável
         isControlPoint: formData.get(`control-point-${index}`) === 'on',
       })),
     }
@@ -150,6 +160,7 @@ export default function ProcessesPage() {
       responsibleRole: '',
       description: '',
       isControlPoint: false,
+      sectorId: '',
     }
     setFormSteps((prev) => [...prev, newStep])
   }
@@ -482,78 +493,97 @@ export default function ProcessesPage() {
                     Etapas do Processo
                   </h3>
                   <div className='space-y-4'>
-                    {formSteps.map((step, index) => (
-                      <div
-                        key={step.id}
-                        className='flex items-start gap-4 p-4 border rounded-lg relative'
-                      >
-                        <div className='flex-shrink-0 flex flex-col items-center justify-center bg-primary text-primary-foreground rounded-full h-8 w-8 text-sm font-bold mt-2'>
-                          {index + 1}
-                        </div>
-                        <div className='flex-grow space-y-2'>
-                          <div className='grid grid-cols-2 gap-4'>
-                            <Select name={`step-sector-${index}`}>
-                              <SelectTrigger>
-                                <SelectValue placeholder='Selecione o Setor' />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {initialSectorsData.map((sector) => (
-                                  <SelectItem
-                                    key={sector.id}
-                                    value={sector.name}
-                                  >
-                                    {sector.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <Select name={`step-activity-${index}`} required>
-                              <SelectTrigger>
-                                <SelectValue placeholder='Selecione a Atividade' />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {initialActivitiesData.map((activity) => (
-                                  <SelectItem
-                                    key={activity.id}
-                                    value={activity.name}
-                                  >
-                                    {activity.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <Textarea
-                            name={`step-description-${index}`}
-                            defaultValue={step.description}
-                            placeholder='Descrição da atividade (opcional)'
-                            rows={2}
-                          />
-                          <div className='flex items-center space-x-2 pt-2'>
-                            <Checkbox
-                              id={`control-point-${index}`}
-                              name={`control-point-${index}`}
-                              defaultChecked={step.isControlPoint}
-                            />
-                            <Label
-                              htmlFor={`control-point-${index}`}
-                              className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
+                    {formSteps.map((step, index) => {
+                        const rolesForSector = initialRolesData.filter(r => r.sectorId === step.sectorId);
+                        return (
+                          <div
+                            key={step.id}
+                            className='flex items-start gap-4 p-4 border rounded-lg relative'
+                          >
+                            <div className='flex-shrink-0 flex flex-col items-center justify-center bg-primary text-primary-foreground rounded-full h-8 w-8 text-sm font-bold mt-2'>
+                              {index + 1}
+                            </div>
+                            <div className='flex-grow space-y-2'>
+                               <div className='grid grid-cols-2 gap-4'>
+                                <Select 
+                                    name={`step-sector-${index}`}
+                                    value={step.sectorId}
+                                    onValueChange={(value) => handleStepChange(index, 'sectorId', value)}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder='Selecione o Setor' />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {initialSectorsData.map((sector) => (
+                                      <SelectItem
+                                        key={sector.id}
+                                        value={sector.id}
+                                      >
+                                        {sector.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <Select 
+                                    name={`step-role-${index}`}
+                                    value={step.responsibleRole}
+                                    onValueChange={(value) => handleStepChange(index, 'responsibleRole', value)}
+                                    required
+                                    disabled={!step.sectorId || rolesForSector.length === 0}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder='Selecione o Cargo' />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {rolesForSector.map((role) => (
+                                      <SelectItem
+                                        key={role.id}
+                                        value={role.id}
+                                      >
+                                        {role.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                               <Input
+                                name={`step-name-${index}`}
+                                defaultValue={step.name}
+                                placeholder='Nome da etapa'
+                                required
+                              />
+                              <Textarea
+                                name={`step-description-${index}`}
+                                defaultValue={step.description}
+                                placeholder='Descrição da atividade (opcional)'
+                                rows={2}
+                              />
+                              <div className='flex items-center space-x-2 pt-2'>
+                                <Checkbox
+                                  id={`control-point-${index}`}
+                                  name={`control-point-${index}`}
+                                  defaultChecked={step.isControlPoint}
+                                />
+                                <Label
+                                  htmlFor={`control-point-${index}`}
+                                  className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
+                                >
+                                  Este é um Ponto de Controle Crítico
+                                </Label>
+                              </div>
+                            </div>
+                            <Button
+                              type='button'
+                              variant='ghost'
+                              size='icon'
+                              className='absolute top-2 right-2 h-6 w-6 text-destructive hover:text-destructive'
+                              onClick={() => removeStep(step.id)}
                             >
-                              Este é um Ponto de Controle Crítico
-                            </Label>
+                              <Trash2 className='h-4 w-4' />
+                            </Button>
                           </div>
-                        </div>
-                        <Button
-                          type='button'
-                          variant='ghost'
-                          size='icon'
-                          className='absolute top-2 right-2 h-6 w-6 text-destructive hover:text-destructive'
-                          onClick={() => removeStep(step.id)}
-                        >
-                          <Trash2 className='h-4 w-4' />
-                        </Button>
-                      </div>
-                    ))}
+                        )
+                    })}
                     <Button
                       type='button'
                       variant='outline'

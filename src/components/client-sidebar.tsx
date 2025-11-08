@@ -82,11 +82,6 @@ export function ClientSidebar() {
     { href: `${basePath}/ghe`, label: 'GHE', icon: Users },
     { href: `${basePath}/processes`, label: 'Processos', icon: Network },
     {
-      href: `${basePath}/activities`,
-      label: 'Atividades',
-      icon: ClipboardList,
-    },
-    {
       href: `${basePath}/machines`,
       label: 'Máquinas e Equipamentos',
       icon: Factory,
