@@ -100,26 +100,17 @@ const AttendeeCard = ({
   }
 
   const handleCardClick = () => {
+     // Specific logic for the "medico" queue
     if (queueType === 'medico') {
-      const clinicalExam = attendee.exams.find(
-        (e) => e.name === 'Avaliação Clínica'
-      )
+      const clinicalExam = attendee.exams.find(exam => exam.name === 'Avaliação Clínica');
       if (clinicalExam) {
-        // Corrected Navigation: Go directly to the clinical evaluation form
-        router.push(`/dashboard/health/clinical-exams/evaluation`)
-        return
+        router.push(`/dashboard/health/evaluation/${attendee.id}`);
+        return;
       }
     }
 
-    if (queueType === 'audiometria' && attendee.exams.length === 1) {
-      router.push(
-        `/dashboard/health/evaluation/${attendee.id}/exam/${attendee.exams[0].id}`
-      )
-      return
-    }
-
-    // Default behavior for other queues or complex cases
-    router.push(`/dashboard/health/evaluation/${attendee.id}`)
+    // Default behavior for other queues or if the specific exam isn't found
+    router.push(`/dashboard/health/evaluation/${attendee.id}`);
   }
 
   return (

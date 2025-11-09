@@ -66,7 +66,7 @@ const saudeSubNavItems = [
     icon: FileHeart,
     subItems: [
       {
-        href: '/dashboard/health/clinical-exams/evaluation',
+        href: '/dashboard/health/clinical-exams/settings',
         label: 'Config. Avaliação Clínica',
       },
       {
