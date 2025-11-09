@@ -9,6 +9,7 @@ import { UserNav } from '@/components/user-nav'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { PanelLeft } from 'lucide-react'
+import { Breadcrumb } from '@/components/breadcrumb'
 
 export default function DashboardLayout({
   children,
@@ -35,6 +36,7 @@ export default function DashboardLayout({
                 <DashboardNav isSheet={true} />
               </SheetContent>
             </Sheet>
+            <Breadcrumb />
             <div className='relative ml-auto flex-1 md:grow-0'>
               {/* This can be a global search in the future */}
             </div>

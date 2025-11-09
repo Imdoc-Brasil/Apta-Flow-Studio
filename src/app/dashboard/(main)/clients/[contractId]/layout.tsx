@@ -8,6 +8,7 @@ import { Logo } from '@/components/logo'
 import Link from 'next/link'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { UserNav } from '@/components/user-nav'
+import { Breadcrumb } from '@/components/breadcrumb'
 
 export default function ClientDetailLayout({
   children,
@@ -42,6 +43,8 @@ export default function ClientDetailLayout({
                 </nav>
               </SheetContent>
             </Sheet>
+
+            <Breadcrumb />
 
             <div className='relative ml-auto flex-1 md:grow-0'>
               {/* This can be a global search in the future */}
