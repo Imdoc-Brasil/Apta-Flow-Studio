@@ -52,6 +52,7 @@ import { useToast } from '@/hooks/use-toast'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { aptaServiceUnits } from './data'
 import { useAttendeeStore, type Attendee, type Status } from './attendee-store'
+import { useRouter } from 'next/navigation'
 
 const statusLabels: Record<Status, string> = {
   Agendado: 'Agendado',
@@ -73,6 +74,7 @@ function ClientOnly({ children }: { children: React.ReactNode }) {
 }
 
 const AttendeeCard = ({ attendee }: { attendee: Attendee }) => {
+  const router = useRouter()
   const {
     attributes,
     listeners,
@@ -88,6 +90,10 @@ const AttendeeCard = ({ attendee }: { attendee: Attendee }) => {
     opacity: isDragging ? 0.5 : 1,
   }
 
+  const handleCardClick = () => {
+    router.push(`/dashboard/health/evaluation/${attendee.id}`)
+  }
+
   return (
     <Card
       ref={setNodeRef}
@@ -95,6 +101,7 @@ const AttendeeCard = ({ attendee }: { attendee: Attendee }) => {
       {...attributes}
       {...listeners}
       className='touch-none cursor-grab active:cursor-grabbing'
+      onClick={handleCardClick}
     >
       <CardHeader className='flex flex-row items-start justify-between p-4 pb-2'>
         <CardTitle className='text-base'>{attendee.patientName}</CardTitle>
