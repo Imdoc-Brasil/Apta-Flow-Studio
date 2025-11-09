@@ -35,7 +35,7 @@ import {
   FilePlus,
   ChevronRight,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Separator } from '@/components/ui/separator'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -54,6 +54,34 @@ export default function ClinicalEvaluationPage() {
   const { toast } = useToast()
   const [isPeriodic, setIsPeriodic] = useState('nao')
   const [isEditing, setIsEditing] = useState(false)
+
+  // State for vital signs
+  const [weight, setWeight] = useState('')
+  const [height, setHeight] = useState('')
+  const [imc, setImc] = useState(0)
+  const [imcStatus, setImcStatus] = useState('')
+
+  const calculateImc = useCallback(() => {
+    const w = parseFloat(weight)
+    const h = parseFloat(height)
+    if (w > 0 && h > 0) {
+      const calculatedImc = w / (h * h)
+      setImc(calculatedImc)
+      if (calculatedImc < 18.5) setImcStatus('Abaixo do peso')
+      else if (calculatedImc < 24.9) setImcStatus('Peso normal')
+      else if (calculatedImc < 29.9) setImcStatus('Sobrepeso')
+      else if (calculatedImc < 34.9) setImcStatus('Obesidade Grau I')
+      else if (calculatedImc < 39.9) setImcStatus('Obesidade Grau II')
+      else setImcStatus('Obesidade Grau III')
+    } else {
+      setImc(0)
+      setImcStatus('')
+    }
+  }, [weight, height])
+
+  useEffect(() => {
+    calculateImc()
+  }, [calculateImc])
 
   const handleSaveSettings = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -464,29 +492,46 @@ export default function ClinicalEvaluationPage() {
                         <TableCell className='text-muted-foreground'>
                           [80 / 1.75]
                         </TableCell>
-                        <TableCell>
-                          <Input placeholder='0' className='w-24' />
+                        <TableCell className='flex gap-2'>
+                          <Input
+                            placeholder='0'
+                            className='w-20'
+                            value={weight}
+                            onChange={(e) => setWeight(e.target.value)}
+                          />
+                           / 
+                          <Input
+                            placeholder='0.00'
+                            className='w-20'
+                            value={height}
+                            onChange={(e) => setHeight(e.target.value)}
+                          />
                         </TableCell>
                         <TableCell>
-                          <Input placeholder='0' className='w-24' />
+                         <Input
+                            readOnly
+                            value={imc > 0 ? imc.toFixed(2) : '0.0'}
+                            className='w-24 bg-muted'
+                          />
                         </TableCell>
                       </TableRow>
                       <TableRow>
                         <TableCell>IMC</TableCell>
-                        <TableCell className='text-muted-foreground'>
+                         <TableCell className='text-muted-foreground'>
                           [26.1]
                         </TableCell>
                         <TableCell>
                           <Input
                             readOnly
-                            placeholder='0.0'
+                            value={imc > 0 ? imc.toFixed(2) : '0.0'}
                             className='w-24 bg-muted'
                           />
                         </TableCell>
                         <TableCell>
                           <Input
                             readOnly
-                            placeholder='Sobrepeso'
+                            value={imcStatus}
+                            placeholder='Normal'
                             className='w-24 bg-muted'
                           />
                         </TableCell>
@@ -642,8 +687,7 @@ export default function ClinicalEvaluationPage() {
 
               <FieldsetGroup title='Seção 06: Achados e Observações'>
                 <Textarea
-                  disabled
-                  value='[Carregar automaticamente os achados alterados]'
+                  placeholder='[Carregar automaticamente os achados alterados]'
                 />
                 <Label>Observações Adicionais</Label>
                 <Textarea placeholder='Adicione observações ou notas adicionais aqui...' />
