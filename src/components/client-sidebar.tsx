@@ -1,3 +1,4 @@
+
 'use client'
 
 import Link from 'next/link'
@@ -112,7 +113,6 @@ export function ClientSidebar() {
       label: 'Matriz de Recomendação',
       icon: ClipboardList,
     },
-    { href: `${basePath}/epc`, label: 'Gestão de EPC', icon: Factory },
     {
       href: `${basePath}/trainings`,
       label: 'Gestão de Treinamentos',
