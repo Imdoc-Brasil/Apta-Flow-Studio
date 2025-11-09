@@ -139,17 +139,16 @@ export default function ClinicalEvaluationPage() {
         </TabsList>
 
         <TabsContent value='settings'>
-          <form onSubmit={handleSaveSettings}>
-            <Card>
-              <CardHeader>
-                <CardTitle>Parâmetros da Avaliação Clínica</CardTitle>
-                <CardDescription>
-                  Defina os detalhes, regras e campos padrão para esta
-                  avaliação. Estas são as configurações globais que as empresas
-                  clientes herdarão, mas poderão ser personalizadas
-                  posteriormente.
-                </CardDescription>
-              </CardHeader>
+          <Card>
+            <CardHeader>
+              <CardTitle>Parâmetros da Avaliação Clínica</CardTitle>
+              <CardDescription>
+                Defina os detalhes, regras e campos padrão para esta avaliação.
+                Estas são as configurações globais que as empresas clientes
+                herdarão, mas poderão ser personalizadas posteriormente.
+              </CardDescription>
+            </CardHeader>
+            <form id='settings-form' onSubmit={handleSaveSettings}>
               <CardContent className='space-y-6'>
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                   <div className='space-y-2'>
@@ -350,29 +349,26 @@ export default function ClinicalEvaluationPage() {
                   </Select>
                 </div>
               </CardContent>
-              <CardFooter className='border-t px-6 py-4 justify-end gap-2'>
-                {isEditing ? (
-                  <>
-                    <Button variant='outline' onClick={handleCancel}>
-                      Cancelar
-                    </Button>
-                    <Button type='submit'>
-                      <Save className='mr-2 h-4 w-4' />
-                      Salvar Configurações
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    type='button'
-                    onClick={() => setIsEditing(true)}
-                  >
-                    <Pencil className='mr-2 h-4 w-4' />
-                    Editar
+            </form>
+            <CardFooter className='border-t px-6 py-4 justify-end gap-2'>
+              {isEditing ? (
+                <>
+                  <Button variant='outline' onClick={handleCancel}>
+                    Cancelar
                   </Button>
-                )}
-              </CardFooter>
-            </Card>
-          </form>
+                  <Button type='submit' form='settings-form'>
+                    <Save className='mr-2 h-4 w-4' />
+                    Salvar Configurações
+                  </Button>
+                </>
+              ) : (
+                <Button type='button' onClick={() => setIsEditing(true)}>
+                  <Pencil className='mr-2 h-4 w-4' />
+                  Editar
+                </Button>
+              )}
+            </CardFooter>
+          </Card>
         </TabsContent>
 
         <TabsContent value='form-model'>
