@@ -97,6 +97,7 @@ import {
   type Attachment,
   type TextElement,
 } from './tickets-store'
+import { useAttendeeStore } from '../health/queue/attendee-store'
 import { format, formatDistanceToNow, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
@@ -1134,6 +1135,7 @@ function ClientOnly({ children }: { children: React.ReactNode }) {
 export default function TicketsPage() {
   const { tickets, addTicket, setTickets, startWorkOnTicket } =
     useTicketStore()
+  const { addAttendee } = useAttendeeStore()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null)
   const [priorityFilter, setPriorityFilter] = useState<string[]>([])
@@ -1176,14 +1178,26 @@ export default function TicketsPage() {
   const handleAddTicket = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
-    addTicket({
+    const newTicketData = {
       subject: formData.get('subject') as string,
       client: formData.get('client') as string,
       priority: formData.get('priority') as Ticket['priority'],
       description: (formData.get('description') as string) || '',
       labels: selectedLabels,
       assignedTo: assignedTo,
-    })
+    };
+    addTicket(newTicketData)
+
+    const isExamRequest = newTicketData.subject.toLowerCase().includes('exame') || newTicketData.subject.toLowerCase().includes('aso');
+    if (isExamRequest && newTicketData.relatedEmployee) {
+       addAttendee({
+        clientName: newTicketData.client,
+        patientName: newTicketData.relatedEmployee,
+        status: 'Agendado',
+        exams: [{ id: `EXM-${Date.now()}`, name: newTicketData.subject, status: 'Pendente'}]
+      })
+    }
+
     setIsDialogOpen(false)
     setSelectedLabels([])
     setAssignedTo([])

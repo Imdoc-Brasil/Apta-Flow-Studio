@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -93,6 +93,10 @@ const AttendeeCard = ({ attendee }: { attendee: Attendee }) => {
   const handleCardClick = () => {
     router.push(`/dashboard/health/evaluation/${attendee.id}`)
   }
+  
+  const examsSummary = attendee.exams.length > 1 
+    ? `${attendee.exams.length} exames` 
+    : attendee.exams[0]?.name || 'Nenhum exame';
 
   return (
     <Card
@@ -108,7 +112,7 @@ const AttendeeCard = ({ attendee }: { attendee: Attendee }) => {
         <MoreHorizontal className='h-4 w-4 text-muted-foreground' />
       </CardHeader>
       <CardContent className='p-4 pt-0 text-sm text-muted-foreground'>
-        <p>{attendee.examType}</p>
+        <p>{examsSummary}</p>
         <p className='font-semibold text-xs'>{attendee.clientName}</p>
       </CardContent>
     </Card>
@@ -227,8 +231,8 @@ export default function QueuePage() {
     addAttendee({
       clientName,
       patientName: patient.name,
-      examType,
       status: 'Agendado',
+      exams: [{ id: `EXM-${Date.now()}`, name: examType, status: 'Pendente' }],
     })
 
     setIsAddDialogOpen(false)
@@ -372,7 +376,7 @@ export default function QueuePage() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className='p-4 pt-0 text-sm text-muted-foreground'>
-                      <p>{activeAttendee.examType}</p>
+                      <p>{activeAttendee.exams[0]?.name}</p>
                       <p className='font-semibold text-xs'>
                         {activeAttendee.clientName}
                       </p>
