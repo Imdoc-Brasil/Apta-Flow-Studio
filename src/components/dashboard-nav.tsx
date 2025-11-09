@@ -78,7 +78,12 @@ const saudeSubNavItems = [
     href: '/dashboard/health/reports-portal',
     label: 'Portal de Laudos',
     icon: Stethoscope,
-    subItems: [],
+    subItems: [
+        {
+            href: '/dashboard/health/reports-portal/ecg/analysis',
+            label: 'Análise de ECG (IA)',
+        },
+    ],
   },
 ]
 
@@ -97,11 +102,16 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
   const [isExamesClinicosOpen, setIsExamesClinicosOpen] = useState(
     getIsActive('/dashboard/health/clinical-exams')
   )
+    const [isPortalLaudosOpen, setIsPortalLaudosOpen] = useState(
+    getIsActive('/dashboard/health/reports-portal')
+    )
 
   useEffect(() => {
     if (isSaudeActive) setIsSaudeOpen(true)
     if (getIsActive('/dashboard/health/clinical-exams'))
       setIsExamesClinicosOpen(true)
+    if (getIsActive('/dashboard/health/reports-portal'))
+        setIsPortalLaudosOpen(true)
   }, [pathname, isSaudeActive])
 
   return (
@@ -151,27 +161,29 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
                   <li key={item.label}>
                     {item.subItems.length > 0 ? (
                       <Collapsible
-                        open={isExamesClinicosOpen}
-                        onOpenChange={setIsExamesClinicosOpen}
+                        open={item.href.includes('clinical-exams') ? isExamesClinicosOpen : isPortalLaudosOpen}
+                        onOpenChange={item.href.includes('clinical-exams') ? setIsExamesClinicosOpen : setIsPortalLaudosOpen}
                       >
                         <CollapsibleTrigger asChild>
                           <div className='w-full'>
-                            <SidebarMenuButton
-                              isActive={getIsActive(item.href)}
-                              tooltip={item.label}
-                              className='h-8 w-full justify-between'
-                            >
-                              <div className='flex items-center gap-2'>
-                                <item.icon />
-                                <span className='group-data-[collapsible=icon]:hidden'>{item.label}</span>
-                              </div>
-                              <ChevronRight
-                                className={cn(
-                                  'h-4 w-4 transition-transform group-data-[collapsible=icon]:hidden',
-                                  isExamesClinicosOpen && 'rotate-90'
-                                )}
-                              />
-                            </SidebarMenuButton>
+                             <Link href={item.href}>
+                                <SidebarMenuButton
+                                isActive={getIsActive(item.href)}
+                                tooltip={item.label}
+                                className='h-8 w-full justify-between'
+                                >
+                                <div className='flex items-center gap-2'>
+                                    <item.icon />
+                                    <span className='group-data-[collapsible=icon]:hidden'>{item.label}</span>
+                                </div>
+                                <ChevronRight
+                                    className={cn(
+                                    'h-4 w-4 transition-transform group-data-[collapsible=icon]:hidden',
+                                    (item.href.includes('clinical-exams') ? isExamesClinicosOpen : isPortalLaudosOpen) && 'rotate-90'
+                                    )}
+                                />
+                                </SidebarMenuButton>
+                            </Link>
                           </div>
                         </CollapsibleTrigger>
                         <CollapsibleContent asChild>
