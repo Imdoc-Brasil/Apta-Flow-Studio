@@ -204,7 +204,7 @@ export default function EcgAnalysisPage() {
             <Button disabled={!analysisResult}>Validar e Salvar Laudo</Button>
           </CardFooter>
         </Card>
-      </Card>
+      </div>
     </div>
   )
 }
