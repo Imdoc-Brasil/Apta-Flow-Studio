@@ -20,6 +20,7 @@ import {
   ChevronRight,
   FlaskConical,
   FileHeart,
+  List,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import {
@@ -54,6 +55,12 @@ const mainNavItems = [
 
 const saudeSubNavItems = [
   {
+    href: '/dashboard/health/queue',
+    label: 'Fila de Atendimento',
+    icon: List,
+    subItems: [],
+  },
+  {
     href: '/dashboard/health/clinical-exams',
     label: 'Exames Clínicos',
     icon: FileHeart,
@@ -79,10 +86,10 @@ const saudeSubNavItems = [
     label: 'Portal de Laudos',
     icon: Stethoscope,
     subItems: [
-        {
-            href: '/dashboard/health/reports-portal/ecg/analysis',
-            label: 'Análise de ECG (IA)',
-        },
+      {
+        href: '/dashboard/health/reports-portal/ecg/analysis',
+        label: 'Análise de ECG (IA)',
+      },
     ],
   },
 ]
@@ -102,16 +109,16 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
   const [isExamesClinicosOpen, setIsExamesClinicosOpen] = useState(
     getIsActive('/dashboard/health/clinical-exams')
   )
-    const [isPortalLaudosOpen, setIsPortalLaudosOpen] = useState(
+  const [isPortalLaudosOpen, setIsPortalLaudosOpen] = useState(
     getIsActive('/dashboard/health/reports-portal')
-    )
+  )
 
   useEffect(() => {
     if (isSaudeActive) setIsSaudeOpen(true)
     if (getIsActive('/dashboard/health/clinical-exams'))
       setIsExamesClinicosOpen(true)
     if (getIsActive('/dashboard/health/reports-portal'))
-        setIsPortalLaudosOpen(true)
+      setIsPortalLaudosOpen(true)
   }, [pathname, isSaudeActive])
 
   return (
@@ -130,7 +137,9 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
                 tooltip={item.label}
               >
                 <item.icon />
-                <span className='group-data-[collapsible=icon]:hidden'>{item.label}</span>
+                <span className='group-data-[collapsible=icon]:hidden'>
+                  {item.label}
+                </span>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
@@ -145,7 +154,9 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
               >
                 <div className='flex items-center gap-2'>
                   <HeartPulse />
-                  <span className='group-data-[collapsible=icon]:hidden'>Sistema de Saúde</span>
+                  <span className='group-data-[collapsible=icon]:hidden'>
+                    Sistema de Saúde
+                  </span>
                 </div>
                 <ChevronRight
                   className={cn(
@@ -161,28 +172,40 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
                   <li key={item.label}>
                     {item.subItems.length > 0 ? (
                       <Collapsible
-                        open={item.href.includes('clinical-exams') ? isExamesClinicosOpen : isPortalLaudosOpen}
-                        onOpenChange={item.href.includes('clinical-exams') ? setIsExamesClinicosOpen : setIsPortalLaudosOpen}
+                        open={
+                          item.href.includes('clinical-exams')
+                            ? isExamesClinicosOpen
+                            : isPortalLaudosOpen
+                        }
+                        onOpenChange={
+                          item.href.includes('clinical-exams')
+                            ? setIsExamesClinicosOpen
+                            : setIsPortalLaudosOpen
+                        }
                       >
                         <CollapsibleTrigger asChild>
                           <div className='w-full'>
-                             <Link href={item.href}>
-                                <SidebarMenuButton
+                            <Link href={item.href}>
+                              <SidebarMenuButton
                                 isActive={getIsActive(item.href)}
                                 tooltip={item.label}
                                 className='h-8 w-full justify-between'
-                                >
+                              >
                                 <div className='flex items-center gap-2'>
-                                    <item.icon />
-                                    <span className='group-data-[collapsible=icon]:hidden'>{item.label}</span>
+                                  <item.icon />
+                                  <span className='group-data-[collapsible=icon]:hidden'>
+                                    {item.label}
+                                  </span>
                                 </div>
                                 <ChevronRight
-                                    className={cn(
+                                  className={cn(
                                     'h-4 w-4 transition-transform group-data-[collapsible=icon]:hidden',
-                                    (item.href.includes('clinical-exams') ? isExamesClinicosOpen : isPortalLaudosOpen) && 'rotate-90'
-                                    )}
+                                    (item.href.includes('clinical-exams')
+                                      ? isExamesClinicosOpen
+                                      : isPortalLaudosOpen) && 'rotate-90'
+                                  )}
                                 />
-                                </SidebarMenuButton>
+                              </SidebarMenuButton>
                             </Link>
                           </div>
                         </CollapsibleTrigger>
@@ -196,7 +219,9 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
                                     tooltip={subItem.label}
                                     className='h-8'
                                   >
-                                    <span className='group-data-[collapsible=icon]:hidden'>{subItem.label}</span>
+                                    <span className='group-data-[collapsible=icon]:hidden'>
+                                      {subItem.label}
+                                    </span>
                                   </SidebarMenuButton>
                                 </Link>
                               </li>
@@ -212,7 +237,9 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
                           className='h-8'
                         >
                           <item.icon />
-                          <span className='group-data-[collapsible=icon]:hidden'>{item.label}</span>
+                          <span className='group-data-[collapsible=icon]:hidden'>
+                            {item.label}
+                          </span>
                         </SidebarMenuButton>
                       </Link>
                     )}
