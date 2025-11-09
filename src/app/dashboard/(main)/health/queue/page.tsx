@@ -27,7 +27,7 @@ import {
   CardFooter,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { PlusCircle, MoreHorizontal, UserCheck } from 'lucide-react'
+import { PlusCircle, MoreHorizontal, UserCheck, Upload } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
   Dialog,
@@ -66,7 +66,12 @@ const statusLabels: Record<Status, string> = {
 
 type QueueType = 'medico' | 'audiometria' | 'laboratorio' | 'rx' | 'graficos'
 
-const columns: Status[] = ['Agendado', 'Aguardando', 'Em Atendimento', 'Concluído']
+const columns: Status[] = [
+  'Agendado',
+  'Aguardando',
+  'Em Atendimento',
+  'Concluído',
+]
 
 function ClientOnly({ children }: { children: React.ReactNode }) {
   const [hasMounted, setHasMounted] = useState(false)
@@ -133,7 +138,7 @@ const AttendeeCard = ({
     e.stopPropagation()
     updateAttendeeStatus(attendee.id, 'Aguardando')
   }
-  
+
   const isBusy = attendee.status === 'Em Atendimento'
 
   return (
@@ -227,9 +232,11 @@ const PlaceholderContent = ({ title }: { title: string }) => (
 )
 
 export default function QueuePage() {
-  const { attendees, addAttendee, setAttendees, updateAttendeeStatus } = useAttendeeStore()
+  const { attendees, addAttendee, setAttendees, updateAttendeeStatus } =
+    useAttendeeStore()
   const [activeAttendee, setActiveAttendee] = useState<Attendee | null>(null)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
   const { toast } = useToast()
   const [selectedUnit, setSelectedUnit] = useState(aptaServiceUnits[0].id)
   const [activeTab, setActiveTab] = useState<QueueType>('medico')
@@ -261,7 +268,7 @@ export default function QueuePage() {
     const isOverAColumn = over.data.current?.type === 'Column'
 
     if (isActiveAnAttendee && isOverAColumn) {
-       updateAttendeeStatus(activeId as string, overId as Status)
+      updateAttendeeStatus(activeId as string, overId as Status)
     }
   }
 
@@ -314,6 +321,18 @@ export default function QueuePage() {
     })
   }
 
+  const handleImportXml = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    // In a real application, you would process the file here.
+    // For now, we just show a success message.
+    toast({
+      title: 'Importação Iniciada!',
+      description:
+        'O arquivo XML está sendo processado. Os status dos exames serão atualizados em breve.',
+    })
+    setIsImportDialogOpen(false)
+  }
+
   return (
     <div className='flex h-full flex-col gap-4'>
       <div className='flex items-center justify-between'>
@@ -334,79 +353,123 @@ export default function QueuePage() {
             </SelectContent>
           </Select>
         </div>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusCircle className='mr-2 h-4 w-4' />
-              Agendar Atendimento
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Agendar Novo Atendimento</DialogTitle>
-              <DialogDescription>
-                Preencha os detalhes para criar um novo atendimento na fila.
-              </DialogDescription>
-            </DialogHeader>
-            <form id='add-attendee-form' onSubmit={handleAddAttendee}>
-              <div className='grid gap-4 py-4'>
-                <div className='space-y-2'>
-                  <Label htmlFor='clientName'>Empresa Cliente</Label>
-                  <Select name='clientName' required>
-                    <SelectTrigger>
-                      <SelectValue placeholder='Selecione a empresa' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {initialClientsData.map((client) => (
-                        <SelectItem
-                          key={client.contractId}
-                          value={client.name}
-                        >
-                          {client.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='employeeId'>Paciente</Label>
-                  <Select name='employeeId' required>
-                    <SelectTrigger>
-                      <SelectValue placeholder='Selecione o colaborador' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {initialEmployeesData.map((employee) => (
-                        <SelectItem key={employee.id} value={employee.id}>
-                          {employee.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='solicitationType'>Tipo de Solicitação</Label>
-                  <Input
-                    id='solicitationType'
-                    name='solicitationType'
-                    placeholder='Ex: ASO Admissional, ASO Periódico...'
-                    required
-                  />
-                </div>
-              </div>
-            </form>
-            <DialogFooter>
-              <Button
-                variant='outline'
-                onClick={() => setIsAddDialogOpen(false)}
-              >
-                Cancelar
+        <div className='flex items-center gap-2'>
+          <Dialog
+            open={isImportDialogOpen}
+            onOpenChange={setIsImportDialogOpen}
+          >
+            <DialogTrigger asChild>
+              <Button variant='outline'>
+                <Upload className='mr-2 h-4 w-4' />
+                Importar Resultados (XML)
               </Button>
-              <Button type='submit' form='add-attendee-form'>
-                Agendar
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Importar Resultados de Exames</DialogTitle>
+                <DialogDescription>
+                  Carregue o arquivo XML fornecido pelo laboratório parceiro
+                  para atualizar os resultados em lote.
+                </DialogDescription>
+              </DialogHeader>
+              <form id='import-xml-form' onSubmit={handleImportXml}>
+                <div className='grid gap-4 py-4'>
+                  <div className='space-y-2'>
+                    <Label htmlFor='xml-file'>Arquivo XML</Label>
+                    <Input id='xml-file' name='xml-file' type='file' accept='.xml' required />
+                  </div>
+                </div>
+              </form>
+              <DialogFooter>
+                <Button
+                  variant='outline'
+                  onClick={() => setIsImportDialogOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button type='submit' form='import-xml-form'>
+                  Importar
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <PlusCircle className='mr-2 h-4 w-4' />
+                Agendar Atendimento
               </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Agendar Novo Atendimento</DialogTitle>
+                <DialogDescription>
+                  Preencha os detalhes para criar um novo atendimento na fila.
+                </DialogDescription>
+              </DialogHeader>
+              <form id='add-attendee-form' onSubmit={handleAddAttendee}>
+                <div className='grid gap-4 py-4'>
+                  <div className='space-y-2'>
+                    <Label htmlFor='clientName'>Empresa Cliente</Label>
+                    <Select name='clientName' required>
+                      <SelectTrigger>
+                        <SelectValue placeholder='Selecione a empresa' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {initialClientsData.map((client) => (
+                          <SelectItem
+                            key={client.contractId}
+                            value={client.name}
+                          >
+                            {client.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className='space-y-2'>
+                    <Label htmlFor='employeeId'>Paciente</Label>
+                    <Select name='employeeId' required>
+                      <SelectTrigger>
+                        <SelectValue placeholder='Selecione o colaborador' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {initialEmployeesData.map((employee) => (
+                          <SelectItem key={employee.id} value={employee.id}>
+                            {employee.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className='space-y-2'>
+                    <Label htmlFor='solicitationType'>
+                      Tipo de Solicitação
+                    </Label>
+                    <Input
+                      id='solicitationType'
+                      name='solicitationType'
+                      placeholder='Ex: ASO Admissional, ASO Periódico...'
+                      required
+                    />
+                  </div>
+                </div>
+              </form>
+              <DialogFooter>
+                <Button
+                  variant='outline'
+                  onClick={() => setIsAddDialogOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button type='submit' form='add-attendee-form'>
+                  Agendar
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <Tabs
