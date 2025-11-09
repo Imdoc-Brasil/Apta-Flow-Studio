@@ -74,6 +74,12 @@ const saudeSubNavItems = [
     icon: FlaskConical,
     subItems: [],
   },
+  {
+    href: '/dashboard/health/reports-portal',
+    label: 'Portal de Laudos',
+    icon: Stethoscope,
+    subItems: [],
+  },
 ]
 
 export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {

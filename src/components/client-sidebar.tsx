@@ -88,29 +88,6 @@ export function ClientSidebar() {
     },
   ]
 
-  const saudeNavItems = [
-    {
-      href: `${basePath}/clinical-exams`,
-      label: 'Exames Clínicos',
-      icon: FileHeart,
-    },
-    {
-      href: `${basePath}/lab-exams`,
-      label: 'Exames Laboratoriais',
-      icon: FlaskConical,
-    },
-    {
-      href: `${basePath}/graphical-exams`,
-      label: 'Exames Gráficos',
-      icon: BarChart3,
-    },
-    {
-      href: `${basePath}/pending-issues`,
-      label: 'Gestão de Pendências',
-      icon: AlertTriangle,
-    },
-  ]
-
   const sstNavItems = [
     {
       href: `${basePath}/pgr`,
@@ -170,25 +147,16 @@ export function ClientSidebar() {
   const isContratoActive = contratoNavItems.some((item) =>
     getIsActive(item.href)
   )
-  const isSaudeActive = saudeNavItems.some((item) => getIsActive(item.href))
 
   const [isSstOpen, setIsSstOpen] = useState(isSstActive)
   const [isEstruturaOpen, setIsEstruturaOpen] = useState(isEstruturaActive)
   const [isContratoOpen, setIsContratoOpen] = useState(isContratoActive)
-  const [isSaudeOpen, setIsSaudeOpen] = useState(isSaudeActive)
 
   useEffect(() => {
     if (isSstActive) setIsSstOpen(true)
     if (isEstruturaActive) setIsEstruturaOpen(true)
     if (isContratoActive) setIsContratoOpen(true)
-    if (isSaudeActive) setIsSaudeOpen(true)
-  }, [
-    pathname,
-    isSstActive,
-    isEstruturaActive,
-    isContratoActive,
-    isSaudeActive,
-  ])
+  }, [pathname, isSstActive, isEstruturaActive, isContratoActive])
 
   if (!contractId) {
     return null // Don't render sidebar on the main clients list page
@@ -293,47 +261,6 @@ export function ClientSidebar() {
           <CollapsibleContent asChild>
             <ul className='pl-6 pt-1 space-y-1'>
               {estruturaNavItems.map((item) => (
-                <SidebarMenuItem key={item.label}>
-                  <Link href={item.href}>
-                    <SidebarMenuButton
-                      isActive={getIsActive(item.href)}
-                      tooltip={item.label}
-                      className='h-8'
-                    >
-                      <item.icon />
-                      <span>{item.label}</span>
-                    </SidebarMenuButton>
-                  </Link>
-                </SidebarMenuItem>
-              ))}
-            </ul>
-          </CollapsibleContent>
-        </Collapsible>
-      </li>
-
-      <li className='relative'>
-        <Collapsible open={isSaudeOpen} onOpenChange={setIsSaudeOpen}>
-          <CollapsibleTrigger asChild>
-            <SidebarMenuButton
-              isActive={isSaudeActive}
-              tooltip='Gestão de Saúde'
-              className='justify-between'
-            >
-              <div className='flex items-center gap-2'>
-                <Stethoscope />
-                <span>Gestão de Saúde</span>
-              </div>
-              <ChevronRight
-                className={cn(
-                  'h-4 w-4 transition-transform',
-                  isSaudeOpen && 'rotate-90'
-                )}
-              />
-            </SidebarMenuButton>
-          </CollapsibleTrigger>
-          <CollapsibleContent asChild>
-            <ul className='pl-6 pt-1 space-y-1'>
-              {saudeNavItems.map((item) => (
                 <SidebarMenuItem key={item.label}>
                   <Link href={item.href}>
                     <SidebarMenuButton
