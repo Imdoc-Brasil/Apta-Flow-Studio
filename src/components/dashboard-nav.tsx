@@ -78,12 +78,6 @@ const saudeSubNavItems = [
     ],
   },
   {
-    href: '/dashboard/health/lab-exams',
-    label: 'Exames Laboratoriais',
-    icon: FlaskConical,
-    subItems: [],
-  },
-  {
     href: '/dashboard/health/reports-portal',
     label: 'Portal de Laudos',
     icon: Stethoscope,
