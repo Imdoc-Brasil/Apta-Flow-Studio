@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -100,6 +100,17 @@ const statusLabels: Record<Status, string> = {
 }
 
 const columns: Status[] = ['Agendado', 'Em Atendimento', 'Concluído']
+
+function ClientOnly({ children }: { children: React.ReactNode }) {
+  const [hasMounted, setHasMounted] = useState(false)
+  useEffect(() => {
+    setHasMounted(true)
+  }, [])
+  if (!hasMounted) {
+    return null
+  }
+  return <>{children}</>
+}
 
 const AttendeeCard = ({ attendee }: { attendee: Attendee }) => {
   const {
@@ -260,161 +271,163 @@ export default function QueuePage() {
   }
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      onDragOver={handleDragOver}
-    >
-      <div className='flex h-full flex-col gap-4'>
-        <div className='flex items-center justify-between'>
-          <div className='flex items-center gap-4'>
-            <h1 className='font-headline text-3xl font-bold'>
-              Fila de Atendimento
-            </h1>
-            <Select value={selectedUnit} onValueChange={setSelectedUnit}>
-              <SelectTrigger className='w-[280px]'>
-                <SelectValue placeholder='Selecione a Unidade de Atendimento' />
-              </SelectTrigger>
-              <SelectContent>
-                {aptaServiceUnits.map((unit) => (
-                  <SelectItem key={unit.id} value={unit.id}>
-                    {unit.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <PlusCircle className='mr-2 h-4 w-4' />
-                Agendar Atendimento
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Agendar Novo Atendimento</DialogTitle>
-                <DialogDescription>
-                  Preencha os detalhes para criar um novo atendimento na fila.
-                </DialogDescription>
-              </DialogHeader>
-              <form id='add-attendee-form' onSubmit={handleAddAttendee}>
-                <div className='grid gap-4 py-4'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='clientName'>Empresa Cliente</Label>
-                    <Select name='clientName' required>
-                      <SelectTrigger>
-                        <SelectValue placeholder='Selecione a empresa' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {initialClientsData.map((client) => (
-                          <SelectItem
-                            key={client.contractId}
-                            value={client.name}
-                          >
-                            {client.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='employeeId'>Paciente</Label>
-                    <Select name='employeeId' required>
-                      <SelectTrigger>
-                        <SelectValue placeholder='Selecione o colaborador' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {initialEmployeesData.map((employee) => (
-                          <SelectItem key={employee.id} value={employee.id}>
-                            {employee.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='examType'>Tipo de Exame/Atendimento</Label>
-                    <Input
-                      id='examType'
-                      name='examType'
-                      placeholder='Ex: ASO Admissional, Avaliação Clínica...'
-                      required
-                    />
-                  </div>
-                </div>
-              </form>
-              <DialogFooter>
-                <Button
-                  variant='outline'
-                  onClick={() => setIsAddDialogOpen(false)}
-                >
-                  Cancelar
-                </Button>
-                <Button type='submit' form='add-attendee-form'>
-                  Agendar
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+    <div className='flex h-full flex-col gap-4'>
+      <div className='flex items-center justify-between'>
+        <div className='flex items-center gap-4'>
+          <h1 className='font-headline text-3xl font-bold'>
+            Fila de Atendimento
+          </h1>
+          <Select value={selectedUnit} onValueChange={setSelectedUnit}>
+            <SelectTrigger className='w-[280px]'>
+              <SelectValue placeholder='Selecione a Unidade de Atendimento' />
+            </SelectTrigger>
+            <SelectContent>
+              {aptaServiceUnits.map((unit) => (
+                <SelectItem key={unit.id} value={unit.id}>
+                  {unit.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-
-        <Tabs defaultValue='medico'>
-          <TabsList>
-            <TabsTrigger value='medico'>Atendimento Médico</TabsTrigger>
-            <TabsTrigger value='audiometria'>Audiometria</TabsTrigger>
-            <TabsTrigger value='laboratorio'>Exames Laboratoriais</TabsTrigger>
-            <TabsTrigger value='rx'>Raio-X</TabsTrigger>
-            <TabsTrigger value='graficos'>Exames Gráficos</TabsTrigger>
-          </TabsList>
-          <TabsContent value='medico' className='mt-4'>
-            <div className='grid flex-1 grid-cols-1 items-start gap-6 md:grid-cols-3'>
-              <SortableContext items={columns}>
-                {columns.map((status) => (
-                  <KanbanColumn
-                    key={status}
-                    status={status}
-                    attendees={attendees.filter(
-                      (attendee) => attendee.status === status
-                    )}
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogTrigger asChild>
+            <Button>
+              <PlusCircle className='mr-2 h-4 w-4' />
+              Agendar Atendimento
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Agendar Novo Atendimento</DialogTitle>
+              <DialogDescription>
+                Preencha os detalhes para criar um novo atendimento na fila.
+              </DialogDescription>
+            </DialogHeader>
+            <form id='add-attendee-form' onSubmit={handleAddAttendee}>
+              <div className='grid gap-4 py-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='clientName'>Empresa Cliente</Label>
+                  <Select name='clientName' required>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Selecione a empresa' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {initialClientsData.map((client) => (
+                        <SelectItem
+                          key={client.contractId}
+                          value={client.name}
+                        >
+                          {client.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='employeeId'>Paciente</Label>
+                  <Select name='employeeId' required>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Selecione o colaborador' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {initialEmployeesData.map((employee) => (
+                        <SelectItem key={employee.id} value={employee.id}>
+                          {employee.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='examType'>Tipo de Exame/Atendimento</Label>
+                  <Input
+                    id='examType'
+                    name='examType'
+                    placeholder='Ex: ASO Admissional, Avaliação Clínica...'
+                    required
                   />
-                ))}
-              </SortableContext>
-            </div>
-          </TabsContent>
-          <TabsContent value='audiometria' className='mt-4'>
-            <PlaceholderContent title='Audiometria' />
-          </TabsContent>
-          <TabsContent value='laboratorio' className='mt-4'>
-            <PlaceholderContent title='Exames Laboratoriais' />
-          </TabsContent>
-          <TabsContent value='rx' className='mt-4'>
-            <PlaceholderContent title='Raio-X' />
-          </TabsContent>
-          <TabsContent value='graficos' className='mt-4'>
-            <PlaceholderContent title='Exames Gráficos' />
-          </TabsContent>
-        </Tabs>
+                </div>
+              </div>
+            </form>
+            <DialogFooter>
+              <Button
+                variant='outline'
+                onClick={() => setIsAddDialogOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button type='submit' form='add-attendee-form'>
+                Agendar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
-      <DragOverlay>
-        {activeAttendee ? (
-          <Card className='cursor-grabbing transform-gpu rotate-3 shadow-lg'>
-            <CardHeader className='flex flex-row items-start justify-between p-4 pb-2'>
-              <CardTitle className='text-base'>
-                {activeAttendee.patientName}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className='p-4 pt-0 text-sm text-muted-foreground'>
-              <p>{activeAttendee.examType}</p>
-              <p className='font-semibold text-xs'>
-                {activeAttendee.clientName}
-              </p>
-            </CardContent>
-          </Card>
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+
+      <Tabs defaultValue='medico'>
+        <TabsList>
+          <TabsTrigger value='medico'>Atendimento Médico</TabsTrigger>
+          <TabsTrigger value='audiometria'>Audiometria</TabsTrigger>
+          <TabsTrigger value='laboratorio'>Exames Laboratoriais</TabsTrigger>
+          <TabsTrigger value='rx'>Raio-X</TabsTrigger>
+          <TabsTrigger value='graficos'>Exames Gráficos</TabsTrigger>
+        </TabsList>
+        <TabsContent value='medico' className='mt-4'>
+          <ClientOnly>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+              onDragOver={handleDragOver}
+            >
+              <div className='grid flex-1 grid-cols-1 items-start gap-6 md:grid-cols-3'>
+                <SortableContext items={columns}>
+                  {columns.map((status) => (
+                    <KanbanColumn
+                      key={status}
+                      status={status}
+                      attendees={attendees.filter(
+                        (attendee) => attendee.status === status
+                      )}
+                    />
+                  ))}
+                </SortableContext>
+              </div>
+              <DragOverlay>
+                {activeAttendee ? (
+                  <Card className='cursor-grabbing transform-gpu rotate-3 shadow-lg'>
+                    <CardHeader className='flex flex-row items-start justify-between p-4 pb-2'>
+                      <CardTitle className='text-base'>
+                        {activeAttendee.patientName}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className='p-4 pt-0 text-sm text-muted-foreground'>
+                      <p>{activeAttendee.examType}</p>
+                      <p className='font-semibold text-xs'>
+                        {activeAttendee.clientName}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
+          </ClientOnly>
+        </TabsContent>
+        <TabsContent value='audiometria' className='mt-4'>
+          <PlaceholderContent title='Audiometria' />
+        </TabsContent>
+        <TabsContent value='laboratorio' className='mt-4'>
+          <PlaceholderContent title='Exames Laboratoriais' />
+        </TabsContent>
+        <TabsContent value='rx' className='mt-4'>
+          <PlaceholderContent title='Raio-X' />
+        </TabsContent>
+        <TabsContent value='graficos' className='mt-4'>
+          <PlaceholderContent title='Exames Gráficos' />
+        </TabsContent>
+      </Tabs>
+    </div>
   )
 }
