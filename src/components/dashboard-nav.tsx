@@ -49,7 +49,7 @@ const mainNavItems = [
   { href: '/dashboard/documents', icon: FileText, label: 'Documentos' },
   { href: '/dashboard/tickets', icon: Ticket, label: 'Tickets' },
   { href: '/dashboard/performance', icon: Activity, label: 'Desempenho' },
-  { href: '/dashboard/processes', icon: Workflow, label: 'Processos' },
+  { href: '/dashboard/processes/diagram', icon: Workflow, label: 'Processos' },
   { href: '/dashboard/analytics', icon: BarChart2, label: 'Analytics' },
 ]
 

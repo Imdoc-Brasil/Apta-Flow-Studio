@@ -114,7 +114,13 @@ export default function EmployeeDetailsPage() {
       : null
       
     // Simplified logic: find processes where the primary sector matches the employee's sector
-    const processes = initialProcessesData.filter(p => p.primarySector === sector.name);
+    const processes = initialProcessesData.filter(p => {
+        const firstStep = p.steps[0];
+        if (firstStep && firstStep.sectorId) {
+            return firstStep.sectorId === sector.id;
+        }
+        return false;
+    });
 
     return { employee: employeeData, role, sector, unit, mainWorkstation, processes }
   }, [employeeData])

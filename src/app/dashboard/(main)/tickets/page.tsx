@@ -1200,8 +1200,6 @@ export default function TicketsPage() {
           clientName: newTicketData.client,
           patientName: employee.name,
           solicitationType: newTicketData.subject,
-          status: 'Agendado',
-          // Simplified exam list for demo purposes
           exams: [
             { id: `EXM-${Date.now()}-A`, name: 'Avaliação Clínica', status: 'Pendente' },
             { id: `EXM-${Date.now()}-B`, name: 'Audiometria', status: 'Pendente' },
