@@ -67,19 +67,16 @@ const saudeSubNavItems = [
     subItems: [],
   },
   {
-    href: '/dashboard/health/clinical-exams',
-    label: 'Exames Clínicos',
+    href: '/dashboard/health/clinical-exams/settings',
+    label: 'Config. Avaliação Clínica',
     icon: FileHeart,
-    subItems: [
-      {
-        href: '/dashboard/health/clinical-exams/settings',
-        label: 'Config. Avaliação Clínica',
-      },
-      {
-        href: '/dashboard/health/clinical-exams/psychosocial',
-        label: 'TESTE: SRQ 20',
-      },
-    ],
+    subItems: [],
+  },
+  {
+    href: '/dashboard/health/clinical-exams',
+    label: 'TESTE: SRQ 20',
+    icon: FileHeart,
+    subItems: [],
   },
   {
     href: '/dashboard/health/lab-exams',

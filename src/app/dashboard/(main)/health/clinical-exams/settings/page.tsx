@@ -400,7 +400,73 @@ export default function ClinicalEvaluationSettingsPage() {
         </TabsContent>
 
         <TabsContent value='form-model'>
-         <p className="text-sm text-muted-foreground p-4">Esta é a página de configuração. A ficha de atendimento real para um paciente é acessada através da Fila de Atendimento.</p>
+         <Card>
+            <CardHeader>
+                <CardTitle>Modelo da Ficha de Atendimento</CardTitle>
+                <CardDescription>Esta é a ficha que o profissional de saúde irá preencher durante o atendimento. Os campos são baseados nas configurações gerais.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                 <ScrollArea className="h-[70vh] p-4 border rounded-lg">
+                    <div className="space-y-8">
+                    <FieldsetGroup title="Seção 01: Dados do Colaborador">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                            <InfoField label="Nome" value={"[Nome do Paciente]"} />
+                            <InfoField label="Matrícula" value={"[Matrícula]"} />
+                             <InfoField label="Idade" value={"[Idade]"} />
+                            <InfoField label="Sexo" value={"[Sexo]"} />
+                             <InfoField label="CPF" value={"[CPF]"} />
+                            <InfoField label="Empresa" value={"[Empresa Cliente]"} />
+                            <InfoField label="Setor" value={"[Setor]"} />
+                            <InfoField label="Cargo" value={"[Cargo]"} />
+                            <InfoField label="Posto de Trabalho" value={"[Posto de Trabalho]"}/>
+                            <InfoField label="GHE" value={"[GHE]"} />
+                        </div>
+                    </FieldsetGroup>
+
+                    <FieldsetGroup title="Seção 02: Contexto do Exame">
+                        <div className="space-y-2">
+                            <Label>Tipo de Exame</Label>
+                            <Input disabled value="[Tipo de Exame]" />
+                        </div>
+                        <div className="space-y-2">
+                             <Label>Riscos Expostos</Label>
+                            <Textarea disabled value="[Lista de Riscos]" />
+                        </div>
+                    </FieldsetGroup>
+                    
+                    <FieldsetGroup title="Seção 03: Anamnese">
+                         <div className="space-y-4 rounded-md border p-4">
+                            <h4 className="font-medium">Dados Vitais</h4>
+                             <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                    <TableHead>Parâmetro</TableHead>
+                                    <TableHead>Avaliação Atual</TableHead>
+                                    <TableHead>Resultado</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    <TableRow>
+                                        <TableCell>PAS / PAD</TableCell>
+                                        <TableCell><Input placeholder='0/0' className='w-24' /></TableCell>
+                                        <TableCell><Input readOnly placeholder='Normal' className='w-24 bg-muted' /></TableCell>
+                                    </TableRow>
+                                     <TableRow>
+                                        <TableCell>Peso (kg) / Altura (m)</TableCell>
+                                        <TableCell className='flex gap-2'>
+                                            <Input placeholder='0' className='w-20' value={weight} onChange={(e) => setWeight(e.target.value)} /> / 
+                                            <Input placeholder='0.00' className='w-20' value={height} onChange={(e) => setHeight(e.target.value)} />
+                                        </TableCell>
+                                        <TableCell><Input readOnly value={imc > 0 ? imc.toFixed(2) : '0.0'} className='w-24 bg-muted' /></TableCell>
+                                    </TableRow>
+                                </TableBody>
+                            </Table>
+                         </div>
+                    </FieldsetGroup>
+                    </div>
+                </ScrollArea>
+            </CardContent>
+         </Card>
         </TabsContent>
 
         <TabsContent value='print-model'>
