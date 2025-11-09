@@ -540,16 +540,17 @@ export default function ClientTicketsPage() {
 
   const { toast } = useToast()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [defaultEmployee, setDefaultEmployee] = useState<string | undefined>(
-    employeeId || undefined
-  )
+  
+  // Use state to manage the default employee and react to URL changes
+  const [defaultEmployee, setDefaultEmployee] = useState<string | undefined>(employeeId || undefined);
 
   useEffect(() => {
-    if (employeeId) {
-      setDefaultEmployee(employeeId)
-      setIsDialogOpen(true)
+    const employeeIdFromUrl = searchParams.get('employee');
+    if (employeeIdFromUrl) {
+      setDefaultEmployee(employeeIdFromUrl);
+      setIsDialogOpen(true);
     }
-  }, [employeeId])
+  }, [searchParams]);
 
   const handleNewTicket = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -607,7 +608,8 @@ export default function ClientTicketsPage() {
                     <Input
                       id='subject'
                       name='subject'
-                      placeholder='Ex: Problema com login'
+                      placeholder='Ex: Dúvida sobre o ASO Admissional'
+                      defaultValue={defaultEmployee ? `Solicitação de Exame para ${initialEmployeesData.find(e => e.id === defaultEmployee)?.name}` : ''}
                       required
                     />
                   </div>

@@ -20,6 +20,7 @@ import {
   AlertTriangle,
   CalendarClock,
   FileText,
+  Stethoscope,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -155,6 +156,13 @@ export default function EmployeeDetailsPage() {
         >
           {employee.status}
         </Badge>
+        <div className='hidden items-center gap-2 md:ml-auto md:flex'>
+           <Button asChild variant='default'>
+             <Link href={`/dashboard/clients/${contractId}/tickets?employee=${employee.id}`}>
+                <Stethoscope className="mr-2 h-4 w-4" /> Solicitar Exame / ASO
+             </Link>
+           </Button>
+        </div>
       </div>
       <div className='grid gap-4 md:grid-cols-[1fr_320px] lg:gap-8'>
         <div className='grid auto-rows-max items-start gap-4 lg:gap-8'>
