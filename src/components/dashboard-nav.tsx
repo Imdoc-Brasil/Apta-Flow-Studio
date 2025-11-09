@@ -98,10 +98,12 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
   const pathname = usePathname()
 
   const getIsActive = (href: string) => {
-    return (
-      pathname.startsWith(href) &&
-      (href !== '/dashboard' || pathname === '/dashboard')
-    )
+    // Exact match for the main dashboard page
+    if (href === '/dashboard') {
+      return pathname === href
+    }
+    // For other items, check if the path starts with the href.
+    return pathname.startsWith(href)
   }
 
   const isSaudeActive = getIsActive('/dashboard/health')
@@ -115,10 +117,15 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
 
   useEffect(() => {
     if (isSaudeActive) setIsSaudeOpen(true)
+    else setIsSaudeOpen(false) // Collapse if not active
+
     if (getIsActive('/dashboard/health/clinical-exams'))
       setIsExamesClinicosOpen(true)
+    else setIsExamesClinicosOpen(false)
+
     if (getIsActive('/dashboard/health/reports-portal'))
       setIsPortalLaudosOpen(true)
+    else setIsPortalLaudosOpen(false)
   }, [pathname, isSaudeActive])
 
   return (
@@ -200,9 +207,13 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
                                 <ChevronRight
                                   className={cn(
                                     'h-4 w-4 transition-transform group-data-[collapsible=icon]:hidden',
-                                    (item.href.includes('clinical-exams')
-                                      ? isExamesClinicosOpen
-                                      : isPortalLaudosOpen) && 'rotate-90'
+                                    ((item.href.includes('clinical-exams') &&
+                                      isExamesClinicosOpen) ||
+                                      (item.href.includes(
+                                        'reports-portal'
+                                      ) &&
+                                        isPortalLaudosOpen)) &&
+                                      'rotate-90'
                                   )}
                                 />
                               </SidebarMenuButton>
