@@ -1,8 +1,9 @@
+
 'use client'
 
 import { create } from 'zustand'
 
-export type Status = 'Agendado' | 'Em Atendimento' | 'Concluído'
+export type Status = 'Agendado' | 'Aguardando' | 'Em Atendimento' | 'Concluído' | 'Cancelado'
 export type ExamStatus = 'Pendente' | 'Realizado'
 
 export interface Exam {
@@ -55,7 +56,7 @@ export const initialAttendees: Attendee[] = [
     patientName: 'Maria Oliveira',
     clientName: 'Quantum Dynamics',
     solicitationType: 'Exames de Imagem',
-    status: 'Agendado',
+    status: 'Aguardando',
     exams: [
       { id: 'EXM-005', name: 'Raio-X de Tórax', status: 'Pendente' },
       { id: 'EXM-006', name: 'Raio-X de Coluna Lombar', status: 'Pendente' },
@@ -65,8 +66,9 @@ export const initialAttendees: Attendee[] = [
 
 type AttendeeStore = {
   attendees: Attendee[]
-  addAttendee: (newAttendeeData: Omit<Attendee, 'id'>) => void
+  addAttendee: (newAttendeeData: Omit<Attendee, 'id' | 'status'>) => void
   setAttendees: (attendees: Attendee[]) => void
+  updateAttendeeStatus: (attendeeId: string, status: Status) => void
   updateExamStatus: (
     attendeeId: string,
     examId: string,
@@ -82,11 +84,18 @@ export const useAttendeeStore = create<AttendeeStore>((set) => ({
         {
           ...newAttendeeData,
           id: `att-${Date.now()}`,
+          status: 'Agendado',
         },
         ...state.attendees,
       ],
     })),
   setAttendees: (attendees) => set({ attendees }),
+  updateAttendeeStatus: (attendeeId, status) =>
+    set((state) => ({
+      attendees: state.attendees.map((attendee) =>
+        attendee.id === attendeeId ? { ...attendee, status } : attendee
+      ),
+    })),
   updateExamStatus: (attendeeId, examId, status) =>
     set((state) => ({
       attendees: state.attendees.map((attendee) => {

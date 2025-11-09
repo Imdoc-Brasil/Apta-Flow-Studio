@@ -27,7 +27,7 @@ import {
   CardFooter,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { PlusCircle, MoreHorizontal } from 'lucide-react'
+import { PlusCircle, MoreHorizontal, UserCheck } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
   Dialog,
@@ -54,16 +54,19 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { aptaServiceUnits } from './data'
 import { useAttendeeStore, type Attendee, type Status } from './attendee-store'
 import { useRouter } from 'next/navigation'
+import { cn } from '@/lib/utils'
 
 const statusLabels: Record<Status, string> = {
   Agendado: 'Agendado',
+  Aguardando: 'Aguardando',
   'Em Atendimento': 'Em Atendimento',
   Concluído: 'Concluído',
+  Cancelado: 'Cancelado',
 }
 
 type QueueType = 'medico' | 'audiometria' | 'laboratorio' | 'rx' | 'graficos'
 
-const columns: Status[] = ['Agendado', 'Em Atendimento', 'Concluído']
+const columns: Status[] = ['Agendado', 'Aguardando', 'Em Atendimento', 'Concluído']
 
 function ClientOnly({ children }: { children: React.ReactNode }) {
   const [hasMounted, setHasMounted] = useState(false)
@@ -84,6 +87,7 @@ const AttendeeCard = ({
   queueType: QueueType
 }) => {
   const router = useRouter()
+  const { updateAttendeeStatus } = useAttendeeStore()
   const {
     attributes,
     listeners,
@@ -91,7 +95,11 @@ const AttendeeCard = ({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: attendee.id, data: { type: 'Attendee', attendee } })
+  } = useSortable({
+    id: attendee.id,
+    data: { type: 'Attendee', attendee },
+    disabled: attendee.status === 'Em Atendimento',
+  })
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -100,36 +108,72 @@ const AttendeeCard = ({
   }
 
   const handleCardClick = () => {
-     // Specific logic for the "medico" queue
-    if (queueType === 'medico') {
-      const clinicalExam = attendee.exams.find(exam => exam.name === 'Avaliação Clínica');
+    if (attendee.status === 'Em Atendimento') {
+      return
+    }
+
+    if (attendee.status === 'Aguardando' && queueType === 'medico') {
+      const clinicalExam = attendee.exams.find(
+        (exam) => exam.name === 'Avaliação Clínica'
+      )
       if (clinicalExam) {
-        router.push(`/dashboard/health/evaluation/${attendee.id}`);
-        return;
+        updateAttendeeStatus(attendee.id, 'Em Atendimento')
+        router.push(`/dashboard/health/evaluation/${attendee.id}`)
+        return
       }
     }
 
-    // Default behavior for other queues or if the specific exam isn't found
-    router.push(`/dashboard/health/evaluation/${attendee.id}`);
+    if (attendee.status === 'Aguardando') {
+      updateAttendeeStatus(attendee.id, 'Em Atendimento')
+      router.push(`/dashboard/health/evaluation/${attendee.id}`)
+    }
   }
+
+  const handleCheckIn = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    updateAttendeeStatus(attendee.id, 'Aguardando')
+  }
+  
+  const isBusy = attendee.status === 'Em Atendimento'
 
   return (
     <Card
       ref={setNodeRef}
       style={style}
-      {...attributes}
-      {...listeners}
-      className='touch-none cursor-grab active:cursor-grabbing'
-      onClick={handleCardClick}
+      className={cn(
+        'touch-none',
+        !isBusy && 'cursor-grab active:cursor-grabbing',
+        isBusy && 'bg-blue-100 dark:bg-blue-900/50 border-blue-400'
+      )}
     >
-      <CardHeader className='flex flex-row items-start justify-between p-4 pb-2'>
-        <CardTitle className='text-base'>{attendee.patientName}</CardTitle>
-        <MoreHorizontal className='h-4 w-4 text-muted-foreground' />
-      </CardHeader>
-      <CardContent className='p-4 pt-0 text-sm text-muted-foreground'>
-        <p>{attendee.solicitationType}</p>
-        <p className='font-semibold text-xs'>{attendee.clientName}</p>
-      </CardContent>
+      <div
+        {...attributes}
+        {...listeners}
+        className='p-4'
+        onClick={handleCardClick}
+      >
+        <CardHeader className='flex flex-row items-start justify-between p-0 pb-2'>
+          <CardTitle className='text-base'>{attendee.patientName}</CardTitle>
+          <MoreHorizontal className='h-4 w-4 text-muted-foreground' />
+        </CardHeader>
+        <CardContent className='p-0 text-sm text-muted-foreground'>
+          <p>{attendee.solicitationType}</p>
+          <p className='font-semibold text-xs'>{attendee.clientName}</p>
+        </CardContent>
+      </div>
+      {attendee.status === 'Agendado' && (
+        <CardFooter className='p-2 border-t'>
+          <Button
+            size='sm'
+            variant='secondary'
+            className='w-full'
+            onClick={handleCheckIn}
+          >
+            <UserCheck className='mr-2 h-4 w-4' />
+            Confirmar Chegada
+          </Button>
+        </CardFooter>
+      )}
     </Card>
   )
 }
@@ -183,7 +227,7 @@ const PlaceholderContent = ({ title }: { title: string }) => (
 )
 
 export default function QueuePage() {
-  const { attendees, addAttendee, setAttendees } = useAttendeeStore()
+  const { attendees, addAttendee, setAttendees, updateAttendeeStatus } = useAttendeeStore()
   const [activeAttendee, setActiveAttendee] = useState<Attendee | null>(null)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const { toast } = useToast()
@@ -217,14 +261,7 @@ export default function QueuePage() {
     const isOverAColumn = over.data.current?.type === 'Column'
 
     if (isActiveAnAttendee && isOverAColumn) {
-      setAttendees(
-        attendees.map((t) => {
-          if (t.id === activeId) {
-            return { ...t, status: overId as Status }
-          }
-          return t
-        })
-      )
+       updateAttendeeStatus(activeId as string, overId as Status)
     }
   }
 
@@ -254,12 +291,19 @@ export default function QueuePage() {
       clientName,
       patientName: patient.name,
       solicitationType,
-      status: 'Agendado',
       // This is a simplified logic. In a real scenario, this would query the PCMSO
       // based on the solicitationType and employee's role/risks.
       exams: [
-        { id: `EXM-${Date.now()}-1`, name: 'Avaliação Clínica', status: 'Pendente' },
-        { id: `EXM-${Date.now()}-2`, name: 'Audiometria', status: 'Pendente' },
+        {
+          id: `EXM-${Date.now()}-1`,
+          name: 'Avaliação Clínica',
+          status: 'Pendente',
+        },
+        {
+          id: `EXM-${Date.now()}-2`,
+          name: 'Audiometria',
+          status: 'Pendente',
+        },
       ],
     })
 
@@ -385,7 +429,7 @@ export default function QueuePage() {
               onDragEnd={handleDragEnd}
               onDragOver={handleDragOver}
             >
-              <div className='grid flex-1 grid-cols-1 items-start gap-6 md:grid-cols-3'>
+              <div className='grid flex-1 grid-cols-1 items-start gap-6 md:grid-cols-4'>
                 <SortableContext items={columns}>
                   {columns.map((status) => (
                     <KanbanColumn
