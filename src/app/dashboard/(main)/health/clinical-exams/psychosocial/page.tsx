@@ -274,7 +274,8 @@ export default function PsychosocialEvaluationPage() {
                             </RadioGroup>
                         </div>
                     </div>
-                     <p className='text-xs text-muted-foreground font-semibold bg-yellow-50 border border-yellow-200 p-2 rounded-md'>RESULTADO: Se o resultado for ≥ 7 (maior ou igual a sete respostas SIM) está comprovado sofrimento mental.</p>
+                     <p className='text-xs text-muted-foreground font-semibold bg-yellow-50 border border-yellow-200 p-2 rounded-md'>RESULTADO: Se o resultado for ≥ 7 (maior ou igual a sete respostas SIM) está comprovado sofrimento
+mental.</p>
                     <div>
                         <Label htmlFor='observations'>Observações</Label>
                         <Textarea id='observations' placeholder='Use este espaço para qualquer observação pertinente a esta coleta de dados.' />
