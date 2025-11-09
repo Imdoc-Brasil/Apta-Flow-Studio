@@ -60,16 +60,18 @@ export interface Training {
   modality: TrainingModality
   workload: number // in hours
   modules: TrainingModule[]
+  validity: number // in months
 }
 
 const initialTraining: Training = {
-  id: 'TRN-001',
+  id: 'TRN-NR-35',
   title: 'NR-35 - Trabalho em Altura',
   description:
     'Capacitação para planejamento, organização e execução de trabalho em altura.',
   type: 'NR',
   modality: 'Híbrido',
   workload: 8,
+  validity: 24,
   modules: [
     {
       id: 'MOD-01',
@@ -148,13 +150,13 @@ export default function EditTrainingPage({
     setModuleType(module?.type || 'Texto')
     setIsModuleDialogOpen(true)
   }
-  
+
   const deleteModule = (moduleId: string) => {
-    setTraining(prev => ({
-        ...prev,
-        modules: prev.modules.filter(m => m.id !== moduleId)
+    setTraining((prev) => ({
+      ...prev,
+      modules: prev.modules.filter((m) => m.id !== moduleId),
     }))
-    toast({ variant: "destructive", title: "Módulo Removido!"})
+    toast({ variant: 'destructive', title: 'Módulo Removido!' })
   }
 
   return (
@@ -236,10 +238,7 @@ export default function EditTrainingPage({
         </CardContent>
       </Card>
 
-      <Dialog
-        open={isModuleDialogOpen}
-        onOpenChange={setIsModuleDialogOpen}
-      >
+      <Dialog open={isModuleDialogOpen} onOpenChange={setIsModuleDialogOpen}>
         <DialogContent className='sm:max-w-lg'>
           <DialogHeader>
             <DialogTitle>

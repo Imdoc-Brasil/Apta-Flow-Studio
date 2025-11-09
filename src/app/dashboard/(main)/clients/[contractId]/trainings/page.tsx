@@ -65,7 +65,7 @@ interface ScheduledTraining {
 const initialScheduledTrainings: ScheduledTraining[] = [
   {
     id: 'SCH-001',
-    trainingId: 'TRN-001',
+    trainingId: 'TRN-NR-35',
     title: 'NR-35 - Trabalho em Altura',
     modality: 'Híbrido',
     scheduledDate: '2024-08-15',
@@ -75,7 +75,7 @@ const initialScheduledTrainings: ScheduledTraining[] = [
   },
   {
     id: 'SCH-002',
-    trainingId: 'TRN-002',
+    trainingId: 'TRN-NR-06',
     title: 'Uso Correto de Protetores Auriculares',
     modality: 'Online',
     scheduledDate: '2024-07-20',
@@ -102,9 +102,11 @@ export default function ClientTrainingsPage() {
         emp.name.toLowerCase().includes(searchTerm.toLowerCase())
     )
   }, [selectedEmployees, searchTerm])
-  
+
   const currentSelectedEmployees = useMemo(() => {
-     return initialEmployeesData.filter(emp => selectedEmployees.includes(emp.id))
+    return initialEmployeesData.filter((emp) =>
+      selectedEmployees.includes(emp.id)
+    )
   }, [selectedEmployees])
 
   const handleSelectEmployee = (employeeId: string) => {
@@ -114,12 +116,11 @@ export default function ClientTrainingsPage() {
   const handleRemoveEmployee = (employeeId: string) => {
     setSelectedEmployees((prev) => prev.filter((id) => id !== employeeId))
   }
-  
+
   const resetSelection = () => {
     setSelectedEmployees([])
     setSearchTerm('')
   }
-
 
   const handleScheduleTraining = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -131,8 +132,7 @@ export default function ClientTrainingsPage() {
       toast({
         variant: 'destructive',
         title: 'Dados incompletos',
-        description:
-          'Selecione um treinamento e pelo menos um colaborador.',
+        description: 'Selecione um treinamento e pelo menos um colaborador.',
       })
       return
     }
@@ -174,8 +174,8 @@ export default function ClientTrainingsPage() {
             <Dialog
               open={isSchedulingDialogOpen}
               onOpenChange={(isOpen) => {
-                  setIsSchedulingDialogOpen(isOpen);
-                  if (!isOpen) resetSelection();
+                setIsSchedulingDialogOpen(isOpen)
+                if (!isOpen) resetSelection()
               }}
             >
               <DialogTrigger asChild>
@@ -215,45 +215,78 @@ export default function ClientTrainingsPage() {
                         <div className='grid grid-cols-2 gap-4'>
                           {/* Coluna da Esquerda: Disponíveis */}
                           <div className='rounded-md border p-4 space-y-2'>
-                              <div className='relative'>
-                                  <Search className='absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
-                                  <Input 
-                                      placeholder='Buscar colaborador...'
-                                      className='pl-8'
-                                      value={searchTerm}
-                                      onChange={(e) => setSearchTerm(e.target.value)}
-                                  />
-                              </div>
-                              <ScrollArea className='h-48'>
-                                  <div className='space-y-2'>
-                                  {availableEmployees.map(employee => (
-                                      <div key={employee.id} className='flex items-center justify-between text-sm p-2 rounded-md hover:bg-muted'>
-                                          <span>{employee.name}</span>
-                                          <Button type='button' size='sm' variant='outline' onClick={() => handleSelectEmployee(employee.id)}>Incluir</Button>
-                                      </div>
-                                  ))}
-                                  {availableEmployees.length === 0 && <p className='text-center text-xs text-muted-foreground pt-4'>Nenhum colaborador encontrado.</p>}
+                            <div className='relative'>
+                              <Search className='absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
+                              <Input
+                                placeholder='Buscar colaborador...'
+                                className='pl-8'
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                              />
+                            </div>
+                            <ScrollArea className='h-48'>
+                              <div className='space-y-2'>
+                                {availableEmployees.map((employee) => (
+                                  <div
+                                    key={employee.id}
+                                    className='flex items-center justify-between text-sm p-2 rounded-md hover:bg-muted'
+                                  >
+                                    <span>{employee.name}</span>
+                                    <Button
+                                      type='button'
+                                      size='sm'
+                                      variant='outline'
+                                      onClick={() =>
+                                        handleSelectEmployee(employee.id)
+                                      }
+                                    >
+                                      Incluir
+                                    </Button>
                                   </div>
-                              </ScrollArea>
+                                ))}
+                                {availableEmployees.length === 0 && (
+                                  <p className='text-center text-xs text-muted-foreground pt-4'>
+                                    Nenhum colaborador encontrado.
+                                  </p>
+                                )}
+                              </div>
+                            </ScrollArea>
                           </div>
-                          
+
                           {/* Coluna da Direita: Selecionados */}
                           <div className='rounded-md border p-4 space-y-2'>
-                               <h4 className='font-medium text-sm'>Selecionados ({currentSelectedEmployees.length})</h4>
-                               <Separator />
-                               <ScrollArea className='h-48'>
-                                   <div className='space-y-2'>
-                                   {currentSelectedEmployees.map(employee => (
-                                       <div key={employee.id} className='flex items-center justify-between text-sm p-2 rounded-md bg-secondary'>
-                                           <span>{employee.name}</span>
-                                           <Button type='button' size='icon' variant='ghost' className='h-6 w-6' onClick={() => handleRemoveEmployee(employee.id)}>
-                                             <X className='h-4 w-4' />
-                                           </Button>
-                                       </div>
-                                   ))}
-                                    {currentSelectedEmployees.length === 0 && <p className='text-center text-xs text-muted-foreground pt-4'>Nenhum colaborador selecionado.</p>}
-                                   </div>
-                               </ScrollArea>
+                            <h4 className='font-medium text-sm'>
+                              Selecionados ({currentSelectedEmployees.length})
+                            </h4>
+                            <Separator />
+                            <ScrollArea className='h-48'>
+                              <div className='space-y-2'>
+                                {currentSelectedEmployees.map((employee) => (
+                                  <div
+                                    key={employee.id}
+                                    className='flex items-center justify-between text-sm p-2 rounded-md bg-secondary'
+                                  >
+                                    <span>{employee.name}</span>
+                                    <Button
+                                      type='button'
+                                      size='icon'
+                                      variant='ghost'
+                                      className='h-6 w-6'
+                                      onClick={() =>
+                                        handleRemoveEmployee(employee.id)
+                                      }
+                                    >
+                                      <X className='h-4 w-4' />
+                                    </Button>
+                                  </div>
+                                ))}
+                                {currentSelectedEmployees.length === 0 && (
+                                  <p className='text-center text-xs text-muted-foreground pt-4'>
+                                    Nenhum colaborador selecionado.
+                                  </p>
+                                )}
+                              </div>
+                            </ScrollArea>
                           </div>
                         </div>
                       </div>
@@ -267,7 +300,10 @@ export default function ClientTrainingsPage() {
                             </SelectTrigger>
                             <SelectContent>
                               {initialStaffsData.map((staff) => (
-                                <SelectItem key={staff.email} value={staff.email}>
+                                <SelectItem
+                                  key={staff.email}
+                                  value={staff.email}
+                                >
                                   {staff.name}
                                 </SelectItem>
                               ))}
@@ -291,8 +327,8 @@ export default function ClientTrainingsPage() {
                   <Button
                     variant='outline'
                     onClick={() => {
-                        setIsSchedulingDialogOpen(false);
-                        resetSelection();
+                      setIsSchedulingDialogOpen(false)
+                      resetSelection()
                     }}
                   >
                     Cancelar
