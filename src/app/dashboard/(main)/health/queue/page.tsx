@@ -60,8 +60,7 @@ const statusLabels: Record<Status, string> = {
   Concluído: 'Concluído',
 }
 
-type QueueType = 'medico' | 'audiometria' | 'laboratorio' | 'rx' | 'graficos';
-
+type QueueType = 'medico' | 'audiometria' | 'laboratorio' | 'rx' | 'graficos'
 
 const columns: Status[] = ['Agendado', 'Em Atendimento', 'Concluído']
 
@@ -76,7 +75,13 @@ function ClientOnly({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
-const AttendeeCard = ({ attendee, queueType }: { attendee: Attendee, queueType: QueueType }) => {
+const AttendeeCard = ({
+  attendee,
+  queueType,
+}: {
+  attendee: Attendee
+  queueType: QueueType
+}) => {
   const router = useRouter()
   const {
     attributes,
@@ -94,17 +99,28 @@ const AttendeeCard = ({ attendee, queueType }: { attendee: Attendee, queueType: 
   }
 
   const handleCardClick = () => {
-    // Se for médico ou áudio e tiver apenas 1 exame, vai direto pro exame
-    if ((queueType === 'medico' || queueType === 'audiometria') && attendee.exams.length === 1) {
-        router.push(`/dashboard/health/evaluation/${attendee.id}/exam/${attendee.exams[0].id}`);
-    } else { // Caso contrário, vai para o painel do paciente
-        router.push(`/dashboard/health/evaluation/${attendee.id}`);
+    if (queueType === 'medico') {
+      const clinicalExam = attendee.exams.find(
+        (e) => e.name === 'Avaliação Clínica'
+      )
+      if (clinicalExam) {
+        router.push(
+          `/dashboard/health/evaluation/${attendee.id}/exam/${clinicalExam.id}`
+        )
+        return
+      }
     }
+
+    if (queueType === 'audiometria' && attendee.exams.length === 1) {
+      router.push(
+        `/dashboard/health/evaluation/${attendee.id}/exam/${attendee.exams[0].id}`
+      )
+      return
+    }
+
+    // Default behavior for other queues or complex cases
+    router.push(`/dashboard/health/evaluation/${attendee.id}`)
   }
-  
-  const examsSummary = attendee.exams.length > 1 
-    ? `${attendee.exams.length} exames` 
-    : attendee.exams[0]?.name || 'Nenhum exame';
 
   return (
     <Card
@@ -120,7 +136,7 @@ const AttendeeCard = ({ attendee, queueType }: { attendee: Attendee, queueType: 
         <MoreHorizontal className='h-4 w-4 text-muted-foreground' />
       </CardHeader>
       <CardContent className='p-4 pt-0 text-sm text-muted-foreground'>
-        <p>{examsSummary}</p>
+        <p>{attendee.solicitationType}</p>
         <p className='font-semibold text-xs'>{attendee.clientName}</p>
       </CardContent>
     </Card>
@@ -150,7 +166,11 @@ const KanbanColumn = ({
       >
         <div className='flex flex-col gap-4 overflow-y-auto'>
           {attendees.map((attendee) => (
-            <AttendeeCard key={attendee.id} attendee={attendee} queueType={queueType} />
+            <AttendeeCard
+              key={attendee.id}
+              attendee={attendee}
+              queueType={queueType}
+            />
           ))}
           {attendees.length === 0 && (
             <div className='py-8 text-center text-sm text-muted-foreground'>
@@ -177,8 +197,7 @@ export default function QueuePage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const { toast } = useToast()
   const [selectedUnit, setSelectedUnit] = useState(aptaServiceUnits[0].id)
-  const [activeTab, setActiveTab] = useState<QueueType>('medico');
-
+  const [activeTab, setActiveTab] = useState<QueueType>('medico')
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -227,11 +246,11 @@ export default function QueuePage() {
     const formData = new FormData(e.currentTarget)
     const clientName = formData.get('clientName') as string
     const employeeId = formData.get('employeeId') as string
-    const examType = formData.get('examType') as string
+    const solicitationType = formData.get('solicitationType') as string
 
     const patient = initialEmployeesData.find((emp) => emp.id === employeeId)
 
-    if (!clientName || !patient || !examType) {
+    if (!clientName || !patient || !solicitationType) {
       toast({
         variant: 'destructive',
         title: 'Campos incompletos',
@@ -243,14 +262,20 @@ export default function QueuePage() {
     addAttendee({
       clientName,
       patientName: patient.name,
+      solicitationType,
       status: 'Agendado',
-      exams: [{ id: `EXM-${Date.now()}`, name: examType, status: 'Pendente' }],
+      // This is a simplified logic. In a real scenario, this would query the PCMSO
+      // based on the solicitationType and employee's role/risks.
+      exams: [
+        { id: `EXM-${Date.now()}-1`, name: 'Avaliação Clínica', status: 'Pendente' },
+        { id: `EXM-${Date.now()}-2`, name: 'Audiometria', status: 'Pendente' },
+      ],
     })
 
     setIsAddDialogOpen(false)
     toast({
       title: 'Atendimento Agendado!',
-      description: `${examType} para ${patient.name} foi adicionado à fila.`,
+      description: `${solicitationType} para ${patient.name} foi adicionado à fila.`,
     })
   }
 
@@ -324,11 +349,11 @@ export default function QueuePage() {
                   </Select>
                 </div>
                 <div className='space-y-2'>
-                  <Label htmlFor='examType'>Tipo de Exame/Atendimento</Label>
+                  <Label htmlFor='solicitationType'>Tipo de Solicitação</Label>
                   <Input
-                    id='examType'
-                    name='examType'
-                    placeholder='Ex: ASO Admissional, Avaliação Clínica...'
+                    id='solicitationType'
+                    name='solicitationType'
+                    placeholder='Ex: ASO Admissional, ASO Periódico...'
                     required
                   />
                 </div>
@@ -349,7 +374,10 @@ export default function QueuePage() {
         </Dialog>
       </div>
 
-      <Tabs defaultValue='medico' onValueChange={(value) => setActiveTab(value as QueueType)}>
+      <Tabs
+        defaultValue='medico'
+        onValueChange={(value) => setActiveTab(value as QueueType)}
+      >
         <TabsList>
           <TabsTrigger value='medico'>Atendimento Médico</TabsTrigger>
           <TabsTrigger value='audiometria'>Audiometria</TabsTrigger>
@@ -389,7 +417,7 @@ export default function QueuePage() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className='p-4 pt-0 text-sm text-muted-foreground'>
-                      <p>{activeAttendee.exams[0]?.name}</p>
+                      <p>{activeAttendee.solicitationType}</p>
                       <p className='font-semibold text-xs'>
                         {activeAttendee.clientName}
                       </p>

@@ -209,12 +209,7 @@ export type Ticket = Omit<
 
 type NewTicketData = Omit<
   Ticket,
-  | 'id'
-  | 'status'
-  | 'updated'
-  | 'checklists'
-  | 'attachments'
-  | 'textElements'
+  'id' | 'status' | 'updated' | 'checklists' | 'attachments' | 'textElements'
 >
 
 type TicketStore = {

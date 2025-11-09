@@ -15,6 +15,7 @@ export interface Attendee {
   id: string
   patientName: string
   clientName: string
+  solicitationType: string // Gatilho principal, ex: "ASO Periódico"
   status: Status
   exams: Exam[]
 }
@@ -24,16 +25,18 @@ export const initialAttendees: Attendee[] = [
     id: '1',
     patientName: 'Carlos Pereira',
     clientName: 'Innovate Inc.',
+    solicitationType: 'ASO Periódico',
     status: 'Agendado',
     exams: [
-      { id: 'EXM-001', name: 'ASO Periódico', status: 'Pendente' },
-      { id: 'EXM-002', name: 'Audiometria', status: 'Pendente' },
+      { id: 'EXM-001-A', name: 'Avaliação Clínica', status: 'Pendente' },
+      { id: 'EXM-001-B', name: 'Audiometria', status: 'Pendente' },
     ],
   },
   {
     id: '2',
     patientName: 'Ana Costa',
     clientName: 'Solutions Co.',
+    solicitationType: 'Eletrocardiograma',
     status: 'Em Atendimento',
     exams: [{ id: 'EXM-003', name: 'Eletrocardiograma', status: 'Pendente' }],
   },
@@ -41,6 +44,7 @@ export const initialAttendees: Attendee[] = [
     id: '3',
     patientName: 'João da Silva',
     clientName: 'Innovate Inc.',
+    solicitationType: 'Avaliação Clínica',
     status: 'Concluído',
     exams: [
       { id: 'EXM-004', name: 'Avaliação Clínica', status: 'Realizado' },
@@ -50,6 +54,7 @@ export const initialAttendees: Attendee[] = [
     id: '4',
     patientName: 'Maria Oliveira',
     clientName: 'Quantum Dynamics',
+    solicitationType: 'Exames de Imagem',
     status: 'Agendado',
     exams: [
       { id: 'EXM-005', name: 'Raio-X de Tórax', status: 'Pendente' },

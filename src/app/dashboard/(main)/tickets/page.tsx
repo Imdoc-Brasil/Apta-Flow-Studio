@@ -115,6 +115,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Progress } from '@/components/ui/progress'
 import { useToast } from '@/hooks/use-toast'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { initialEmployeesData } from '../clients/[contractId]/employees/data'
 
 const priorityVariant = {
   Alta: 'destructive',
@@ -1185,17 +1186,28 @@ export default function TicketsPage() {
       description: (formData.get('description') as string) || '',
       labels: selectedLabels,
       assignedTo: assignedTo,
-    };
+      relatedEmployee: formData.get('relatedEmployee') as string,
+    }
     addTicket(newTicketData)
 
-    const isExamRequest = newTicketData.subject.toLowerCase().includes('exame') || newTicketData.subject.toLowerCase().includes('aso');
+    const isExamRequest =
+      newTicketData.subject.toLowerCase().includes('exame') ||
+      newTicketData.subject.toLowerCase().includes('aso')
     if (isExamRequest && newTicketData.relatedEmployee) {
-       addAttendee({
-        clientName: newTicketData.client,
-        patientName: newTicketData.relatedEmployee,
-        status: 'Agendado',
-        exams: [{ id: `EXM-${Date.now()}`, name: newTicketData.subject, status: 'Pendente'}]
-      })
+      const employee = initialEmployeesData.find(e => e.id === newTicketData.relatedEmployee)
+      if (employee) {
+        addAttendee({
+          clientName: newTicketData.client,
+          patientName: employee.name,
+          solicitationType: newTicketData.subject,
+          status: 'Agendado',
+          // Simplified exam list for demo purposes
+          exams: [
+            { id: `EXM-${Date.now()}-A`, name: 'Avaliação Clínica', status: 'Pendente' },
+            { id: `EXM-${Date.now()}-B`, name: 'Audiometria', status: 'Pendente' },
+          ],
+        })
+      }
     }
 
     setIsDialogOpen(false)
@@ -1411,6 +1423,27 @@ export default function TicketsPage() {
                               value={client.name}
                             >
                               {client.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                     <div className='space-y-2'>
+                      <Label htmlFor='relatedEmployee'>
+                        Colaborador Relacionado (Opcional)
+                      </Label>
+                      <Select name='relatedEmployee'>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Selecione um colaborador' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value=''>Nenhum</SelectItem>
+                          {initialEmployeesData.map((employee) => (
+                            <SelectItem
+                              key={employee.id}
+                              value={employee.id}
+                            >
+                              {employee.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
