@@ -45,7 +45,7 @@ export default function PsychosocialEvaluationPage() {
   const handleCancel = () => {
     setIsEditing(false)
   }
-  
+
   const srqQuestions = [
     'Você tem dores de cabeça frequente?',
     'Tem falta de apetite?',
@@ -89,9 +89,9 @@ export default function PsychosocialEvaluationPage() {
               <CardHeader>
                 <CardTitle>Parâmetros do Teste SRQ-20</CardTitle>
                 <CardDescription>
-                  Defina os detalhes, regras e campos padrão para esta avaliação.
-                  Estas são as configurações globais que as empresas clientes
-                  herdarão.
+                  Defina os detalhes, regras e campos padrão para esta
+                  avaliação. Estas são as configurações globais que as empresas
+                  clientes herdarão.
                 </CardDescription>
               </CardHeader>
               <CardContent className='space-y-6'>
@@ -183,7 +183,9 @@ export default function PsychosocialEvaluationPage() {
                 </div>
 
                 <div className='space-y-2'>
-                  <Label htmlFor='linkedRisk'>Risco Vinculado (Opcional)</Label>
+                  <Label htmlFor='linkedRisk'>
+                    Risco Vinculado (Opcional)
+                  </Label>
                   <Select name='linkedRisk' disabled={!isEditing}>
                     <SelectTrigger>
                       <SelectValue placeholder='Selecione um risco do catálogo para vincular' />
@@ -211,7 +213,10 @@ export default function PsychosocialEvaluationPage() {
                     </Button>
                   </>
                 ) : (
-                  <Button type='button' onClick={() => setIsEditing(true)}>
+                  <Button
+                    type='button'
+                    onClick={() => setIsEditing(true)}
+                  >
                     <Pencil className='mr-2 h-4 w-4' />
                     Editar
                   </Button>
@@ -224,63 +229,97 @@ export default function PsychosocialEvaluationPage() {
         <TabsContent value='form-model'>
           <Card>
             <CardHeader>
-                <CardTitle>Modelo de Ficha - SRQ-20</CardTitle>
-                <CardDescription>Este é o modelo de questionário que será apresentado ao colaborador.</CardDescription>
+              <CardTitle>Modelo de Ficha - SRQ-20</CardTitle>
+              <CardDescription>
+                Este é o modelo de questionário que será apresentado ao
+                colaborador.
+              </CardDescription>
             </CardHeader>
             <CardContent className='space-y-6'>
-                <div className="rounded-lg border bg-muted/50 p-4 text-sm">
-                    <p className='font-bold'>Instruções</p>
-                    <p>Estas questões são relacionadas a certas dores e problemas que podem ter lhe incomodado nos últimos 30 dias. Se você acha que a questão se aplica a você e você teve o problema descrito nos últimos 30 dias responda SIM. Por outro lado, se a questão não se aplica a você e você não teve o problema nos últimos 30 dias, responda NÃO. Lembre-se que o diagnóstico definitivo só pode ser fornecido por um profissional.</p>
-                </div>
+              <div className='rounded-lg border bg-muted/50 p-4 text-sm'>
+                <p className='font-bold'>Instruções</p>
+                <p>
+                  Estas questões são relacionadas a certas dores e problemas
+                  que podem ter lhe incomodado nos últimos 30 dias. Se você
+                  acha que a questão se aplica a você e você teve o problema
+                  descrito nos últimos 30 dias responda SIM. Por outro lado, se
+                  a questão não se aplica a você e você não teve o problema nos
+                  últimos 30 dias, responda NÃO. Lembre-se que o diagnóstico
+                  definitivo só pode ser fornecido por um profissional.
+                </p>
+              </div>
 
-                <div className='space-y-4'>
-                    {srqQuestions.map((question, index) => (
-                        <div key={index} className='flex items-center justify-between rounded-md border p-3'>
-                            <p className='text-sm font-medium'>{index + 1}. {question}</p>
-                            <RadioGroup name={`q-${index}`} className='flex items-center gap-4'>
-                                <div className='flex items-center space-x-2'>
-                                    <RadioGroupItem value='sim' id={`q-${index}-sim`} />
-                                    <Label htmlFor={`q-${index}-sim`}>Sim</Label>
-                                </div>
-                                <div className='flex items-center space-x-2'>
-                                    <RadioGroupItem value='nao' id={`q-${index}-nao`} />
-                                    <Label htmlFor={`q-${index}-nao`}>Não</Label>
-                                </div>
-                            </RadioGroup>
-                        </div>
-                    ))}
-                </div>
+              <div className='space-y-4'>
+                {srqQuestions.map((question, index) => (
+                  <div
+                    key={index}
+                    className='flex items-center justify-between rounded-md border p-3'
+                  >
+                    <p className='text-sm font-medium'>
+                      {index + 1}. {question}
+                    </p>
+                    <RadioGroup
+                      name={`q-${index}`}
+                      className='flex items-center gap-4'
+                    >
+                      <div className='flex items-center space-x-2'>
+                        <RadioGroupItem value='sim' id={`q-${index}-sim`} />
+                        <Label htmlFor={`q-${index}-sim`}>Sim</Label>
+                      </div>
+                      <div className='flex items-center space-x-2'>
+                        <RadioGroupItem value='nao' id={`q-${index}-nao`} />
+                        <Label htmlFor={`q-${index}-nao`}>Não</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                ))}
+              </div>
 
-                <Separator />
+              <Separator />
 
-                <div className='space-y-6 rounded-lg border p-4'>
-                    <h3 className='font-semibold'>Resultados</h3>
-                    <div className='grid md:grid-cols-2 gap-6'>
-                         <div className='flex items-center gap-4'>
-                            <Label htmlFor='total-sim' className='font-medium'>Total de respostas SIM:</Label>
-                            <Input id='total-sim' type='number' className='w-24' readOnly value={0} />
-                        </div>
-                        <div className='flex items-center gap-4'>
-                            <Label className='font-medium'>Sofrimento mental leve:</Label>
-                             <RadioGroup className='flex items-center gap-4'>
-                                <div className='flex items-center space-x-2'>
-                                    <RadioGroupItem value='sim' id='sofrimento-sim' />
-                                    <Label htmlFor='sofrimento-sim'>Sim</Label>
-                                </div>
-                                <div className='flex items-center space-x-2'>
-                                    <RadioGroupItem value='nao' id='sofrimento-nao' />
-                                    <Label htmlFor='sofrimento-nao'>Não</Label>
-                                </div>
-                            </RadioGroup>
-                        </div>
-                    </div>
-                     <p className='text-xs text-muted-foreground font-semibold bg-yellow-50 border border-yellow-200 p-2 rounded-md'>RESULTADO: Se o resultado for ≥ 7 (maior ou igual a sete respostas SIM) está comprovado sofrimento
-mental.</p>
-                    <div>
-                        <Label htmlFor='observations'>Observações</Label>
-                        <Textarea id='observations' placeholder='Use este espaço para qualquer observação pertinente a esta coleta de dados.' />
-                    </div>
+              <div className='space-y-6 rounded-lg border p-4'>
+                <h3 className='font-semibold'>Resultados</h3>
+                <div className='grid md:grid-cols-2 gap-6'>
+                  <div className='flex items-center gap-4'>
+                    <Label htmlFor='total-sim' className='font-medium'>
+                      Total de respostas SIM:
+                    </Label>
+                    <Input
+                      id='total-sim'
+                      type='number'
+                      className='w-24'
+                      readOnly
+                      value={0}
+                    />
+                  </div>
+                  <div className='flex items-center gap-4'>
+                    <Label className='font-medium'>
+                      Sofrimento mental leve:
+                    </Label>
+                    <RadioGroup className='flex items-center gap-4'>
+                      <div className='flex items-center space-x-2'>
+                        <RadioGroupItem value='sim' id='sofrimento-sim' />
+                        <Label htmlFor='sofrimento-sim'>Sim</Label>
+                      </div>
+                      <div className='flex items-center space-x-2'>
+                        <RadioGroupItem value='nao' id='sofrimento-nao' />
+                        <Label htmlFor='sofrimento-nao'>Não</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
                 </div>
+                <p className='text-xs text-muted-foreground font-semibold bg-yellow-50 border border-yellow-200 p-2 rounded-md'>
+                  RESULTADO: Se o resultado for ≥ 7 (maior ou igual a sete
+                  respostas SIM) está comprovado sofrimento mental.
+                </p>
+                <div>
+                  <Label htmlFor='observations'>Observações</Label>
+                  <Textarea
+                    id='observations'
+                    placeholder='Use este espaço para qualquer observação pertinente a esta coleta de dados.'
+                  />
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
