@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
@@ -104,9 +105,8 @@ const AttendeeCard = ({
         (e) => e.name === 'Avaliação Clínica'
       )
       if (clinicalExam) {
-        router.push(
-          `/dashboard/health/evaluation/${attendee.id}/exam/${clinicalExam.id}`
-        )
+        // Corrected Navigation: Go directly to the clinical evaluation form
+        router.push(`/dashboard/health/clinical-exams/evaluation`)
         return
       }
     }
