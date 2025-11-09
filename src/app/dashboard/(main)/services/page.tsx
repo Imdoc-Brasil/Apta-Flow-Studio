@@ -1,4 +1,3 @@
-
 'use client'
 
 import {
@@ -35,44 +34,6 @@ import { useToast } from '@/hooks/use-toast'
 import { useState } from 'react'
 
 // --- Mock Data ---
-
-const initialMedicalExams = [
-  {
-    code: '0201',
-    name: 'Avaliação Clínica Ocupacional',
-    type: 'Profissional Agenda',
-    price: 'R$ 50,00',
-    periodicity: '12 meses',
-  },
-  {
-    code: '0211',
-    name: 'Avaliação da acuidade visual',
-    type: 'Laboratório',
-    price: 'R$ 35,00',
-    periodicity: '24 meses',
-  },
-  {
-    code: 'N/A',
-    name: 'Avaliação Psicossocial',
-    type: 'Terceirizado',
-    price: 'R$ 150,00',
-    periodicity: 'Conforme PCMSO',
-  },
-  {
-    code: '0212',
-    name: 'Exame oftalmológico',
-    type: 'Terceirizado',
-    price: 'R$ 200,00',
-    periodicity: 'Conforme PCMSO',
-  },
-  {
-    code: '0215',
-    name: 'Glicemia',
-    type: 'Laboratório',
-    price: 'R$ 25,00',
-    periodicity: 'Anual',
-  },
-]
 
 export const sstPrograms = [
     {
@@ -349,26 +310,11 @@ function AddServiceDialog({
 
 export default function ServicesPage() {
   const { toast } = useToast()
-  const [isAdjustmentDialogOpen, setIsAdjustmentDialogOpen] = useState(false)
-  const [isAddExamDialogOpen, setIsAddExamDialogOpen] = useState(false)
   const [isAddProgramDialogOpen, setIsAddProgramDialogOpen] = useState(false)
   const [isAddContractDialogOpen, setIsAddContractDialogOpen] = useState(false)
   const [isAddItemDialogOpen, setIsAddItemDialogOpen] = useState(false)
   const [isAddProfessionalDialogOpen, setIsAddProfessionalDialogOpen] =
     useState(false)
-
-  const handleAdjustment = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    const formData = new FormData(event.currentTarget)
-    const adjustment = formData.get('adjustment') as string
-
-    toast({
-      title: 'Reajuste Aplicado!',
-      description: `O reajuste de ${adjustment}% foi aplicado a todos os exames.`,
-    })
-
-    setIsAdjustmentDialogOpen(false)
-  }
 
   return (
     <div className='grid flex-1 auto-rows-max gap-4'>
@@ -377,102 +323,13 @@ export default function ServicesPage() {
           Catálogo de Serviços
         </h1>
       </div>
-      <Tabs defaultValue='exams'>
-        <TabsList className='grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5'>
-          <TabsTrigger value='exams'>Exames Médicos</TabsTrigger>
+      <Tabs defaultValue='programs'>
+        <TabsList className='grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4'>
           <TabsTrigger value='programs'>Programas e Laudos</TabsTrigger>
           <TabsTrigger value='advisory'>Assessoria Técnica</TabsTrigger>
           <TabsTrigger value='rentals'>Aluguéis</TabsTrigger>
           <TabsTrigger value='outsourcing'>Terceirização SESMT</TabsTrigger>
         </TabsList>
-
-        <TabsContent value='exams'>
-          <Card>
-            <CardHeader>
-              <CardTitle>Exames Médicos Ocupacionais</CardTitle>
-              <CardDescription>
-                Tabela de preços e configurações para exames médicos conforme
-                NR7.
-              </CardDescription>
-              <div className='pt-4 flex items-center gap-2 ml-auto'>
-                <Dialog
-                  open={isAdjustmentDialogOpen}
-                  onOpenChange={setIsAdjustmentDialogOpen}
-                >
-                  <DialogTrigger asChild>
-                    <Button size='sm' variant='outline' className='h-8 gap-1'>
-                      <Percent className='h-3.5 w-3.5' />
-                      <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
-                        Aplicar Reajuste Anual
-                      </span>
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className='sm:max-w-md'>
-                    <form onSubmit={handleAdjustment}>
-                      <DialogHeader>
-                        <DialogTitle>Reajuste Anual de Preços</DialogTitle>
-                        <DialogDescription>
-                          Aplique um reajuste percentual a todos os exames
-                          médicos. Os novos preços serão refletidos em todos os
-                          novos contratos.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className='grid gap-4 py-4'>
-                        <div className='grid grid-cols-4 items-center gap-4'>
-                          <Label htmlFor='adjustment' className='text-right'>
-                            Percentual (%)
-                          </Label>
-                          <Input
-                            id='adjustment'
-                            name='adjustment'
-                            type='number'
-                            placeholder='Ex: 10'
-                            className='col-span-3'
-                            required
-                          />
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button type='submit'>Aplicar Reajuste</Button>
-                      </DialogFooter>
-                    </form>
-                  </DialogContent>
-                </Dialog>
-                <ServiceTableActions
-                  buttonLabel='Adicionar Exame'
-                  onAddClick={() => setIsAddExamDialogOpen(true)}
-                />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Código (eSocial)</TableHead>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Preço</TableHead>
-                    <TableHead>Periodicidade</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {initialMedicalExams.map((exam) => (
-                    <TableRow key={exam.code}>
-                      <TableCell className='font-medium'>{exam.code}</TableCell>
-                      <TableCell>{exam.name}</TableCell>
-                      <TableCell>
-                        <Badge variant='outline'>{exam.type}</Badge>
-                      </TableCell>
-                      <TableCell>{exam.price}</TableCell>
-                      <TableCell>{exam.periodicity}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
         <TabsContent value='programs'>
           <Card>
             <CardHeader>
@@ -649,12 +506,6 @@ export default function ServicesPage() {
           </Card>
         </TabsContent>
       </Tabs>
-      <AddServiceDialog
-        open={isAddExamDialogOpen}
-        onOpenChange={setIsAddExamDialogOpen}
-        title='Adicionar Novo Exame'
-        description='Preencha os detalhes para adicionar um novo exame médico ao catálogo.'
-      />
       <AddServiceDialog
         open={isAddProgramDialogOpen}
         onOpenChange={setIsAddProgramDialogOpen}

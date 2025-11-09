@@ -60,6 +60,12 @@ const saudeSubNavItems = [
     icon: List,
     subItems: [],
   },
+   {
+    href: '/dashboard/health/exams',
+    label: 'Catálogo de Exames',
+    icon: Stethoscope,
+    subItems: [],
+  },
   {
     href: '/dashboard/health/clinical-exams',
     label: 'Exames Clínicos',
@@ -261,6 +267,4 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
           </Collapsible>
         </SidebarMenuItem>
       </SidebarMenu>
-    </>
-  )
-}
+    </
