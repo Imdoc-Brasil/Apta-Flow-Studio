@@ -95,6 +95,16 @@ export default function AttendeeEvaluationPage() {
     </div>
   )
 
+  const getExamLink = (exam: Exam) => {
+    if (exam.name === 'Avaliação Clínica') {
+      // Navigate to the specific clinical evaluation page
+      return `/dashboard/health/clinical-exams/evaluation`
+    }
+    // Navigate to the generic exam result upload page
+    return `/dashboard/health/evaluation/${attendeeId}/exam/${exam.id}`
+  }
+
+
   return (
     <div className='grid flex-1 auto-rows-max gap-4'>
       <div className='flex items-center gap-4'>
@@ -175,7 +185,7 @@ export default function AttendeeEvaluationPage() {
                           disabled={exam.status === 'Realizado'}
                         >
                           <Link
-                            href={`/dashboard/health/evaluation/${attendeeId}/exam/${exam.id}`}
+                            href={getExamLink(exam)}
                           >
                             {exam.status === 'Realizado'
                               ? 'Visualizar'
