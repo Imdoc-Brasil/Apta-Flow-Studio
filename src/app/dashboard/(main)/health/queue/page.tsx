@@ -28,6 +28,27 @@ import {
 import { Button } from '@/components/ui/button'
 import { PlusCircle, MoreHorizontal } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { initialClientsData } from '@/app/dashboard/(main)/clients/data'
+import { initialEmployeesData } from '@/app/dashboard/(main)/clients/[contractId]/employees/data'
+import { useToast } from '@/hooks/use-toast'
 
 type Status = 'Agendado' | 'Em Atendimento' | 'Concluído'
 
@@ -151,6 +172,8 @@ const KanbanColumn = ({
 export default function QueuePage() {
   const [attendees, setAttendees] = useState<Attendee[]>(initialAttendees)
   const [activeAttendee, setActiveAttendee] = useState<Attendee | null>(null)
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const { toast } = useToast()
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -191,6 +214,40 @@ export default function QueuePage() {
     setActiveAttendee(null)
   }
 
+  const handleAddAttendee = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const formData = new FormData(e.currentTarget)
+    const clientName = formData.get('clientName') as string
+    const employeeId = formData.get('employeeId') as string
+    const examType = formData.get('examType') as string
+
+    const patient = initialEmployeesData.find((emp) => emp.id === employeeId)
+
+    if (!clientName || !patient || !examType) {
+      toast({
+        variant: 'destructive',
+        title: 'Campos incompletos',
+        description: 'Por favor, preencha todos os campos.',
+      })
+      return
+    }
+
+    const newAttendee: Attendee = {
+      id: `att-${Date.now()}`,
+      clientName,
+      patientName: patient.name,
+      examType,
+      status: 'Agendado',
+    }
+
+    setAttendees((prev) => [newAttendee, ...prev])
+    setIsAddDialogOpen(false)
+    toast({
+      title: 'Atendimento Agendado!',
+      description: `${examType} para ${patient.name} foi adicionado à fila.`,
+    })
+  }
+
   return (
     <DndContext
       sensors={sensors}
@@ -204,10 +261,76 @@ export default function QueuePage() {
           <h1 className='font-headline text-3xl font-bold'>
             Fila de Atendimento
           </h1>
-          <Button>
-            <PlusCircle className='mr-2 h-4 w-4' />
-            Agendar Atendimento
-          </Button>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <PlusCircle className='mr-2 h-4 w-4' />
+                Agendar Atendimento
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Agendar Novo Atendimento</DialogTitle>
+                <DialogDescription>
+                  Preencha os detalhes para criar um novo atendimento na fila.
+                </DialogDescription>
+              </DialogHeader>
+              <form id='add-attendee-form' onSubmit={handleAddAttendee}>
+                <div className='grid gap-4 py-4'>
+                  <div className='space-y-2'>
+                    <Label htmlFor='clientName'>Empresa Cliente</Label>
+                    <Select name='clientName' required>
+                      <SelectTrigger>
+                        <SelectValue placeholder='Selecione a empresa' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {initialClientsData.map((client) => (
+                          <SelectItem key={client.contractId} value={client.name}>
+                            {client.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className='space-y-2'>
+                    <Label htmlFor='employeeId'>Paciente</Label>
+                    <Select name='employeeId' required>
+                      <SelectTrigger>
+                        <SelectValue placeholder='Selecione o colaborador' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {initialEmployeesData.map((employee) => (
+                          <SelectItem key={employee.id} value={employee.id}>
+                            {employee.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className='space-y-2'>
+                    <Label htmlFor='examType'>Tipo de Exame/Atendimento</Label>
+                    <Input
+                      id='examType'
+                      name='examType'
+                      placeholder='Ex: ASO Admissional, Avaliação Clínica...'
+                      required
+                    />
+                  </div>
+                </div>
+              </form>
+              <DialogFooter>
+                <Button
+                  variant='outline'
+                  onClick={() => setIsAddDialogOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button type='submit' form='add-attendee-form'>
+                  Agendar
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <div className='grid flex-1 grid-cols-1 items-start gap-6 md:grid-cols-3'>
