@@ -60,6 +60,9 @@ const statusLabels: Record<Status, string> = {
   Concluído: 'Concluído',
 }
 
+type QueueType = 'medico' | 'audiometria' | 'laboratorio' | 'rx' | 'graficos';
+
+
 const columns: Status[] = ['Agendado', 'Em Atendimento', 'Concluído']
 
 function ClientOnly({ children }: { children: React.ReactNode }) {
@@ -73,7 +76,7 @@ function ClientOnly({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
-const AttendeeCard = ({ attendee }: { attendee: Attendee }) => {
+const AttendeeCard = ({ attendee, queueType }: { attendee: Attendee, queueType: QueueType }) => {
   const router = useRouter()
   const {
     attributes,
@@ -91,7 +94,12 @@ const AttendeeCard = ({ attendee }: { attendee: Attendee }) => {
   }
 
   const handleCardClick = () => {
-    router.push(`/dashboard/health/evaluation/${attendee.id}`)
+    // Se for médico ou áudio e tiver apenas 1 exame, vai direto pro exame
+    if ((queueType === 'medico' || queueType === 'audiometria') && attendee.exams.length === 1) {
+        router.push(`/dashboard/health/evaluation/${attendee.id}/exam/${attendee.exams[0].id}`);
+    } else { // Caso contrário, vai para o painel do paciente
+        router.push(`/dashboard/health/evaluation/${attendee.id}`);
+    }
   }
   
   const examsSummary = attendee.exams.length > 1 
@@ -122,9 +130,11 @@ const AttendeeCard = ({ attendee }: { attendee: Attendee }) => {
 const KanbanColumn = ({
   status,
   attendees,
+  queueType,
 }: {
   status: Status
   attendees: Attendee[]
+  queueType: QueueType
 }) => {
   const { setNodeRef } = useSortable({ id: status, data: { type: 'Column' } })
 
@@ -140,7 +150,7 @@ const KanbanColumn = ({
       >
         <div className='flex flex-col gap-4 overflow-y-auto'>
           {attendees.map((attendee) => (
-            <AttendeeCard key={attendee.id} attendee={attendee} />
+            <AttendeeCard key={attendee.id} attendee={attendee} queueType={queueType} />
           ))}
           {attendees.length === 0 && (
             <div className='py-8 text-center text-sm text-muted-foreground'>
@@ -167,6 +177,8 @@ export default function QueuePage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const { toast } = useToast()
   const [selectedUnit, setSelectedUnit] = useState(aptaServiceUnits[0].id)
+  const [activeTab, setActiveTab] = useState<QueueType>('medico');
+
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -337,7 +349,7 @@ export default function QueuePage() {
         </Dialog>
       </div>
 
-      <Tabs defaultValue='medico'>
+      <Tabs defaultValue='medico' onValueChange={(value) => setActiveTab(value as QueueType)}>
         <TabsList>
           <TabsTrigger value='medico'>Atendimento Médico</TabsTrigger>
           <TabsTrigger value='audiometria'>Audiometria</TabsTrigger>
@@ -363,6 +375,7 @@ export default function QueuePage() {
                       attendees={attendees.filter(
                         (attendee) => attendee.status === status
                       )}
+                      queueType={activeTab}
                     />
                   ))}
                 </SortableContext>
