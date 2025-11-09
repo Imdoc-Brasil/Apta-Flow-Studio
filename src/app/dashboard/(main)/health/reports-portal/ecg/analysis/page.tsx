@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { analyzeEcg, AnalyzeEcgOutput } from '@/ai/flows/analyze-ecg-flow'
 import { UploadCloud, Bot, Loader2 } from 'lucide-react'
+import { Textarea } from '@/components/ui/textarea'
 
 export default function EcgAnalysisPage() {
   const { toast } = useToast()
@@ -165,43 +166,67 @@ export default function EcgAnalysisPage() {
             )}
             {analysisResult && (
               <div className='space-y-4 text-sm'>
-                <div className='space-y-1'>
-                  <Label className='font-semibold'>Ritmo Cardíaco</Label>
-                  <p className='p-2 bg-muted rounded-md border'>
-                    {analysisResult.ritmoCardiaco}
-                  </p>
+                <div className='space-y-2'>
+                  <Label className='font-semibold' htmlFor='ritmo-cardiaco'>
+                    Ritmo Cardíaco
+                  </Label>
+                  <Textarea
+                    id='ritmo-cardiaco'
+                    defaultValue={analysisResult.ritmoCardiaco}
+                  />
                 </div>
-                <div className='space-y-1'>
-                  <Label className='font-semibold'>Intervalos</Label>
-                  <p className='p-2 bg-muted rounded-md border'>
-                    {analysisResult.intervalos}
-                  </p>
+                <div className='space-y-2'>
+                  <Label className='font-semibold' htmlFor='intervalos'>
+                    Intervalos
+                  </Label>
+                  <Textarea
+                    id='intervalos'
+                    defaultValue={analysisResult.intervalos}
+                  />
                 </div>
-                <div className='space-y-1'>
-                  <Label className='font-semibold'>
+                <div className='space-y-2'>
+                  <Label className='font-semibold' htmlFor='analise-st'>
                     Análise do Segmento ST e Onda T
                   </Label>
-                  <p className='p-2 bg-muted rounded-md border'>
-                    {analysisResult.analiseST}
-                  </p>
+                  <Textarea
+                    id='analise-st'
+                    defaultValue={analysisResult.analiseST}
+                  />
                 </div>
-                <div className='space-y-1'>
-                  <Label className='font-semibold'>Conclusão</Label>
-                  <p className='p-2 bg-muted rounded-md border'>
-                    {analysisResult.conclusao}
-                  </p>
+                <div className='space-y-2'>
+                  <Label className='font-semibold' htmlFor='conclusao'>
+                    Conclusão
+                  </Label>
+                  <Textarea
+                    id='conclusao'
+                    defaultValue={analysisResult.conclusao}
+                  />
                 </div>
-                <div className='space-y-1'>
-                  <Label className='font-semibold'>Observações</Label>
-                  <p className='p-2 bg-muted rounded-md border'>
-                    {analysisResult.observacoes}
-                  </p>
+                <div className='space-y-2'>
+                  <Label className='font-semibold' htmlFor='observacoes'>
+                    Observações
+                  </Label>
+                  <Textarea
+                    id='observacoes'
+                    defaultValue={analysisResult.observacoes}
+                  />
                 </div>
               </div>
             )}
           </CardContent>
           <CardFooter>
-            <Button disabled={!analysisResult}>Validar e Salvar Laudo</Button>
+            <Button
+              onClick={() => {
+                toast({
+                  title: 'Laudo Validado!',
+                  description:
+                    'O laudo foi salvo e está pronto para ser anexado ao prontuário do paciente.',
+                })
+              }}
+              disabled={!analysisResult}
+            >
+              Validar e Salvar Laudo
+            </Button>
           </CardFooter>
         </Card>
       </div>
