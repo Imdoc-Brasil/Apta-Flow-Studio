@@ -70,6 +70,10 @@ import {
   type TextElement,
 } from '@/app/dashboard/(main)/tickets/tickets-store'
 import {
+  useAttendeeStore,
+  type Attendee,
+} from '@/app/dashboard/(main)/health/queue/attendee-store'
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -534,6 +538,8 @@ export default function ClientTicketsPage() {
   const client = getClientById(contractId)
 
   const { tickets, addTicket } = useTicketStore()
+  const { addAttendee } = useAttendeeStore()
+
   const clientTickets = tickets.filter(
     (ticket) => ticket.client === client?.name
   )
@@ -541,7 +547,6 @@ export default function ClientTicketsPage() {
   const { toast } = useToast()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   
-  // Use state to manage the default employee and react to URL changes
   const [defaultEmployee, setDefaultEmployee] = useState<string | undefined>(employeeId || undefined);
 
   useEffect(() => {
@@ -555,23 +560,42 @@ export default function ClientTicketsPage() {
   const handleNewTicket = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
+    const subject = formData.get('subject') as string
     const employeeId = formData.get('employee') as string
     const employeeName =
       initialEmployeesData.find((e) => e.id === employeeId)?.name || undefined
 
+    // 1. Create the ticket
     addTicket({
-      subject: formData.get('subject') as string,
+      subject: subject,
       client: client?.name || 'Cliente Desconhecido',
       priority: formData.get('priority') as Ticket['priority'],
       description: formData.get('description') as string,
       relatedEmployee: employeeName,
     })
 
-    toast({
-      title: 'Chamado Enviado com Sucesso!',
-      description:
-        'Sua solicitação foi registrada e nossa equipe entrará em contato em breve.',
-    })
+    // 2. If it's an exam request, also add to the attendee queue
+    const isExamRequest = subject.toLowerCase().includes('exame') || subject.toLowerCase().includes('aso');
+    if (isExamRequest && client && employeeName) {
+      addAttendee({
+        clientName: client.name,
+        patientName: employeeName,
+        examType: subject,
+        status: 'Agendado',
+      })
+      toast({
+        title: 'Atendimento Agendado!',
+        description: `Sua solicitação para ${employeeName} foi adicionada à fila de atendimento.`,
+      })
+    } else {
+        toast({
+            title: 'Chamado Enviado com Sucesso!',
+            description:
+              'Sua solicitação foi registrada e nossa equipe entrará em contato em breve.',
+          })
+    }
+
+
     setIsDialogOpen(false)
     setDefaultEmployee(undefined)
   }

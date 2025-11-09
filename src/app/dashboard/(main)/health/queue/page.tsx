@@ -51,47 +51,7 @@ import { initialEmployeesData } from '@/app/dashboard/(main)/clients/[contractId
 import { useToast } from '@/hooks/use-toast'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { aptaServiceUnits } from './data'
-
-type Status = 'Agendado' | 'Em Atendimento' | 'Concluído'
-
-interface Attendee {
-  id: string
-  patientName: string
-  clientName: string
-  examType: string
-  status: Status
-}
-
-const initialAttendees: Attendee[] = [
-  {
-    id: '1',
-    patientName: 'Carlos Pereira',
-    clientName: 'Innovate Inc.',
-    examType: 'ASO Periódico',
-    status: 'Agendado',
-  },
-  {
-    id: '2',
-    patientName: 'Ana Costa',
-    clientName: 'Solutions Co.',
-    examType: 'Eletrocardiograma',
-    status: 'Em Atendimento',
-  },
-  {
-    id: '3',
-    patientName: 'João da Silva',
-    clientName: 'Innovate Inc.',
-    examType: 'Avaliação Clínica',
-    status: 'Concluído',
-  },
-  {
-    id: '4',
-    patientName: 'Maria Oliveira',
-    clientName: 'Quantum Dynamics',
-    examType: 'Raio-X de Tórax',
-    status: 'Agendado',
-  },
-]
+import { useAttendeeStore, type Attendee, type Status } from './attendee-store'
 
 const statusLabels: Record<Status, string> = {
   Agendado: 'Agendado',
@@ -191,7 +151,7 @@ const PlaceholderContent = ({ title }: { title: string }) => (
 )
 
 export default function QueuePage() {
-  const [attendees, setAttendees] = useState<Attendee[]>(initialAttendees)
+  const { attendees, addAttendee, setAttendees } = useAttendeeStore()
   const [activeAttendee, setActiveAttendee] = useState<Attendee | null>(null)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const { toast } = useToast()
@@ -224,11 +184,14 @@ export default function QueuePage() {
     const isOverAColumn = over.data.current?.type === 'Column'
 
     if (isActiveAnAttendee && isOverAColumn) {
-      setAttendees((attendees) => {
-        const activeIndex = attendees.findIndex((t) => t.id === activeId)
-        attendees[activeIndex].status = overId as Status
-        return [...attendees]
-      })
+      setAttendees(
+        attendees.map((t) => {
+          if (t.id === activeId) {
+            return { ...t, status: overId as Status }
+          }
+          return t
+        })
+      )
     }
   }
 
@@ -254,15 +217,13 @@ export default function QueuePage() {
       return
     }
 
-    const newAttendee: Attendee = {
-      id: `att-${Date.now()}`,
+    addAttendee({
       clientName,
       patientName: patient.name,
       examType,
       status: 'Agendado',
-    }
+    })
 
-    setAttendees((prev) => [newAttendee, ...prev])
     setIsAddDialogOpen(false)
     toast({
       title: 'Atendimento Agendado!',
