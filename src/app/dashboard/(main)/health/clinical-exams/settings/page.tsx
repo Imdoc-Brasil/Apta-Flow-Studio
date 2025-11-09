@@ -22,23 +22,10 @@ import {
 } from '@/components/ui/select'
 import { initialHazardData } from '@/app/dashboard/(main)/risks/page'
 import { useToast } from '@/hooks/use-toast'
-import {
-  Save,
-  FileSignature,
-  Printer,
-  Pencil,
-  AlertCircle,
-  File,
-  Shield,
-  Syringe,
-  Briefcase,
-  FilePlus,
-  ChevronRight,
-} from 'lucide-react'
+import { Save, Printer, Pencil } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Separator } from '@/components/ui/separator'
-import { Checkbox } from '@/components/ui/checkbox'
 import {
   Table,
   TableBody,
@@ -48,7 +35,6 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Badge } from '@/components/ui/badge'
 
 export default function ClinicalEvaluationSettingsPage() {
   const { toast } = useToast()
@@ -120,19 +106,6 @@ export default function ClinicalEvaluationSettingsPage() {
     </div>
   )
 
-  const ExamField = ({
-    label,
-    children,
-  }: {
-    label: string
-    children: React.ReactNode
-  }) => (
-    <div className='flex items-center justify-between'>
-      <Label className='text-sm'>{label}</Label>
-      <div className='flex items-center gap-4'>{children}</div>
-    </div>
-  )
-
   const NormalAlteredField = ({ label }: { label: string }) => (
     <div className='grid grid-cols-[1fr_2fr] gap-4 items-start'>
       <div className='flex flex-col gap-2'>
@@ -172,8 +145,6 @@ export default function ClinicalEvaluationSettingsPage() {
               <CardTitle>Parâmetros da Avaliação Clínica</CardTitle>
               <CardDescription>
                 Defina os detalhes, regras e campos padrão para esta avaliação.
-                Estas são as configurações globais que as empresas clientes
-                herdarão, mas poderão ser personalizadas posteriormente.
               </CardDescription>
             </CardHeader>
             <form id='settings-form' onSubmit={handleSaveSettings}>

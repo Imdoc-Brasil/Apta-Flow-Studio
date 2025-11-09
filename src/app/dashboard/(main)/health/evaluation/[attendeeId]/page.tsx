@@ -213,7 +213,7 @@ export default function AttendeeEvaluationPage() {
           </Link>
         </Button>
         <h1 className='flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0'>
-          Atendimento Clínico: {attendee.patientName}
+          Painel de Atendimento: {attendee.patientName}
         </h1>
         <Badge variant='outline' className='ml-auto sm:ml-0'>
           {attendee.status}
@@ -222,351 +222,86 @@ export default function AttendeeEvaluationPage() {
 
        <div className='grid md:grid-cols-3 gap-8'>
             <div className='md:col-span-2 space-y-6'>
-              <FieldsetGroup title='Seção 01: Dados do Colaborador'>
-                <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm'>
-                  <InfoField label='Nome' value={employee?.name} />
-                  <InfoField label='Matrícula' value={employee?.id} />
-                  <InfoField label='Idade' value={'N/A'} />
-                  <InfoField label='Sexo' value={'N/A'} />
-                  <InfoField label='CPF' value={'N/A'} />
-                  <InfoField label='Empresa' value={client?.name} />
-                  <InfoField label='Setor' value={sector?.name} />
-                  <InfoField label='Cargo' value={role?.name} />
-                  <InfoField
-                    label='Posto de Trabalho'
-                    value={'N/A'}
-                  />
-                  <InfoField label='GHE' value={'N/A'} />
-                  <div className='col-span-full'>
-                    <InfoField
-                      label='Atividades'
-                      value={role?.activities.join(', ')}
-                    />
-                  </div>
-                  <div className='col-span-full'>
-                    <InfoField label='Endereço' value={employee?.phone} />
-                  </div>
-                </div>
-              </FieldsetGroup>
+                 <ScrollArea className="h-[calc(100vh-12rem)] p-1">
+                    <div className="space-y-8 pr-4">
+                        <FieldsetGroup title="Seção 01: Dados do Colaborador">
+                            <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm'>
+                            <InfoField label='Nome' value={employee?.name} />
+                            <InfoField label='Matrícula' value={employee?.id} />
+                            <InfoField label='Idade' value={'N/A'} />
+                            <InfoField label='Sexo' value={'N/A'} />
+                            <InfoField label='CPF' value={'N/A'} />
+                            <InfoField label='Empresa' value={client?.name} />
+                            <InfoField label='Setor' value={sector?.name} />
+                            <InfoField label='Cargo' value={role?.name} />
+                            <InfoField
+                                label='Posto de Trabalho'
+                                value={'N/A'}
+                            />
+                            <InfoField label='GHE' value={'N/A'} />
+                            <div className='col-span-full'>
+                                <InfoField
+                                label='Atividades'
+                                value={role?.activities.join(', ')}
+                                />
+                            </div>
+                            <div className='col-span-full'>
+                                <InfoField label='Endereço' value={employee?.phone} />
+                            </div>
+                            </div>
+                        </FieldsetGroup>
 
-              <FieldsetGroup title='Seção 02: Contexto do Exame'>
-                <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-                  <div className='space-y-2'>
-                    <Label>Tipo de Exame</Label>
-                    <Input disabled value={examType} />
-                  </div>
-                </div>
-                <div className='space-y-2'>
-                  <Label>Exposto aos Riscos</Label>
-                  <Textarea
-                    disabled
-                    value='Ruído Contínuo ou Intermitente, Levantamento de peso'
-                    rows={2}
-                  />
-                </div>
-                <div className='space-y-2'>
-                  <Label>Exames a Serem Realizados (Conforme PCMSO)</Label>
-                   <Textarea
-                    disabled
-                    value={attendee.exams.map((e: any) => e.name).join(', ')}
-                    rows={2}
-                  />
-                </div>
-              </FieldsetGroup>
-
-              <FieldsetGroup title='Seção 03: Anamnese'>
-                {/* Subseção 01 */}
-                <div className='space-y-4 rounded-md border p-4'>
-                  <h4 className='font-medium'>Dados Vitais</h4>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Parâmetro</TableHead>
-                        <TableHead>Última Avaliação</TableHead>
-                        <TableHead>Avaliação Atual</TableHead>
-                        <TableHead>Resultado</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      <TableRow>
-                        <TableCell>PAS / PAD</TableCell>
-                        <TableCell className='text-muted-foreground'>
-                          [120/80]
-                        </TableCell>
-                        <TableCell>
-                          <Input placeholder='0/0' className='w-24' />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            readOnly
-                            placeholder='Normal'
-                            className='w-24 bg-muted'
-                          />
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>Peso (kg) / Altura (m)</TableCell>
-                        <TableCell className='text-muted-foreground'>
-                          [80 / 1.75]
-                        </TableCell>
-                        <TableCell className='flex gap-2'>
-                          <Input
-                            placeholder='0'
-                            className='w-20'
-                            value={weight}
-                            onChange={(e) => setWeight(e.target.value)}
-                          />
-                           / 
-                          <Input
-                            placeholder='0.00'
-                            className='w-20'
-                            value={height}
-                            onChange={(e) => setHeight(e.target.value)}
-                          />
-                        </TableCell>
-                        <TableCell>
-                         <Input
-                            readOnly
-                            value={imc > 0 ? imc.toFixed(2) : '0.0'}
-                            className='w-24 bg-muted'
-                          />
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>IMC</TableCell>
-                         <TableCell className='text-muted-foreground'>
-                          [26.1]
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            readOnly
-                            value={imc > 0 ? imc.toFixed(2) : '0.0'}
-                            className='w-24 bg-muted'
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Input
-                            readOnly
-                            value={imcStatus}
-                            placeholder='Normal'
-                            className='w-24 bg-muted'
-                          />
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>Circ. Pescoço (cm)</TableCell>
-                        <TableCell className='text-muted-foreground'>
-                          [40]
-                        </TableCell>
-                        <TableCell>
-                          <Input placeholder='0' className='w-24' />
-                        </TableCell>
-                        <TableCell />
-                      </TableRow>
-                      <TableRow>
-                        <TableCell>Circ. Abdominal (cm)</TableCell>
-                        <TableCell className='text-muted-foreground'>
-                          [92]
-                        </TableCell>
-                        <TableCell>
-                          <Input placeholder='0' className='w-24' />
-                        </TableCell>
-                        <TableCell />
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </div>
-                {/* Subseção 02 */}
-                <div className='space-y-4 rounded-md border p-4'>
-                  <h4 className='font-medium'>Hábitos de Vida e Doenças</h4>
-                  <ExamField label='Fuma?'>
-                    <RadioGroup defaultValue='nao' className='flex gap-4'>
-                      <div className='flex items-center space-x-2'>
-                        <RadioGroupItem value='sim' id='fuma-sim' />
-                        <Label htmlFor='fuma-sim'>Sim</Label>
-                      </div>
-                      <div className='flex items-center space-x-2'>
-                        <RadioGroupItem value='nao' id='fuma-nao' />
-                        <Label htmlFor='fuma-nao'>Não</Label>
-                      </div>
-                    </RadioGroup>
-                  </ExamField>
-                  <ExamField label='Bebida Alcoólica'>
-                    <Select>
-                      <SelectTrigger className='w-[180px]'>
-                        <SelectValue placeholder='Frequência' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value='diaria'>Diária</SelectItem>
-                        <SelectItem value='2-3'>2-3x Semana</SelectItem>
-                        <SelectItem value='fds'>Fins de Semana</SelectItem>
-                        <SelectItem value='eventual'>Eventual</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </ExamField>
-                  <ExamField label='Atividade Física'>
-                    <Select>
-                      <SelectTrigger className='w-[180px]'>
-                        <SelectValue placeholder='Frequência' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value='sedentario'>Sedentário</SelectItem>
-                        <SelectItem value='2-3'>2-3x Semana</SelectItem>
-                        <SelectItem value='4-5'>4-5x Semana</SelectItem>
-                        <SelectItem value='+6'>+6x Semana</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </ExamField>
-                  <div className='grid grid-cols-2 gap-4'>
-                    <ExamField label='Diabetes?'>
-                      <Checkbox />
-                    </ExamField>
-                    <ExamField label='Hipertensão?'>
-                      <Checkbox />
-                    </ExamField>
-                  </div>
-                  <div className='space-y-2'>
-                    <Label>Doenças Ortopédicas? Quais?</Label>
-                    <Input />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label>
-                      Realiza terapias para fatores de riscos psicossociais?
-                      Descrever
-                    </Label>
-                    <Input />
-                  </div>
-                </div>
-                {/* Subseção 03 */}
-                <div className='space-y-4 rounded-md border p-4'>
-                  <h4 className='font-medium'>Histórico Ocupacional</h4>
-                  <div className='space-y-2'>
-                    <Label>Cargo no emprego anterior:</Label>
-                    <Input />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label>Quais atividades realizava:</Label>
-                    <Textarea rows={2} />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label>
-                      Já teve algum Acidente de Trabalho? Descreva. Foi afastado
-                      pelo INSS?
-                    </Label>
-                    <Textarea rows={2} />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label>
-                      Afastamento pelo INSS por doença comum? Descreva:
-                    </Label>
-                    <Textarea rows={2} />
-                  </div>
-                </div>
-                {/* Subseção 04 */}
-                <div className='space-y-4 rounded-md border p-4'>
-                  <h4 className='font-medium'>Queixas Atuais e Anamnese</h4>
-                  <Textarea
-                    placeholder='Use a IA para transcrever a conversa ou digite livremente...'
-                    rows={5}
-                  />
-                </div>
-                {/* Subseção 05 */}
-                <div className='space-y-4 rounded-md border p-4'>
-                  <h4 className='font-medium'>Exame Físico Atual</h4>
-                  <div className='space-y-2'>
-                    <NormalAlteredField label='Cabeça e Pescoço' />
-                    <NormalAlteredField label='Tórax' />
-                    <NormalAlteredField label='Abdome' />
-                    <h5 className='font-semibold pt-2'>Coluna</h5>
-                    <div className='pl-4 space-y-2'>
-                      <NormalAlteredField label='Cervical' />
-                      <NormalAlteredField label='Dorsal' />
-                      <NormalAlteredField label='Lombar' />
+                        <FieldsetGroup title="Seção 02: Contexto do Exame">
+                            <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                            <div className='space-y-2'>
+                                <Label>Tipo de Exame</Label>
+                                <Input disabled value={examType} />
+                            </div>
+                            </div>
+                            <div className='space-y-2'>
+                            <Label>Exposto aos Riscos</Label>
+                            <Textarea
+                                disabled
+                                value='Ruído Contínuo ou Intermitente, Levantamento de peso'
+                                rows={2}
+                            />
+                            </div>
+                            <div className='space-y-2'>
+                            <Label>Exames a Serem Realizados (Conforme PCMSO)</Label>
+                            <Textarea
+                                disabled
+                                value={attendee.exams.map((e: any) => e.name).join(', ')}
+                                rows={2}
+                            />
+                            </div>
+                        </FieldsetGroup>
                     </div>
-                    <h5 className='font-semibold pt-2'>Membros Superiores</h5>
-                    <div className='pl-4 space-y-2'>
-                      <NormalAlteredField label='Ombros' />
-                      <NormalAlteredField label='Braços' />
-                      <NormalAlteredField label='Antebraços' />
-                      <NormalAlteredField label='Mãos' />
-                    </div>
-                    <h5 className='font-semibold pt-2'>Membros Inferiores</h5>
-                    <div className='pl-4 space-y-2'>
-                      <NormalAlteredField label='Quadril' />
-                      <NormalAlteredField label='Coxas' />
-                      <NormalAlteredField label='Joelhos' />
-                      <NormalAlteredField label='Pernas' />
-                      <NormalAlteredField label='Pés' />
-                    </div>
-                  </div>
-                </div>
-              </FieldsetGroup>
-
-              <FieldsetGroup title='Seção 06: Achados e Observações'>
-                <Textarea
-                  placeholder='[Carregar automaticamente os achados alterados]'
-                />
-                <Label>Observações Adicionais</Label>
-                <Textarea placeholder='Adicione observações ou notas adicionais aqui...' />
-              </FieldsetGroup>
-              <FieldsetGroup title='Seção 07: Conclusão'>
-                <RadioGroup className='space-y-2'>
-                  <div className='flex items-center space-x-2'>
-                    <RadioGroupItem value='normal' id='conc-normal' />
-                    <Label htmlFor='conc-normal'>Exame normal</Label>
-                  </div>
-                  <div className='flex items-center space-x-2'>
-                    <RadioGroupItem
-                      value='achado-sem-incapacidade'
-                      id='conc-achado-sem'
-                    />
-                    <Label htmlFor='conc-achado-sem'>
-                      Achados alterados, mas que não incapacita para o trabalho
-                    </Label>
-                  </div>
-                  <div className='flex items-center space-x-2'>
-                    <RadioGroupItem value='revisor' id='conc-revisor' />
-                    <Label htmlFor='conc-revisor'>
-                      Achados alterados, encaminho para avaliação complementar
-                      do médico revisor
-                    </Label>
-                  </div>
-                  <div className='flex items-center space-x-2'>
-                    <RadioGroupItem value='parecer' id='conc-parecer' />
-                    <Label htmlFor='conc-parecer'>
-                      Achados alterados, solicito parecer complementar
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </FieldsetGroup>
-              <FieldsetGroup title='Seção 08: Ações'>
-                <div className='flex flex-wrap gap-2'>
-                  <Button variant='outline'>
-                    <Printer className='mr-2 h-4 w-4' /> Imprimir Recomendações
-                  </Button>
-                  <Button>
-                    <FileSignature className='mr-2 h-4 w-4' /> Finalizar
-                    Atendimento
-                  </Button>
-                  <Button variant='secondary'>
-                    <Save className='mr-2 h-4 w-4' /> Salvar, sem finalizar
-                  </Button>
-                </div>
-              </FieldsetGroup>
+                </ScrollArea>
             </div>
 
             <aside className='md:col-span-1 space-y-6'>
               <Card>
                 <CardHeader>
-                  <CardTitle>Resumo do Atendimento</CardTitle>
+                  <CardTitle>Exames Solicitados</CardTitle>
                 </CardHeader>
                 <CardContent className='space-y-4 text-sm'>
-                   {attendee.exams.map((exam: any) => (
-                    <div key={exam.id} className='flex justify-between items-center'>
-                        <span>{exam.name}</span>{' '}
-                        <Badge variant={exam.status === 'Realizado' ? 'secondary' : 'outline'}>{exam.status}</Badge>
-                    </div>
-                   ))}
+                   {attendee.exams.map((exam: any) => {
+                      const isClinical = exam.name === 'Avaliação Clínica'
+                      const href = isClinical
+                        ? `/dashboard/health/evaluation/${attendeeId}` // Should be current page, maybe disable?
+                        : `/dashboard/health/evaluation/${attendeeId}/exam/${exam.id}`
+                      return (
+                        <div key={exam.id} className='flex justify-between items-center p-2 rounded-md hover:bg-muted'>
+                            <div>
+                                <p className='font-medium'>{exam.name}</p>
+                                <Badge variant={exam.status === 'Realizado' ? 'secondary' : 'outline'}>{exam.status}</Badge>
+                            </div>
+                            <Button asChild size="sm" variant="ghost" disabled={isClinical && attendee.status === 'Em Atendimento'}>
+                                <Link href={href}>Realizar Exame <ChevronRight className='ml-2 h-4 w-4' /></Link>
+                            </Button>
+                        </div>
+                      )
+                   })}
                 </CardContent>
               </Card>
               <Card>
