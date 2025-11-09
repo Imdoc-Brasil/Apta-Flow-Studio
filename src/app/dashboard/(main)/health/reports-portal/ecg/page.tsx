@@ -1,3 +1,4 @@
+
 'use client'
 
 import {
@@ -75,7 +76,7 @@ export default function EcgEvaluationPage() {
                     <Input
                       id='esocialCode'
                       name='esocialCode'
-                      defaultValue='0213'
+                      defaultValue='530'
                       disabled={!isEditing}
                       required
                     />

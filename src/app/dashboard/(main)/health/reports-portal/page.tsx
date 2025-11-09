@@ -1,3 +1,4 @@
+
 'use client'
 
 import {
@@ -15,8 +16,9 @@ const laudableExams = [
   {
     name: 'Eletrocardiograma (ECG)',
     description: 'Análise do ritmo e atividade elétrica do coração.',
-    href: '/dashboard/health/reports-portal/ecg',
+    href: '/dashboard/health/reports-portal/ecg/analysis',
     status: 'active',
+    configHref: '/dashboard/health/reports-portal/ecg',
   },
   {
     name: 'Eletroencefalograma (EEG)',
@@ -60,14 +62,14 @@ export default function ReportsPortalPage() {
             <Card
               key={exam.name}
               className={
-                exam.status === 'inactive' ? 'bg-muted/50' : 'hover:shadow-md'
+                exam.status === 'inactive' ? 'bg-muted/50 flex flex-col' : 'hover:shadow-md flex flex-col'
               }
             >
               <CardHeader>
                 <CardTitle className='text-lg'>{exam.name}</CardTitle>
                 <CardDescription>{exam.description}</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className='flex-grow flex flex-col justify-end gap-2'>
                 <Button
                   asChild
                   variant={exam.status === 'inactive' ? 'secondary' : 'default'}
@@ -75,12 +77,19 @@ export default function ReportsPortalPage() {
                   className='w-full'
                 >
                   <Link href={exam.href}>
-                    {exam.status === 'inactive' ? 'Em Breve' : 'Configurar'}
+                    {exam.status === 'inactive' ? 'Em Breve' : 'Analisar com IA'}
                     {exam.status === 'active' && (
                       <ChevronRight className='ml-2 h-4 w-4' />
                     )}
                   </Link>
                 </Button>
+                {exam.configHref && (
+                   <Button asChild variant="outline" className='w-full'>
+                     <Link href={exam.configHref}>
+                       Configurar Modelo
+                     </Link>
+                   </Button>
+                )}
               </CardContent>
             </Card>
           ))}
