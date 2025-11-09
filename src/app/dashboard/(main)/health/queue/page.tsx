@@ -52,7 +52,6 @@ import { useToast } from '@/hooks/use-toast'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { aptaServiceUnits } from './data'
 
-
 type Status = 'Agendado' | 'Em Atendimento' | 'Concluído'
 
 interface Attendee {
@@ -172,13 +171,20 @@ const KanbanColumn = ({
   )
 }
 
+const PlaceholderContent = ({ title }: { title: string }) => (
+  <Card>
+    <CardContent className='flex items-center justify-center h-96'>
+      <p className='text-muted-foreground'>A fila de {title} aparecerá aqui.</p>
+    </CardContent>
+  </Card>
+)
+
 export default function QueuePage() {
   const [attendees, setAttendees] = useState<Attendee[]>(initialAttendees)
   const [activeAttendee, setActiveAttendee] = useState<Attendee | null>(null)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const { toast } = useToast()
   const [selectedUnit, setSelectedUnit] = useState(aptaServiceUnits[0].id)
-
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -263,21 +269,23 @@ export default function QueuePage() {
     >
       <div className='flex h-full flex-col gap-4'>
         <div className='flex items-center justify-between'>
-            <div className='flex items-center gap-4'>
-                <h1 className='font-headline text-3xl font-bold'>
-                    Fila de Atendimento
-                </h1>
-                <Select value={selectedUnit} onValueChange={setSelectedUnit}>
-                    <SelectTrigger className='w-[280px]'>
-                        <SelectValue placeholder='Selecione a Unidade de Atendimento'/>
-                    </SelectTrigger>
-                    <SelectContent>
-                        {aptaServiceUnits.map(unit => (
-                            <SelectItem key={unit.id} value={unit.id}>{unit.name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
+          <div className='flex items-center gap-4'>
+            <h1 className='font-headline text-3xl font-bold'>
+              Fila de Atendimento
+            </h1>
+            <Select value={selectedUnit} onValueChange={setSelectedUnit}>
+              <SelectTrigger className='w-[280px]'>
+                <SelectValue placeholder='Selecione a Unidade de Atendimento' />
+              </SelectTrigger>
+              <SelectContent>
+                {aptaServiceUnits.map((unit) => (
+                  <SelectItem key={unit.id} value={unit.id}>
+                    {unit.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -302,7 +310,10 @@ export default function QueuePage() {
                       </SelectTrigger>
                       <SelectContent>
                         {initialClientsData.map((client) => (
-                          <SelectItem key={client.contractId} value={client.name}>
+                          <SelectItem
+                            key={client.contractId}
+                            value={client.name}
+                          >
                             {client.name}
                           </SelectItem>
                         ))}
@@ -350,33 +361,42 @@ export default function QueuePage() {
           </Dialog>
         </div>
 
-        <Tabs defaultValue="medico">
-            <TabsList>
-                <TabsTrigger value="medico">Atendimento Médico</TabsTrigger>
-                <TabsTrigger value="audiometria">Audiometria</TabsTrigger>
-                <TabsTrigger value="laboratorio">Exames Laboratoriais</TabsTrigger>
-                <TabsTrigger value="rx">Raio-X</TabsTrigger>
-                <TabsTrigger value="graficos">Exames Gráficos</TabsTrigger>
-            </TabsList>
-            <TabsContent value="medico" className="mt-4">
-                 <div className='grid flex-1 grid-cols-1 items-start gap-6 md:grid-cols-3'>
-                    <SortableContext items={columns}>
-                        {columns.map((status) => (
-                        <KanbanColumn
-                            key={status}
-                            status={status}
-                            attendees={attendees.filter(
-                            (attendee) => attendee.status === status
-                            )}
-                        />
-                        ))}
-                    </SortableContext>
-                    </div>
-            </TabsContent>
-            {/* Other TabsContent will be added later */}
+        <Tabs defaultValue='medico'>
+          <TabsList>
+            <TabsTrigger value='medico'>Atendimento Médico</TabsTrigger>
+            <TabsTrigger value='audiometria'>Audiometria</TabsTrigger>
+            <TabsTrigger value='laboratorio'>Exames Laboratoriais</TabsTrigger>
+            <TabsTrigger value='rx'>Raio-X</TabsTrigger>
+            <TabsTrigger value='graficos'>Exames Gráficos</TabsTrigger>
+          </TabsList>
+          <TabsContent value='medico' className='mt-4'>
+            <div className='grid flex-1 grid-cols-1 items-start gap-6 md:grid-cols-3'>
+              <SortableContext items={columns}>
+                {columns.map((status) => (
+                  <KanbanColumn
+                    key={status}
+                    status={status}
+                    attendees={attendees.filter(
+                      (attendee) => attendee.status === status
+                    )}
+                  />
+                ))}
+              </SortableContext>
+            </div>
+          </TabsContent>
+          <TabsContent value='audiometria' className='mt-4'>
+            <PlaceholderContent title='Audiometria' />
+          </TabsContent>
+          <TabsContent value='laboratorio' className='mt-4'>
+            <PlaceholderContent title='Exames Laboratoriais' />
+          </TabsContent>
+          <TabsContent value='rx' className='mt-4'>
+            <PlaceholderContent title='Raio-X' />
+          </TabsContent>
+          <TabsContent value='graficos' className='mt-4'>
+            <PlaceholderContent title='Exames Gráficos' />
+          </TabsContent>
         </Tabs>
-
-        
       </div>
       <DragOverlay>
         {activeAttendee ? (
