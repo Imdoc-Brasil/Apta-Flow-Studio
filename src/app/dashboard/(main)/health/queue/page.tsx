@@ -132,7 +132,9 @@ const AttendeeCard = ({
       style={style}
       className={cn(
         'touch-none',
-        'cursor-grab active:cursor-grabbing',
+        isBusy
+          ? 'cursor-pointer'
+          : 'cursor-grab active:cursor-grabbing',
         isBusy && 'bg-blue-100 dark:bg-blue-900/50 border-blue-400'
       )}
       {...attributes}
