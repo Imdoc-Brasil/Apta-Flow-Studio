@@ -1,3 +1,4 @@
+
 'use client'
 
 import { create } from 'zustand'
@@ -205,6 +206,7 @@ export type Ticket = Omit<
   attachments?: Attachment[]
   textElements?: TextElement[]
   relatedEmployee?: string
+  solicitationType?: string // Added for health requests
 }
 
 type NewTicketData = Omit<

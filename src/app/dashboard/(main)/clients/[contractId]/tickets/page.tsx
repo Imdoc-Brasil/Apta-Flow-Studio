@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
   Card,
   CardContent,
@@ -575,27 +575,11 @@ export default function ClientTicketsPage() {
       relatedEmployee: employeeName,
     })
 
-    // 2. If it's an exam request, also add to the attendee queue
-    const isExamRequest = subject.toLowerCase().includes('exame') || subject.toLowerCase().includes('aso');
-    if (isExamRequest && client && employeeName) {
-      addAttendee({
-        clientName: client.name,
-        patientName: employeeName,
-        solicitationType: subject,
-        status: 'Agendado',
-      })
-      toast({
-        title: 'Atendimento Agendado!',
-        description: `Sua solicitação para ${employeeName} foi adicionada à fila de atendimento.`,
-      })
-    } else {
-        toast({
-            title: 'Chamado Enviado com Sucesso!',
-            description:
-              'Sua solicitação foi registrada e nossa equipe entrará em contato em breve.',
-          })
-    }
-
+    toast({
+      title: 'Chamado Enviado com Sucesso!',
+      description:
+        'Sua solicitação foi registrada e nossa equipe entrará em contato em breve.',
+    })
 
     setIsDialogOpen(false)
     setDefaultEmployee(undefined)
