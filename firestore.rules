@@ -143,13 +143,13 @@ service cloud.firestore {
      /**
       * @description Rule for the /roles_admin/{uid} collection.  This collection manages super admin privileges.
       * @path /roles_admin/{uid}
-      * @allow (read) Denied to prevent enumeration of admins.
+      * @allow (read) Allows a user to check their own admin status, but not enumerate other admins.
       * @allow (create) Allows a signed-in user to create their OWN admin role document, but only if it doesn't already exist.
       *               This is the key to creating the *first* superadmin. After that, this rule can be tightened.
       * @allow (delete) Allows a superadmin to delete an admin role (demote a user).
       */
     match /roles_admin/{uid} {
-      allow read: if false;
+      allow read: if isSignedIn() && request.auth.uid == uid;
       allow create: if isSignedIn() && request.auth.uid == uid && !exists(/databases/$(database)/documents/roles_admin/$(uid));
       allow update: if false;
       allow delete: if isSuperAdmin();
