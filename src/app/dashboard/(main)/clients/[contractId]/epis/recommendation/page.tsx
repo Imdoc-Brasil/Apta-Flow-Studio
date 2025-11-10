@@ -19,7 +19,6 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { initialEpiData } from '../data'
-import { initialHazardData } from '@/app/dashboard/(main)/risks/page'
 import {
   initialInventory,
   getHazardById,
@@ -30,8 +29,7 @@ import { initialSectorsData } from '../../sectors/data'
 import { initialUnitsData } from '../../units/data'
 import { initialGheData } from '../../ghe/data'
 import { initialEnvironmentsData } from '../../environments/data'
-import { Input } from '@/components/ui/input'
-import { ArrowDown, ChevronsRight } from 'lucide-react'
+import { ChevronsRight } from 'lucide-react'
 
 type AssociationType =
   | 'risk'
@@ -57,7 +55,6 @@ export default function RecommendationMatrixPage() {
     .filter(Boolean)
 
   const inventoryRisks = initialInventory
-    .filter((inv) => inv.unitId === selectedUnit)
     .map((inv) => getHazardById(inv.hazardId))
     .filter((h) => h !== undefined)
 

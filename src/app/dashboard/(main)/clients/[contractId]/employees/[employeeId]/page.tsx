@@ -35,6 +35,7 @@ import { initialSectorsData } from '../../sectors/data'
 import { initialUnitsData } from '../../units/data'
 import { initialEnvironmentsData } from '../../environments/data'
 import { initialProcessesData } from '../../processes/data'
+import { initialEpiDeliveries } from '../../epis/data'
 
 function getEmployeeById(employeeId: string) {
   return initialEmployeesData.find((e) => e.id === employeeId)
@@ -68,13 +69,6 @@ const getStatusBadgeVariant = (status: Employee['status']) => {
   }
 }
 
-const summaryIndicators = [
-    { title: 'ASO', status: 'Em dia', variant: 'secondary', days: 'Vence em 280 dias' },
-    { title: 'Treinamentos Obrigatórios', status: 'Em dia', variant: 'secondary', days: 'Todos concluídos' },
-    { title: 'EPIs Essenciais', status: 'Atenção', variant: 'destructive', days: '1 item pendente' },
-    { title: 'Vacinação', status: 'Em dia', variant: 'secondary', days: 'Nenhuma pendência' },
-]
-
 export default function EmployeeDetailsPage() {
   const params = useParams()
   const router = useRouter()
@@ -82,6 +76,18 @@ export default function EmployeeDetailsPage() {
   const employeeId = params.employeeId as string
 
   const employeeData = useMemo(() => getEmployeeById(employeeId), [employeeId])
+  
+  const episDeliveredCount = useMemo(() => {
+    return initialEpiDeliveries.filter(d => d.employeeId === employeeId).length
+  }, [employeeId])
+
+  const summaryIndicators = [
+    { title: 'ASO', status: 'Em dia', variant: 'secondary', days: 'Vence em 280 dias' },
+    { title: 'Treinamentos Obrigatórios', status: 'Em dia', variant: 'secondary', days: 'Todos concluídos' },
+    { title: 'EPIs Essenciais', status: episDeliveredCount > 0 ? 'Em dia' : 'Atenção', variant: episDeliveredCount > 0 ? 'secondary' : 'destructive', days: episDeliveredCount > 0 ? `${episDeliveredCount} itens entregues` : 'Nenhum item entregue' },
+    { title: 'Vacinação', status: 'Em dia', variant: 'secondary', days: 'Nenhuma pendência' },
+]
+
 
   const employeeDetails = useMemo(() => {
     if (!employeeData) return null
