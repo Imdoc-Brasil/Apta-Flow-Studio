@@ -46,6 +46,7 @@ import { useTicketStore } from '../../../tickets/tickets-store'
 import { initialClientsData } from '../../../clients/data'
 import { useState } from 'react'
 import { useParams } from 'next/navigation'
+import { Separator } from '@/components/ui/separator'
 
 const initialAsoData = [
     { id: 'ASO-001', employee: 'Carlos Pereira', type: 'Periódico', issueDate: '2024-07-01', validity: '12 meses', status: 'Apto' },
