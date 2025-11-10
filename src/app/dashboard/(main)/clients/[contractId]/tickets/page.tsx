@@ -565,21 +565,53 @@ export default function ClientTicketsPage() {
     const employeeId = formData.get('employee') as string
     const employeeName =
       initialEmployeesData.find((e) => e.id === employeeId)?.name || undefined
+    const clientName = client?.name || 'Cliente Desconhecido'
 
     // 1. Create the ticket
     addTicket({
       subject: subject,
-      client: client?.name || 'Cliente Desconhecido',
+      client: clientName,
       priority: formData.get('priority') as Ticket['priority'],
       description: formData.get('description') as string,
       relatedEmployee: employeeName,
     })
 
-    toast({
-      title: 'Chamado Enviado com Sucesso!',
-      description:
-        'Sua solicitação foi registrada e nossa equipe entrará em contato em breve.',
-    })
+    // 2. Check if it's a health-related request and add to attendee queue
+    const isHealthRequest =
+      subject.toLowerCase().includes('exame') ||
+      subject.toLowerCase().includes('aso')
+
+    if (isHealthRequest && employeeName) {
+      addAttendee({
+        clientName,
+        patientName: employeeName,
+        solicitationType: subject,
+        // This is a simplified logic. In a real scenario, this would query the PCMSO
+        // based on the solicitationType and employee's role/risks.
+        exams: [
+          {
+            id: `EXM-${Date.now()}-A`,
+            name: 'Avaliação Clínica',
+            status: 'Pendente',
+          },
+          {
+            id: `EXM-${Date.now()}-B`,
+            name: 'Audiometria',
+            status: 'Pendente',
+          },
+        ],
+      })
+      toast({
+        title: 'Chamado e Agendamento Criados!',
+        description: `Sua solicitação foi registrada e um atendimento foi agendado para ${employeeName}.`,
+      })
+    } else {
+      toast({
+        title: 'Chamado Enviado com Sucesso!',
+        description:
+          'Sua solicitação foi registrada e nossa equipe entrará em contato em breve.',
+      })
+    }
 
     setIsDialogOpen(false)
     setDefaultEmployee(undefined)

@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
@@ -1179,33 +1180,47 @@ export default function TicketsPage() {
   const handleAddTicket = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
+    const subject = formData.get('subject') as string
+    const clientName = formData.get('client') as string
+    const relatedEmployeeId = formData.get('relatedEmployee') as string
+
     const newTicketData = {
-      subject: formData.get('subject') as string,
-      client: formData.get('client') as string,
+      subject,
+      client: clientName,
       priority: formData.get('priority') as Ticket['priority'],
       description: (formData.get('description') as string) || '',
       labels: selectedLabels,
       assignedTo: assignedTo,
-      relatedEmployee: formData.get('relatedEmployee') as string,
+      relatedEmployee:
+        initialEmployeesData.find((e) => e.id === relatedEmployeeId)?.name ||
+        undefined,
     }
     addTicket(newTicketData)
 
-    const isExamRequest =
-      newTicketData.subject.toLowerCase().includes('exame') ||
-      newTicketData.subject.toLowerCase().includes('aso')
-    if (isExamRequest && newTicketData.relatedEmployee) {
-      const employee = initialEmployeesData.find(e => e.id === newTicketData.relatedEmployee)
-      if (employee) {
-        addAttendee({
-          clientName: newTicketData.client,
-          patientName: employee.name,
-          solicitationType: newTicketData.subject,
-          exams: [
-            { id: `EXM-${Date.now()}-A`, name: 'Avaliação Clínica', status: 'Pendente' },
-            { id: `EXM-${Date.now()}-B`, name: 'Audiometria', status: 'Pendente' },
-          ],
-        })
-      }
+    const isHealthRequest =
+      subject.toLowerCase().includes('exame') ||
+      subject.toLowerCase().includes('aso')
+
+    if (isHealthRequest && newTicketData.relatedEmployee) {
+      addAttendee({
+        clientName,
+        patientName: newTicketData.relatedEmployee,
+        solicitationType: subject,
+        // This is a simplified logic. In a real scenario, this would query the PCMSO
+        // based on the solicitationType and employee's role/risks.
+        exams: [
+          {
+            id: `EXM-${Date.now()}-A`,
+            name: 'Avaliação Clínica',
+            status: 'Pendente',
+          },
+          {
+            id: `EXM-${Date.now()}-B`,
+            name: 'Audiometria',
+            status: 'Pendente',
+          },
+        ],
+      })
     }
 
     setIsDialogOpen(false)
