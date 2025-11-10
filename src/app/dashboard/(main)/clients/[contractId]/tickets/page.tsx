@@ -580,7 +580,7 @@ export default function ClientTicketsPage() {
       addAttendee({
         clientName: client.name,
         patientName: employeeName,
-        examType: subject,
+        solicitationType: subject,
         status: 'Agendado',
       })
       toast({
