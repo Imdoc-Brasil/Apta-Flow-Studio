@@ -1,5 +1,5 @@
 
-export type EmployeeStatus = 'Ativo' | 'Férias' | 'Desligado'
+export type EmployeeStatus = 'Ativo' | 'Férias' | 'Desligado' | 'Candidato'
 
 export interface Employee {
   id: string

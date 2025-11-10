@@ -534,61 +534,74 @@ export default function ProcessesPage() {
                             <div className='flex-shrink-0 flex flex-col items-center justify-center bg-primary text-primary-foreground rounded-full h-8 w-8 text-sm font-bold mt-2'>
                               {index + 1}
                             </div>
-                            <div className='flex-grow space-y-2'>
+                            <div className='flex-grow space-y-4'>
                                <div className='grid grid-cols-2 gap-4'>
-                                <Select 
-                                    name={`step-sector-${index}`}
-                                    value={step.sectorId}
-                                    onValueChange={(value) => handleStepChange(index, 'sectorId', value)}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder='Selecione o Setor' />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {initialSectorsData.map((sector) => (
-                                      <SelectItem
-                                        key={sector.id}
-                                        value={sector.id}
-                                      >
-                                        {sector.name}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <Select 
-                                    name={`step-role-${index}`}
-                                    value={step.responsibleRole}
-                                    onValueChange={(value) => handleStepChange(index, 'responsibleRole', value)}
+                                <div className='space-y-2'>
+                                  <Label htmlFor={`step-name-${index}`}>Nome da Etapa</Label>
+                                  <Input
+                                    id={`step-name-${index}`}
+                                    name={`step-name-${index}`}
+                                    defaultValue={step.name}
                                     required
-                                    disabled={!step.sectorId || rolesForSector.length === 0}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder='Selecione o Cargo' />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {rolesForSector.map((role) => (
-                                      <SelectItem
-                                        key={role.id}
-                                        value={role.id}
-                                      >
-                                        {role.name}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
+                                  />
+                                </div>
+                                <div className='space-y-2'>
+                                  <Label htmlFor={`step-sector-${index}`}>Setor Responsável</Label>
+                                  <Select 
+                                      name={`step-sector-${index}`}
+                                      value={step.sectorId}
+                                      onValueChange={(value) => handleStepChange(index, 'sectorId', value)}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder='Selecione o Setor' />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {initialSectorsData.map((sector) => (
+                                        <SelectItem
+                                          key={sector.id}
+                                          value={sector.id}
+                                        >
+                                          {sector.name}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
                               </div>
-                               <Input
-                                name={`step-name-${index}`}
-                                defaultValue={step.name}
-                                placeholder='Nome da etapa'
-                                required
-                              />
-                              <Textarea
-                                name={`step-description-${index}`}
-                                defaultValue={step.description}
-                                placeholder='Descrição da atividade (opcional)'
-                                rows={2}
-                              />
+                               <div className='space-y-2'>
+                                  <Label htmlFor={`step-role-${index}`}>Cargo Responsável</Label>
+                                  <Select 
+                                      name={`step-role-${index}`}
+                                      value={step.responsibleRole}
+                                      onValueChange={(value) => handleStepChange(index, 'responsibleRole', value)}
+                                      required
+                                      disabled={!step.sectorId || rolesForSector.length === 0}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder='Selecione o Cargo' />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {rolesForSector.map((role) => (
+                                        <SelectItem
+                                          key={role.id}
+                                          value={role.id}
+                                        >
+                                          {role.name}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              <div className='space-y-2'>
+                                <Label htmlFor={`step-description-${index}`}>Descrição da Atividade</Label>
+                                <Textarea
+                                  id={`step-description-${index}`}
+                                  name={`step-description-${index}`}
+                                  defaultValue={step.description}
+                                  placeholder='Descreva o que deve ser feito nesta etapa.'
+                                  rows={2}
+                                />
+                              </div>
                               <div className='flex items-center space-x-2 pt-2'>
                                 <Checkbox
                                   id={`control-point-${index}`}

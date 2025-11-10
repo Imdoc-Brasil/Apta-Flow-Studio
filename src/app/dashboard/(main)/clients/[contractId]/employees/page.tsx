@@ -76,10 +76,10 @@ import type { Employee, EmployeeStatus } from './data'
 import { initialRolesData } from '../roles/data'
 import { initialSectorsData } from '../sectors/data'
 import { initialUnitsData } from '../units/data'
-import { initialEnvironmentsData } from '../environments/data'
 import { Separator } from '@/components/ui/separator'
 import { useRouter } from 'next/navigation'
 import { useParams } from 'next/navigation'
+import { useToast } from '@/hooks/use-toast'
 
 // Componente para formatar datas com segurança no cliente
 function ClientSideDateFormatter({ dateString }: { dateString: string }) {
@@ -110,11 +110,24 @@ export default function EmployeesPage() {
     'Ativo',
     'Férias',
     'Desligado',
+    'Candidato',
   ])
-  const [viewMode, setViewMode] = useState<'list' | 'card'>('list')
+  const [viewMode, setViewMode] = useState<'list' | 'list'>('list')
   const router = useRouter()
   const params = useParams()
   const contractId = params.contractId as string
+  const { toast } = useToast()
+
+  const [selectedAddRole, setSelectedAddRole] = useState('')
+  const roleDetails = useMemo(() => {
+    if (!selectedAddRole) return null
+    const role = initialRolesData.find((r) => r.id === selectedAddRole)
+    if (!role) return null
+    const sector = initialSectorsData.find((s) => s.id === role.sectorId)
+    if (!sector) return null
+    const unit = initialUnitsData.find((u) => u.id === sector.unitId)
+    return { role, sector, unit }
+  }, [selectedAddRole])
 
   const getRoleById = (roleId: string) =>
     initialRolesData.find((r) => r.id === roleId)
@@ -148,12 +161,17 @@ export default function EmployeesPage() {
       roleId: formData.get('roleId') as string,
       email: formData.get('email') as string,
       phone: formData.get('phone') as string,
-      status: 'Ativo',
+      status: 'Candidato',
       admissionDate: new Date().toISOString().split('T')[0],
       avatar: `https://i.pravatar.cc/150?u=${Math.random()}`,
     }
     setEmployees((prev) => [newEmployee, ...prev])
     setIsAddDialogOpen(false)
+    setSelectedAddRole('')
+    toast({
+      title: 'Candidato Adicionado!',
+      description: `O candidato "${name}" foi adicionado e aguarda os próximos passos.`,
+    })
   }
 
   const handleEditEmployee = (event: React.FormEvent<HTMLFormElement>) => {
@@ -215,6 +233,8 @@ export default function EmployeesPage() {
     switch (status) {
       case 'Ativo':
         return 'secondary'
+      case 'Candidato':
+        return 'default'
       case 'Desligado':
         return 'destructive'
       case 'Férias':
@@ -224,26 +244,74 @@ export default function EmployeesPage() {
     }
   }
 
-  const renderEmployeeForm = (employee?: Employee | null) => (
+  const renderAddEmployeeForm = () => (
     <div className='grid gap-4 py-4'>
-      <div className='grid grid-cols-4 items-center gap-4'>
-        <Label htmlFor='name' className='text-right'>
-          Nome
-        </Label>
-        <Input
-          id='name'
-          name='name'
-          className='col-span-3'
-          defaultValue={employee?.name}
+      <div className='space-y-2'>
+        <Label htmlFor='roleId'>Cargo</Label>
+        <Select
+          name='roleId'
+          value={selectedAddRole}
+          onValueChange={setSelectedAddRole}
           required
-        />
+        >
+          <SelectTrigger>
+            <SelectValue placeholder='Selecione o cargo para o novo colaborador' />
+          </SelectTrigger>
+          <SelectContent>
+            {initialRolesData.map((role) => (
+              <SelectItem key={role.id} value={role.id}>
+                {role.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
-      <div className='grid grid-cols-4 items-center gap-4'>
-        <Label htmlFor='roleId' className='text-right'>
-          Cargo
-        </Label>
+
+      {roleDetails && (
+        <div className='grid grid-cols-2 gap-4 rounded-md border bg-muted/50 p-4'>
+          <div className='space-y-1'>
+            <p className='text-sm font-medium text-muted-foreground'>Unidade</p>
+            <p className='font-semibold'>{roleDetails.unit?.name}</p>
+          </div>
+          <div className='space-y-1'>
+            <p className='text-sm font-medium text-muted-foreground'>Setor</p>
+            <p className='font-semibold'>{roleDetails.sector.name}</p>
+          </div>
+        </div>
+      )}
+
+      <fieldset disabled={!selectedAddRole}>
+        <div className='grid gap-4 py-4'>
+          <Separator />
+          <div className='space-y-2'>
+            <Label htmlFor='name'>Nome do Colaborador</Label>
+            <Input id='name' name='name' required />
+          </div>
+          <div className='grid grid-cols-2 gap-4'>
+            <div className='space-y-2'>
+              <Label htmlFor='email'>Email</Label>
+              <Input id='email' name='email' type='email' required />
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='phone'>Telefone</Label>
+              <Input id='phone' name='phone' />
+            </div>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+  )
+
+  const renderEditForm = (employee?: Employee | null) => (
+    <div className='grid gap-4 py-4'>
+      <div className='space-y-2'>
+        <Label htmlFor='name'>Nome</Label>
+        <Input id='name' name='name' defaultValue={employee?.name} required />
+      </div>
+      <div className='space-y-2'>
+        <Label htmlFor='roleId'>Cargo</Label>
         <Select name='roleId' defaultValue={employee?.roleId} required>
-          <SelectTrigger className='col-span-3'>
+          <SelectTrigger>
             <SelectValue placeholder='Selecione o cargo' />
           </SelectTrigger>
           <SelectContent>
@@ -255,29 +323,19 @@ export default function EmployeesPage() {
           </SelectContent>
         </Select>
       </div>
-      <div className='grid grid-cols-4 items-center gap-4'>
-        <Label htmlFor='email' className='text-right'>
-          Email
-        </Label>
+      <div className='space-y-2'>
+        <Label htmlFor='email'>Email</Label>
         <Input
           id='email'
           name='email'
           type='email'
-          className='col-span-3'
           defaultValue={employee?.email}
           required
         />
       </div>
-      <div className='grid grid-cols-4 items-center gap-4'>
-        <Label htmlFor='phone' className='text-right'>
-          Telefone
-        </Label>
-        <Input
-          id='phone'
-          name='phone'
-          defaultValue={employee?.phone}
-          className='col-span-3'
-        />
+      <div className='space-y-2'>
+        <Label htmlFor='phone'>Telefone</Label>
+        <Input id='phone' name='phone' defaultValue={employee?.phone} />
       </div>
     </div>
   )
@@ -295,10 +353,7 @@ export default function EmployeesPage() {
           <span className='sr-only'>Alternar menu</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align='end'
-        onClick={(e) => e.stopPropagation()}
-      >
+      <DropdownMenuContent align='end' onClick={(e) => e.stopPropagation()}>
         <DropdownMenuLabel>Ações</DropdownMenuLabel>
         <DropdownMenuItem onClick={() => openEditDialog(employee)}>
           Editar
@@ -308,6 +363,11 @@ export default function EmployeesPage() {
           <DropdownMenuSubTrigger>Alterar Status</DropdownMenuSubTrigger>
           <DropdownMenuPortal>
             <DropdownMenuSubContent>
+              <DropdownMenuItem
+                onClick={() => handleChangeStatus(employee.id, 'Candidato')}
+              >
+                Candidato
+              </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => handleChangeStatus(employee.id, 'Ativo')}
               >
@@ -371,21 +431,23 @@ export default function EmployeesPage() {
                 <DropdownMenuContent align='end'>
                   <DropdownMenuLabel>Filtrar por Status</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {['Ativo', 'Férias', 'Desligado'].map((status) => (
-                    <DropdownMenuCheckboxItem
-                      key={status}
-                      checked={statusFilter.includes(status)}
-                      onCheckedChange={(checked) => {
-                        setStatusFilter((prev) =>
-                          checked
-                            ? [...prev, status]
-                            : prev.filter((s) => s !== status)
-                        )
-                      }}
-                    >
-                      {status}
-                    </DropdownMenuCheckboxItem>
-                  ))}
+                  {['Candidato', 'Ativo', 'Férias', 'Desligado'].map(
+                    (status) => (
+                      <DropdownMenuCheckboxItem
+                        key={status}
+                        checked={statusFilter.includes(status)}
+                        onCheckedChange={(checked) => {
+                          setStatusFilter((prev) =>
+                            checked
+                              ? [...prev, status]
+                              : prev.filter((s) => s !== status)
+                          )
+                        }}
+                      >
+                        {status}
+                      </DropdownMenuCheckboxItem>
+                    )
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -408,7 +470,13 @@ export default function EmployeesPage() {
                   <LayoutGrid className='h-4 w-4' />
                 </Button>
               </div>
-              <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <Dialog
+                open={isAddDialogOpen}
+                onOpenChange={(isOpen) => {
+                  setIsAddDialogOpen(isOpen)
+                  if (!isOpen) setSelectedAddRole('')
+                }}
+              >
                 <DialogTrigger asChild>
                   <Button size='sm' className='h-8 gap-1'>
                     <PlusCircle className='h-3.5 w-3.5' />
@@ -425,16 +493,23 @@ export default function EmployeesPage() {
                     </DialogDescription>
                   </DialogHeader>
                   <form id='add-employee-form' onSubmit={handleAddEmployee}>
-                    {renderEmployeeForm()}
+                    {renderAddEmployeeForm()}
                   </form>
                   <DialogFooter>
                     <Button
                       variant='outline'
-                      onClick={() => setIsAddDialogOpen(false)}
+                      onClick={() => {
+                        setIsAddDialogOpen(false)
+                        setSelectedAddRole('')
+                      }}
                     >
                       Cancelar
                     </Button>
-                    <Button type='submit' form='add-employee-form'>
+                    <Button
+                      type='submit'
+                      form='add-employee-form'
+                      disabled={!selectedAddRole}
+                    >
                       Salvar
                     </Button>
                   </DialogFooter>
@@ -559,7 +634,7 @@ export default function EmployeesPage() {
             </DialogDescription>
           </DialogHeader>
           <form id='edit-employee-form' onSubmit={handleEditEmployee}>
-            {renderEmployeeForm(currentEmployee)}
+            {renderEditForm(currentEmployee)}
           </form>
           <DialogFooter>
             <Button
@@ -574,7 +649,6 @@ export default function EmployeesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog
