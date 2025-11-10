@@ -40,24 +40,26 @@ export default function LoginPage() {
       })
       router.push('/dashboard')
     } catch (error: any) {
-      // For a better UX, check if the user does not exist and offer to create an account
-      if (error.code === 'auth/user-not-found') {
+      if (error.code === 'auth/invalid-credential') {
+        // This error can mean user not found or wrong password.
+        // We'll attempt to create a new user as a fallback.
         try {
           await createUserWithEmailAndPassword(auth, email, password)
           toast({
             title: 'Conta criada com sucesso!',
             description:
-              'Como este é seu primeiro login, uma nova conta foi criada para você.',
+              'Como este é seu primeiro acesso, uma nova conta foi criada para você.',
           })
           router.push('/dashboard')
         } catch (createError: any) {
           toast({
             variant: 'destructive',
-            title: 'Erro ao criar conta',
-            description: createError.message,
+            title: 'Erro ao Criar Conta',
+            description: `Não foi possível fazer login ou criar uma conta. Verifique os dados e tente novamente. (Erro: ${createError.code})`,
           })
         }
       } else {
+        // Handle other errors (e.g., network issues)
         toast({
           variant: 'destructive',
           title: 'Erro de Login',
