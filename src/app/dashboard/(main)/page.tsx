@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import {
   Activity,
   ArrowUpRight,
@@ -30,6 +31,9 @@ import Link from 'next/link'
 import { useTicketStore } from './tickets/tickets-store'
 import { initialClientsData } from '@/app/dashboard/(main)/clients/data'
 import { initialStaffsData } from './employees/page'
+import { useUser, useFirestore } from '@/firebase'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { useToast } from '@/hooks/use-toast'
 
 const kpiDataStatic = [
   {
@@ -48,6 +52,36 @@ const kpiDataStatic = [
 
 export default function Dashboard() {
   const { tickets } = useTicketStore()
+  const { user, isUserLoading } = useUser()
+  const firestore = useFirestore()
+  const { toast } = useToast()
+
+  useEffect(() => {
+    const promoteToSuperAdmin = async () => {
+      if (!user || !firestore) return
+
+      const adminRoleRef = doc(firestore, 'roles_admin', user.uid)
+      try {
+        const docSnap = await getDoc(adminRoleRef)
+        if (!docSnap.exists()) {
+          // User is not an admin yet, let's promote them.
+          await setDoc(adminRoleRef, { createdAt: new Date() })
+          toast({
+            title: 'Bem-vindo, Superadministrador!',
+            description: 'Sua conta foi elevada para o nível de superadministrador.',
+          })
+        }
+      } catch (error) {
+        console.error('Erro ao verificar ou criar o perfil de admin:', error)
+        // We don't show a toast here to avoid bothering existing admins if there's a transient network issue.
+      }
+    }
+
+    if (!isUserLoading) {
+      promoteToSuperAdmin()
+    }
+  }, [user, isUserLoading, firestore, toast])
+
   const activeClientsCount = initialClientsData.filter(
     (c) => c.status === 'Ativo'
   ).length

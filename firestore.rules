@@ -49,11 +49,7 @@ service cloud.firestore {
      * @principle Enforces role-based access control, allowing only super admins to manage client data.
      */
     match /clients/{clientId} {
-      allow get: if isSuperAdmin();
-      allow list: if isSuperAdmin();
-      allow create: if isSuperAdmin();
-      allow update: if isSuperAdmin();
-      allow delete: if isSuperAdmin();
+      allow read, write: if isSuperAdmin();
     }
 
     /**
@@ -64,11 +60,7 @@ service cloud.firestore {
      * @principle Enforces role-based access control, allowing only super admins to manage employee data.
      */
     match /employees/{employeeId} {
-      allow get: if isSuperAdmin();
-      allow list: if isSuperAdmin();
-      allow create: if isSuperAdmin();
-      allow update: if isSuperAdmin();
-      allow delete: if isSuperAdmin();
+      allow read, write: if isSuperAdmin();
     }
 
     /**
@@ -79,11 +71,7 @@ service cloud.firestore {
      * @principle Enforces role-based access control, allowing only super admins to manage contract data.
      */
     match /contracts/{contractId} {
-      allow get: if isSuperAdmin();
-      allow list: if isSuperAdmin();
-      allow create: if isSuperAdmin();
-      allow update: if isSuperAdmin();
-      allow delete: if isSuperAdmin();
+       allow read, write: if isSuperAdmin();
     }
 
     /**
@@ -94,11 +82,7 @@ service cloud.firestore {
      * @principle Enforces role-based access control, allowing only super admins to manage service request data.
      */
     match /serviceRequests/{serviceRequestId} {
-      allow get: if isSuperAdmin();
-      allow list: if isSuperAdmin();
-      allow create: if isSuperAdmin();
-      allow update: if isSuperAdmin();
-      allow delete: if isSuperAdmin();
+       allow read, write: if isSuperAdmin();
     }
 
     /**
@@ -109,11 +93,7 @@ service cloud.firestore {
      * @principle Enforces role-based access control, allowing only super admins to manage SLA data.
      */
     match /slas/{slaId} {
-      allow get: if isSuperAdmin();
-      allow list: if isSuperAdmin();
-      allow create: if isSuperAdmin();
-      allow update: if isSuperAdmin();
-      allow delete: if isSuperAdmin();
+       allow read, write: if isSuperAdmin();
     }
 
     /**
@@ -124,11 +104,7 @@ service cloud.firestore {
      * @principle Enforces role-based access control, allowing only super admins to manage OKR data.
      */
     match /okrs/{okrId} {
-      allow get: if isSuperAdmin();
-      allow list: if isSuperAdmin();
-      allow create: if isSuperAdmin();
-      allow update: if isSuperAdmin();
-      allow delete: if isSuperAdmin();
+       allow read, write: if isSuperAdmin();
     }
 
     /**
@@ -139,11 +115,7 @@ service cloud.firestore {
      * @principle Enforces role-based access control, allowing only super admins to manage process tool usage data.
      */
     match /processToolUsages/{processToolUsageId} {
-      allow get: if isSuperAdmin();
-      allow list: if isSuperAdmin();
-      allow create: if isSuperAdmin();
-      allow update: if isSuperAdmin();
-      allow delete: if isSuperAdmin();
+       allow read, write: if isSuperAdmin();
     }
 
     /**
@@ -154,11 +126,7 @@ service cloud.firestore {
      * @principle Enforces role-based access control, allowing only super admins to manage report data.
      */
     match /reports/{reportId} {
-      allow get: if isSuperAdmin();
-      allow list: if isSuperAdmin();
-      allow create: if isSuperAdmin();
-      allow update: if isSuperAdmin();
-      allow delete: if isSuperAdmin();
+       allow read, write: if isSuperAdmin();
     }
 
     /**
@@ -169,27 +137,22 @@ service cloud.firestore {
      * @principle Enforces role-based access control, allowing only super admins to manage super admin profile data.
      */
     match /superAdminProfiles/{superAdminProfileId} {
-      allow get: if isSuperAdmin();
-      allow list: if isSuperAdmin();
-      allow create: if isSuperAdmin();
-      allow update: if isSuperAdmin();
-      allow delete: if isSuperAdmin();
+       allow read, write: if isSuperAdmin();
     }
 
      /**
       * @description Rule for the /roles_admin/{uid} collection.  This collection manages super admin privileges.
       * @path /roles_admin/{uid}
-      * @allow (get, list) Always denied to prevent enumeration.
-      * @allow (create) If the user is a super admin.
-      * @deny (create) If the user is not a super admin.
+      * @allow (read) Denied to prevent enumeration of admins.
+      * @allow (create) Allows a signed-in user to create their OWN admin role document, but only if it doesn't already exist.
+      *               This is the key to creating the *first* superadmin. After that, this rule can be tightened.
+      * @allow (delete) Allows a superadmin to delete an admin role (demote a user).
       */
     match /roles_admin/{uid} {
-      allow get: if false;
-      allow list: if false;
-      allow create: if isSuperAdmin() && request.auth.uid == uid;
-      allow update: if false; // No updates allowed to this collection
+      allow read: if false;
+      allow create: if isSignedIn() && request.auth.uid == uid && !exists(/databases/$(database)/documents/roles_admin/$(uid));
+      allow update: if false;
       allow delete: if isSuperAdmin();
     }
-
   }
 }
