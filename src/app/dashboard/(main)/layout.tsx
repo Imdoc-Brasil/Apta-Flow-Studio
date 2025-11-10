@@ -1,3 +1,8 @@
+'use client'
+
+import { useUser } from '@/firebase'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 import { DashboardNav } from '@/components/dashboard-nav'
 import {
   Sidebar,
@@ -7,7 +12,7 @@ import {
 import { UserNav } from '@/components/user-nav'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
-import { PanelLeft } from 'lucide-react'
+import { Loader2, PanelLeft } from 'lucide-react'
 import { Breadcrumb } from '@/components/breadcrumb'
 
 export default function DashboardLayout({
@@ -15,6 +20,24 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
+  const { user, isUserLoading } = useUser()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!isUserLoading && !user) {
+      router.push('/login')
+    }
+  }, [isUserLoading, user, router])
+
+  if (isUserLoading || !user) {
+    return (
+      <div className='flex min-h-screen w-full flex-col items-center justify-center bg-muted/40'>
+        <Loader2 className='h-8 w-8 animate-spin text-primary' />
+        <p className='mt-4 text-muted-foreground'>Carregando...</p>
+      </div>
+    )
+  }
+
   return (
     <SidebarProvider>
       <div className='group flex min-h-screen w-full flex-row bg-muted/40'>
