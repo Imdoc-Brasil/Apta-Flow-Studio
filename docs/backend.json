@@ -1,109 +1,534 @@
-
 {
   "entities": {
-    "User": {
-      "title": "User",
-      "description": "Represents a user of the application.",
+    "Client": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Client",
       "type": "object",
+      "description": "Represents a client company (Pessoa Jurídica) managed within the system.",
       "properties": {
-        "uid": {
+        "id": {
           "type": "string",
-          "description": "The unique ID of the user."
+          "description": "Unique identifier for the Client entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the client company."
+        },
+        "cnpj": {
+          "type": "string",
+          "description": "The CNPJ (Brazilian corporate tax ID) of the client company."
+        },
+        "contactName": {
+          "type": "string",
+          "description": "Name of the primary contact person at the client company."
+        },
+        "contactEmail": {
+          "type": "string",
+          "description": "Email address of the primary contact person at the client company.",
+          "format": "email"
+        },
+        "address": {
+          "type": "string",
+          "description": "The physical address of the client company."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "cnpj",
+        "contactName",
+        "contactEmail"
+      ]
+    },
+    "Employee": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Employee",
+      "type": "object",
+      "description": "Represents an employee within the system.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Employee entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The full name of the employee."
         },
         "email": {
           "type": "string",
-          "format": "email",
-          "description": "The email address of the user."
+          "description": "The email address of the employee.",
+          "format": "email"
         },
-        "displayName": {
+        "jobTitle": {
           "type": "string",
-          "description": "The display name of the user."
+          "description": "The job title of the employee."
+        },
+        "phoneNumber": {
+          "type": "string",
+          "description": "The phone number of the employee."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "email",
+        "jobTitle"
+      ]
+    },
+    "Contract": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Contract",
+      "type": "object",
+      "description": "Represents a contract or service agreement.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Contract entity."
+        },
+        "clientId": {
+          "type": "string",
+          "description": "Reference to Client. (Relationship: Client 1:N Contract)"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name or title of the contract."
+        },
+        "startDate": {
+          "type": "string",
+          "description": "The start date of the contract.",
+          "format": "date-time"
+        },
+        "endDate": {
+          "type": "string",
+          "description": "The end date of the contract.",
+          "format": "date-time"
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the contract terms and services."
+        },
+        "documentUrl": {
+          "type": "string",
+          "description": "URL to the contract document.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "clientId",
+        "name",
+        "startDate",
+        "endDate",
+        "documentUrl"
+      ]
+    },
+    "ServiceRequest": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ServiceRequest",
+      "type": "object",
+      "description": "Represents a service request submitted by a client.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ServiceRequest entity."
+        },
+        "clientId": {
+          "type": "string",
+          "description": "Reference to Client. (Relationship: Client 1:N ServiceRequest)"
+        },
+        "employeeId": {
+          "type": "string",
+          "description": "Reference to Employee. (Relationship: Employee 1:N ServiceRequest).  Assigned employee."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title or subject of the service request."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the service request."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the service request (e.g., Open, In Progress, Resolved)."
+        },
+        "priority": {
+          "type": "string",
+          "description": "The priority of the service request (e.g., High, Medium, Low)."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The date and time the service request was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "clientId",
+        "title",
+        "description",
+        "status",
+        "priority",
+        "createdAt"
+      ]
+    },
+    "SLA": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SLA",
+      "type": "object",
+      "description": "Represents a Service Level Agreement.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the SLA entity."
+        },
+        "clientId": {
+          "type": "string",
+          "description": "Reference to Client. (Relationship: Client 1:N SLA)"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name or title of the SLA."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the SLA terms."
+        },
+        "targetResolutionTime": {
+          "type": "number",
+          "description": "The target resolution time for service requests, in hours."
+        },
+        "penaltyClause": {
+          "type": "string",
+          "description": "Details about the penalty clause if the SLA is not met."
+        }
+      },
+      "required": [
+        "id",
+        "clientId",
+        "name",
+        "description",
+        "targetResolutionTime"
+      ]
+    },
+    "OKR": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "OKR",
+      "type": "object",
+      "description": "Represents an Objective and Key Results.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the OKR entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the OKR."
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of the OKR."
+        },
+        "targetValue": {
+          "type": "number",
+          "description": "The target value for the OKR."
+        },
+        "currentValue": {
+          "type": "number",
+          "description": "The current value of the OKR."
+        },
+        "startDate": {
+          "type": "string",
+          "description": "The start date of the OKR.",
+          "format": "date-time"
+        },
+        "endDate": {
+          "type": "string",
+          "description": "The end date of the OKR.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "targetValue",
+        "currentValue",
+        "startDate",
+        "endDate"
+      ]
+    },
+    "ProcessToolUsage": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ProcessToolUsage",
+      "type": "object",
+      "description": "Represents the suggestion and justifications for using different process management tools",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ProcessToolUsage entity."
+        },
+        "serviceRequestId": {
+          "type": "string",
+          "description": "Reference to ServiceRequest. (Relationship: ServiceRequest 1:N ProcessToolUsage)"
+        },
+        "toolName": {
+          "type": "string",
+          "description": "Name of the process tool (e.g., Kanban, Timeline, PDCA, 5W2H, Fishbone)."
+        },
+        "justification": {
+          "type": "string",
+          "description": "Justification, provided by a GenAI, for using the suggested process tool."
+        }
+      },
+      "required": [
+        "id",
+        "serviceRequestId",
+        "toolName",
+        "justification"
+      ]
+    },
+    "Report": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Report",
+      "type": "object",
+      "description": "Represents a generated report.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Report entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the report."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the report contents."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "The date and time the report was generated.",
+          "format": "date-time"
+        },
+        "reportData": {
+          "type": "string",
+          "description": "The data contained within the report, potentially in JSON format."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "createdAt",
+        "reportData"
+      ]
+    },
+    "SuperAdminProfile": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "SuperAdminProfile",
+      "type": "object",
+      "description": "Represents the profile of a super administrator.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the SuperAdminProfile entity."
+        },
+        "employeeId": {
+          "type": "string",
+          "description": "Reference to Employee. (Relationship: Employee 1:1 SuperAdminProfile)"
+        },
+        "username": {
+          "type": "string",
+          "description": "Username of the super administrator."
+        },
+        "email": {
+          "type": "string",
+          "description": "Email address of the super administrator.",
+          "format": "email"
         },
         "role": {
           "type": "string",
-          "description": "The role of the user, used for access control.",
-          "enum": ["superadmin", "admin", "medico", "staff", "cliente"]
+          "description": "Role of the super administrator. For future use."
         }
       },
-      "required": ["uid", "email"]
-    },
-    "Client": {
-      "title": "Client",
-      "description": "Represents a client company.",
-      "type": "object",
-      "properties": {
-        "contractId": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "cnpj": {
-          "type": "string"
-        },
-        "status": {
-          "type": "string",
-          "enum": ["Ativo", "Inativo"]
-        },
-        "responsibleName": {
-          "type": "string"
-        },
-        "responsibleContact": {
-          "type": "string"
-        }
-      },
-      "required": ["contractId", "name", "cnpj"]
-    },
-    "Employee": {
-      "title": "Employee",
-      "description": "Represents an employee of a client company.",
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
-        },
-        "roleId": {
-          "type": "string"
-        },
-        "clientId": {
-          "type": "string"
-        },
-        "email": {
-          "type": "string",
-          "format": "email"
-        },
-        "status": {
-          "type": "string",
-          "enum": ["Ativo", "Férias", "Desligado"]
-        }
-      },
-      "required": ["id", "name", "clientId"]
+      "required": [
+        "id",
+        "employeeId",
+        "username",
+        "email"
+      ]
     }
   },
   "auth": {
-    "providers": ["password", "google.com"]
+    "providers": [
+      "password",
+      "anonymous"
+    ]
   },
   "firestore": {
-    "/users/{userId}": {
-      "schema": {
-        "$ref": "#/entities/User"
+    "structure": [
+      {
+        "path": "/clients/{clientId}",
+        "definition": {
+          "entityName": "Client",
+          "schema": {
+            "$ref": "#/backend/entities/Client"
+          },
+          "description": "Stores information about client companies (Pessoa Jurídica).",
+          "params": [
+            {
+              "name": "clientId",
+              "description": "The unique identifier of the client."
+            }
+          ]
+        }
       },
-      "description": "Stores public information for each user."
-    },
-    "/clients/{clientId}": {
-      "schema": {
-        "$ref": "#/entities/Client"
+      {
+        "path": "/employees/{employeeId}",
+        "definition": {
+          "entityName": "Employee",
+          "schema": {
+            "$ref": "#/backend/entities/Employee"
+          },
+          "description": "Stores information about employees.",
+          "params": [
+            {
+              "name": "employeeId",
+              "description": "The unique identifier of the employee."
+            }
+          ]
+        }
       },
-      "description": "Collection of all client companies."
-    },
-    "/clients/{clientId}/employees/{employeeId}": {
-      "schema": {
-        "$ref": "#/entities/Employee"
+      {
+        "path": "/contracts/{contractId}",
+        "definition": {
+          "entityName": "Contract",
+          "schema": {
+            "$ref": "#/backend/entities/Contract"
+          },
+          "description": "Stores contract data. Connects to a Client via the `clientId` field.",
+          "params": [
+            {
+              "name": "contractId",
+              "description": "The unique identifier of the contract."
+            }
+          ]
+        }
       },
-      "description": "Subcollection for employees of a specific client."
-    }
+      {
+        "path": "/serviceRequests/{serviceRequestId}",
+        "definition": {
+          "entityName": "ServiceRequest",
+          "schema": {
+            "$ref": "#/backend/entities/ServiceRequest"
+          },
+          "description": "Stores service request tickets. Connects to a Client via the `clientId` field and an Employee via the `employeeId` field.",
+          "params": [
+            {
+              "name": "serviceRequestId",
+              "description": "The unique identifier of the service request."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/slas/{slaId}",
+        "definition": {
+          "entityName": "SLA",
+          "schema": {
+            "$ref": "#/backend/entities/SLA"
+          },
+          "description": "Stores Service Level Agreements. Connects to a Client via the `clientId` field.",
+          "params": [
+            {
+              "name": "slaId",
+              "description": "The unique identifier of the SLA."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/okrs/{okrId}",
+        "definition": {
+          "entityName": "OKR",
+          "schema": {
+            "$ref": "#/backend/entities/OKR"
+          },
+          "description": "Stores Objectives and Key Results.",
+          "params": [
+            {
+              "name": "okrId",
+              "description": "The unique identifier of the OKR."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/processToolUsages/{processToolUsageId}",
+        "definition": {
+          "entityName": "ProcessToolUsage",
+          "schema": {
+            "$ref": "#/backend/entities/ProcessToolUsage"
+          },
+          "description": "Stores GenAI-based suggestions for process tools. Connects to a Service Request via the `serviceRequestId` field.",
+          "params": [
+            {
+              "name": "processToolUsageId",
+              "description": "The unique identifier of the process tool usage entry."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/reports/{reportId}",
+        "definition": {
+          "entityName": "Report",
+          "schema": {
+            "$ref": "#/backend/entities/Report"
+          },
+          "description": "Stores analytics and reporting data.",
+          "params": [
+            {
+              "name": "reportId",
+              "description": "The unique identifier of the report."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/superAdminProfiles/{superAdminProfileId}",
+        "definition": {
+          "entityName": "SuperAdminProfile",
+          "schema": {
+            "$ref": "#/backend/entities/SuperAdminProfile"
+          },
+          "description": "Stores the profile information for super administrators.",
+          "params": [
+            {
+              "name": "superAdminProfileId",
+              "description": "The unique identifier of the super administrator profile."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_admin/{uid}",
+        "definition": {
+          "entityName": "roles_admin",
+          "schema": {
+            "$ref": "#/backend/entities/SuperAdminProfile"
+          },
+          "description": "Collection to store super admin user IDs. Existence of a document indicates admin role. The document itself can be empty.",
+          "params": [
+            {
+              "name": "uid",
+              "description": "The Firebase Auth UID of the super administrator."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "Based on the requirements, the Firestore structure is designed with the following principles:\n\n*   **Authorization Independence:**  Since we're only dealing with a SuperAdmin role initially, and focusing on the structure itself, we'll lay the groundwork for future denormalization. If other roles are introduced later with different access levels, we can denormalize authorization data (e.g., 'roles' or 'permissions') directly into the documents that require access control, avoiding `get()` calls in security rules.\n*   **Clarity and Debuggability:**  Path names are explicit, entity names are derived from the schema, and descriptions clarify the purpose of each collection and field. This helps with understanding the data model and writing security rules.\n*   **DBAC:** We will start with existence-based global roles. If more complex roles are required in the future, the `SuperAdminProfile` can be extended to include a `role` field to differentiate access within the super admin role, or extended for more RBAC scenarios.\n*   **QAPs (Rules are not Filters):**  Currently, this is handled by structural segregation (putting entities with similar access requirements into their own collections).\n\nThe core data structure recommendations include:\n\n1.  **Clients Collection:** `/clients/{clientId}` stores information about client companies.\n2.  **Employees Collection:** `/employees/{employeeId}` stores information about employees.\n3.  **Contracts Collection:** `/contracts/{contractId}` stores contract data.  The `clientId` field establishes the 1:N relationship between Clients and Contracts.\n4.  **Service Requests Collection:** `/serviceRequests/{serviceRequestId}` stores service request tickets. The `clientId` and `employeeId` fields establish the 1:N relationships between Clients/Employees and ServiceRequests.\n5.  **SLAs Collection:** `/slas/{slaId}` stores Service Level Agreements.  The `clientId` field establishes the 1:N relationship between Clients and SLAs.\n6.  **OKRs Collection:** `/okrs/{okrId}` stores Objectives and Key Results.\n7.  **Process Tool Usage Collection:** `/processToolUsages/{processToolUsageId}` stores GenAI-based suggestions for process tools related to service requests. The `serviceRequestId` establishes the 1:N relationship between ServiceRequests and ProcessToolUsages.\n8.  **Reports Collection:** `/reports/{reportId}` stores analytics and reporting data.\n9. **Super Admin Profile Collection:** `/superAdminProfiles/{superAdminProfileId}` holds information for super administrators.\n10. **Roles Admin Collection:** `/roles_admin/{uid}` stores the UIDs of super administrators.\n\nThe structure leverages hierarchical paths for user-owned data (although initially just for super admins). This approach provides simple and secure access control. As the system evolves, the structure will support more complex authorization scenarios with the appropriate level of denormalization."
   }
 }
