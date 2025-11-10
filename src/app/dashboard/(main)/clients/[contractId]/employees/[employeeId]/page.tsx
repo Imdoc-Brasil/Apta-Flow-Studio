@@ -76,18 +76,41 @@ export default function EmployeeDetailsPage() {
   const employeeId = params.employeeId as string
 
   const employeeData = useMemo(() => getEmployeeById(employeeId), [employeeId])
-  
+
   const episDeliveredCount = useMemo(() => {
-    return initialEpiDeliveries.filter(d => d.employeeId === employeeId).length
+    return initialEpiDeliveries.filter((d) => d.employeeId === employeeId)
+      .length
   }, [employeeId])
 
   const summaryIndicators = [
-    { title: 'ASO', status: 'Em dia', variant: 'secondary', days: 'Vence em 280 dias' },
-    { title: 'Treinamentos Obrigatórios', status: 'Em dia', variant: 'secondary', days: 'Todos concluídos' },
-    { title: 'EPIs Essenciais', status: episDeliveredCount > 0 ? 'Em dia' : 'Atenção', variant: episDeliveredCount > 0 ? 'secondary' : 'destructive', days: episDeliveredCount > 0 ? `${episDeliveredCount} itens entregues` : 'Nenhum item entregue' },
-    { title: 'Vacinação', status: 'Em dia', variant: 'secondary', days: 'Nenhuma pendência' },
-]
-
+    {
+      title: 'ASO',
+      status: 'Em dia',
+      variant: 'secondary',
+      days: 'Vence em 280 dias',
+    },
+    {
+      title: 'Treinamentos Obrigatórios',
+      status: 'Em dia',
+      variant: 'secondary',
+      days: 'Todos concluídos',
+    },
+    {
+      title: 'EPIs Essenciais',
+      status: episDeliveredCount > 0 ? 'Em dia' : 'Atenção',
+      variant: episDeliveredCount > 0 ? 'secondary' : 'destructive',
+      days:
+        episDeliveredCount > 0
+          ? `${episDeliveredCount} itens entregues`
+          : 'Nenhum item entregue',
+    },
+    {
+      title: 'Vacinação',
+      status: 'Em dia',
+      variant: 'secondary',
+      days: 'Nenhuma pendência',
+    },
+  ]
 
   const employeeDetails = useMemo(() => {
     if (!employeeData) return null
@@ -118,15 +141,15 @@ export default function EmployeeDetailsPage() {
     const mainWorkstation = role.mainWorkstationId
       ? initialEnvironmentsData.find((e) => e.id === role.mainWorkstationId)
       : null
-      
+
     // Simplified logic: find processes where the primary sector matches the employee's sector
-    const processes = initialProcessesData.filter(p => {
-        const firstStep = p.steps[0];
-        if (firstStep && firstStep.sectorId) {
-            return firstStep.sectorId === sector.id;
-        }
-        return false;
-    });
+    const processes = initialProcessesData.filter((p) => {
+      const firstStep = p.steps[0]
+      if (firstStep && firstStep.sectorId) {
+        return firstStep.sectorId === sector.id
+      }
+      return false
+    })
 
     return { employee: employeeData, role, sector, unit, mainWorkstation, processes }
   }, [employeeData])
@@ -148,7 +171,8 @@ export default function EmployeeDetailsPage() {
     )
   }
 
-  const { employee, role, sector, unit, mainWorkstation, processes } = employeeDetails
+  const { employee, role, sector, unit, mainWorkstation, processes } =
+    employeeDetails
 
   return (
     <div className='grid flex-1 auto-rows-max gap-4'>
@@ -169,11 +193,13 @@ export default function EmployeeDetailsPage() {
           {employee.status}
         </Badge>
         <div className='hidden items-center gap-2 md:ml-auto md:flex'>
-           <Button asChild variant='default'>
-             <Link href={`/dashboard/clients/${contractId}/tickets?employee=${employee.id}`}>
-                <Stethoscope className="mr-2 h-4 w-4" /> Solicitar Exame / ASO
-             </Link>
-           </Button>
+          <Button asChild variant='default'>
+            <Link
+              href={`/dashboard/clients/${contractId}/tickets?employee=${employee.id}`}
+            >
+              <Stethoscope className='mr-2 h-4 w-4' /> Solicitar Exame / ASO
+            </Link>
+          </Button>
         </div>
       </div>
       <div className='grid gap-4 md:grid-cols-[1fr_320px] lg:gap-8'>
@@ -218,7 +244,7 @@ export default function EmployeeDetailsPage() {
                       />
                     </p>
                   </div>
-                   <div className='space-y-1'>
+                  <div className='space-y-1'>
                     <p className='text-sm font-medium text-muted-foreground'>
                       Status
                     </p>
@@ -235,136 +261,181 @@ export default function EmployeeDetailsPage() {
             <CardHeader>
               <CardTitle>Informações sobre o Ambiente de Trabalho</CardTitle>
             </CardHeader>
-             <CardContent className='grid gap-4'>
-                <div className='grid grid-cols-2 gap-4'>
-                     <div className='space-y-1'>
-                        <p className='text-sm font-medium text-muted-foreground'>Unidade</p>
-                        <p>{unit?.name || 'N/A'}</p>
-                    </div>
-                     <div className='space-y-1'>
-                        <p className='text-sm font-medium text-muted-foreground'>Setor</p>
-                        <p>{sector?.name || 'N/A'}</p>
-                    </div>
-                     <div className='space-y-1'>
-                        <p className='text-sm font-medium text-muted-foreground'>Cargo</p>
-                        <p>{role?.name || 'N/A'}</p>
-                    </div>
-                    <div className='space-y-1'>
-                        <p className='text-sm font-medium text-muted-foreground'>Posto de Trabalho Principal</p>
-                        <p>{mainWorkstation?.name || 'N/A'}</p>
-                    </div>
+            <CardContent className='grid gap-4'>
+              <div className='grid grid-cols-2 gap-4'>
+                <div className='space-y-1'>
+                  <p className='text-sm font-medium text-muted-foreground'>
+                    Unidade
+                  </p>
+                  <p>{unit?.name || 'N/A'}</p>
                 </div>
-                <Separator />
-                <div className='space-y-2'>
-                    <p className='text-sm font-medium text-muted-foreground'>Atividades Desenvolvidas</p>
-                    <div className='flex flex-wrap gap-1'>
-                        {role?.activities.map(activity => (
-                            <Badge key={activity} variant="outline">{activity}</Badge>
-                        ))}
-                    </div>
+                <div className='space-y-1'>
+                  <p className='text-sm font-medium text-muted-foreground'>
+                    Setor
+                  </p>
+                  <p>{sector?.name || 'N/A'}</p>
                 </div>
-                <Separator />
-                <div className='space-y-2'>
-                    <p className='text-sm font-medium text-muted-foreground'>Etapas/Processos Envolvidos</p>
-                    <div className='flex flex-wrap gap-1'>
-                         {processes.length > 0 ? processes.map(process => (
-                            <Badge key={process.id} variant="secondary">{process.name}</Badge>
-                        )) : <p className='text-xs text-muted-foreground'>Nenhum processo principal associado a este setor.</p>}
-                    </div>
+                <div className='space-y-1'>
+                  <p className='text-sm font-medium text-muted-foreground'>
+                    Cargo
+                  </p>
+                  <p>{role?.name || 'N/A'}</p>
                 </div>
+                <div className='space-y-1'>
+                  <p className='text-sm font-medium text-muted-foreground'>
+                    Posto de Trabalho Principal
+                  </p>
+                  <p>{mainWorkstation?.name || 'N/A'}</p>
+                </div>
+              </div>
+              <Separator />
+              <div className='space-y-2'>
+                <p className='text-sm font-medium text-muted-foreground'>
+                  Atividades Desenvolvidas
+                </p>
+                <div className='flex flex-wrap gap-1'>
+                  {role?.activities.map((activity) => (
+                    <Badge key={activity} variant='outline'>
+                      {activity}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+              <Separator />
+              <div className='space-y-2'>
+                <p className='text-sm font-medium text-muted-foreground'>
+                  Etapas/Processos Envolvidos
+                </p>
+                <div className='flex flex-wrap gap-1'>
+                  {processes.length > 0 ? (
+                    processes.map((process) => (
+                      <Badge key={process.id} variant='secondary'>
+                        {process.name}
+                      </Badge>
+                    ))
+                  ) : (
+                    <p className='text-xs text-muted-foreground'>
+                      Nenhum processo principal associado a este setor.
+                    </p>
+                  )}
+                </div>
+              </div>
             </CardContent>
           </Card>
-          
-          <Card>
-              <CardHeader>
-                  <CardTitle>Documentos Obrigatórios</CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-2">
-                 <Link href={`/dashboard/clients/${contractId}/asos`} className="flex items-center justify-between rounded-md p-3 bg-background hover:bg-accent transition-colors border">
-                    <div className="flex items-center gap-3">
-                        <ClipboardCheck className="h-5 w-5 text-muted-foreground" />
-                        <span className="font-medium">Gestão de ASOs</span>
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                 </Link>
-                 <Link href={`/dashboard/clients/${contractId}/trainings`} className="flex items-center justify-between rounded-md p-3 bg-background hover:bg-accent transition-colors border">
-                    <div className="flex items-center gap-3">
-                        <GraduationCap className="h-5 w-5 text-muted-foreground" />
-                        <span className="font-medium">Registros de Treinamentos</span>
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                 </Link>
-                 <Link href={`/dashboard/clients/${contractId}/epis`} className="flex items-center justify-between rounded-md p-3 bg-background hover:bg-accent transition-colors border">
-                    <div className="flex items-center gap-3">
-                        <HardHat className="h-5 w-5 text-muted-foreground" />
-                        <span className="font-medium">Ficha de EPIs</span>
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                 </Link>
-                 <Link href={`/dashboard/clients/${contractId}/vaccines`} className="flex items-center justify-between rounded-md p-3 bg-background hover:bg-accent transition-colors border">
-                    <div className="flex items-center gap-3">
-                        <Syringe className="h-5 w-5 text-muted-foreground" />
-                        <span className="font-medium">Registros de Vacinas</span>
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                 </Link>
-              </CardContent>
-          </Card>
-          
+
           <Card>
             <CardHeader>
-                <CardTitle>Segurança do Trabalho</CardTitle>
+              <CardTitle>Documentos Obrigatórios</CardTitle>
             </CardHeader>
-            <CardContent>
-                 <Button variant="outline" className="w-full">
-                    <ShieldAlert className="mr-2 h-4 w-4" /> Ver Registros de Eventos e Acidentes
-                </Button>
+            <CardContent className='grid gap-2'>
+              <Link
+                href={`/dashboard/clients/${contractId}/asos`}
+                className='flex items-center justify-between rounded-md p-3 bg-background hover:bg-accent transition-colors border'
+              >
+                <div className='flex items-center gap-3'>
+                  <ClipboardCheck className='h-5 w-5 text-muted-foreground' />
+                  <span className='font-medium'>Gestão de ASOs</span>
+                </div>
+                <ChevronRight className='h-5 w-5 text-muted-foreground' />
+              </Link>
+              <Link
+                href={`/dashboard/clients/${contractId}/trainings`}
+                className='flex items-center justify-between rounded-md p-3 bg-background hover:bg-accent transition-colors border'
+              >
+                <div className='flex items-center gap-3'>
+                  <GraduationCap className='h-5 w-5 text-muted-foreground' />
+                  <span className='font-medium'>
+                    Registros de Treinamentos
+                  </span>
+                </div>
+                <ChevronRight className='h-5 w-5 text-muted-foreground' />
+              </Link>
+              <Link
+                href={`/dashboard/clients/${contractId}/epis`}
+                className='flex items-center justify-between rounded-md p-3 bg-background hover:bg-accent transition-colors border'
+              >
+                <div className='flex items-center gap-3'>
+                  <HardHat className='h-5 w-5 text-muted-foreground' />
+                  <span className='font-medium'>Ficha de EPIs</span>
+                </div>
+                <ChevronRight className='h-5 w-5 text-muted-foreground' />
+              </Link>
+              <Link
+                href={`/dashboard/clients/${contractId}/vaccines`}
+                className='flex items-center justify-between rounded-md p-3 bg-background hover:bg-accent transition-colors border'
+              >
+                <div className='flex items-center gap-3'>
+                  <Syringe className='h-5 w-5 text-muted-foreground' />
+                  <span className='font-medium'>Registros de Vacinas</span>
+                </div>
+                <ChevronRight className='h-5 w-5 text-muted-foreground' />
+              </Link>
             </CardContent>
           </Card>
-          
-           <Card>
+
+          <Card>
             <CardHeader>
-                <CardTitle>Documentos de Saúde</CardTitle>
+              <CardTitle>Segurança do Trabalho</CardTitle>
             </CardHeader>
             <CardContent>
-                 <Button variant="secondary" className="w-full">
-                    <FileText className="mr-2 h-4 w-4" /> Acessar Prontuário Médico Digital
-                </Button>
+              <Button variant='outline' className='w-full'>
+                <ShieldAlert className='mr-2 h-4 w-4' /> Ver Registros de
+                Eventos e Acidentes
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Documentos de Saúde</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Button variant='secondary' className='w-full'>
+                <FileText className='mr-2 h-4 w-4' /> Acessar Prontuário Médico
+                Digital
+              </Button>
             </CardContent>
           </Card>
         </div>
 
         <div className='grid auto-rows-max items-start gap-4 lg:gap-8'>
-             <Card>
-              <CardHeader>
-                <CardTitle>Resumo e Alertas</CardTitle>
-              </CardHeader>
-              <CardContent className='grid gap-4'>
-                {summaryIndicators.map(indicator => (
-                    <div key={indicator.title} className="p-3 border rounded-lg">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium">{indicator.title}</span>
-                             <Badge variant={indicator.variant as any}>{indicator.status}</Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground pt-1">{indicator.days}</p>
-                    </div>
-                ))}
-                
-                <Separator />
-                
-                <div className='space-y-3'>
-                    <h4 className='font-medium'>Próximos Agendamentos</h4>
-                    <div className="flex items-start gap-3 text-sm">
-                        <CalendarClock className="h-5 w-5 text-muted-foreground mt-0.5" />
-                        <div>
-                            <p className="font-medium">Exame Periódico</p>
-                            <p className="text-muted-foreground">Agendado para: 15/08/2024</p>
-                        </div>
-                    </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Resumo e Alertas</CardTitle>
+            </CardHeader>
+            <CardContent className='grid gap-4'>
+              {summaryIndicators.map((indicator) => (
+                <div key={indicator.title} className='p-3 border rounded-lg'>
+                  <div className='flex items-center justify-between'>
+                    <span className='text-sm font-medium'>
+                      {indicator.title}
+                    </span>
+                    <Badge variant={indicator.variant as any}>
+                      {indicator.status}
+                    </Badge>
+                  </div>
+                  <p className='text-xs text-muted-foreground pt-1'>
+                    {indicator.days}
+                  </p>
                 </div>
-                
-              </CardContent>
-            </Card>
+              ))}
+
+              <Separator />
+
+              <div className='space-y-3'>
+                <h4 className='font-medium'>Próximos Agendamentos</h4>
+                <div className='flex items-start gap-3 text-sm'>
+                  <CalendarClock className='h-5 w-5 text-muted-foreground mt-0.5' />
+                  <div>
+                    <p className='font-medium'>Exame Periódico</p>
+                    <p className='text-muted-foreground'>
+                      Agendado para: 15/08/2024
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

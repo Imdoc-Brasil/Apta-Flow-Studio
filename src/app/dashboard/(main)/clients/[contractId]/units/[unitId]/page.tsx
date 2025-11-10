@@ -36,7 +36,7 @@ import {
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useToast } from '@/hooks/use-toast'
 
@@ -53,21 +53,26 @@ export default function UnitDetailsPage() {
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
-  const sectorsInUnit = initialSectorsData.filter((s) => s.unitId === unitId)
-  const sectorIdsInUnit = sectorsInUnit.map((s) => s.id)
+  const { totalSectors, totalRoles, totalEmployees } = useMemo(() => {
+    const sectorsInUnit = initialSectorsData.filter((s) => s.unitId === unitId)
+    const sectorIdsInUnit = sectorsInUnit.map((s) => s.id)
 
-  const rolesInUnit = initialRolesData.filter((r) =>
-    sectorIdsInUnit.includes(r.sectorId)
-  )
-  const roleIdsInUnit = rolesInUnit.map((r) => r.id)
+    const rolesInUnit = initialRolesData.filter((r) =>
+      sectorIdsInUnit.includes(r.sectorId)
+    )
+    const roleIdsInUnit = rolesInUnit.map((r) => r.id)
 
-  const employeesInUnit = initialEmployeesData.filter(
-    (e) => e.status === 'Ativo' && roleIdsInUnit.includes(e.roleId)
-  )
+    const employeesInUnit = initialEmployeesData.filter(
+      (e) => e.status === 'Ativo' && roleIdsInUnit.includes(e.roleId)
+    )
 
-  const totalSectors = sectorsInUnit.length
-  const totalRoles = rolesInUnit.length
-  const totalEmployees = employeesInUnit.length
+    return {
+      totalSectors: sectorsInUnit.length,
+      totalRoles: rolesInUnit.length,
+      totalEmployees: employeesInUnit.length,
+    }
+  }, [unitId])
+
   const expiredAsos = 0 // Placeholder
   const pcdEmployees = 0 // Placeholder
   const expiredTrainings = 0 // Placeholder
@@ -253,6 +258,7 @@ export default function UnitDetailsPage() {
                 <Link
                   key={navUnit.id}
                   href={`/dashboard/clients/${contractId}/units/${navUnit.id}`}
+                  onClick={() => setCurrentUnit(getUnitById(navUnit.id))}
                 >
                   <DropdownMenuItem
                     disabled={navUnit.id === unitId}
@@ -378,7 +384,8 @@ export default function UnitDetailsPage() {
                     Cidade / Estado
                   </p>
                   <p>
-                    {currentUnit.propertyInfo.city} / {currentUnit.propertyInfo.state}
+                    {currentUnit.propertyInfo.city} /{' '}
+                    {currentUnit.propertyInfo.state}
                   </p>
                 </div>
                 <div className='space-y-1'>
@@ -471,7 +478,7 @@ export default function UnitDetailsPage() {
                     {expiredAsos}
                   </span>
                 </Link>
-                 <Link
+                <Link
                   href='#'
                   className='flex items-center justify-between rounded-md border p-3 bg-background hover:bg-accent hover:text-accent-foreground transition-colors'
                 >
@@ -487,14 +494,14 @@ export default function UnitDetailsPage() {
                     {expiredTrainings}
                   </span>
                 </Link>
-                 <Link
+                <Link
                   href='#'
                   className='flex items-center justify-between rounded-md border p-3 bg-background hover:bg-accent hover:text-accent-foreground transition-colors'
                 >
                   <span className='text-muted-foreground'>
                     Vacinas vencidas
                   </span>
-                   <span
+                  <span
                     className={cn(
                       'font-semibold',
                       expiredVaccines > 0 && 'text-destructive'
