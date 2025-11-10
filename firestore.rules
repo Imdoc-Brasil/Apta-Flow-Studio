@@ -1,26 +1,4 @@
 
-/**
- * @file Firestore Security Rules
- * @description This ruleset enforces a role-based access control (RBAC) model with a single "superAdmin" role,
- *              using the `roles_admin` collection to manage administrator privileges.
- *
- * Data Structure:
- * - /clients/{clientId}: Stores information about client companies.
- * - /employees/{employeeId}: Stores information about employees.
- * - /contracts/{contractId}: Stores contract data, linked to clients.
- * - /serviceRequests/{serviceRequestId}: Stores service requests, linked to clients and employees.
- * - /slas/{slaId}: Stores Service Level Agreements, linked to clients.
- * - /okrs/{okrId}: Stores Objectives and Key Results.
- * - /processToolUsages/{processToolUsageId}: Stores process tool usage suggestions, linked to service requests.
- * - /reports/{reportId}: Stores analytics and reporting data.
- * - /superAdminProfiles/{superAdminProfileId}: Stores profile information for super administrators.
- * - /roles_admin/{uid}: Stores user IDs with super administrator privileges.
- *
- * Key Security Decisions:
- * - Super admins, as determined by presence in `/roles_admin/{uid}`, have full CRUD access to all collections.
- * - Non-authenticated users are denied access to all collections.
- * - Data shape validation is relaxed in this prototyping phase to allow for rapid iteration.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
