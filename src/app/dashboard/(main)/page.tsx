@@ -31,8 +31,8 @@ import Link from 'next/link'
 import { useTicketStore } from './tickets/tickets-store'
 import { initialClientsData } from '@/app/dashboard/(main)/clients/data'
 import { initialStaffsData } from './employees/page'
-import { useUser, useFirestore } from '@/firebase'
-import { doc, getDoc, setDoc } from 'firebase/firestore'
+import { useUser, useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase'
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
 
 const kpiDataStatic = [
@@ -58,29 +58,47 @@ export default function Dashboard() {
 
   useEffect(() => {
     const promoteToSuperAdmin = async () => {
-      if (!user || !firestore) return
+      if (!user || !firestore) return;
 
-      const adminRoleRef = doc(firestore, 'roles_admin', user.uid)
+      const adminRoleRef = doc(firestore, 'roles_admin', user.uid);
       try {
-        const docSnap = await getDoc(adminRoleRef)
+        const docSnap = await getDoc(adminRoleRef);
         if (!docSnap.exists()) {
-          // User is not an admin yet, let's promote them.
-          await setDoc(adminRoleRef, { createdAt: new Date() })
-          toast({
-            title: 'Bem-vindo, Superadministrador!',
-            description: 'Sua conta foi elevada para o nível de superadministrador.',
-          })
+          const creationData = { createdAt: serverTimestamp() }
+          // User is not an admin yet, promote them.
+          // This is a non-blocking write with specific error handling.
+          setDoc(adminRoleRef, creationData)
+            .then(() => {
+              toast({
+                title: 'Bem-vindo, Superadministrador!',
+                description: 'Sua conta foi elevada para o nível de superadministrador.',
+              });
+            })
+            .catch((error) => {
+              // Construct and emit the detailed error for debugging.
+              const permissionError = new FirestorePermissionError({
+                path: adminRoleRef.path,
+                operation: 'create',
+                requestResourceData: creationData,
+              });
+              errorEmitter.emit('permission-error', permissionError);
+            });
         }
       } catch (error) {
-        console.error('Erro ao verificar ou criar o perfil de admin:', error)
-        // We don't show a toast here to avoid bothering existing admins if there's a transient network issue.
+         // This will catch errors from getDoc, which is less likely to be a permission issue
+         // for this specific logic, but good to have.
+         const permissionError = new FirestorePermissionError({
+            path: adminRoleRef.path,
+            operation: 'get',
+          });
+         errorEmitter.emit('permission-error', permissionError);
       }
-    }
+    };
 
-    if (!isUserLoading) {
-      promoteToSuperAdmin()
+    if (!isUserLoading && user) {
+      promoteToSuperAdmin();
     }
-  }, [user, isUserLoading, firestore, toast])
+  }, [user, isUserLoading, firestore, toast]);
 
   const activeClientsCount = initialClientsData.filter(
     (c) => c.status === 'Ativo'
