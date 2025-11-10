@@ -1,9 +1,10 @@
 'use client'
 
 import { useUser } from '@/firebase'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useEffect } from 'react'
 import { DashboardNav } from '@/components/dashboard-nav'
+import { ClientSidebar } from '@/components/client-sidebar'
 import {
   Sidebar,
   SidebarProvider,
@@ -22,12 +23,15 @@ export default function DashboardLayout({
 }) {
   const { user, isUserLoading } = useUser()
   const router = useRouter()
+  const pathname = usePathname()
 
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login')
     }
   }, [isUserLoading, user, router])
+
+  const isClientSpecificRoute = /^\/dashboard\/clients\/.+/.test(pathname)
 
   if (isUserLoading || !user) {
     return (
@@ -38,11 +42,13 @@ export default function DashboardLayout({
     )
   }
 
+  const SidebarComponent = isClientSpecificRoute ? ClientSidebar : DashboardNav
+
   return (
     <SidebarProvider>
       <div className='group flex min-h-screen w-full flex-row bg-muted/40'>
         <Sidebar collapsible='icon'>
-          <DashboardNav />
+          <SidebarComponent />
         </Sidebar>
         <div className='flex flex-1 flex-col sm:pl-14 group-data-[state=expanded]:sm:pl-72 transition-all duration-300'>
           <header className='sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6'>
@@ -55,7 +61,7 @@ export default function DashboardLayout({
                 </Button>
               </SheetTrigger>
               <SheetContent side='left' className='sm:max-w-xs'>
-                <DashboardNav isSheet={true} />
+                <SidebarComponent isSheet={true} />
               </SheetContent>
             </Sheet>
             <Breadcrumb />
