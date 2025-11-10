@@ -55,6 +55,7 @@ export default function RecommendationMatrixPage() {
     .filter(Boolean)
 
   const inventoryRisks = initialInventory
+    .filter((inv) => inv.unitId === selectedUnit)
     .map((inv) => getHazardById(inv.hazardId))
     .filter((h) => h !== undefined)
 

@@ -1,7 +1,13 @@
 'use client'
 
-import { useState, useMemo } from 'react'
-import { MoreHorizontal, PlusCircle, Search, Trash2 } from 'lucide-react'
+import { useState, useMemo, useEffect } from 'react'
+import {
+  MoreHorizontal,
+  PlusCircle,
+  Search,
+  Trash2,
+  Filter,
+} from 'lucide-react'
 import {
   Card,
   CardContent,
@@ -47,6 +53,15 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Separator } from '@/components/ui/separator'
 import { initialActivitiesData } from '../activities/data'
+import { useSearchParams } from 'next/navigation'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 export default function RolesPage() {
   const [roles, setRoles] = useState(initialRolesData)
@@ -55,6 +70,12 @@ export default function RolesPage() {
   const [formActivities, setFormActivities] = useState<string[]>([])
   const [activityInput, setActivityInput] = useState('')
   const { toast } = useToast()
+  const searchParams = useSearchParams()
+  const urlSectorId = searchParams.get('sectorId')
+
+  const [sectorFilter, setSectorFilter] = useState<string[]>(
+    urlSectorId ? [urlSectorId] : []
+  )
 
   const sectorsWithUnit = useMemo(() => {
     return initialSectorsData.map((sector) => {
@@ -68,22 +89,34 @@ export default function RolesPage() {
   }
 
   const filteredRoles = useMemo(() => {
-    return roles.filter(
-      (role) =>
-        role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        role.description.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  }, [roles, searchTerm])
+    let filtered = roles
+    if (sectorFilter.length > 0) {
+      filtered = filtered.filter((role) => sectorFilter.includes(role.sectorId))
+    }
+    if (searchTerm) {
+      filtered = filtered.filter(
+        (role) =>
+          role.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          role.description.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    }
+    return filtered
+  }, [roles, searchTerm, sectorFilter])
 
   const handleAddActivity = () => {
-    if (activityInput.trim() && !formActivities.includes(activityInput.trim())) {
+    if (
+      activityInput.trim() &&
+      !formActivities.includes(activityInput.trim())
+    ) {
       setFormActivities([...formActivities, activityInput.trim()])
       setActivityInput('')
     }
   }
 
   const handleRemoveActivity = (activityToRemove: string) => {
-    setFormActivities(formActivities.filter(activity => activity !== activityToRemove))
+    setFormActivities(
+      formActivities.filter((activity) => activity !== activityToRemove)
+    )
   }
 
   const handleAddRole = (event: React.FormEvent<HTMLFormElement>) => {
@@ -122,19 +155,52 @@ export default function RolesPage() {
           Gerencie os cargos e suas atribuições dentro de cada setor.
         </CardDescription>
         <div className='flex items-center justify-between pt-4'>
-          <div className='relative w-full max-w-sm'>
-            <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
-            <Input
-              type='search'
-              placeholder='Buscar por nome do cargo...'
-              className='pl-8'
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className='flex items-center gap-2'>
+            <div className='relative w-full max-w-sm'>
+              <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
+              <Input
+                type='search'
+                placeholder='Buscar por nome do cargo...'
+                className='pl-8'
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant='outline' size='sm' className='h-10 gap-1'>
+                  <Filter className='h-3.5 w-3.5' />
+                  <span className='sr-only sm:not-sr-only'>Filtrar</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end'>
+                <DropdownMenuLabel>Filtrar por Setor</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {sectorsWithUnit.map((sector) => (
+                  <DropdownMenuCheckboxItem
+                    key={sector.id}
+                    checked={sectorFilter.includes(sector.id)}
+                    onCheckedChange={(checked) => {
+                      setSectorFilter((prev) =>
+                        checked
+                          ? [...prev, sector.id]
+                          : prev.filter((id) => id !== sector.id)
+                      )
+                    }}
+                  >
+                    {sector.name} ({sector.unitName})
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button size='sm' className='h-8 gap-1' onClick={() => setFormActivities([])}>
+              <Button
+                size='sm'
+                className='h-8 gap-1'
+                onClick={() => setFormActivities([])}
+              >
                 <PlusCircle className='h-3.5 w-3.5' />
                 <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
                   Adicionar Cargo
@@ -229,7 +295,7 @@ export default function RolesPage() {
                     </div>
                     <div className='space-y-2'>
                       <Label htmlFor='activities'>Atividades Principais</Label>
-                      <div className="flex gap-2">
+                      <div className='flex gap-2'>
                         <Input
                           id='activities'
                           name='activities'
@@ -243,14 +309,24 @@ export default function RolesPage() {
                           }}
                           placeholder='Digite uma atividade e tecle Enter'
                         />
-                         <Button type="button" onClick={handleAddActivity}>Adicionar</Button>
+                        <Button type='button' onClick={handleAddActivity}>
+                          Adicionar
+                        </Button>
                       </div>
-                      <div className="flex flex-wrap gap-2 mt-2">
+                      <div className='flex flex-wrap gap-2 mt-2'>
                         {formActivities.map((activity) => (
-                          <Badge key={activity} variant="secondary" className="flex items-center gap-1">
+                          <Badge
+                            key={activity}
+                            variant='secondary'
+                            className='flex items-center gap-1'
+                          >
                             {activity}
-                            <button type="button" onClick={() => handleRemoveActivity(activity)} className="rounded-full hover:bg-background/50">
-                              <Trash2 className="h-3 w-3" />
+                            <button
+                              type='button'
+                              onClick={() => handleRemoveActivity(activity)}
+                              className='rounded-full hover:bg-background/50'
+                            >
+                              <Trash2 className='h-3 w-3' />
                             </button>
                           </Badge>
                         ))}
