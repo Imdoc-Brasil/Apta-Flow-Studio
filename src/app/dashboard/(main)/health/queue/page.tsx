@@ -313,7 +313,7 @@ export default function QueuePage() {
     toast({
       title: 'Importação Iniciada!',
       description:
-        'O arquivo XML está sendo processado. Os status dos exames serão atualizados em breve.',
+        'O arquivo está sendo processado. Os status dos exames serão atualizados em breve.',
     })
     setIsImportDialogOpen(false)
   }
@@ -346,22 +346,22 @@ export default function QueuePage() {
             <DialogTrigger asChild>
               <Button variant='outline'>
                 <Upload className='mr-2 h-4 w-4' />
-                Importar Resultados (XML)
+                Importar Resultados
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Importar Resultados de Exames</DialogTitle>
                 <DialogDescription>
-                  Carregue o arquivo XML fornecido pelo laboratório parceiro
-                  para atualizar os resultados em lote.
+                  Carregue o arquivo XML ou CSV fornecido pelo laboratório para
+                  atualizar os resultados em lote.
                 </DialogDescription>
               </DialogHeader>
-              <form id='import-xml-form' onSubmit={handleImportXml}>
+              <form id='import-file-form' onSubmit={handleImportXml}>
                 <div className='grid gap-4 py-4'>
                   <div className='space-y-2'>
-                    <Label htmlFor='xml-file'>Arquivo XML</Label>
-                    <Input id='xml-file' name='xml-file' type='file' accept='.xml' required />
+                    <Label htmlFor='results-file'>Arquivo (XML ou CSV)</Label>
+                    <Input id='results-file' name='results-file' type='file' accept='.xml,.csv' required />
                   </div>
                 </div>
               </form>
@@ -372,7 +372,7 @@ export default function QueuePage() {
                 >
                   Cancelar
                 </Button>
-                <Button type='submit' form='import-xml-form'>
+                <Button type='submit' form='import-file-form'>
                   Importar
                 </Button>
               </DialogFooter>
@@ -527,5 +527,3 @@ export default function QueuePage() {
     </div>
   )
 }
-
-    
