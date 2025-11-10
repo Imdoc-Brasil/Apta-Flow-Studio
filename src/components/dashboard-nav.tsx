@@ -37,6 +37,8 @@ import {
 } from '@/components/ui/collapsible'
 import { useState, useEffect } from 'react'
 import { Logo } from './logo'
+import { useAdmin } from '@/firebase/auth/use-admin'
+import { ClientSidebar } from './client-sidebar'
 
 const mainNavItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Painel' },
@@ -92,6 +94,7 @@ const saudeSubNavItems = [
 
 export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
   const pathname = usePathname()
+  const { isAdmin, isAdminLoading } = useAdmin()
 
   const getIsActive = (href: string) => {
     // Exact match for the main dashboard page
@@ -124,6 +127,13 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
     else setIsPortalLaudosOpen(false)
   }, [pathname, isSaudeActive])
 
+  // If the user is determined to be a client, render the client-specific sidebar
+  const isClientRoute = pathname.includes('/dashboard/clients/')
+  if (!isAdminLoading && !isAdmin && isClientRoute) {
+    return <ClientSidebar />
+  }
+
+  // Admin view
   return (
     <>
       <SidebarHeader className='flex items-center justify-between'>

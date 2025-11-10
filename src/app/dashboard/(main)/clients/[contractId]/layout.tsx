@@ -1,61 +1,33 @@
 'use client'
 
 import { ClientSidebar } from '@/components/client-sidebar'
-import { Button } from '@/components/ui/button'
-import { PanelLeft } from 'lucide-react'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
-import { Logo } from '@/components/logo'
-import Link from 'next/link'
-import { SidebarProvider } from '@/components/ui/sidebar'
-import { UserNav } from '@/components/user-nav'
-import { Breadcrumb } from '@/components/breadcrumb'
+import { useAdmin } from '@/firebase'
 
 export default function ClientDetailLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const { isAdmin, isAdminLoading } = useAdmin()
+
+  // For admins, the main dashboard layout already provides the sidebar structure.
+  // We just render the children.
+  if (isAdminLoading || isAdmin) {
+    return <>{children}</>
+  }
+
+  // For non-admins (clients), we render the specific client-focused layout.
+  // This layout will have its own sidebar defined in ClientSidebar.
   return (
-    <SidebarProvider>
-      <div className='flex min-h-screen w-full flex-col bg-muted/40'>
-        <aside className='fixed inset-y-0 left-0 z-10 hidden w-72 flex-col border-r bg-background sm:flex'>
-          <ClientSidebar />
-        </aside>
-        <div className='flex flex-col sm:pl-72'>
-          <header className='sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6'>
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button size='icon' variant='outline' className='sm:hidden'>
-                  <PanelLeft className='h-5 w-5' />
-                  <span className='sr-only'>Alternar Menu</span>
-                </Button>
-              </SheetTrigger>
-              <SheetContent side='left' className='sm:max-w-xs'>
-                <nav className='grid gap-6 text-lg font-medium'>
-                  <Link
-                    href='/'
-                    className='group flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-full bg-primary text-lg font-semibold text-primary-foreground md:text-base'
-                  >
-                    <Logo className='text-primary-foreground' />
-                    <span className='sr-only'>AptaFlow</span>
-                  </Link>
-                  <ClientSidebar />
-                </nav>
-              </SheetContent>
-            </Sheet>
-
-            <Breadcrumb />
-
-            <div className='relative ml-auto flex-1 md:grow-0'>
-              {/* This can be a global search in the future */}
-            </div>
-            <UserNav />
-          </header>
-          <main className='flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6'>
-            {children}
-          </main>
-        </div>
+    <div className='flex min-h-screen w-full flex-col bg-muted/40'>
+      <aside className='fixed inset-y-0 left-0 z-10 hidden w-72 flex-col border-r bg-background sm:flex'>
+        <ClientSidebar />
+      </aside>
+      <div className='flex flex-col sm:pl-72'>
+        <main className='flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6'>
+          {children}
+        </main>
       </div>
-    </SidebarProvider>
+    </div>
   )
 }
