@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { MoreHorizontal, PlusCircle } from 'lucide-react'
+import { MoreHorizontal, PlusCircle, Users } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -147,139 +147,162 @@ export default function AsosPage() {
               colaboradores.
             </CardDescription>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <PlusCircle className='mr-2 h-4 w-4' />
-                Novo Pedido de Atendimento
-              </Button>
-            </DialogTrigger>
-            <DialogContent className='sm:max-w-lg'>
-              <DialogHeader>
-                <DialogTitle>Novo Pedido de Atendimento</DialogTitle>
-                <DialogDescription>
-                  Selecione o colaborador e o tipo de avaliação para gerar um
-                  novo pedido.
-                </DialogDescription>
-              </DialogHeader>
-              <form id='new-aso-request-form' onSubmit={handleNewRequest}>
-                <div className='grid gap-6 py-4'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='employeeId'>Colaborador</Label>
-                    <Select name='employeeId' required>
-                      <SelectTrigger>
-                        <SelectValue placeholder='Selecione o colaborador' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {initialEmployeesData.map((emp) => (
-                          <SelectItem key={emp.id} value={emp.id}>
-                            {emp.name}
+          <div className='flex items-center gap-2'>
+            <Button variant='outline'>
+              <Users className='mr-2 h-4 w-4' />
+              Pedido em Massa
+            </Button>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <PlusCircle className='mr-2 h-4 w-4' />
+                  Novo Pedido de Atendimento
+                </Button>
+              </DialogTrigger>
+              <DialogContent className='sm:max-w-lg'>
+                <DialogHeader>
+                  <DialogTitle>Novo Pedido de Atendimento</DialogTitle>
+                  <DialogDescription>
+                    Selecione o colaborador e o tipo de avaliação para gerar um
+                    novo pedido.
+                  </DialogDescription>
+                </DialogHeader>
+                <form id='new-aso-request-form' onSubmit={handleNewRequest}>
+                  <div className='grid gap-6 py-4'>
+                    <div className='space-y-2'>
+                      <Label htmlFor='employeeId'>Colaborador</Label>
+                      <Select name='employeeId' required>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Selecione o colaborador' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {initialEmployeesData.map((emp) => (
+                            <SelectItem key={emp.id} value={emp.id}>
+                              {emp.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='solicitationType'>
+                        Tipo de Atendimento
+                      </Label>
+                      <Select name='solicitationType' required>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Selecione o tipo de avaliação' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value='Avaliação Admissional'>
+                            Avaliação Admissional
                           </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='solicitationType'>
-                      Tipo de Atendimento
-                    </Label>
-                    <Select name='solicitationType' required>
-                      <SelectTrigger>
-                        <SelectValue placeholder='Selecione o tipo de avaliação' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value='Avaliação Admissional'>
-                          Avaliação Admissional
-                        </SelectItem>
-                        <SelectItem value='Avaliação Periódica'>
-                          Avaliação Periódica
-                        </SelectItem>
-                        <SelectItem value='Avaliação de Retorno ao Trabalho'>
-                          Avaliação de Retorno ao Trabalho
-                        </SelectItem>
-                        <SelectItem value='Avaliação de Mudança de Risco'>
-                          Avaliação de Mudança de Risco
-                        </SelectItem>
-                        <SelectItem value='Avaliação Demissional'>
-                          Avaliação Demissional
-                        </SelectItem>
-                         <SelectItem value='Monitoramento Pontual' disabled>
-                          Monitoramento Pontual
-                        </SelectItem>
-                         <SelectItem value='Evolução de Afastamento' disabled>
-                          Evolução de Afastamento
-                        </SelectItem>
-                         <SelectItem value='Avaliação de Segmento' disabled>
-                          Avaliação de Segmento
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                          <SelectItem value='Avaliação Periódica'>
+                            Avaliação Periódica
+                          </SelectItem>
+                          <SelectItem value='Avaliação de Retorno ao Trabalho'>
+                            Avaliação de Retorno ao Trabalho
+                          </SelectItem>
+                          <SelectItem value='Avaliação de Mudança de Risco'>
+                            Avaliação de Mudança de Risco
+                          </SelectItem>
+                          <SelectItem value='Avaliação Demissional'>
+                            Avaliação Demissional
+                          </SelectItem>
+                          <SelectItem value='Monitoramento Pontual' disabled>
+                            Monitoramento Pontual
+                          </SelectItem>
+                          <SelectItem value='Evolução de Afastamento' disabled>
+                            Evolução de Afastamento
+                          </SelectItem>
+                          <SelectItem value='Avaliação de Segmento' disabled>
+                            Avaliação de Segmento
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-                  <Separator />
-                  
-                  <div className='space-y-2 bg-muted/50 p-3 rounded-md border'>
-                      <Label className='font-semibold'>Informações do PCMSO</Label>
+                    <Separator />
+
+                    <div className='space-y-2 bg-muted/50 p-3 rounded-md border'>
+                      <Label className='font-semibold'>
+                        Informações do PCMSO
+                      </Label>
                       <p className='text-xs text-muted-foreground'>
-                          Os riscos e exames vinculados ao cargo do colaborador aparecerão aqui automaticamente.
+                        Os riscos e exames vinculados ao cargo do colaborador
+                        aparecerão aqui automaticamente.
                       </p>
                       <div className='space-y-2 pt-2'>
-                          <Label className='text-xs'>Riscos (PCMSO)</Label>
-                          <Textarea placeholder='[Carregado automaticamente...]' disabled rows={2}/>
+                        <Label className='text-xs'>Riscos (PCMSO)</Label>
+                        <Textarea
+                          placeholder='[Carregado automaticamente...]'
+                          disabled
+                          rows={2}
+                        />
                       </div>
                       <div className='space-y-2'>
-                          <Label className='text-xs'>Exames (PCMSO)</Label>
-                           <Textarea placeholder='[Carregado automaticamente...]' disabled rows={2}/>
+                        <Label className='text-xs'>Exames (PCMSO)</Label>
+                        <Textarea
+                          placeholder='[Carregado automaticamente...]'
+                          disabled
+                          rows={2}
+                        />
                       </div>
-                  </div>
-
-                  <Separator />
-
-                  <div className='space-y-4'>
-                    <Label className='font-semibold'>Informações Adicionais</Label>
-                    <div className='space-y-2'>
-                      <div className='flex items-center space-x-2'>
-                        <Checkbox id='pcd' name='pcd' />
-                        <Label htmlFor='pcd' className='font-normal'>
-                          Avaliação para Enquadramento PCD?
-                        </Label>
-                      </div>
-                      <Textarea
-                        name='pcd-details'
-                        placeholder='Se sim, descreva se há alguma necessidade especial para o atendimento.'
-                      />
                     </div>
-                    <div className='space-y-2'>
-                      <div className='flex items-center space-x-2'>
-                        <Checkbox id='priority' name='priority' />
-                        <Label htmlFor='priority' className='font-normal'>
-                          Atendimento prioritário?
-                        </Label>
+
+                    <Separator />
+
+                    <div className='space-y-4'>
+                      <Label className='font-semibold'>
+                        Informações Adicionais
+                      </Label>
+                      <div className='space-y-2'>
+                        <div className='flex items-center space-x-2'>
+                          <Checkbox id='pcd' name='pcd' />
+                          <Label htmlFor='pcd' className='font-normal'>
+                            Avaliação para Enquadramento PCD?
+                          </Label>
+                        </div>
+                        <Textarea
+                          name='pcd-details'
+                          placeholder='Se sim, descreva se há alguma necessidade especial para o atendimento.'
+                        />
                       </div>
-                       {/* Futuramente, mostrar as opções se o checkbox estiver marcado */}
+                      <div className='space-y-2'>
+                        <div className='flex items-center space-x-2'>
+                          <Checkbox id='priority' name='priority' />
+                          <Label htmlFor='priority' className='font-normal'>
+                            Atendimento prioritário?
+                          </Label>
+                        </div>
+                        {/* Futuramente, mostrar as opções se o checkbox estiver marcado */}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </form>
-              <DialogFooter>
-                <Button
-                  variant='outline'
-                  onClick={() => setIsDialogOpen(false)}
-                >
-                  Cancelar
-                </Button>
-                <Button variant='secondary' form='new-aso-request-form'>
-                  Imprimir
-                </Button>
-                 <Button variant='secondary' disabled form='new-aso-request-form'>
-                  Encaminhar
-                </Button>
-                <Button type='submit' form='new-aso-request-form'>
-                  Salvar
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+                </form>
+                <DialogFooter>
+                  <Button
+                    variant='outline'
+                    onClick={() => setIsDialogOpen(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button variant='secondary' form='new-aso-request-form'>
+                    Imprimir
+                  </Button>
+                  <Button
+                    variant='secondary'
+                    disabled
+                    form='new-aso-request-form'
+                  >
+                    Encaminhar
+                  </Button>
+                  <Button type='submit' form='new-aso-request-form'>
+                    Salvar
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -305,7 +328,9 @@ export default function AsosPage() {
                 <TableCell>{aso.validity}</TableCell>
                 <TableCell>
                   <Badge
-                    variant={aso.status === 'Apto' ? 'secondary' : 'destructive'}
+                    variant={
+                      aso.status === 'Apto' ? 'secondary' : 'destructive'
+                    }
                   >
                     {aso.status}
                   </Badge>
