@@ -113,23 +113,8 @@ const AttendeeCard = ({
   }
 
   const handleCardClick = () => {
-    if (attendee.status === 'Em Atendimento') {
-      return
-    }
-
-    if (attendee.status === 'Aguardando' && queueType === 'medico') {
-      const clinicalExam = attendee.exams.find(
-        (exam) => exam.name === 'Avaliação Clínica'
-      )
-      if (clinicalExam) {
-        updateAttendeeStatus(attendee.id, 'Em Atendimento')
-        router.push(`/dashboard/health/evaluation/${attendee.id}`)
-        return
-      }
-    }
-
-    if (attendee.status === 'Aguardando') {
-      updateAttendeeStatus(attendee.id, 'Em Atendimento')
+    // Independentemente do status (exceto 'Agendado'), ir para a página de avaliação
+    if (attendee.status !== 'Agendado') {
       router.push(`/dashboard/health/evaluation/${attendee.id}`)
     }
   }
@@ -147,15 +132,15 @@ const AttendeeCard = ({
       style={style}
       className={cn(
         'touch-none',
-        !isBusy && 'cursor-grab active:cursor-grabbing',
+        'cursor-grab active:cursor-grabbing',
         isBusy && 'bg-blue-100 dark:bg-blue-900/50 border-blue-400'
       )}
+      {...attributes}
+      {...listeners}
+      onClick={handleCardClick}
     >
       <div
-        {...attributes}
-        {...listeners}
         className='p-4'
-        onClick={handleCardClick}
       >
         <CardHeader className='flex flex-row items-start justify-between p-0 pb-2'>
           <CardTitle className='text-base'>{attendee.patientName}</CardTitle>
@@ -542,3 +527,5 @@ export default function QueuePage() {
     </div>
   )
 }
+
+    
