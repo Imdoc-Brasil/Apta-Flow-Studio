@@ -38,8 +38,6 @@ import {
 } from '@/components/ui/collapsible'
 import { useState, useEffect } from 'react'
 import { Logo } from './logo'
-import { useAdmin } from '@/firebase/auth/use-admin'
-import { ClientSidebar } from './client-sidebar'
 
 const mainNavItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Painel' },
@@ -127,7 +125,6 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
     else setIsPortalLaudosOpen(false)
   }, [pathname, isSaudeActive])
 
-  // Admin view
   return (
     <>
       <SidebarHeader className='flex items-center justify-between'>
