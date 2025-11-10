@@ -33,21 +33,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
-import { Badge } from '@/components/ui/badge'
 
 const getSectorById = (sectorId: string): Sector | undefined => {
   return initialSectorsData.find((sector) => sector.id === sectorId)
@@ -91,7 +82,8 @@ export default function SectorDetailsPage() {
     }
 
     if (editingEnvironment) {
-      // Update logic would go here
+      const updatedEnv = { ...editingEnvironment, ...environmentData }
+      setEnvironments(prev => prev.map(e => e.id === updatedEnv.id ? updatedEnv : e))
       toast({
         title: 'Posto de Trabalho Atualizado!',
         description: `O posto de trabalho "${environmentData.name}" foi atualizado.`,
