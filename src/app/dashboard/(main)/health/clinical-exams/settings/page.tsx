@@ -24,51 +24,14 @@ import {
 import { initialHazardData } from '@/app/dashboard/(main)/risks/page'
 import { useToast } from '@/hooks/use-toast'
 import { Save, Printer, Pencil } from 'lucide-react'
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Separator } from '@/components/ui/separator'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { ScrollArea } from '@/components/ui/scroll-area'
 
 export default function ClinicalEvaluationSettingsPage() {
   const { toast } = useToast()
   const [isPeriodic, setIsPeriodic] = useState('nao')
   const [isEditing, setIsEditing] = useState(false)
-
-  // State for vital signs
-  const [weight, setWeight] = useState('')
-  const [height, setHeight] = useState('')
-  const [imc, setImc] = useState(0)
-  const [imcStatus, setImcStatus] = useState('')
-
-  const calculateImc = useCallback(() => {
-    const w = parseFloat(weight)
-    const h = parseFloat(height)
-    if (w > 0 && h > 0) {
-      const calculatedImc = w / (h * h)
-      setImc(calculatedImc)
-      if (calculatedImc < 18.5) setImcStatus('Abaixo do peso')
-      else if (calculatedImc < 24.9) setImcStatus('Peso normal')
-      else if (calculatedImc < 29.9) setImcStatus('Sobrepeso')
-      else if (calculatedImc < 34.9) setImcStatus('Obesidade Grau I')
-      else if (calculatedImc < 39.9) setImcStatus('Obesidade Grau II')
-      else setImcStatus('Obesidade Grau III')
-    } else {
-      setImc(0)
-      setImcStatus('')
-    }
-  }, [weight, height])
-
-  useEffect(() => {
-    calculateImc()
-  }, [calculateImc])
 
   const handleSaveSettings = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -86,45 +49,6 @@ export default function ClinicalEvaluationSettingsPage() {
     setIsEditing(false)
     // For now, just toggles the state
   }
-
-  const FieldsetGroup = ({
-    children,
-    title,
-  }: {
-    children: React.ReactNode
-    title: string
-  }) => (
-    <fieldset className='space-y-4 rounded-lg border p-4'>
-      <legend className='-ml-1 px-1 text-base font-medium'>{title}</legend>
-      {children}
-    </fieldset>
-  )
-
-  const InfoField = ({ label, value }: { label: string; value: string }) => (
-    <div className='space-y-1'>
-      <p className='text-xs font-medium text-muted-foreground'>{label}</p>
-      <p className='text-sm font-semibold'>{value}</p>
-    </div>
-  )
-
-  const NormalAlteredField = ({ label }: { label: string }) => (
-    <div className='grid grid-cols-[1fr_2fr] gap-4 items-start'>
-      <div className='flex flex-col gap-2'>
-        <Label className='text-sm font-medium pt-2'>{label}</Label>
-        <RadioGroup defaultValue='normal' className='flex'>
-          <div className='flex items-center space-x-2'>
-            <RadioGroupItem value='normal' id={`${label}-normal`} />
-            <Label htmlFor={`${label}-normal`}>Normal</Label>
-          </div>
-          <div className='flex items-center space-x-2'>
-            <RadioGroupItem value='alterado' id={`${label}-alterado`} />
-            <Label htmlFor={`${label}-alterado`}>Alterado</Label>
-          </div>
-        </RadioGroup>
-      </div>
-      <Input placeholder='Se alterado, descrever...' />
-    </div>
-  )
 
   return (
     <div className='grid flex-1 auto-rows-max gap-4'>
@@ -372,73 +296,31 @@ export default function ClinicalEvaluationSettingsPage() {
         </TabsContent>
 
         <TabsContent value='form-model'>
-         <Card>
+          <Card>
             <CardHeader>
-                <CardTitle>Modelo da Ficha de Atendimento</CardTitle>
-                <CardDescription>Esta é a ficha que o profissional de saúde irá preencher durante o atendimento. Os campos são baseados nas configurações gerais.</CardDescription>
+              <CardTitle>Modelo da Ficha de Atendimento</CardTitle>
+              <CardDescription>
+                Configure os campos e seções que aparecerão na ficha de
+                avaliação clínica durante o atendimento.
+              </CardDescription>
             </CardHeader>
             <CardContent>
-                 <ScrollArea className="h-[70vh] p-4 border rounded-lg">
-                    <div className="space-y-8">
-                    <FieldsetGroup title="Seção 01: Dados do Colaborador">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-                            <InfoField label="Nome" value={"[Nome do Paciente]"} />
-                            <InfoField label="Matrícula" value={"[Matrícula]"} />
-                             <InfoField label="Idade" value={"[Idade]"} />
-                            <InfoField label="Sexo" value={"[Sexo]"} />
-                             <InfoField label="CPF" value={"[CPF]"} />
-                            <InfoField label="Empresa" value={"[Empresa Cliente]"} />
-                            <InfoField label="Setor" value={"[Setor]"} />
-                            <InfoField label="Cargo" value={"[Cargo]"} />
-                            <InfoField label="Posto de Trabalho" value={"[Posto de Trabalho]"}/>
-                            <InfoField label="GHE" value={"[GHE]"} />
-                        </div>
-                    </FieldsetGroup>
-
-                    <FieldsetGroup title="Seção 02: Contexto do Exame">
-                        <div className="space-y-2">
-                            <Label>Tipo de Exame</Label>
-                            <Input disabled value="[Tipo de Exame]" />
-                        </div>
-                        <div className="space-y-2">
-                             <Label>Riscos Expostos</Label>
-                            <Textarea disabled value="[Lista de Riscos]" />
-                        </div>
-                    </FieldsetGroup>
-                    
-                    <FieldsetGroup title="Seção 03: Anamnese">
-                         <div className="space-y-4 rounded-md border p-4">
-                            <h4 className="font-medium">Dados Vitais</h4>
-                             <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                    <TableHead>Parâmetro</TableHead>
-                                    <TableHead>Avaliação Atual</TableHead>
-                                    <TableHead>Resultado</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    <TableRow>
-                                        <TableCell>PAS / PAD</TableCell>
-                                        <TableCell><Input placeholder='0/0' className='w-24' /></TableCell>
-                                        <TableCell><Input readOnly placeholder='Normal' className='w-24 bg-muted' /></TableCell>
-                                    </TableRow>
-                                     <TableRow>
-                                        <TableCell>Peso (kg) / Altura (m)</TableCell>
-                                        <TableCell className='flex gap-2'>
-                                            <Input placeholder='0' className='w-20' value={weight} onChange={(e) => setWeight(e.target.value)} /> / 
-                                            <Input placeholder='0.00' className='w-20' value={height} onChange={(e) => setHeight(e.target.value)} />
-                                        </TableCell>
-                                        <TableCell><Input readOnly value={imc > 0 ? imc.toFixed(2) + ' (' + imcStatus + ')' : '...'} className='w-48 bg-muted' /></TableCell>
-                                    </TableRow>
-                                </TableBody>
-                            </Table>
-                         </div>
-                    </FieldsetGroup>
-                    </div>
-                </ScrollArea>
+              <div className='flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm h-96'>
+                <div className='flex flex-col items-center gap-2 text-center'>
+                  <Pencil className='h-12 w-12 text-muted-foreground' />
+                  <h3 className='text-2xl font-bold tracking-tight'>
+                    Editor de Formulário
+                  </h3>
+                  <p className='text-sm text-muted-foreground'>
+                    Arraste e solte campos para construir a ficha de anamnese.
+                  </p>
+                  <Button className='mt-4' disabled>
+                    Em breve
+                  </Button>
+                </div>
+              </div>
             </CardContent>
-         </Card>
+          </Card>
         </TabsContent>
 
         <TabsContent value='print-model'>

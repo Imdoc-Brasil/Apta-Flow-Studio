@@ -114,15 +114,16 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
 
   useEffect(() => {
     if (isSaudeActive) setIsSaudeOpen(true)
-    else setIsSaudeOpen(false) // Collapse if not active
+    // Do not auto-collapse if not active, let user control it
+    // else setIsSaudeOpen(false) 
 
     if (getIsActive('/dashboard/health/clinical-exams'))
       setIsExamesClinicosOpen(true)
-    else setIsExamesClinicosOpen(false)
+    // else setIsExamesClinicosOpen(false)
 
     if (getIsActive('/dashboard/health/reports-portal'))
       setIsPortalLaudosOpen(true)
-    else setIsPortalLaudosOpen(false)
+    // else setIsPortalLaudosOpen(false)
   }, [pathname, isSaudeActive])
 
   return (

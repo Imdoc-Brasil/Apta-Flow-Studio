@@ -30,6 +30,12 @@ const healthServices = [
     href: '/dashboard/health/exams',
     icon: Stethoscope,
   },
+   {
+    name: 'Configuração de Exames Clínicos',
+    description: 'Defina os parâmetros e modelos para as avaliações clínicas.',
+    href: '/dashboard/health/clinical-exams',
+    icon: FileHeart,
+  },
   {
     name: 'Portal de Laudos',
     description:
