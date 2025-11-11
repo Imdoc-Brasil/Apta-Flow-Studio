@@ -113,8 +113,10 @@ const AttendeeCard = ({
   }
 
   const handleCardClick = () => {
-    // Independentemente do status (exceto 'Agendado'), ir para a página de avaliação
-    if (attendee.status !== 'Agendado') {
+    if (attendee.status === 'Aguardando') {
+      updateAttendeeStatus(attendee.id, 'Em Atendimento')
+      router.push(`/dashboard/health/evaluation/${attendee.id}`)
+    } else if (attendee.status === 'Em Atendimento') {
       router.push(`/dashboard/health/evaluation/${attendee.id}`)
     }
   }
@@ -132,18 +134,14 @@ const AttendeeCard = ({
       style={style}
       className={cn(
         'touch-none',
-        isBusy
-          ? 'cursor-pointer'
-          : 'cursor-grab active:cursor-grabbing',
+        isBusy ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing',
         isBusy && 'bg-blue-100 dark:bg-blue-900/50 border-blue-400'
       )}
       {...attributes}
       {...listeners}
       onClick={handleCardClick}
     >
-      <div
-        className='p-4'
-      >
+      <div className='p-4'>
         <CardHeader className='flex flex-row items-start justify-between p-0 pb-2'>
           <CardTitle className='text-base'>{attendee.patientName}</CardTitle>
           <MoreHorizontal className='h-4 w-4 text-muted-foreground' />
@@ -363,7 +361,13 @@ export default function QueuePage() {
                 <div className='grid gap-4 py-4'>
                   <div className='space-y-2'>
                     <Label htmlFor='results-file'>Arquivo (XML ou CSV)</Label>
-                    <Input id='results-file' name='results-file' type='file' accept='.xml,.csv' required />
+                    <Input
+                      id='results-file'
+                      name='results-file'
+                      type='file'
+                      accept='.xml,.csv'
+                      required
+                    />
                   </div>
                 </div>
               </form>
@@ -496,17 +500,19 @@ export default function QueuePage() {
               <DragOverlay>
                 {activeAttendee ? (
                   <Card className='cursor-grabbing transform-gpu rotate-3 shadow-lg'>
-                    <CardHeader className='flex flex-row items-start justify-between p-4 pb-2'>
-                      <CardTitle className='text-base'>
-                        {activeAttendee.patientName}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className='p-4 pt-0 text-sm text-muted-foreground'>
-                      <p>{activeAttendee.solicitationType}</p>
-                      <p className='font-semibold text-xs'>
-                        {activeAttendee.clientName}
-                      </p>
-                    </CardContent>
+                    <div className='p-4'>
+                      <CardHeader className='flex flex-row items-start justify-between p-0 pb-2'>
+                        <CardTitle className='text-base'>
+                          {activeAttendee.patientName}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className='p-0 text-sm text-muted-foreground'>
+                        <p>{activeAttendee.solicitationType}</p>
+                        <p className='font-semibold text-xs'>
+                          {activeAttendee.clientName}
+                        </p>
+                      </CardContent>
+                    </div>
                   </Card>
                 ) : null}
               </DragOverlay>
