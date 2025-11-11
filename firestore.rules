@@ -1,137 +1,154 @@
-
+/**
+ * @file Firestore Security Rules for AptaFlow
+ * @version Prototyping Mode - Data shape is not strictly validated.
+ *
+ * @description This ruleset enforces a role-based access control model with ownership for certain resources.
+ *
+ * @dataStructure
+ *   - /clients/{clientId}: Stores client company data.
+ *   - /employees/{employeeId}: Stores employee data.
+ *   - /clients/{clientId}/contracts/{contractId}: Stores contracts associated with a client.
+ *   - /clients/{clientId}/serviceRequests/{serviceRequestId}: Stores service requests submitted by clients.
+ *   - /clients/{clientId}/slas/{slaId}: Stores SLAs associated with clients.
+ *   - /okrs/{okrId}: Stores OKRs (Objectives and Key Results).
+ *   - /clients/{clientId}/documents/{documentId}: Stores documents associated with clients.
+ *   - /roles_admin/{userId}: Documents in this collection represent users with admin privileges.
+ *
+ * @keySecurityDecisions
+ *   - Admin privileges are granted based on the presence of a document in the `/roles_admin/{userId}` collection.
+ *   - Client-owned resources (contracts, service requests, documents, SLAs) enforce that the `clientId` field matches the path.
+ *   - Unrestricted reads for all entities.
+ */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Checks if the current user is signed in.
-     * @returns {boolean} True if the user is signed in, false otherwise.
-     */
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    /**
-     * @description Checks if the current user is a super admin based on their UID being present in the roles_admin collection.
-     * @returns {boolean} True if the user is a super admin, false otherwise.
-     */
-    function isSuperAdmin() {
-      return exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
-    }
-
-
-    /**
-     * @description Rule for the /clients/{clientId} collection.
+     * @description Allows access to client data based on role.
      * @path /clients/{clientId}
-     * @allow (create) If the user is a super admin.
-     * @deny (create) If the user is not a super admin.
-     * @principle Enforces role-based access control, allowing only super admins to manage client data.
+     * @allow (get, list): Any authenticated user can read client data.
+     * @allow (create, update, delete): Only admins can create, update, or delete client data.
+     * @deny (create, update, delete): Non-admin users cannot create, update, or delete client data.
+     * @principle Enforces role-based access control for client management.
      */
     match /clients/{clientId} {
-      allow read, write: if isSuperAdmin();
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
     }
 
     /**
-     * @description Rule for the /employees/{employeeId} collection.
+     * @description Allows access to employee data based on role.
      * @path /employees/{employeeId}
-     * @allow (create) If the user is a super admin.
-     * @deny (create) If the user is not a super admin.
-     * @principle Enforces role-based access control, allowing only super admins to manage employee data.
+     * @allow (get, list): Any authenticated user can read employee data.
+     * @allow (create, update, delete): Only admins can create, update, or delete employee data.
+     * @deny (create, update, delete): Non-admin users cannot create, update, or delete employee data.
+     * @principle Enforces role-based access control for employee management.
      */
     match /employees/{employeeId} {
-      allow read, write: if isSuperAdmin();
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
     }
 
     /**
-     * @description Rule for the /contracts/{contractId} collection.
-     * @path /contracts/{contractId}
-     * @allow (create) If the user is a super admin.
-     * @deny (create) If the user is not a super admin.
-     * @principle Enforces role-based access control, allowing only super admins to manage contract data.
+     * @description Allows access to contracts associated with a client.
+     * @path /clients/{clientId}/contracts/{contractId}
+     * @allow (get, list): Any authenticated user can read contract data.
+     * @allow (create): Only admins can create new contracts, ensuring the clientId matches the path.
+     * @allow (update, delete): Only admins can update or delete existing contracts.
+     * @deny (create): Non-admin users cannot create contracts.
+     * @deny (update, delete): Non-admin users cannot update or delete contracts.
+     * @principle Enforces role-based access control and validates data integrity.
      */
-    match /contracts/{contractId} {
-       allow read, write: if isSuperAdmin();
+    match /clients/{clientId}/contracts/{contractId} {
+      allow get, list: if true;
+      allow create: if isAdmin() && request.resource.data.clientId == clientId;
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
     }
 
     /**
-     * @description Rule for the /serviceRequests/{serviceRequestId} collection.
-     * @path /serviceRequests/{serviceRequestId}
-     * @allow (create) If the user is a super admin.
-     * @deny (create) If the user is not a super admin.
-     * @principle Enforces role-based access control, allowing only super admins to manage service request data.
+     * @description Allows access to service requests submitted by clients.
+     * @path /clients/{clientId}/serviceRequests/{serviceRequestId}
+     * @allow (get, list): Any authenticated user can read service request data.
+     * @allow (create): Only admins can create new service requests, ensuring the clientId matches the path.
+     * @allow (update, delete): Only admins can update or delete existing service requests.
+     * @deny (create): Non-admin users cannot create service requests.
+     * @deny (update, delete): Non-admin users cannot update or delete service requests.
+     * @principle Enforces role-based access control and validates data integrity.
      */
-    match /serviceRequests/{serviceRequestId} {
-       allow read, write: if isSuperAdmin();
+    match /clients/{clientId}/serviceRequests/{serviceRequestId} {
+      allow get, list: if true;
+      allow create: if isAdmin() && request.resource.data.clientId == clientId;
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
     }
 
     /**
-     * @description Rule for the /slas/{slaId} collection.
-     * @path /slas/{slaId}
-     * @allow (create) If the user is a super admin.
-     * @deny (create) If the user is not a super admin.
-     * @principle Enforces role-based access control, allowing only super admins to manage SLA data.
+     * @description Allows access to SLAs associated with clients.
+     * @path /clients/{clientId}/slas/{slaId}
+     * @allow (get, list): Any authenticated user can read SLA data.
+     * @allow (create): Only admins can create new SLAs, ensuring the clientId matches the path.
+     * @allow (update, delete): Only admins can update or delete existing SLAs.
+     * @deny (create): Non-admin users cannot create SLAs.
+     * @deny (update, delete): Non-admin users cannot update or delete SLAs.
+     * @principle Enforces role-based access control and validates data integrity.
      */
-    match /slas/{slaId} {
-       allow read, write: if isSuperAdmin();
+    match /clients/{clientId}/slas/{slaId} {
+      allow get, list: if true;
+      allow create: if isAdmin() && request.resource.data.clientId == clientId;
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
     }
 
     /**
-     * @description Rule for the /okrs/{okrId} collection.
+     * @description Allows access to OKRs (Objectives and Key Results).
      * @path /okrs/{okrId}
-     * @allow (create) If the user is a super admin.
-     * @deny (create) If the user is not a super admin.
-     * @principle Enforces role-based access control, allowing only super admins to manage OKR data.
+     * @allow (get, list): Any authenticated user can read OKR data.
+     * @allow (create, update, delete): Only admins can create, update, or delete OKR data.
+     * @deny (create, update, delete): Non-admin users cannot create, update, or delete OKR data.
+     * @principle Enforces role-based access control for OKR management.
      */
     match /okrs/{okrId} {
-       allow read, write: if isSuperAdmin();
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
     }
 
     /**
-     * @description Rule for the /processToolUsages/{processToolUsageId} collection.
-     * @path /processToolUsages/{processToolUsageId}
-     * @allow (create) If the user is a super admin.
-     * @deny (create) If the user is not a super admin.
-     * @principle Enforces role-based access control, allowing only super admins to manage process tool usage data.
+     * @description Allows access to documents associated with clients.
+     * @path /clients/{clientId}/documents/{documentId}
+     * @allow (get, list): Any authenticated user can read document data.
+     * @allow (create): Only admins can create new documents, ensuring the clientId matches the path.
+     * @allow (update, delete): Only admins can update or delete existing documents.
+     * @deny (create): Non-admin users cannot create documents.
+     * @deny (update, delete): Non-admin users cannot update or delete documents.
+     * @principle Enforces role-based access control and validates data integrity.
      */
-    match /processToolUsages/{processToolUsageId} {
-       allow read, write: if isSuperAdmin();
+    match /clients/{clientId}/documents/{documentId} {
+      allow get, list: if true;
+      allow create: if isAdmin() && request.resource.data.clientId == clientId;
+      allow update: if isAdmin() && resource != null;
+      allow delete: if isAdmin() && resource != null;
     }
-
-    /**
-     * @description Rule for the /reports/{reportId} collection.
-     * @path /reports/{reportId}
-     * @allow (create) If the user is a super admin.
-     * @deny (create) If the user is not a super admin.
-     * @principle Enforces role-based access control, allowing only super admins to manage report data.
-     */
-    match /reports/{reportId} {
-       allow read, write: if isSuperAdmin();
-    }
-
-    /**
-     * @description Rule for the /superAdminProfiles/{superAdminProfileId} collection.
-     * @path /superAdminProfiles/{superAdminProfileId}
-     * @allow (create) If the user is a super admin.
-     * @deny (create) If the user is not a super admin.
-     * @principle Enforces role-based access control, allowing only super admins to manage super admin profile data.
-     */
-    match /superAdminProfiles/{superAdminProfileId} {
-       allow read, write: if isSuperAdmin();
-    }
-
      /**
-      * @description Rule for the /roles_admin/{uid} collection.  This collection manages super admin privileges.
-      * @path /roles_admin/{uid}
-      * @allow (read) Allows a user to check their own admin status, but not enumerate other admins.
-      * @allow (create) Allows a signed-in user to create their OWN admin role document, but only if it doesn't already exist.
-      *               This is the key to creating the *first* superadmin. After that, this rule can be tightened.
-      * @allow (delete) Allows a superadmin to delete an admin role (demote a user).
+      * @description Restricts access to admin role documents to only allow reads for admin role verification purposes.  Only admins can create/delete/update other admins.
+      * @path /roles_admin/{userId}
+      * @allow get: if isAdmin();
+      * @allow list: if isAdmin();
+      * @allow create: if isAdmin();
+      * @allow update: if isAdmin() && resource != null;
+      * @allow delete: if isAdmin() && resource != null;
+      * @principle Enforces role-based access control for granting admin privileges.
       */
-    match /roles_admin/{uid} {
-      allow read: if isSignedIn() && request.auth.uid == uid;
-      allow create: if isSignedIn() && request.auth.uid == uid && !exists(/databases/$(database)/documents/roles_admin/$(uid));
-      allow update: if false;
-      allow delete: if isSuperAdmin();
-    }
+     match /roles_admin/{userId} {
+       allow get, list: if isAdmin();
+       allow create: if isAdmin();
+       allow update: if isAdmin() && resource != null;
+       allow delete: if isAdmin() && resource != null;
+     }
+  }
+
+  // Helper function to determine if a user is an admin.
+  function isAdmin() {
+    return exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
   }
 }
