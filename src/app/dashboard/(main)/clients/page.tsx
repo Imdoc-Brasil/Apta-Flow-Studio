@@ -286,8 +286,8 @@ export default function ClientsPage() {
                             defaultValue={inheritData ? client?.address : ''}
                           />
                         </div>
-                        <div className='grid grid-cols-2 gap-4'>
-                          <div className='space-y-2'>
+                        <div className='grid grid-cols-4 gap-4'>
+                          <div className='space-y-2 col-span-3'>
                             <Label>CNAE Principal</Label>
                             <Popover
                               open={isCnaePopoverOpen}
@@ -300,11 +300,13 @@ export default function ClientsPage() {
                                   aria-expanded={isCnaePopoverOpen}
                                   className='w-full justify-between font-normal'
                                 >
-                                  {cnae
-                                    ? cnaeList.find(
-                                        (item) => item.code === cnae
-                                      )?.description
-                                    : 'Selecione ou busque um CNAE...'}
+                                  <span className='truncate'>
+                                    {cnae
+                                      ? cnaeList.find(
+                                          (item) => item.code === cnae
+                                        )?.description
+                                      : 'Selecione ou busque um CNAE...'}
+                                  </span>
                                   <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
                                 </Button>
                               </PopoverTrigger>
@@ -357,7 +359,7 @@ export default function ClientsPage() {
                               readOnly
                             />
                           </div>
-                          <div className='space-y-2'>
+                          <div className='space-y-2 col-span-1'>
                             <Label htmlFor='riskLevel'>Grau de Risco</Label>
                             <Input
                               id='riskLevel'
