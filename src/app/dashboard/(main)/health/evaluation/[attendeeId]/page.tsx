@@ -276,6 +276,35 @@ export default function AttendeeEvaluationPage() {
                             />
                             </div>
                         </FieldsetGroup>
+                         <FieldsetGroup title="Seção 03: Anamnese">
+                         <div className="space-y-4 rounded-md border p-4">
+                            <h4 className="font-medium">Dados Vitais</h4>
+                             <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                    <TableHead>Parâmetro</TableHead>
+                                    <TableHead>Avaliação Atual</TableHead>
+                                    <TableHead>Resultado</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    <TableRow>
+                                        <TableCell>PAS / PAD</TableCell>
+                                        <TableCell><Input placeholder='0/0' className='w-24' /></TableCell>
+                                        <TableCell><Input readOnly placeholder='Normal' className='w-24 bg-muted' /></TableCell>
+                                    </TableRow>
+                                     <TableRow>
+                                        <TableCell>Peso (kg) / Altura (m)</TableCell>
+                                        <TableCell className='flex gap-2'>
+                                            <Input placeholder='0' className='w-20' value={weight} onChange={(e) => setWeight(e.target.value)} /> / 
+                                            <Input placeholder='0.00' className='w-20' value={height} onChange={(e) => setHeight(e.target.value)} />
+                                        </TableCell>
+                                        <TableCell><Input readOnly value={imc > 0 ? `${imc.toFixed(2)} (${imcStatus})` : '...'} className='w-48 bg-muted' /></TableCell>
+                                    </TableRow>
+                                </TableBody>
+                            </Table>
+                         </div>
+                    </FieldsetGroup>
                     </div>
                 </ScrollArea>
             </div>

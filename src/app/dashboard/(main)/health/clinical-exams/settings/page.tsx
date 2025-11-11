@@ -429,7 +429,7 @@ export default function ClinicalEvaluationSettingsPage() {
                                             <Input placeholder='0' className='w-20' value={weight} onChange={(e) => setWeight(e.target.value)} /> / 
                                             <Input placeholder='0.00' className='w-20' value={height} onChange={(e) => setHeight(e.target.value)} />
                                         </TableCell>
-                                        <TableCell><Input readOnly value={imc > 0 ? imc.toFixed(2) : '0.0'} className='w-24 bg-muted' /></TableCell>
+                                        <TableCell><Input readOnly value={imc > 0 ? imc.toFixed(2) + ' (' + imcStatus + ')' : '...'} className='w-48 bg-muted' /></TableCell>
                                     </TableRow>
                                 </TableBody>
                             </Table>
