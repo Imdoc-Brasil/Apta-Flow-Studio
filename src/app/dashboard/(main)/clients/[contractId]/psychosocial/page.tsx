@@ -27,7 +27,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { PlusCircle, MoreHorizontal, Link as LinkIcon } from 'lucide-react'
+import {
+  PlusCircle,
+  MoreHorizontal,
+  Link as LinkIcon,
+  Check,
+  ChevronsUpDown,
+} from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/hooks/use-toast'
 import { Label } from '@/components/ui/label'
@@ -49,9 +55,31 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu'
 import Link from 'next/link'
-import { initialSurveys, type PsychosocialSurvey, type SurveyStatus } from './data'
+import {
+  initialSurveys,
+  type PsychosocialSurvey,
+  type SurveyStatus,
+} from './data'
+import { initialEmployeesData } from '../employees/data'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
+import { cn } from '@/lib/utils'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Input } from '@/components/ui/input'
+
+const standardCircumstances = [
+  {
+    id: 'c1',
+    text: 'Primeiro levantamento preliminar de riscos psicossociais de acordo com a NR-01, Portaria MTE nº 1.419, publicada em 27 de agosto de 2024.',
+  },
+  {
+    id: 'c2',
+    text: 'Avaliação seguimento do levantamento de riscos psicossociais de acordo com a NR-01, Portaria MTE nº 1.419, publicada em 27 de agosto de 2024.',
+  },
+]
 
 export default function PsychosocialPage() {
   const { toast } = useToast()
@@ -66,26 +94,34 @@ export default function PsychosocialPage() {
 
   const [surveys, setSurveys] = useState(initialSurveys)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [selectedUnits, setSelectedUnits] = useState<string[]>([])
+  const [circumstanceText, setCircumstanceText] = useState('')
 
   const handleCreateSurvey = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
-    const unitId = formData.get('unitId') as string
+    
     const circumstances = formData.get('circumstances') as string
-    const unitName =
-      unitId === 'all'
-        ? 'Todas as Unidades'
-        : clientUnits.find((u) => u.id === unitId)?.name || 'N/A'
 
-    if (!unitId || !circumstances || !client) {
+    if (selectedUnits.length === 0 || !circumstances || !client) {
       toast({
         variant: 'destructive',
         title: 'Campos Incompletos',
         description:
-          'Por favor, selecione a unidade e descreva as circunstâncias.',
+          'Por favor, selecione as unidades e descreva as circunstâncias.',
       })
       return
     }
+    
+    let unitDisplay = 'Múltiplas Unidades'
+    if (selectedUnits.length === 1) {
+        if(selectedUnits[0] === 'all') {
+            unitDisplay = 'Todas as Unidades'
+        } else {
+            unitDisplay = clientUnits.find(u => u.id === selectedUnits[0])?.name || 'N/A'
+        }
+    }
+
 
     const newSurvey: PsychosocialSurvey = {
       id: `SURV-${new Date().getFullYear()}-${Math.random()
@@ -94,7 +130,7 @@ export default function PsychosocialPage() {
         .toUpperCase()}`,
       creationDate: new Date().toISOString().split('T')[0],
       clientName: client.name,
-      unit: unitName,
+      unit: unitDisplay,
       circumstances,
       status: 'Planejada',
     }
@@ -120,6 +156,31 @@ export default function PsychosocialPage() {
     }
   }
 
+  const handleUnitSelection = (unitId: string) => {
+    if (unitId === 'all') {
+      setSelectedUnits(['all'])
+      return
+    }
+    setSelectedUnits((prev) => {
+      const isSelected = prev.includes(unitId)
+      let newSelection = prev.filter(u => u !== 'all'); // remove 'all' if any specific unit is selected
+      if (isSelected) {
+        return newSelection.filter((id) => id !== unitId)
+      } else {
+        return [...newSelection, unitId]
+      }
+    })
+  }
+  
+  const getSelectedUnitsText = () => {
+    if (selectedUnits.includes('all')) return 'Todas as Unidades'
+    if (selectedUnits.length === 0) return 'Selecione a(s) unidade(s)'
+    if (selectedUnits.length === 1) return clientUnits.find(u => u.id === selectedUnits[0])?.name
+    return `${selectedUnits.length} unidades selecionadas`
+  }
+  
+  const totalEmployees = initialEmployeesData.length; // Placeholder
+
   return (
     <Card>
       <CardHeader>
@@ -133,12 +194,12 @@ export default function PsychosocialPage() {
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button onClick={() => { setSelectedUnits([]); setCircumstanceText('')}}>
                 <PlusCircle className='mr-2 h-4 w-4' />
                 Criar Nova Pesquisa
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className='sm:max-w-2xl'>
               <DialogHeader>
                 <DialogTitle>Criar Nova Pesquisa Psicossocial</DialogTitle>
                 <DialogDescription>
@@ -147,39 +208,111 @@ export default function PsychosocialPage() {
                 </DialogDescription>
               </DialogHeader>
               <form id='create-survey-form' onSubmit={handleCreateSurvey}>
+                <ScrollArea className='h-[60vh] pr-4'>
                 <div className='grid gap-4 py-4'>
                   <div className='space-y-2'>
                     <Label htmlFor='unitId'>Unidade(s)</Label>
-                    <Select name='unitId' required>
-                      <SelectTrigger>
-                        <SelectValue placeholder='Selecione a unidade ou todas' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value='all'>Todas as Unidades</SelectItem>
-                        {clientUnits.map((unit) => (
-                          <SelectItem key={unit.id} value={unit.id}>
-                            {unit.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                     <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-between"
+                          >
+                            {getSelectedUnitsText()}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                           <Command>
+                            <CommandInput placeholder="Buscar unidade..." />
+                            <CommandEmpty>Nenhuma unidade encontrada.</CommandEmpty>
+                             <CommandList>
+                                <CommandGroup>
+                                 <CommandItem onSelect={() => handleUnitSelection('all')}>
+                                    <Check className={cn("mr-2 h-4 w-4", selectedUnits.includes('all') ? "opacity-100" : "opacity-0")} />
+                                    Todas as Unidades
+                                  </CommandItem>
+                                  {clientUnits.map((unit) => (
+                                    <CommandItem key={unit.id} onSelect={() => handleUnitSelection(unit.id)}>
+                                       <Check className={cn("mr-2 h-4 w-4", selectedUnits.includes(unit.id) ? "opacity-100" : "opacity-0")} />
+                                       {unit.name}
+                                    </CommandItem>
+                                  ))}
+                                </CommandGroup>
+                             </CommandList>
+                           </Command>
+                        </PopoverContent>
+                      </Popover>
                   </div>
                   <div className='space-y-2'>
                     <Label htmlFor='circumstances'>
                       Nome / Circunstâncias da Pesquisa
                     </Label>
+                     <Select onValueChange={setCircumstanceText}>
+                        <SelectTrigger>
+                            <SelectValue placeholder='Selecione um modelo ou digite abaixo' />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {standardCircumstances.map(item => (
+                                <SelectItem key={item.id} value={item.text}>{item.text}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                     <Textarea
                       id='circumstances'
                       name='circumstances'
                       placeholder='Ex: Avaliação Anual 2024, Investigação Pós-Incidente...'
+                      value={circumstanceText}
+                      onChange={(e) => setCircumstanceText(e.target.value)}
                       required
                     />
                   </div>
-                  <p className='text-sm text-muted-foreground'>
+                   <div className='grid grid-cols-2 gap-4'>
+                     <div className='space-y-2'>
+                        <Label htmlFor='month'>Mês de Aplicação</Label>
+                        <Select name='month'>
+                           <SelectTrigger>
+                            <SelectValue placeholder='Selecione o mês' />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from({length: 12}, (_, i) => new Date(0, i)).map(date => (
+                                <SelectItem key={date.getMonth()} value={(date.getMonth() + 1).toString()}>
+                                    {date.toLocaleString('pt-BR', { month: 'long' })}
+                                </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className='space-y-2'>
+                        <Label htmlFor='year'>Ano de Aplicação</Label>
+                        <Select name='year'>
+                           <SelectTrigger>
+                            <SelectValue placeholder='Selecione o ano' />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Array.from({length: 5}, (_, i) => new Date().getFullYear() - i).map(year => (
+                                <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                   </div>
+                   <div className='grid grid-cols-2 gap-4'>
+                       <div className='space-y-2'>
+                          <Label htmlFor='total-active'>Total de Colaboradores Ativos</Label>
+                          <Input id='total-active' name='total-active' type='number' value={totalEmployees} disabled />
+                       </div>
+                       <div className='space-y-2'>
+                          <Label htmlFor='total-invited'>Total de Convidados</Label>
+                          <Input id='total-invited' name='total-invited' type='number' placeholder='Nº de colaboradores' />
+                       </div>
+                   </div>
+                  <p className='text-xs text-muted-foreground'>
                     Após a criação, você poderá gerar o link e definir os
                     parâmetros demográficos.
                   </p>
                 </div>
+                </ScrollArea>
               </form>
               <DialogFooter>
                 <Button variant='outline' onClick={() => setIsDialogOpen(false)}>
@@ -263,5 +396,3 @@ export default function PsychosocialPage() {
     </Card>
   )
 }
-
-    
