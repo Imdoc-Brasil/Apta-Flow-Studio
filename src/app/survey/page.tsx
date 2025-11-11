@@ -41,8 +41,6 @@ export default function SurveyPage() {
     setStep(3) // Go to thank you page
   }
   
-  const allQuestions = psychosocialSurveyData.flatMap(group => group.questions)
-
   if (step === 3) {
     return (
       <div className='flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4'>
@@ -219,38 +217,45 @@ export default function SurveyPage() {
             </div>
           )}
           {step === 2 && (
-            <form onSubmit={handleSubmit}>
+             <form onSubmit={handleSubmit}>
               <h3 className='font-semibold mb-4'>
                 Parte 2: Questionário
               </h3>
-              <div className='space-y-6'>
-                {allQuestions.map((q, index) => (
-                  <div key={q.id}>
-                    <p className='font-medium text-sm mb-2'>
-                      {index + 1}. {q.text}
-                    </p>
-                    <RadioGroup name={q.id} className='flex flex-wrap gap-x-6 gap-y-2'>
-                       <div className='flex items-center space-x-2'>
-                        <RadioGroupItem value='1' id={`${q.id}-1`} />
-                        <Label htmlFor={`${q.id}-1`}>Nunca</Label>
-                      </div>
-                       <div className='flex items-center space-x-2'>
-                        <RadioGroupItem value='2' id={`${q.id}-2`} />
-                        <Label htmlFor={`${q.id}-2`}>Raramente</Label>
-                      </div>
-                       <div className='flex items-center space-x-2'>
-                        <RadioGroupItem value='3' id={`${q.id}-3`} />
-                        <Label htmlFor={`${q.id}-3`}>Às vezes</Label>
-                      </div>
-                       <div className='flex items-center space-x-2'>
-                        <RadioGroupItem value='4' id={`${q.id}-4`} />
-                        <Label htmlFor={`${q.id}-4`}>Frequentemente</Label>
-                      </div>
-                       <div className='flex items-center space-x-2'>
-                        <RadioGroupItem value='5' id={`${q.id}-5`} />
-                        <Label htmlFor={`${q.id}-5`}>Sempre</Label>
-                      </div>
-                    </RadioGroup>
+              <div className='space-y-8'>
+                {psychosocialSurveyData.map((group) => (
+                  <div key={group.id}>
+                    <h4 className='font-medium mb-4'>{group.name}</h4>
+                    <div className='space-y-6 pl-4 border-l-2'>
+                      {group.questions.map((q, index) => (
+                        <div key={q.id}>
+                          <p className='font-medium text-sm mb-2'>
+                            {index + 1}. {q.text}
+                          </p>
+                           <RadioGroup name={q.id} className='flex flex-wrap gap-x-6 gap-y-2'>
+                              <div className='flex items-center space-x-2'>
+                                <RadioGroupItem value='1' id={`${q.id}-1`} />
+                                <Label htmlFor={`${q.id}-1`}>Nunca</Label>
+                              </div>
+                              <div className='flex items-center space-x-2'>
+                                <RadioGroupItem value='2' id={`${q.id}-2`} />
+                                <Label htmlFor={`${q.id}-2`}>Raramente</Label>
+                              </div>
+                              <div className='flex items-center space-x-2'>
+                                <RadioGroupItem value='3' id={`${q.id}-3`} />
+                                <Label htmlFor={`${q.id}-3`}>Às vezes</Label>
+                              </div>
+                              <div className='flex items-center space-x-2'>
+                                <RadioGroupItem value='4' id={`${q.id}-4`} />
+                                <Label htmlFor={`${q.id}-4`}>Frequentemente</Label>
+                              </div>
+                              <div className='flex items-center space-x-2'>
+                                <RadioGroupItem value='5' id={`${q.id}-5`} />
+                                <Label htmlFor={`${q.id}-5`}>Sempre</Label>
+                              </div>
+                          </RadioGroup>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
