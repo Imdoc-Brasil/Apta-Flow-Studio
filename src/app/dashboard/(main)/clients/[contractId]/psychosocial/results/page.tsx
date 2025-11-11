@@ -20,6 +20,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
+  CartesianGrid,
 } from 'recharts'
 import {
   ChartContainer,
@@ -165,6 +166,9 @@ export default function PsychosocialResultsPage() {
   const surveyId = searchParams.get('surveyId')
 
   const survey = initialSurveys.find((s) => s.id === surveyId)
+  
+  const numConvidado = 50 // Placeholder
+  const numRespostas = 48 // Placeholder
 
   return (
     <div className='grid flex-1 auto-rows-max gap-8'>
@@ -182,6 +186,74 @@ export default function PsychosocialResultsPage() {
         unitName={survey?.unit}
         creationDate={survey?.creationDate}
       />
+      
+      <Card>
+         <CardHeader>
+          <CardTitle className='font-headline text-3xl'>Resumo Executivo</CardTitle>
+        </CardHeader>
+        <CardContent className='prose prose-sm max-w-none dark:prose-invert'>
+            <p>
+                Este Relatório do(a) <strong>{survey?.circumstances}</strong> contém os resultados da Pesquisa realizada pela <strong>{survey?.clientName}</strong> na(s) sua(s) unidade(s): <strong>{survey?.unit}</strong>.
+            </p>
+            <p>
+                Esta pesquisa investigou as percepções sobre o trabalho do ponto de vista dos seus colaboradores. <strong>{numConvidado}</strong> foram convidados a responder à pesquisa e <strong>{numRespostas}</strong> concluíram o envio das respostas. Consulte o Apêndice A para um resumo dos detalhes [vamos criar posteriormente os Apêndices].
+            </p>
+            <p>
+                A ferramenta de Avaliação de Riscos Psicossociais Relacionados ao Trabalho (ARPT) foi desenvolvida pela AptaFlow para medir as atitudes e percepções da força de trabalho sobre aspectos do trabalho que são conhecidos por estarem associados ao estresse relacionado ao trabalho. A ARPT faz parte dos Padrões de Gerenciamento de Riscos Psicossociais Relacionados ao Trabalho da ARPT, que são a abordagem de avaliação de risco da AptaFlow para ajudar os empregadores a gerenciar as causas do estresse no local de trabalho.
+            </p>
+            <p>
+                A AptaFlow defende o uso da ARPT no Programa de Gerenciamento de Risco (PGR), como uma fonte de dados que pode ser usada para identificar a extensão em que o estresse relacionado ao trabalho é um problema na empresa avaliada.
+            </p>
+            <p>
+                Este relatório resume as respostas fornecidas pelos colaboradores e permitirá que a empresa <strong>{survey?.clientName}</strong> se concentre nas áreas prioritárias e faça melhorias direcionadas.
+            </p>
+
+            <h3 className='font-headline'>Como os resultados são apresentados</h3>
+            <p>
+                O sistema de pontuação usado na pesquisa ARPT foi baseado em uma escala de 5 pontos. O sistema de pontuação é complexo, pois algumas escalas e itens são pontuados inversamente na ferramenta por razões psicométricas. Para auxiliar sua interpretação significativa, os resultados foram agrupados em três categorias: respostas favoráveis, neutras e desfavoráveis, apresentadas como porcentagens de respondentes. A categoria neutra contém respostas que pontuaram 3, onde as opções de resposta eram 'às vezes' ou 'neutro'. As categorias favorável e desfavorável combinam as duas respostas em ambos os lados da escala. Por exemplo, para o item 'Eu posso decidir quando fazer uma pausa', as respostas 'Frequentemente' e 'Sempre' são combinadas para produzir a porcentagem de respondentes que deram uma resposta favorável, enquanto as respostas 'Nunca' e 'Raramente' são combinadas para produzir a porcentagem de respondentes que deram uma resposta desfavorável. No entanto, para as pontuações de Relacionamentos, estas são apresentadas como categorias de resposta em vez de favorável/desfavorável. Isso ocorre porque, se os respondentes responderem "às vezes" às perguntas neste domínio, isso pode indicar a presença de bullying ou assédio, e qualquer relato de tais comportamentos deve ser considerado sério pela organização.
+            </p>
+            <p>
+                No primeiro gráfico abaixo, que resume o desempenho geral da sua organização, todas as pontuações são apresentadas de forma que uma pontuação alta indique características de trabalho saudáveis e uma pontuação baixa indique características de trabalho menos saudáveis. Portanto, uma pontuação baixa pode indicar que é necessário fazer melhorias para proteger a saúde e o bem-estar da sua força de trabalho.
+            </p>
+            <p>
+                É útil revisar a pontuação da sua organização para cada domínio em relação aos benchmarks de uma amostra comparativa de 17.286 respondentes de 123 avaliações do setor privado da União Europeia, optamos por usar esses dados, por alguns motivos. O primeiro é pela ausência de informações e indicadores de riscos psicossociais do setor privado no Brasil e América Latina, outro é por que o Reino Unido e a União Europeia possuem a maior pesquisa e o maior banco de dados desses indicadores.
+            </p>
+            <p>
+                No entanto, é importante observar que os Padrões de Gestão são projetados como padrões em relação aos quais as organizações devem buscar atingir uma pontuação de cinco para cada domínio. Portanto, o desempenho em relação aos benchmarks deve ser analisado com cautela, e qualquer domínio para o qual o desempenho seja inferior a cinco indica uma área potencial para melhoria.
+            </p>
+            <p>Observe que pontuações que indicam desempenho razoável/bom ainda podem incluir áreas com desempenho inferior.</p>
+            <p>Revisar seus dados com uma análise mais detalhada (ou seja, por diferentes categorias demográficas) e realizar grupos focais pode ajudá-lo a explorar e validar suas pontuações com mais profundidade.</p>
+            <p>Para obter mais informações sobre os dados de referência, consulte: Edwards, J.A., & Webster, S. (2012).</p>
+
+            <h3 className='font-headline'>Principais Conclusões</h3>
+            <p>
+                O gráfico a seguir mostra as pontuações médias da empresa <strong>{survey?.clientName}</strong> para cada um dos seis domínios, em comparação com os benchmarks do setor privado. A linha vermelha indica a pontuação do 25º percentil e a linha verde indica a pontuação do 75º percentil para a amostra comparativa. Isso significa que, em comparação com os benchmarks, as organizações com pontuação abaixo da linha vermelha tiveram um desempenho inferior a 75% das organizações; as organizações com pontuação entre as linhas vermelha e verde ficaram entre os 50% intermediários das organizações. As pontuações acima da linha verde são melhores do que 75% das organizações.
+            </p>
+            <ul className='list-disc pl-5 space-y-2'>
+                <li><strong>Demandas</strong> - isso inclui questões como carga de trabalho, padrões de trabalho e ambiente de trabalho. As empresas com bom desempenho nesta área provavelmente têm prazos alcançáveis, demandas adequadas em relação às horas de trabalho e sistemas em implementação para responder a preocupações individuais.</li>
+                <li><strong>Controle</strong> – refere-se ao quanto a pessoa tem influência sobre a maneira como realiza seu trabalho. Empresas com bom desempenho nessa área tendem a promover a autonomia e a iniciativa, com sistemas claros para que os funcionários influenciem seu próprio trabalho e padrões de trabalho.</li>
+                <li><strong>Apoio</strong> – inclui o incentivo, apoio e os recursos fornecidos pela empresa, pela gestão direta e pelos colegas, e pode ser dividido em duas ocasiões de subdomínio para "Apoio da Gestão" e "Apoio dos Colegas". Empresas com bom desempenho nessa área tendem a ter sistemas claros que permitem e incentivam os gestores a apoiar suas equipes e fornecer feedback regular e construtivo. Eles também possuem equipes prestativas e compassivas, com sistemas que facilitam o respeito e o apoio entre pares.</li>
+                <li><strong>Relacionamentos</strong> – inclui a promoção de um ambiente de trabalho positivo para evitar conflitos e lidar com comportamentos inaceitáveis. Empresas com bom desempenho nessa área tendem a promover um ambiente de trabalho positivo e a lidar eficazmente com conflitos e comportamentos inaceitáveis.</li>
+                <li><strong>Papel</strong> – se as pessoas entendem seu papel dentro da organização e se a organização garante que elas não tenham papéis conflitantes. Organizações com bom desempenho nesta área provavelmente promovem deveres, metas e responsabilidades claras e possuem sistemas implementados para lidar com conflitos de papéis.</li>
+                <li><strong>Mudança</strong> - como uma mudança organizacional (grande ou pequena) é gerenciada e comunicada na organização. Organizações com bom desempenho provavelmente possuem sistemas de gestão de mudanças que garantem que a mudança seja devidamente consultada, renovada de forma criteriosa e bem comunicada.</li>
+            </ul>
+            <p>As seis áreas são relacionadas como sete fatores porque o "Apoio" é dividido em dois fatores: Apoio dos Gestores e Apoio dos Pares. As opções variam de 1 (ruim) a 5 (desejável).</p>
+        
+            <div className='h-[400px] w-full pt-8'>
+              <ChartContainer config={chartConfig} className="w-full h-full">
+                <BarChart data={analysisData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid vertical={false} />
+                  <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={80} />
+                  <YAxis domain={[1, 5]} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Bar dataKey="yourScore" fill="var(--color-yourScore)" radius={4} />
+                  <ReferenceLine y={3.5} label={{ value: 'Benchmark Inferior', position: 'insideTopLeft', fill: 'hsl(var(--destructive))', fontSize: 12 }} stroke="hsl(var(--destructive))" strokeDasharray="3 3" />
+                  <ReferenceLine y={4.5} label={{ value: 'Benchmark Superior', position: 'insideTopLeft', fill: 'hsl(var(--chart-2))', fontSize: 12 }} stroke="hsl(var(--chart-2))" strokeDasharray="3 3" />
+                </BarChart>
+              </ChartContainer>
+            </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -257,7 +329,7 @@ export default function PsychosocialResultsPage() {
                     />
                     <ReferenceLine
                       x={item.benchmark75}
-                      stroke='hsl(var(--accent))'
+                      stroke='hsl(var(--chart-2))'
                       strokeWidth={2}
                       strokeDasharray='3 3'
                     />
@@ -278,7 +350,7 @@ export default function PsychosocialResultsPage() {
                       vermelha
                     </span>{' '}
                     indica o 25º percentil e a linha{' '}
-                    <span className='font-semibold text-accent-foreground bg-accent px-1 rounded-sm'>
+                    <span className='font-semibold text-accent-foreground bg-green-500 px-1 rounded-sm'>
                       verde
                     </span>{' '}
                     indica o 75º percentil para a amostra comparativa.
@@ -308,5 +380,3 @@ export default function PsychosocialResultsPage() {
     </div>
   )
 }
-
-    
