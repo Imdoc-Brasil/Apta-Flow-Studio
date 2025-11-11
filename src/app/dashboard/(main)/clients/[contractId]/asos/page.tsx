@@ -130,12 +130,38 @@ export default function AsosPage() {
       relatedEmployee: employee.name,
     })
 
+    // 3. Add to the local ASO list for immediate feedback
+    const newAso: Aso = {
+      id: `ASO-${Date.now().toString().slice(-4)}`,
+      employee: employee.name,
+      type: solicitationType,
+      issueDate: new Date().toISOString().split('T')[0],
+      validity: '-',
+      status: 'Solicitado',
+    }
+    setAsos((prev) => [newAso, ...prev])
+
     toast({
       title: 'Pedido de Atendimento Criado!',
       description: `A solicitação para ${employee.name} foi enviada para a fila de atendimento da Apta.`,
     })
 
     setIsDialogOpen(false)
+  }
+
+  const getStatusVariant = (
+    status: string
+  ): 'secondary' | 'destructive' | 'outline' | 'default' => {
+    switch (status) {
+      case 'Apto':
+        return 'secondary'
+      case 'Inapto':
+        return 'destructive'
+      case 'Solicitado':
+        return 'default'
+      default:
+        return 'outline'
+    }
   }
 
   return (
@@ -335,7 +361,7 @@ export default function AsosPage() {
             <TableRow>
               <TableHead>Colaborador</TableHead>
               <TableHead>Tipo</TableHead>
-              <TableHead>Data Emissão</TableHead>
+              <TableHead>Data Emissão/Solicitação</TableHead>
               <TableHead>Validade</TableHead>
               <TableHead>Resultado</TableHead>
               <TableHead>
@@ -348,14 +374,14 @@ export default function AsosPage() {
               <TableRow key={aso.id}>
                 <TableCell className='font-medium'>{aso.employee}</TableCell>
                 <TableCell>{aso.type}</TableCell>
-                <TableCell>{aso.issueDate}</TableCell>
+                <TableCell>
+                  {new Date(aso.issueDate).toLocaleDateString('pt-BR', {
+                    timeZone: 'UTC',
+                  })}
+                </TableCell>
                 <TableCell>{aso.validity}</TableCell>
                 <TableCell>
-                  <Badge
-                    variant={
-                      aso.status === 'Apto' ? 'secondary' : 'destructive'
-                    }
-                  >
+                  <Badge variant={getStatusVariant(aso.status)}>
                     {aso.status}
                   </Badge>
                 </TableCell>
