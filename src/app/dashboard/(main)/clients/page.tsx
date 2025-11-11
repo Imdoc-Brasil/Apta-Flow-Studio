@@ -9,6 +9,8 @@ import {
   Filter,
   Loader2,
   FilePlus,
+  Check,
+  ChevronsUpDown,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -58,7 +60,21 @@ import { useToast } from '@/hooks/use-toast'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { cnaeToRiskLevelMap } from '@/lib/cnae-risk-map'
+import { cnaeList, type CnaeData } from '@/lib/cnae-risk-map'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import { cn } from '@/lib/utils'
 
 export default function ClientsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -75,9 +91,10 @@ export default function ClientsPage() {
   const [cnpj, setCnpj] = useState('')
   const [isCnpjLoading, setIsCnpjLoading] = useState(false)
   const [cnpjError, setCnpjError] = useState<string | null>(null)
-  
+
   const [cnae, setCnae] = useState('')
   const [riskLevel, setRiskLevel] = useState('')
+  const [isCnaePopoverOpen, setIsCnaePopoverOpen] = useState(false)
 
   const handleAddClient = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -94,9 +111,15 @@ export default function ClientsPage() {
       status: 'Ativo',
       adminResponsibleName: formData.get('adminResponsibleName') as string,
       adminResponsibleCPF: formData.get('adminResponsibleCPF') as string,
-      contractResponsibleName: formData.get('contractResponsibleName') as string,
-      contractResponsiblePhone: formData.get('contractResponsiblePhone') as string,
-      contractResponsibleEmail: formData.get('contractResponsibleEmail') as string,
+      contractResponsibleName: formData.get(
+        'contractResponsibleName'
+      ) as string,
+      contractResponsiblePhone: formData.get(
+        'contractResponsiblePhone'
+      ) as string,
+      contractResponsibleEmail: formData.get(
+        'contractResponsibleEmail'
+      ) as string,
     }
 
     addDocumentNonBlocking(clientsRef, newClientData)
@@ -133,18 +156,12 @@ export default function ClientsPage() {
 
     setIsCnpjLoading(false)
   }
-  
-  const handleCnaeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newCnae = e.target.value.replace(/\D/g, '')
-    setCnae(newCnae)
-    const risk = cnaeToRiskLevelMap[newCnae]
-    if (risk) {
-      setRiskLevel(risk.toString())
-    } else {
-      setRiskLevel('')
-    }
-  }
 
+  const handleCnaeSelect = (selectedCnae: CnaeData) => {
+    setCnae(selectedCnae.code)
+    setRiskLevel(selectedCnae.riskLevel.toString())
+    setIsCnaePopoverOpen(false)
+  }
 
   return (
     <Card>
@@ -241,13 +258,72 @@ export default function ClientsPage() {
                         </div>
                         <div className='grid grid-cols-2 gap-4'>
                           <div className='space-y-2'>
-                            <Label htmlFor='cnae'>CNAE Principal</Label>
+                            <Label>CNAE Principal</Label>
+                            <Popover
+                              open={isCnaePopoverOpen}
+                              onOpenChange={setIsCnaePopoverOpen}
+                            >
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant='outline'
+                                  role='combobox'
+                                  aria-expanded={isCnaePopoverOpen}
+                                  className='w-full justify-between font-normal'
+                                >
+                                  {cnae
+                                    ? cnaeList.find(
+                                        (item) => item.code === cnae
+                                      )?.description
+                                    : 'Selecione ou busque um CNAE...'}
+                                  <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className='w-[--radix-popover-trigger-width] p-0'>
+                                <Command>
+                                  <CommandInput placeholder='Buscar CNAE por código ou descrição...' />
+                                  <CommandEmpty>
+                                    Nenhum CNAE encontrado.
+                                  </CommandEmpty>
+                                  <CommandList>
+                                    <CommandGroup>
+                                      {cnaeList.map((item) => (
+                                        <CommandItem
+                                          key={item.code}
+                                          value={`${item.code} ${item.description}`}
+                                          onSelect={() =>
+                                            handleCnaeSelect(item)
+                                          }
+                                        >
+                                          <Check
+                                            className={cn(
+                                              'mr-2 h-4 w-4',
+                                              cnae === item.code
+                                                ? 'opacity-100'
+                                                : 'opacity-0'
+                                            )}
+                                          />
+                                          <div className='flex flex-col'>
+                                            <span className='font-medium'>
+                                              {item.description}
+                                            </span>
+                                            <span className='text-xs text-muted-foreground'>
+                                              {item.code} - Grau de Risco:{' '}
+                                              {item.riskLevel}
+                                            </span>
+                                          </div>
+                                        </CommandItem>
+                                      ))}
+                                    </CommandGroup>
+                                  </CommandList>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
                             <Input
                               id='cnae'
                               name='cnae'
                               value={cnae}
-                              onChange={handleCnaeChange}
-                              placeholder='Apenas números'
+                              className='hidden'
+                              readOnly
                             />
                           </div>
                           <div className='space-y-2'>
