@@ -75,6 +75,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
+import { Checkbox } from '@/components/ui/checkbox'
 
 export default function ClientsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -95,6 +96,17 @@ export default function ClientsPage() {
   const [cnae, setCnae] = useState('')
   const [riskLevel, setRiskLevel] = useState('')
   const [isCnaePopoverOpen, setIsCnaePopoverOpen] = useState(false)
+  const [inheritData, setInheritData] = useState(false)
+
+  const client = useMemo(() => {
+    // This would be fetched based on a logged-in user's company in a real app
+    return {
+      cnpj: '12.345.678/0001-99',
+      address: 'Rua das Flores, 123',
+      cnae: '6201501',
+      riskLevel: '1',
+    }
+  }, [])
 
   const handleAddClient = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -237,6 +249,19 @@ export default function ClientsPage() {
                         )}
                       </div>
 
+                      <div className='flex items-center space-x-2'>
+                        <Checkbox
+                          id='inherit'
+                          checked={inheritData}
+                          onCheckedChange={(checked) =>
+                            setInheritData(checked as boolean)
+                          }
+                        />
+                        <Label htmlFor='inherit' className='cursor-pointer'>
+                          Herdar dados da empresa principal
+                        </Label>
+                      </div>
+
                       <fieldset
                         className='grid gap-4'
                         disabled={isCnpjLoading || !!cnpjError}
@@ -254,7 +279,12 @@ export default function ClientsPage() {
                         </div>
                         <div className='space-y-2'>
                           <Label htmlFor='address'>Endereço</Label>
-                          <Textarea id='address' name='address' rows={2} />
+                          <Textarea
+                            id='address'
+                            name='address'
+                            rows={2}
+                            defaultValue={inheritData ? client?.address : ''}
+                          />
                         </div>
                         <div className='grid grid-cols-2 gap-4'>
                           <div className='space-y-2'>
@@ -293,6 +323,7 @@ export default function ClientsPage() {
                                           onSelect={() =>
                                             handleCnaeSelect(item)
                                           }
+                                          onClick={() => handleCnaeSelect(item)}
                                         >
                                           <Check
                                             className={cn(
