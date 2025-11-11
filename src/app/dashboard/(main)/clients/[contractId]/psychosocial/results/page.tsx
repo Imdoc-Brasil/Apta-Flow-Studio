@@ -63,12 +63,13 @@ const calculateScores = () => {
     )
     const averageScore = totalResponses > 0 ? totalScores / totalResponses : 0
 
+    // Simplified benchmark data for demonstration
     let benchmark25 = 3.5
     let benchmark75 = 4.5
+    
+    if (group.name.includes('Demandas')) benchmark25 = 3.34
+    if (group.name.includes('Organização')) benchmark75 = 3.75
 
-    // Using example benchmarks from the provided image
-    if (group.name.includes('Demand')) benchmark25 = 3.34
-    if (group.name.includes('Control')) benchmark75 = 3.75
 
     return {
       name: group.name,
@@ -97,16 +98,16 @@ const domainTextMap: { [key: string]: string } = {
     'Este domínio refere-se a aspectos do trabalho como carga de trabalho, padrões de trabalho e ambiente de trabalho. Organizações com bom desempenho nesta área são propensas a ter prazos alcançáveis, demandas adequadas em relação às horas de trabalho e sistemas para responder a preocupações individuais.',
   'Organização do Trabalho':
     'Refere-se ao quanto uma pessoa tem a dizer sobre a forma como faz seu trabalho. Organizações com bom desempenho nesta área provavelmente incentivam a autonomia e a iniciativa, com sistemas claros para que os funcionários influenciem seus próprios padrões de trabalho.',
-  'Relacionamentos Interpessoais e Liderança':
-    'Este domínio inclui o encorajamento e o apoio fornecidos pela gestão e pelos colegas. Organizações com bom desempenho aqui provavelmente têm equipes prestativas e compassivas, com sistemas que facilitam o respeito e o apoio mútuo.',
-  'Conflito Trabalho-Família':
+  'Apoio da Liderança':
+    'Este domínio inclui o encorajamento e o apoio fornecidos pela gestão. Organizações com bom desempenho aqui provavelmente têm sistemas claros que permitem e incentivam os gestores a apoiar sua equipe e fornecer feedback regular e construtivo.',
+  'Apoio dos Colegas':
+    'Este domínio inclui o encorajamento, o patrocínio e os recursos fornecidos pelos colegas. Organizações com bom desempenho nesta área provavelmente têm equipes prestativas e compassivas, com sistemas que facilitam o respeito e o apoio mútuo.',
+  'Relacionamentos e Interações Pessoais':
     'Isto inclui a promoção de um trabalho positivo para evitar conflitos e lidar com comportamentos inaceitáveis. Organizações com bom desempenho nesta área provavelmente promovem um trabalho positivo e lidam eficazmente com conflitos e comportamentos inaceitáveis.',
-  'Insegurança no Emprego':
-    'Como a mudança organizacional (grande ou pequena) é gerenciada e comunicada na organização. Organizações com bom desempenho nesta área provavelmente têm sistemas de gestão de mudanças eficazes que garantem que a mudança seja consultada, implementada de forma ponderada e bem comunicada.',
-  'Valores no Trabalho':
+  'Papel no Trabalho':
     'Se as pessoas entendem seu papel na organização e se a organização garante que elas não tenham papéis conflitantes. Organizações com bom desempenho nesta área provavelmente promovem deveres, metas e responsabilidades claras e têm sistemas para lidar com conflitos de papéis.',
-  'Assédio Moral':
-    'Refere-se ao incentivo, patrocínio e recursos fornecidos pela organização e pela gestão de linha. Organizações com bom desempenho nesta área provavelmente têm sistemas claros que permitem e incentivam os gestores a apoiar sua equipe e fornecer feedback regular e construtivo.',
+  'Mudanças Organizacionais':
+    'Como a mudança organizacional (grande ou pequena) é gerenciada e comunicada na organização. Organizações com bom desempenho nesta área provavelmente têm sistemas de gestão de mudanças eficazes que garantem que a mudança seja consultada, implementada de forma ponderada e bem comunicada.',
 }
 
 function ReportCover({
@@ -226,24 +227,24 @@ export default function PsychosocialResultsPage() {
 
              <h3 className='font-headline text-lg font-bold text-foreground pt-4'>Principais Conclusões</h3>
             <p>
-                O gráfico a seguir mostra as pontuações médias da empresa <strong>{survey?.clientName}</strong> para cada um dos seis domínios, em comparação com os benchmarks do setor privado. A linha vermelha indica a pontuação do 25º percentil e a linha verde indica a pontuação do 75º percentil para a amostra comparativa. Isso significa que, em comparação com os
+                O gráfico a seguir mostra as pontuações médias da empresa <strong>{survey?.clientName}</strong> para cada um dos domínios, em comparação com os benchmarks do setor privado. A linha vermelha indica a pontuação do 25º percentil e a linha verde indica a pontuação do 75º percentil para a amostra comparativa. Isso significa que, em comparação com os
                 benchmarks, as organizações com pontuação abaixo da linha vermelha tiveram um desempenho inferior a 75% das organizações; as organizações com pontuação entre as linhas vermelha e verde ficaram entre os 50% intermediários das organizações. As pontuações acima da linha verde são melhores do que 75% das organizações.
             </p>
             <ul className='list-disc pl-5 space-y-2'>
-                <li><strong>Demandas</strong> - isso inclui questões como carga de trabalho, padrões de trabalho e ambiente de trabalho. As empresas com bom desempenho nesta área provavelmente têm prazos alcançáveis, demandas adequadas em relação às horas de trabalho e sistemas em implementação para responder a preocupações individuais.</li>
-                <li><strong>Controle</strong> – refere-se ao quanto a pessoa tem influência sobre a maneira como realiza seu trabalho. Empresas com bom desempenho nessa área tendem a promover a autonomia e a iniciativa, com sistemas claros para que os funcionários influenciem seu próprio trabalho e padrões de trabalho.</li>
-                <li><strong>Apoio</strong> – inclui o incentivo, apoio e os recursos fornecidos pela empresa, pela gestão direta e pelos colegas, e pode ser dividido em duas ocasiões de subdomínio para "Apoio da Gestão" e "Apoio dos Colegas". Empresas com bom desempenho nessa área tendem a ter sistemas claros que permitem e incentivam os gestores a apoiar suas equipes e fornecer feedback regular e construtivo. Eles também possuem equipes prestativas e compassivas, com sistemas que facilitam o respeito e o apoio entre pares.</li>
-                <li><strong>Relacionamentos</strong> – inclui a promoção de um ambiente de trabalho positivo para evitar conflitos e lidar com comportamentos inaceitáveis. Empresas com bom desempenho nessa área tendem a promover um ambiente de trabalho positivo e a lidar eficazmente com conflitos e comportamentos inaceitáveis.</li>
-                <li><strong>Papel</strong> – se as pessoas entendem seu papel dentro da organização e se a organização garante que elas não tenham papéis conflitantes. Organizações com bom desempenho nesta área provavelmente promovem deveres, metas e responsabilidades claras e possuem sistemas implementados para lidar com conflitos de papéis.</li>
-                <li><strong>Mudança</strong> - como uma mudança organizacional (grande ou pequena) é gerenciada e comunicada na organização. Organizações com bom desempenho provavelmente possuem sistemas de gestão de mudanças que garantem que a mudança seja devidamente consultada, renovada de forma criteriosa e bem comunicada.</li>
+                <li><strong>Demandas do Trabalho</strong> - isso inclui questões como carga de trabalho, padrões de trabalho e ambiente de trabalho.</li>
+                <li><strong>Organização do Trabalho</strong> – refere-se ao quanto a pessoa tem influência sobre a maneira como realiza seu trabalho.</li>
+                <li><strong>Apoio da Liderança e dos Colegas</strong> – inclui o incentivo, apoio e os recursos fornecidos pela empresa, pela gestão direta e pelos colegas.</li>
+                <li><strong>Relacionamentos e Interações Pessoais</strong> – inclui a promoção de um ambiente de trabalho positivo para evitar conflitos e lidar com comportamentos inaceitáveis.</li>
+                <li><strong>Papel no Trabalho</strong> – se as pessoas entendem seu papel dentro da organização e se a organização garante que elas não tenham papéis conflitantes.</li>
+                <li><strong>Mudanças Organizacionais</strong> - como uma mudança organizacional (grande ou pequena) é gerenciada e comunicada na organização.</li>
             </ul>
-            <p>As seis áreas são relacionadas como sete fatores porque o "Apoio" é dividido em dois fatores: Apoio dos Gestores e Apoio dos Pares. As opções variam de 1 (ruim) a 5 (desejável).</p>
+            <p>As opções variam de 1 (ruim) a 5 (desejável).</p>
         
             <div className='h-[400px] w-full pt-8'>
               <ChartContainer config={chartConfig} className="w-full h-full">
-                <BarChart data={analysisData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <BarChart data={analysisData} margin={{ top: 20, right: 30, left: 20, bottom: 80 }}>
                   <CartesianGrid vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={80} />
+                  <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" interval={0} />
                   <YAxis domain={[1, 5]} />
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Bar dataKey="yourScore" fill="var(--color-yourScore)" radius={4} />
@@ -302,24 +303,6 @@ export default function PsychosocialResultsPage() {
                       radius={4}
                       barSize={20}
                     >
-                      <text
-                        x={-10}
-                        y={10}
-                        textAnchor='end'
-                        fill='hsl(var(--foreground))'
-                        className='text-sm font-bold'
-                      >
-                        Sua Pontuação
-                      </text>
-                      <text
-                        x='98%'
-                        y={10}
-                        textAnchor='end'
-                        fill='hsl(var(--primary-foreground))'
-                        className='text-sm font-bold'
-                      >
-                        {item.yourScore.toFixed(2)}
-                      </text>
                     </Bar>
                     <ReferenceLine
                       x={item.benchmark25}

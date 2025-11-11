@@ -54,118 +54,89 @@ export const psychosocialSurveyData: PsychosocialStressorGroup[] = [
         id: 'OT06',
         text: 'Você tem a oportunidade de desenvolver suas habilidades no trabalho?',
       },
-      {
-        id: 'OT07',
-        text: 'Seu trabalho lhe dá a sensação de "fazer um bom trabalho"?',
-      },
     ],
   },
   {
-    id: 'RELACIONAMENTOS_INTERPESSOAIS',
-    name: 'Relacionamentos Interpessoais e Liderança',
+    id: 'APOIO_LIDERANCA',
+    name: 'Apoio da Liderança',
     questions: [
       {
-        id: 'RI01',
+        id: 'AL01',
         text: 'Seu supervisor imediato é bom em planejar e organizar o trabalho?',
       },
       {
-        id: 'RI02',
+        id: 'AL02',
         text: 'Seu supervisor imediato distribui o trabalho de forma justa?',
       },
       {
-        id: 'RI03',
+        id: 'AL03',
+        text: 'Recebo o respeito que mereço da minha gerência sênior.',
+      },
+    ],
+  },
+  {
+    id: 'APOIO_COLEGAS',
+    name: 'Apoio dos Colegas',
+    questions: [
+      {
+        id: 'AC01',
         text: 'Você recebe apoio e ajuda de seus colegas quando necessário?',
       },
       {
-        id: 'RI04',
+        id: 'AC02',
         text: 'Há um bom ambiente de colaboração entre os colegas?',
       },
       {
-        id: 'RI05',
-        text: 'Você se sente parte de uma comunidade em seu local de trabalho?',
+        id: 'AC03',
+        text: 'Sinto que posso contar com meus colegas.',
       },
     ],
   },
   {
-    id: 'CONFLITO_TRABALHO_FAMILIA',
-    name: 'Conflito Trabalho-Família',
+    id: 'RELACIONAMENTOS_INTERACOES',
+    name: 'Relacionamentos e Interações Pessoais',
     questions: [
       {
-        id: 'CTF01',
-        text: 'Com que frequência você não tem tempo para a família/amigos por causa do trabalho?',
-      },
-      {
-        id: 'CTF02',
-        text: 'Com que frequência você volta do trabalho cansado demais para fazer as coisas que gostaria em casa?',
-      },
-      {
-        id: 'CTF03',
-        text: 'A família e os amigos dizem que você deveria trabalhar menos?',
-      },
-      {
-        id: 'CTF04',
-        text: 'Seu trabalho interfere na sua vida familiar e em seus momentos de lazer?',
-      },
-    ],
-  },
-  {
-    id: 'INSEGURANCA_EMPREGO',
-    name: 'Insegurança no Emprego',
-    questions: [
-      { id: 'IE01', text: 'Você está preocupado em ser demitido?' },
-      {
-        id: 'IE02',
-        text: 'Você está preocupado com a possibilidade de uma grande mudança organizacional?',
-      },
-      {
-        id: 'IE03',
-        text: 'Você está preocupado em ter que assumir novas funções sem o devido preparo?',
-      },
-    ],
-  },
-  {
-    id: 'VALORES_TRABALHO',
-    name: 'Valores no Trabalho',
-    questions: [
-      {
-        id: 'VT01',
-        text: 'Seu trabalho tem um propósito e significado para você?',
-      },
-      {
-        id: 'VT02',
-        text: 'Seu trabalho lhe dá a sensação de "fazer um bom trabalho"?',
-      },
-      {
-        id: 'VT03',
-        text: 'Você sente que o trabalho que você faz é importante?',
-      },
-      {
-        id: 'VT04',
-        text: 'Você se sente motivado e engajado em seu trabalho?',
-      },
-    ],
-  },
-  {
-    id: 'ASSEDIO_MORAL',
-    name: 'Assédio Moral',
-    questions: [
-      {
-        id: 'AM01',
+        id: 'RI01',
         text: 'Você foi exposto a fofocas ou rumores sobre você?',
       },
       {
-        id: 'AM02',
+        id: 'RI02',
         text: 'Você teve informações importantes para o seu trabalho retidas de você?',
       },
-      { id: 'AM03', text: 'Você foi humilhado ou ridicularizado em seu trabalho?' },
-      { id: 'AM04', text: 'Você foi ignorado ou excluído?' },
+      { id: 'RI03', text: 'Você foi humilhado ou ridicularizado em seu trabalho?' },
+    ],
+  },
+  {
+    id: 'PAPEL_TRABALHO',
+    name: 'Papel no Trabalho',
+    questions: [
       {
-        id: 'AM05',
-        text: 'Você recebeu críticas ou ofensas pessoais e depreciativas?',
+        id: 'PT01',
+        text: 'Eu entendo claramente quais são minhas funções e responsabilidades.',
       },
       {
-        id: 'AM06',
-        text: 'Suas opiniões e pontos de vista foram ignorados?',
+        id: 'PT02',
+        text: 'Eu tenho clareza sobre os objetivos e metas da minha equipe.',
+      },
+      {
+        id: 'PT03',
+        text: 'Eu sei como meu trabalho se encaixa nos objetivos gerais da empresa.',
+      },
+    ],
+  },
+  {
+    id: 'MUDANCAS_ORGANIZACIONAIS',
+    name: 'Mudanças Organizacionais',
+    questions: [
+      { id: 'MO01', text: 'Você está preocupado em ser demitido?' },
+      {
+        id: 'MO02',
+        text: 'As mudanças são comunicadas de forma eficaz na organização?',
+      },
+      {
+        id: 'MO03',
+        text: 'Sinto que tenho informações suficientes para entender as mudanças.',
       },
     ],
   },
@@ -192,5 +163,3 @@ export const initialSurveys: PsychosocialSurvey[] = [
     status: 'Concluída',
   },
 ]
-
-    
