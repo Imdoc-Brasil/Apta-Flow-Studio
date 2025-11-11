@@ -307,6 +307,7 @@ export default function PsychosocialResultsPage() {
             permitirá que a empresa <strong>{survey?.clientName}</strong> se
             concentre nas áreas prioritárias e faça melhorias direcionadas.
           </p>
+
           <h3 className='font-headline text-lg font-bold text-foreground pt-4'>
             Como os resultados são apresentados
           </h3>
@@ -392,12 +393,12 @@ export default function PsychosocialResultsPage() {
           </p>
           <ul className='list-disc pl-5 space-y-2'>
             <li>
-              <strong>Demandas do Trabalho</strong> - isso inclui questões como
-              carga de trabalho, padrões de trabalho e ambiente de trabalho.
+              <strong>Demandas</strong> - isso inclui questões como carga de
+              trabalho, padrões de trabalho e ambiente de trabalho.
             </li>
             <li>
-              <strong>Organização do Trabalho</strong> – refere-se ao quanto a
-              pessoa tem influência sobre a maneira como realiza seu trabalho.
+              <strong>Controle</strong> – refere-se ao quanto a pessoa tem
+              influência sobre a maneira como realiza seu trabalho.
             </li>
             <li>
               <strong>Apoio da Liderança e dos Colegas</strong> – inclui o
@@ -405,25 +406,27 @@ export default function PsychosocialResultsPage() {
               gestão direta e pelos colegas.
             </li>
             <li>
-              <strong>Relacionamentos e Interações Pessoais</strong> – inclui a
-              promoção de um ambiente de trabalho positivo para evitar conflitos
-              e lidar com comportamentos inaceitáveis.
+              <strong>Relacionamentos</strong> – inclui a promoção de um
+              ambiente de trabalho positivo para evitar conflitos e lidar com
+              comportamentos inaceitáveis.
             </li>
             <li>
-              <strong>Papel no Trabalho</strong> – se as pessoas entendem seu
-              papel dentro da organização e se a organização garante que elas
-              não tenham papéis conflitantes.
+              <strong>Papel</strong> – se as pessoas entendem seu papel dentro
+              da organização e se a organização garante que elas não tenham
+              papéis conflitantes.
             </li>
             <li>
-              <strong>Mudanças Organizacionais</strong> - como uma mudança
-              organizacional (grande ou pequena) é gerenciada e comunicada na
-              organização.
+              <strong>Mudança</strong> - como uma mudança organizacional
+              (grande ou pequena) é gerenciada e comunicada na organização.
             </li>
           </ul>
           <p>As opções variam de 1 (ruim) a 5 (desejável).</p>
 
           <div className='h-[400px] w-full pt-8'>
-            <ChartContainer config={domainChartConfig} className='w-full h-full'>
+            <ChartContainer
+              config={domainChartConfig}
+              className='w-full h-full'
+            >
               <BarChart
                 data={domainAnalysisData}
                 margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
@@ -465,6 +468,9 @@ export default function PsychosocialResultsPage() {
               </h3>
               <p className='text-muted-foreground mt-2 text-sm leading-relaxed'>
                 {domainTextMap[domain.domainName]}
+              </p>
+               <p className='text-muted-foreground mt-4 text-sm leading-relaxed'>
+                Os resultados para a empresa <strong>{survey?.clientName}</strong> na pesquisa atual são apresentados abaixo:
               </p>
 
               <div className='mt-6 rounded-lg border bg-muted/30 p-6 space-y-6'>
@@ -512,7 +518,7 @@ export default function PsychosocialResultsPage() {
                             stackId='a'
                             radius={[4, 0, 0, 4]}
                           />
-                           <Bar
+                          <Bar
                             dataKey='Neutral'
                             fill='var(--color-Neutral)'
                             stackId='a'
@@ -521,7 +527,7 @@ export default function PsychosocialResultsPage() {
                             dataKey='Favourable'
                             fill='var(--color-Favourable)'
                             stackId='a'
-                             radius={[0, 4, 4, 0]}
+                            radius={[0, 4, 4, 0]}
                           />
                         </BarChart>
                       </ChartContainer>
@@ -532,20 +538,20 @@ export default function PsychosocialResultsPage() {
               <Separator className='mt-12' />
             </div>
           ))}
-            <div className="flex justify-between text-xs mt-4">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-sm bg-destructive" />
-                <span>Desfavorável</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-sm bg-chart-2" />
-                <span>Neutra</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-sm bg-chart-1" />
-                <span>Favorável</span>
-              </div>
+          <div className='flex justify-between text-xs mt-4'>
+            <div className='flex items-center gap-2'>
+              <span className='w-3 h-3 rounded-sm bg-destructive' />
+              <span>Desfavorável</span>
             </div>
+            <div className='flex items-center gap-2'>
+              <span className='w-3 h-3 rounded-sm bg-chart-2' />
+              <span>Neutra</span>
+            </div>
+            <div className='flex items-center gap-2'>
+              <span className='w-3 h-3 rounded-sm bg-chart-1' />
+              <span>Favorável</span>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
