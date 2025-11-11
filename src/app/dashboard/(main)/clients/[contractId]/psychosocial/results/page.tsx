@@ -191,7 +191,7 @@ export default function PsychosocialResultsPage() {
          <CardHeader>
           <CardTitle className='font-headline text-3xl'>Resumo Executivo</CardTitle>
         </CardHeader>
-        <CardContent className='prose prose-sm max-w-none dark:prose-invert'>
+        <CardContent className='space-y-4 text-sm text-muted-foreground'>
             <p>
                 Este Relatório do(a) <strong>{survey?.circumstances}</strong> contém os resultados da Pesquisa realizada pela <strong>{survey?.clientName}</strong> na(s) sua(s) unidade(s): <strong>{survey?.unit}</strong>.
             </p>
@@ -208,12 +208,12 @@ export default function PsychosocialResultsPage() {
                 Este relatório resume as respostas fornecidas pelos colaboradores e permitirá que a empresa <strong>{survey?.clientName}</strong> se concentre nas áreas prioritárias e faça melhorias direcionadas.
             </p>
 
-            <h3 className='font-headline'>Como os resultados são apresentados</h3>
+            <h3 className='font-headline text-lg font-bold text-foreground pt-4'>Como os resultados são apresentados</h3>
             <p>
                 O sistema de pontuação usado na pesquisa ARPT foi baseado em uma escala de 5 pontos. O sistema de pontuação é complexo, pois algumas escalas e itens são pontuados inversamente na ferramenta por razões psicométricas. Para auxiliar sua interpretação significativa, os resultados foram agrupados em três categorias: respostas favoráveis, neutras e desfavoráveis, apresentadas como porcentagens de respondentes. A categoria neutra contém respostas que pontuaram 3, onde as opções de resposta eram 'às vezes' ou 'neutro'. As categorias favorável e desfavorável combinam as duas respostas em ambos os lados da escala. Por exemplo, para o item 'Eu posso decidir quando fazer uma pausa', as respostas 'Frequentemente' e 'Sempre' são combinadas para produzir a porcentagem de respondentes que deram uma resposta favorável, enquanto as respostas 'Nunca' e 'Raramente' são combinadas para produzir a porcentagem de respondentes que deram uma resposta desfavorável. No entanto, para as pontuações de Relacionamentos, estas são apresentadas como categorias de resposta em vez de favorável/desfavorável. Isso ocorre porque, se os respondentes responderem "às vezes" às perguntas neste domínio, isso pode indicar a presença de bullying ou assédio, e qualquer relato de tais comportamentos deve ser considerado sério pela organização.
             </p>
             <p>
-                No primeiro gráfico abaixo, que resume o desempenho geral da sua organização, todas as pontuações são apresentadas de forma que uma pontuação alta indique características de trabalho saudáveis e uma pontuação baixa indique características de trabalho menos saudáveis. Portanto, uma pontuação baixa pode indicar que é necessário fazer melhorias para proteger a saúde e o bem-estar da sua força de trabalho.
+                No primeiro gráfico abaixo, que resume o desempenho geral da sua organização, todas as pontuações são apresentadas de forma que uma pontuação alta indique características de trabalho saudáveis ​​e uma pontuação baixa indique características de trabalho menos saudáveis. Portanto, uma pontuação baixa pode indicar que é necessário fazer melhorias para proteger a saúde e o bem-estar da sua força de trabalho.
             </p>
             <p>
                 É útil revisar a pontuação da sua organização para cada domínio em relação aos benchmarks de uma amostra comparativa de 17.286 respondentes de 123 avaliações do setor privado da União Europeia, optamos por usar esses dados, por alguns motivos. O primeiro é pela ausência de informações e indicadores de riscos psicossociais do setor privado no Brasil e América Latina, outro é por que o Reino Unido e a União Europeia possuem a maior pesquisa e o maior banco de dados desses indicadores.
@@ -225,9 +225,10 @@ export default function PsychosocialResultsPage() {
             <p>Revisar seus dados com uma análise mais detalhada (ou seja, por diferentes categorias demográficas) e realizar grupos focais pode ajudá-lo a explorar e validar suas pontuações com mais profundidade.</p>
             <p>Para obter mais informações sobre os dados de referência, consulte: Edwards, J.A., & Webster, S. (2012).</p>
 
-            <h3 className='font-headline'>Principais Conclusões</h3>
+            <h3 className='font-headline text-lg font-bold text-foreground pt-4'>Principais Conclusões</h3>
             <p>
-                O gráfico a seguir mostra as pontuações médias da empresa <strong>{survey?.clientName}</strong> para cada um dos seis domínios, em comparação com os benchmarks do setor privado. A linha vermelha indica a pontuação do 25º percentil e a linha verde indica a pontuação do 75º percentil para a amostra comparativa. Isso significa que, em comparação com os benchmarks, as organizações com pontuação abaixo da linha vermelha tiveram um desempenho inferior a 75% das organizações; as organizações com pontuação entre as linhas vermelha e verde ficaram entre os 50% intermediários das organizações. As pontuações acima da linha verde são melhores do que 75% das organizações.
+                O gráfico a seguir mostra as pontuações médias da empresa <strong>{survey?.clientName}</strong> para cada um dos seis domínios, em comparação com os benchmarks do setor privado. A linha vermelha indica a pontuação do 25º percentil e a linha verde indica a pontuação do 75º percentil para a amostra comparativa. Isso significa que, em comparação com os
+                benchmarks, as organizações com pontuação abaixo da linha vermelha tiveram um desempenho inferior a 75% das organizações; as organizações com pontuação entre as linhas vermelha e verde ficaram entre os 50% intermediários das organizações. As pontuações acima da linha verde são melhores do que 75% das organizações.
             </p>
             <ul className='list-disc pl-5 space-y-2'>
                 <li><strong>Demandas</strong> - isso inclui questões como carga de trabalho, padrões de trabalho e ambiente de trabalho. As empresas com bom desempenho nesta área provavelmente têm prazos alcançáveis, demandas adequadas em relação às horas de trabalho e sistemas em implementação para responder a preocupações individuais.</li>
