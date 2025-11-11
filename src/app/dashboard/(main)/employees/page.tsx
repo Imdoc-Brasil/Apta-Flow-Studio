@@ -85,6 +85,7 @@ import { z } from 'zod'
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -540,7 +541,7 @@ export default function StaffsPage() {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Hub da Equipe</CardTitle>
+          <CardTitle>Equipe</CardTitle>
           <CardDescription>
             Gerencie a equipe interna da sua empresa.
           </CardDescription>
@@ -893,3 +894,5 @@ export default function StaffsPage() {
     </>
   )
 }
+
+    
