@@ -11,6 +11,7 @@ import {
   FilePlus,
   Check,
   ChevronsUpDown,
+  X,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -96,6 +97,10 @@ export default function ClientsPage() {
   const [cnae, setCnae] = useState('')
   const [riskLevel, setRiskLevel] = useState('')
   const [isCnaePopoverOpen, setIsCnaePopoverOpen] = useState(false)
+  
+  const [secondaryCnaes, setSecondaryCnaes] = useState<CnaeData[]>([])
+  const [isSecondaryCnaePopoverOpen, setIsSecondaryCnaePopoverOpen] = useState(false)
+
 
   const handleAddClient = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -109,6 +114,7 @@ export default function ClientsPage() {
       address: formData.get('address') as string,
       cnae: formData.get('cnae') as string,
       riskLevel: formData.get('riskLevel') as string,
+      secondaryCnaes: secondaryCnaes.map(c => c.code),
       status: 'Ativo',
       adminResponsibleName: formData.get('adminResponsibleName') as string,
       adminResponsibleCPF: formData.get('adminResponsibleCPF') as string,
@@ -130,6 +136,7 @@ export default function ClientsPage() {
     })
 
     setIsDialogOpen(false)
+    setSecondaryCnaes([])
   }
 
   const handleCnpjBlur = async () => {
@@ -163,6 +170,18 @@ export default function ClientsPage() {
     setRiskLevel(selectedCnae.riskLevel.toString())
     setIsCnaePopoverOpen(false)
   }
+  
+  const handleSecondaryCnaeSelect = (selectedCnae: CnaeData) => {
+    if (!secondaryCnaes.some(c => c.code === selectedCnae.code) && cnae !== selectedCnae.code) {
+      setSecondaryCnaes(prev => [...prev, selectedCnae]);
+    }
+    setIsSecondaryCnaePopoverOpen(false);
+  }
+
+  const handleRemoveSecondaryCnae = (cnaeCode: string) => {
+    setSecondaryCnaes(prev => prev.filter(c => c.code !== cnaeCode));
+  }
+
 
   return (
     <Card>
@@ -341,6 +360,56 @@ export default function ClientsPage() {
                               placeholder='Automático'
                             />
                           </div>
+                        </div>
+
+                        <div className='space-y-2'>
+                            <Label>CNAEs Secundários</Label>
+                             <Popover open={isSecondaryCnaePopoverOpen} onOpenChange={setIsSecondaryCnaePopoverOpen}>
+                              <PopoverTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  role="combobox"
+                                  aria-expanded={isSecondaryCnaePopoverOpen}
+                                  className="w-full justify-between font-normal"
+                                >
+                                  Adicionar CNAE secundário...
+                                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                 <Command>
+                                  <CommandInput placeholder="Buscar CNAE..." />
+                                  <CommandEmpty>Nenhum CNAE encontrado.</CommandEmpty>
+                                  <CommandList>
+                                    <CommandGroup>
+                                      {cnaeList.filter(c => c.code !== cnae && !secondaryCnaes.some(sc => sc.code === c.code)).map((item) => (
+                                        <CommandItem
+                                          key={item.code}
+                                          value={`${item.code} ${item.description}`}
+                                          onSelect={() => handleSecondaryCnaeSelect(item)}
+                                           onClick={() => handleSecondaryCnaeSelect(item)}
+                                        >
+                                          <div className='flex flex-col'>
+                                            <span className='font-medium'>{item.description}</span>
+                                            <span className='text-xs text-muted-foreground'>{item.code}</span>
+                                          </div>
+                                        </CommandItem>
+                                      ))}
+                                    </CommandGroup>
+                                  </CommandList>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
+                             <div className="mt-2 flex flex-wrap gap-2">
+                              {secondaryCnaes.map(cnae => (
+                                <Badge key={cnae.code} variant="secondary" className="flex items-center gap-1">
+                                  {cnae.code}
+                                  <button type="button" onClick={() => handleRemoveSecondaryCnae(cnae.code)}>
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                </Badge>
+                              ))}
+                            </div>
                         </div>
 
                         <Separator className='my-4' />

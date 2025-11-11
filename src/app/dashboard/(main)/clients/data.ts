@@ -8,6 +8,7 @@ export interface Client {
   // New fields from CNPJ data
   tradeName?: string; // Nome Fantasia
   cnae?: string;
+  secondaryCnaes?: string[];
   address?: string;
   riskLevel?: string;
   
