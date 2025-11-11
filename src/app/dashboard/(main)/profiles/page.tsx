@@ -37,16 +37,42 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useCollection, useFirestore, useMemoFirebase } from '@/firebase'
+import {
+  useCollection,
+  useFirestore,
+  useMemoFirebase,
+  useUser,
+} from '@/firebase'
 import { collection } from 'firebase/firestore'
 import type { Staff } from '../employees/page'
 
 interface Profile {
   id: string
   name: string
+  code?: string
+  createdBy?: string
+  createdAt?: string
 }
 
 export const initialProfiles: Profile[] = []
+
+function ClientSideDate({ dateString }: { dateString?: string }) {
+  const [formattedDate, setFormattedDate] = useState('')
+
+  React.useEffect(() => {
+    if (dateString) {
+      setFormattedDate(
+        new Date(dateString).toLocaleDateString('pt-BR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        })
+      )
+    }
+  }, [dateString])
+
+  return <>{formattedDate}</>
+}
 
 export default function ProfilesPage() {
   const [profiles, setProfiles] = useState<Profile[]>(initialProfiles)
@@ -54,6 +80,8 @@ export default function ProfilesPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null)
   const [profileName, setProfileName] = useState('')
+  const [profileCode, setProfileCode] = useState('')
+  const { user } = useUser()
 
   const firestore = useFirestore()
   const staffsRef = useMemoFirebase(
@@ -80,10 +108,14 @@ export default function ProfilesPage() {
     const newProfile: Profile = {
       id: `profile-${Date.now()}`,
       name: profileName,
+      code: profileCode,
+      createdBy: user?.email || 'Desconhecido',
+      createdAt: new Date().toISOString(),
     }
     setProfiles((prev) => [...prev, newProfile])
     setIsAddDialogOpen(false)
     setProfileName('')
+    setProfileCode('')
   }
 
   const handleEditProfile = (event: React.FormEvent<HTMLFormElement>) => {
@@ -91,25 +123,61 @@ export default function ProfilesPage() {
     if (!currentProfile || !profileName) return
     setProfiles((prev) =>
       prev.map((p) =>
-        p.id === currentProfile.id ? { ...p, name: profileName } : p
+        p.id === currentProfile.id
+          ? { ...p, name: profileName, code: profileCode }
+          : p
       )
     )
     setIsEditDialogOpen(false)
     setCurrentProfile(null)
     setProfileName('')
+    setProfileCode('')
   }
 
   const openEditDialog = (profile: Profile) => {
     setCurrentProfile(profile)
     setProfileName(profile.name)
+    setProfileCode(profile.code || '')
     setIsEditDialogOpen(true)
   }
 
   const openAddDialog = () => {
     setCurrentProfile(null)
     setProfileName('')
+    setProfileCode('')
     setIsAddDialogOpen(true)
   }
+
+  const renderProfileForm = (profile?: Profile | null) => (
+    <div className='grid gap-4 py-4'>
+      <div className='grid grid-cols-4 items-center gap-4'>
+        <Label htmlFor='name' className='text-right'>
+          Nome do Perfil
+        </Label>
+        <Input
+          id='name'
+          name='name'
+          value={profileName}
+          onChange={(e) => setProfileName(e.target.value)}
+          className='col-span-3'
+          required
+        />
+      </div>
+      <div className='grid grid-cols-4 items-center gap-4'>
+        <Label htmlFor='code' className='text-right'>
+          Código
+        </Label>
+        <Input
+          id='code'
+          name='code'
+          value={profileCode}
+          onChange={(e) => setProfileCode(e.target.value)}
+          className='col-span-3'
+          placeholder='(Opcional)'
+        />
+      </div>
+    </div>
+  )
 
   return (
     <Card>
@@ -138,21 +206,7 @@ export default function ProfilesPage() {
                 </DialogDescription>
               </DialogHeader>
               <form id='add-profile-form' onSubmit={handleAddProfile}>
-                <div className='grid gap-4 py-4'>
-                  <div className='grid grid-cols-4 items-center gap-4'>
-                    <Label htmlFor='name' className='text-right'>
-                      Nome do Perfil
-                    </Label>
-                    <Input
-                      id='name'
-                      name='name'
-                      value={profileName}
-                      onChange={(e) => setProfileName(e.target.value)}
-                      className='col-span-3'
-                      required
-                    />
-                  </div>
-                </div>
+                {renderProfileForm()}
               </form>
               <DialogFooter>
                 <Button
@@ -174,7 +228,12 @@ export default function ProfilesPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Nome do Perfil</TableHead>
-              <TableHead className='text-right'>Staffs com este Perfil</TableHead>
+              <TableHead>Código</TableHead>
+              <TableHead>Criado por</TableHead>
+              <TableHead>Data de Criação</TableHead>
+              <TableHead className='text-right'>
+                Staffs com este Perfil
+              </TableHead>
               <TableHead>
                 <span className='sr-only'>Ações</span>
               </TableHead>
@@ -184,8 +243,17 @@ export default function ProfilesPage() {
             {profiles.map((profile) => (
               <TableRow key={profile.id}>
                 <TableCell className='font-medium'>{profile.name}</TableCell>
+                <TableCell>{profile.code}</TableCell>
+                <TableCell className='text-muted-foreground'>
+                  {profile.createdBy}
+                </TableCell>
+                <TableCell className='text-muted-foreground'>
+                  <ClientSideDate dateString={profile.createdAt} />
+                </TableCell>
                 <TableCell className='text-right'>
-                   <Badge variant="secondary">{staffCountByProfile[profile.id] || 0}</Badge>
+                  <Badge variant='secondary'>
+                    {staffCountByProfile[profile.id] || 0}
+                  </Badge>
                 </TableCell>
                 <TableCell className='text-right'>
                   <DropdownMenu>
@@ -215,25 +283,11 @@ export default function ProfilesPage() {
           <DialogHeader>
             <DialogTitle>Editar Perfil</DialogTitle>
             <DialogDescription>
-              Modifique o nome do perfil de acesso.
+              Modifique os detalhes do perfil de acesso.
             </DialogDescription>
           </DialogHeader>
           <form id='edit-profile-form' onSubmit={handleEditProfile}>
-            <div className='grid gap-4 py-4'>
-              <div className='grid grid-cols-4 items-center gap-4'>
-                <Label htmlFor='edit-name' className='text-right'>
-                  Nome do Perfil
-                </Label>
-                <Input
-                  id='edit-name'
-                  name='edit-name'
-                  value={profileName}
-                  onChange={(e) => setProfileName(e.target.value)}
-                  className='col-span-3'
-                  required
-                />
-              </div>
-            </div>
+            {renderProfileForm(currentProfile)}
           </form>
           <DialogFooter>
             <Button
