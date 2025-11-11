@@ -2,7 +2,13 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import { MoreHorizontal, PlusCircle, Search, Filter, Loader2 } from 'lucide-react'
+import {
+  MoreHorizontal,
+  PlusCircle,
+  Search,
+  Filter,
+  Loader2,
+} from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
   Card,
@@ -85,6 +91,10 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { initialClientsData } from '../clients/data'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Check, ChevronsUpDown, X } from 'lucide-react'
+import { Command, CommandEmpty, CommandInput, CommandGroup, CommandItem, CommandList } from '@/components/ui/command'
+import { cn } from '@/lib/utils'
 
 type StaffStatus = 'Ativo' | 'Licença' | 'Suspenso'
 type StaffSituation = 'Online' | 'Offline'
@@ -102,6 +112,7 @@ export interface Staff {
   status: StaffStatus
   situacao: StaffSituation
   contractId?: string
+  clientIds?: string[]
 }
 
 const staffFormSchema = z.object({
@@ -111,6 +122,7 @@ const staffFormSchema = z.object({
   assinatura: z.string().min(2, { message: 'A assinatura é obrigatória.' }),
   phone: z.string().optional(),
   contractId: z.string().optional(),
+  clientIds: z.array(z.string()).optional(),
 })
 
 type StaffFormValues = z.infer<typeof staffFormSchema>
@@ -135,7 +147,7 @@ export default function StaffsPage() {
     'Suspenso',
   ])
   const { toast } = useToast()
-  
+
   const form = useForm<StaffFormValues>({
     resolver: zodResolver(staffFormSchema),
     defaultValues: {
@@ -144,15 +156,16 @@ export default function StaffsPage() {
       assinatura: '',
       phone: '',
       contractId: '',
+      clientIds: [],
     },
   })
-  
+
   const editForm = useForm<StaffFormValues>({
     resolver: zodResolver(staffFormSchema),
   })
 
-  const perfilIdValue = form.watch('perfilId');
-  const editPerfilIdValue = editForm.watch('perfilId');
+  const perfilIdValue = form.watch('perfilId')
+  const editPerfilIdValue = editForm.watch('perfilId')
 
   const filteredStaffs = useMemo(() => {
     if (!staffs) return []
@@ -189,6 +202,7 @@ export default function StaffsPage() {
       avatar: `https://i.pravatar.cc/150?u=${Math.random()}`,
       fallback,
       contractId: data.perfilId === 'cliente' ? data.contractId : undefined,
+      clientIds: data.perfilId !== 'cliente' ? data.clientIds : undefined,
     }
 
     addDocumentNonBlocking(staffsRef, newStaff)
@@ -199,7 +213,7 @@ export default function StaffsPage() {
     setIsAddDialogOpen(false)
     form.reset()
   }
-  
+
   function onEditSubmit(data: StaffFormValues) {
     if (!currentStaff?.id || !firestore) return
     const staffDocRef = doc(firestore, 'staffs', currentStaff.id)
@@ -216,6 +230,7 @@ export default function StaffsPage() {
       ...data,
       fallback,
       contractId: data.perfilId === 'cliente' ? data.contractId : undefined,
+      clientIds: data.perfilId !== 'cliente' ? data.clientIds : undefined,
     }
 
     updateDocumentNonBlocking(staffDocRef, updatedData)
@@ -226,7 +241,6 @@ export default function StaffsPage() {
     setIsEditDialogOpen(false)
     setCurrentStaff(null)
   }
-
 
   const handleDeleteStaff = () => {
     if (!currentStaff?.id || !firestore) return
@@ -249,12 +263,13 @@ export default function StaffsPage() {
   const openEditDialog = (staff: Staff) => {
     setCurrentStaff(staff)
     editForm.reset({
-        name: staff.name,
-        email: staff.email,
-        perfilId: staff.perfilId,
-        assinatura: staff.assinatura,
-        phone: staff.phone,
-        contractId: staff.contractId,
+      name: staff.name,
+      email: staff.email,
+      perfilId: staff.perfilId,
+      assinatura: staff.assinatura,
+      phone: staff.phone,
+      contractId: staff.contractId,
+      clientIds: staff.clientIds || [],
     })
     setIsEditDialogOpen(true)
   }
@@ -287,173 +302,245 @@ export default function StaffsPage() {
   }
 
   const renderStaffForm = (formInstance: any, staff?: Staff | null) => {
-    const isClientProfile = staff ? editPerfilIdValue === 'cliente' : perfilIdValue === 'cliente';
+    const isClientProfile = staff
+      ? editPerfilIdValue === 'cliente'
+      : perfilIdValue === 'cliente'
 
     return (
-    <Form {...formInstance}>
-      <form
-        id={staff ? 'edit-staff-form' : 'add-staff-form'}
-        onSubmit={formInstance.handleSubmit(staff ? onEditSubmit : onSubmit)}
-        className='space-y-4 py-4'
-      >
-        <div className='flex items-center gap-4'>
-          <Avatar className='h-16 w-16'>
-            <AvatarImage src={staff?.avatar} />
-            <AvatarFallback>{staff?.fallback || 'AV'}</AvatarFallback>
-          </Avatar>
-          <div className='flex-1 space-y-2'>
-            <Label htmlFor='avatar-upload'>Avatar</Label>
-            <Input
-              id='avatar-upload'
-              name='avatar-upload'
-              type='file'
-              className='text-sm'
-            />
+      <Form {...formInstance}>
+        <form
+          id={staff ? 'edit-staff-form' : 'add-staff-form'}
+          onSubmit={formInstance.handleSubmit(staff ? onEditSubmit : onSubmit)}
+          className='space-y-4 py-4'
+        >
+          <div className='flex items-center gap-4'>
+            <Avatar className='h-16 w-16'>
+              <AvatarImage src={staff?.avatar} />
+              <AvatarFallback>{staff?.fallback || 'AV'}</AvatarFallback>
+            </Avatar>
+            <div className='flex-1 space-y-2'>
+              <Label htmlFor='avatar-upload'>Avatar</Label>
+              <Input
+                id='avatar-upload'
+                name='avatar-upload'
+                type='file'
+                className='text-sm'
+              />
+            </div>
           </div>
-        </div>
 
-        <div className='grid grid-cols-3 gap-4'>
-          <div className='col-span-2 space-y-2'>
-            <FormField
-              control={formInstance.control}
-              name='name'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <div className='grid grid-cols-3 gap-4'>
+            <div className='col-span-2 space-y-2'>
+              <FormField
+                control={formInstance.control}
+                name='name'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className='col-span-1 space-y-2'>
+              <Label htmlFor='code'>Código</Label>
+              <Input
+                id='code'
+                name='code'
+                value={staff?.code || `STF-${'####'}`}
+                disabled
+              />
+            </div>
           </div>
-          <div className='col-span-1 space-y-2'>
-            <Label htmlFor='code'>Código</Label>
-            <Input id='code' name='code' value={staff?.code || `STF-${'####'}`} disabled />
+
+          <div className='grid grid-cols-2 gap-4'>
+            <div className='space-y-2'>
+              <FormField
+                control={formInstance.control}
+                name='email'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input type='email' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <div className='space-y-2'>
+              <FormField
+                control={formInstance.control}
+                name='phone'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Telefone</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
           </div>
-        </div>
 
-        <div className='grid grid-cols-2 gap-4'>
-           <div className='space-y-2'>
-                <FormField
-                  control={formInstance.control}
-                  name='email'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
+          <div className='grid grid-cols-2 gap-4'>
+            <div className='space-y-2'>
+              <FormField
+                control={formInstance.control}
+                name='perfilId'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Perfil</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
-                        <Input type='email' {...field} />
+                        <SelectTrigger>
+                          <SelectValue placeholder='Selecione um perfil' />
+                        </SelectTrigger>
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                      <SelectContent>
+                        {initialProfiles.map((profile) => (
+                          <SelectItem key={profile.id} value={profile.id}>
+                            {profile.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
             <div className='space-y-2'>
-                <FormField
-                  control={formInstance.control}
-                  name='phone'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Telefone</FormLabel>
+              <FormField
+                control={formInstance.control}
+                name='assinatura'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Assinatura (Credencial)</FormLabel>
+                    <FormControl>
+                      <Input placeholder='Ex: Eng. Civil' {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
+          {isClientProfile ? (
+            <div className='space-y-2'>
+              <FormField
+                control={formInstance.control}
+                name='contractId'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Empresa Cliente</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
-                        <Input {...field} />
+                        <SelectTrigger>
+                          <SelectValue placeholder='Selecione a empresa do cliente' />
+                        </SelectTrigger>
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                      <SelectContent>
+                        {initialClientsData.map((client) => (
+                          <SelectItem key={client.id} value={client.id}>
+                            {client.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
-        </div>
-
-        <div className='grid grid-cols-2 gap-4'>
-            <div className='space-y-2'>
+          ) : (
+             <div className='space-y-2'>
                 <FormField
                   control={formInstance.control}
-                  name='perfilId'
+                  name='clientIds'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Perfil</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder='Selecione um perfil' />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {initialProfiles.map((profile) => (
-                            <SelectItem key={profile.id} value={profile.id}>
-                              {profile.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormLabel>Acesso a Clientes</FormLabel>
+                       <Popover>
+                        <PopoverTrigger asChild>
+                           <FormControl>
+                            <Button
+                              variant="outline"
+                              role="combobox"
+                              className={cn(
+                                "w-full justify-between",
+                                !field.value?.length && "text-muted-foreground"
+                              )}
+                            >
+                               {field.value?.length ? `${field.value.length} cliente(s) selecionado(s)` : "Selecionar clientes..."}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                          <Command>
+                            <CommandInput placeholder="Buscar cliente..." />
+                            <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
+                            <CommandGroup>
+                              <CommandList>
+                                {initialClientsData.map((client) => (
+                                  <CommandItem
+                                    key={client.id}
+                                    onSelect={() => {
+                                      const selected = field.value || []
+                                      const newSelection = selected.includes(client.id)
+                                        ? selected.filter((id) => id !== client.id)
+                                        : [...selected, client.id]
+                                      field.onChange(newSelection)
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        "mr-2 h-4 w-4",
+                                        field.value?.includes(client.id)
+                                          ? "opacity-100"
+                                          : "opacity-0"
+                                      )}
+                                    />
+                                    {client.name}
+                                  </CommandItem>
+                                ))}
+                              </CommandList>
+                            </CommandGroup>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <FormDescription>
+                        Deixe em branco para acesso a todos os clientes.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-            </div>
-            <div className='space-y-2'>
-                <FormField
-                  control={formInstance.control}
-                  name='assinatura'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Assinatura (Credencial)</FormLabel>
-                      <FormControl>
-                        <Input placeholder='Ex: Eng. Civil' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-            </div>
-        </div>
-        {isClientProfile && (
-            <div className='space-y-2'>
-                <FormField
-                  control={formInstance.control}
-                  name='contractId'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Empresa Cliente</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder='Selecione a empresa do cliente' />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {initialClientsData.map((client) => (
-                            <SelectItem key={client.id} value={client.id}>
-                              {client.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-            </div>
-        )}
-      </form>
-    </Form>
-  )
+             </div>
+          )}
+        </form>
+      </Form>
+    )
   }
 
   return (
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Hub de Equipe</CardTitle>
+          <CardTitle>Hub da Equipe</CardTitle>
           <CardDescription>
             Gerencie a equipe interna da sua empresa.
           </CardDescription>
@@ -503,7 +590,11 @@ export default function StaffsPage() {
             </div>
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button size='sm' className='h-8 gap-1' onClick={() => form.reset()}>
+                <Button
+                  size='sm'
+                  className='h-8 gap-1'
+                  onClick={() => form.reset()}
+                >
                   <PlusCircle className='h-3.5 w-3.5' />
                   <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
                     Adicionar Membro
@@ -732,11 +823,9 @@ export default function StaffsPage() {
                   </p>
                 </div>
               </div>
-               <div className='space-y-2'>
+              <div className='space-y-2'>
                 <p className='text-sm font-medium'>Código</p>
-                <p className='text-muted-foreground'>
-                  {currentStaff.code}
-                </p>
+                <p className='text-muted-foreground'>{currentStaff.code}</p>
               </div>
               <div className='space-y-2'>
                 <p className='text-sm font-medium'>Perfil</p>
