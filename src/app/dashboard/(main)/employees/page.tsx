@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
@@ -91,10 +90,21 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-import { initialClientsData } from '../clients/data'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { initialClientsData, type Client } from '../clients/data'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
 import { Check, ChevronsUpDown, X } from 'lucide-react'
-import { Command, CommandEmpty, CommandInput, CommandGroup, CommandItem, CommandList } from '@/components/ui/command'
+import {
+  Command,
+  CommandEmpty,
+  CommandInput,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
 import { cn } from '@/lib/utils'
 
 type StaffStatus = 'Ativo' | 'Licença' | 'Suspenso'
@@ -288,6 +298,11 @@ export default function StaffsPage() {
   const getProfileName = (perfilId: string) => {
     return initialProfiles.find((p) => p.id === perfilId)?.name || 'N/A'
   }
+  
+  const getClientName = (contractId: string) => {
+    return initialClientsData.find((c) => c.id === contractId)?.name || 'N/A'
+  }
+
 
   const getStatusBadgeVariant = (status: StaffStatus) => {
     switch (status) {
@@ -306,6 +321,8 @@ export default function StaffsPage() {
     const isClientProfile = staff
       ? editPerfilIdValue === 'cliente'
       : perfilIdValue === 'cliente'
+      
+    const watchedClientIds = formInstance.watch('clientIds') || [];
 
     return (
       <Form {...formInstance}>
@@ -481,11 +498,11 @@ export default function StaffsPage() {
                               variant="outline"
                               role="combobox"
                               className={cn(
-                                "w-full justify-between",
+                                "w-full justify-between font-normal",
                                 !field.value?.length && "text-muted-foreground"
                               )}
                             >
-                               {field.value?.length ? `${field.value.length} cliente(s) selecionado(s)` : "Selecionar clientes..."}
+                               Selecionar clientes...
                               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                           </FormControl>
@@ -526,6 +543,20 @@ export default function StaffsPage() {
                       <FormDescription>
                         Deixe em branco para acesso a todos os clientes.
                       </FormDescription>
+                       <div className='mt-2 flex flex-wrap gap-1'>
+                        {watchedClientIds.map((clientId: string) => (
+                           <Badge key={clientId} variant="secondary">
+                             {getClientName(clientId)}
+                             <button
+                               type="button"
+                               className="ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                               onClick={() => field.onChange(watchedClientIds.filter((id: string) => id !== clientId))}
+                             >
+                               <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                             </button>
+                           </Badge>
+                         ))}
+                       </div>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -635,15 +666,8 @@ export default function StaffsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Membro</TableHead>
-                  <TableHead className='hidden md:table-cell'>
-                    Código
-                  </TableHead>
-                  <TableHead className='hidden md:table-cell'>
-                    Perfil
-                  </TableHead>
-                  <TableHead className='hidden sm:table-cell'>
-                    Situação
-                  </TableHead>
+                  <TableHead>Perfil</TableHead>
+                  <TableHead>Acesso ao Cliente</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>
                     <span className='sr-only'>Ações</span>
@@ -669,23 +693,24 @@ export default function StaffsPage() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className='hidden md:table-cell'>
-                      {staff.code}
-                    </TableCell>
-                    <TableCell className='hidden md:table-cell'>
+                    <TableCell>
                       {getProfileName(staff.perfilId)}
                     </TableCell>
-                    <TableCell className='hidden sm:table-cell'>
-                      <div className='flex items-center gap-2'>
-                        <span
-                          className={`h-2 w-2 rounded-full ${
-                            staff.situacao === 'Online'
-                              ? 'bg-green-500'
-                              : 'bg-gray-400'
-                          }`}
-                        ></span>
-                        <span>{staff.situacao}</span>
-                      </div>
+                     <TableCell>
+                      {staff.perfilId === 'cliente' && staff.contractId ? (
+                        <Badge variant="secondary">{getClientName(staff.contractId)}</Badge>
+                      ) : !staff.clientIds || staff.clientIds.length === 0 ? (
+                        <Badge>Todos</Badge>
+                      ) : (
+                        <div className="flex flex-wrap gap-1">
+                          {staff.clientIds.slice(0, 2).map(id => (
+                             <Badge key={id} variant="outline">{getClientName(id)}</Badge>
+                          ))}
+                          {staff.clientIds.length > 2 && (
+                             <Badge variant="outline">+{staff.clientIds.length - 2}</Badge>
+                          )}
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell>
                       <Badge variant={getStatusBadgeVariant(staff.status)}>
@@ -894,6 +919,4 @@ export default function StaffsPage() {
     </>
   )
 }
-    
-
     
