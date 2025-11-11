@@ -7,6 +7,7 @@ import {
   PlusCircle,
   ShieldCheck,
   ChevronDown,
+  X,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -285,11 +286,28 @@ export default function ProfilesPage() {
   ) => {
     setSelectedPermissions((prev) => {
       const newSet = new Set(prev)
+      const [action, moduleId] = permission.split(':') as [Action, Module]
+      const mainModule = permissionModules.find((m) => m.id === moduleId)
+
+      // Ação em cascata para submódulos
+      if (mainModule && mainModule.subModules) {
+        mainModule.subModules.forEach((subModule) => {
+          const subPermission = `${action}:${subModule.id}` as Permission
+          if (checked) {
+            newSet.add(subPermission)
+          } else {
+            newSet.delete(subPermission)
+          }
+        })
+      }
+
+      // Ação principal
       if (checked) {
         newSet.add(permission)
       } else {
         newSet.delete(permission)
       }
+
       return newSet
     })
   }
@@ -502,14 +520,17 @@ export default function ProfilesPage() {
             </DialogDescription>
           </DialogHeader>
           <form id='permissions-form' onSubmit={handlePermissionsSubmit}>
-            <div className='sticky top-0 bg-background/95 p-2 mt-2 flex items-center border-b z-10'>
+            <div className='sticky top-0 bg-background/95 p-2 flex items-center border-b z-10'>
               <div className='flex-1 font-semibold pl-4'>Módulo</div>
               <div className='grid grid-cols-4 gap-4 w-[300px] text-center text-xs font-semibold text-muted-foreground'>
                 {permissionActions.map((action) => (
-                  <span key={action.id}>{action.name}</span>
+                  <div key={action.id} className='flex justify-center'>
+                    {action.name}
+                  </div>
                 ))}
               </div>
             </div>
+
             <ScrollArea className='h-[60vh] mt-2'>
               <Accordion type='multiple' className='w-full'>
                 {permissionModules.map((module) => (
