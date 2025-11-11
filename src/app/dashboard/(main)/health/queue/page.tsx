@@ -27,7 +27,7 @@ import {
   CardFooter,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { PlusCircle, MoreHorizontal, UserCheck, Upload } from 'lucide-react'
+import { PlusCircle, MoreHorizontal, UserCheck, Upload, Search } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
   Dialog,
@@ -84,13 +84,7 @@ function ClientOnly({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
-const AttendeeCard = ({
-  attendee,
-  queueType,
-}: {
-  attendee: Attendee
-  queueType: QueueType
-}) => {
+const AttendeeCard = ({ attendee }: { attendee: Attendee }) => {
   const router = useRouter()
   const { updateAttendeeStatus } = useAttendeeStore()
   const {
@@ -171,11 +165,9 @@ const AttendeeCard = ({
 const KanbanColumn = ({
   status,
   attendees,
-  queueType,
 }: {
   status: Status
   attendees: Attendee[]
-  queueType: QueueType
 }) => {
   const { setNodeRef } = useSortable({ id: status, data: { type: 'Column' } })
 
@@ -194,7 +186,6 @@ const KanbanColumn = ({
             <AttendeeCard
               key={attendee.id}
               attendee={attendee}
-              queueType={queueType}
             />
           ))}
           {attendees.length === 0 && (
@@ -217,7 +208,7 @@ const PlaceholderContent = ({ title }: { title: string }) => (
 )
 
 export default function QueuePage() {
-  const { attendees, addAttendee, setAttendees, updateAttendeeStatus } =
+  const { attendees, addAttendee, updateAttendeeStatus } =
     useAttendeeStore()
   const [activeAttendee, setActiveAttendee] = useState<Attendee | null>(null)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
@@ -225,6 +216,14 @@ export default function QueuePage() {
   const { toast } = useToast()
   const [selectedUnit, setSelectedUnit] = useState(aptaServiceUnits[0].id)
   const [activeTab, setActiveTab] = useState<QueueType>('medico')
+  const [searchTerm, setSearchTerm] = useState('')
+
+  const filteredAttendees = useMemo(() => {
+    if (!searchTerm) return attendees
+    return attendees.filter(attendee => 
+      attendee.patientName.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  }, [attendees, searchTerm])
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -283,8 +282,6 @@ export default function QueuePage() {
       clientName,
       patientName: patient.name,
       solicitationType,
-      // This is a simplified logic. In a real scenario, this would query the PCMSO
-      // based on the solicitationType and employee's role/risks.
       exams: [
         {
           id: `EXM-${Date.now()}-1`,
@@ -308,8 +305,6 @@ export default function QueuePage() {
 
   const handleImportXml = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    // In a real application, you would process the file here.
-    // For now, we just show a success message.
     toast({
       title: 'Importação Iniciada!',
       description:
@@ -463,6 +458,16 @@ export default function QueuePage() {
         </div>
       </div>
 
+      <div className='relative w-full max-w-sm'>
+        <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
+        <Input
+          placeholder='Buscar paciente...'
+          className='pl-8'
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+
       <Tabs
         defaultValue='medico'
         onValueChange={(value) => setActiveTab(value as QueueType)}
@@ -489,10 +494,9 @@ export default function QueuePage() {
                     <KanbanColumn
                       key={status}
                       status={status}
-                      attendees={attendees.filter(
+                      attendees={filteredAttendees.filter(
                         (attendee) => attendee.status === status
                       )}
-                      queueType={activeTab}
                     />
                   ))}
                 </SortableContext>
@@ -535,3 +539,5 @@ export default function QueuePage() {
     </div>
   )
 }
+
+    
