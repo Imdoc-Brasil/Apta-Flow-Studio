@@ -138,7 +138,8 @@ const calculateQuestionDetailsFromResponses = (
         (questionResponses.filter((r) => r === 3).length / totalResponses) *
         100
       const favourable =
-        (questionResponses.filter((r) => r >= 4).length / totalResponses) * 100
+        (questionResponses.filter((r) => r >= 4).length / totalResponses) *
+        100
 
       return {
         id: question.id,
