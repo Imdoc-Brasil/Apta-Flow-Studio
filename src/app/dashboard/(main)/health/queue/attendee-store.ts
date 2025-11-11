@@ -16,9 +16,11 @@ export interface Attendee {
   id: string
   patientName: string
   clientName: string
-  solicitationType: string // Gatilho principal, ex: "ASO Periódico"
+  solicitationType: string
   status: Status
   exams: Exam[]
+  createdAt: string
+  checkInTime?: string
 }
 
 export const initialAttendees: Attendee[] = [
@@ -28,6 +30,7 @@ export const initialAttendees: Attendee[] = [
     clientName: 'Innovate Inc.',
     solicitationType: 'ASO Periódico',
     status: 'Agendado',
+    createdAt: new Date('2024-07-22T09:00:00Z').toISOString(),
     exams: [
       { id: 'EXM-001-A', name: 'Avaliação Clínica', status: 'Pendente' },
       { id: 'EXM-001-B', name: 'Audiometria', status: 'Pendente' },
@@ -39,6 +42,8 @@ export const initialAttendees: Attendee[] = [
     clientName: 'Solutions Co.',
     solicitationType: 'Eletrocardiograma',
     status: 'Em Atendimento',
+    createdAt: new Date('2024-07-22T09:05:00Z').toISOString(),
+    checkInTime: new Date('2024-07-22T09:10:00Z').toISOString(),
     exams: [{ id: 'EXM-003', name: 'Eletrocardiograma', status: 'Pendente' }],
   },
   {
@@ -47,6 +52,8 @@ export const initialAttendees: Attendee[] = [
     clientName: 'Innovate Inc.',
     solicitationType: 'Avaliação Clínica',
     status: 'Concluído',
+    createdAt: new Date('2024-07-21T14:00:00Z').toISOString(),
+    checkInTime: new Date('2024-07-21T14:05:00Z').toISOString(),
     exams: [
       { id: 'EXM-004', name: 'Avaliação Clínica', status: 'Realizado' },
     ],
@@ -57,6 +64,8 @@ export const initialAttendees: Attendee[] = [
     clientName: 'Quantum Dynamics',
     solicitationType: 'Exames de Imagem',
     status: 'Aguardando',
+    createdAt: new Date('2024-07-22T08:30:00Z').toISOString(),
+    checkInTime: new Date('2024-07-22T08:45:00Z').toISOString(),
     exams: [
       { id: 'EXM-005', name: 'Raio-X de Tórax', status: 'Pendente' },
       { id: 'EXM-006', name: 'Raio-X de Coluna Lombar', status: 'Pendente' },
@@ -66,7 +75,7 @@ export const initialAttendees: Attendee[] = [
 
 type AttendeeStore = {
   attendees: Attendee[]
-  addAttendee: (newAttendeeData: Omit<Attendee, 'id' | 'status'>) => void
+  addAttendee: (newAttendeeData: Omit<Attendee, 'id' | 'status' | 'createdAt'>) => void
   setAttendees: (attendees: Attendee[]) => void
   updateAttendeeStatus: (attendeeId: string, status: Status) => void
   updateExamStatus: (
@@ -85,6 +94,7 @@ export const useAttendeeStore = create<AttendeeStore>((set) => ({
           ...newAttendeeData,
           id: `att-${Date.now()}`,
           status: 'Agendado',
+          createdAt: new Date().toISOString(),
         },
         ...state.attendees,
       ],
@@ -92,9 +102,17 @@ export const useAttendeeStore = create<AttendeeStore>((set) => ({
   setAttendees: (attendees) => set({ attendees }),
   updateAttendeeStatus: (attendeeId, status) =>
     set((state) => ({
-      attendees: state.attendees.map((attendee) =>
-        attendee.id === attendeeId ? { ...attendee, status } : attendee
-      ),
+      attendees: state.attendees.map((attendee) => {
+        if (attendee.id === attendeeId) {
+          const isCheckingIn = status === 'Aguardando' && attendee.status !== 'Aguardando';
+          return {
+            ...attendee,
+            status,
+            checkInTime: isCheckingIn ? new Date().toISOString() : attendee.checkInTime
+          };
+        }
+        return attendee;
+      }),
     })),
   updateExamStatus: (attendeeId, examId, status) =>
     set((state) => ({

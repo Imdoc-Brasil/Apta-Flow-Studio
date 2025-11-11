@@ -171,6 +171,22 @@ const KanbanColumn = ({
 }) => {
   const { setNodeRef } = useSortable({ id: status, data: { type: 'Column' } })
 
+  const sortedAttendees = useMemo(() => {
+    switch (status) {
+      case 'Agendado':
+        return [...attendees].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      case 'Aguardando':
+        return [...attendees].sort((a, b) => {
+          const timeA = a.checkInTime ? new Date(a.checkInTime).getTime() : 0;
+          const timeB = b.checkInTime ? new Date(b.checkInTime).getTime() : 0;
+          return timeA - timeB;
+        });
+      default:
+        return attendees;
+    }
+  }, [attendees, status]);
+
+
   return (
     <div
       ref={setNodeRef}
@@ -178,17 +194,17 @@ const KanbanColumn = ({
     >
       <h2 className='text-lg font-bold'>{statusLabels[status]}</h2>
       <SortableContext
-        items={attendees.map((a) => a.id)}
+        items={sortedAttendees.map((a) => a.id)}
         strategy={verticalListSortingStrategy}
       >
         <div className='flex flex-col gap-4 overflow-y-auto'>
-          {attendees.map((attendee) => (
+          {sortedAttendees.map((attendee) => (
             <AttendeeCard
               key={attendee.id}
               attendee={attendee}
             />
           ))}
-          {attendees.length === 0 && (
+          {sortedAttendees.length === 0 && (
             <div className='py-8 text-center text-sm text-muted-foreground'>
               Nenhum atendimento nesta coluna.
             </div>
@@ -539,5 +555,3 @@ export default function QueuePage() {
     </div>
   )
 }
-
-    
