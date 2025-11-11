@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
@@ -173,6 +174,14 @@ export default function StaffsPage() {
 
   const editForm = useForm<StaffFormValues>({
     resolver: zodResolver(staffFormSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      assinatura: '',
+      phone: '',
+      contractId: '',
+      clientIds: [],
+    },
   })
 
   const perfilIdValue = form.watch('perfilId')
@@ -920,3 +929,4 @@ export default function StaffsPage() {
   )
 }
     
+
