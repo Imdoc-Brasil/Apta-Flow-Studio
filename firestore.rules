@@ -130,25 +130,34 @@ service cloud.firestore {
       allow delete: if isAdmin() && resource != null;
     }
      /**
-      * @description Restricts access to admin role documents to only allow reads for admin role verification purposes.  Only admins can create/delete/update other admins.
+      * @description Restricts access to admin role documents. A user can read their own role document. Only admins can create/delete/update other admins.
       * @path /roles_admin/{userId}
-      * @allow get: if isAdmin();
+      * @allow get: if isOwner(userId);
       * @allow list: if isAdmin();
-      * @allow create: if isAdmin();
+      * @allow create: if isAdmin() || !exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
       * @allow update: if isAdmin() && resource != null;
       * @allow delete: if isAdmin() && resource != null;
       * @principle Enforces role-based access control for granting admin privileges.
       */
      match /roles_admin/{userId} {
-       allow get, list: if isAdmin();
-       allow create: if isAdmin();
+       allow get: if isOwner(userId);
+       allow list: if isAdmin();
+       allow create: if isAdmin() || !isAnyAdminCreated();
        allow update: if isAdmin() && resource != null;
        allow delete: if isAdmin() && resource != null;
      }
   }
 
+  function isOwner(userId) {
+    return request.auth != null && request.auth.uid == userId;
+  }
+
+  function isAnyAdminCreated() {
+    return exists(/databases/$(database)/documents/roles_admin);
+  }
+
   // Helper function to determine if a user is an admin.
   function isAdmin() {
-    return exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+    return request.auth != null && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
   }
 }
