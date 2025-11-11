@@ -57,6 +57,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 export default function ClientsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -167,99 +168,101 @@ export default function ClientsPage() {
                   </DialogDescription>
                 </DialogHeader>
                 <form id='add-client-form' onSubmit={handleAddClient}>
-                  <div className='grid gap-6 py-4'>
+                  <ScrollArea className='h-[60vh]'>
+                    <div className='grid gap-6 py-4 pr-6'>
 
-                    <div className="space-y-2">
-                      <Label htmlFor='cnpj'>CNPJ</Label>
-                       <div className="flex gap-2">
-                         <Input
-                          id='cnpj'
-                          name='cnpj'
-                          placeholder='00.000.000/0000-00'
-                          required
-                          value={cnpj}
-                          onChange={(e) => {
-                              setCnpj(e.target.value)
-                              setCnpjError(null)
-                          }}
-                          onBlur={handleCnpjBlur}
-                        />
-                        <Button type="button" variant="secondary" disabled={isCnpjLoading}>
-                            {isCnpjLoading ? <Loader2 className="h-4 w-4 animate-spin"/> : <Search className="h-4 w-4" />}
-                        </Button>
-                       </div>
-                       {cnpjError && <p className="text-sm text-destructive">{cnpjError}</p>}
+                      <div className="space-y-2">
+                        <Label htmlFor='cnpj'>CNPJ</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id='cnpj'
+                            name='cnpj'
+                            placeholder='00.000.000/0000-00'
+                            required
+                            value={cnpj}
+                            onChange={(e) => {
+                                setCnpj(e.target.value)
+                                setCnpjError(null)
+                            }}
+                            onBlur={handleCnpjBlur}
+                          />
+                          <Button type="button" variant="secondary" disabled={isCnpjLoading}>
+                              {isCnpjLoading ? <Loader2 className="h-4 w-4 animate-spin"/> : <Search className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                        {cnpjError && <p className="text-sm text-destructive">{cnpjError}</p>}
+                      </div>
+
+                      <fieldset className='grid gap-4' disabled={isCnpjLoading || !!cnpjError}>
+                        {/* Autopopulated fields */}
+                        <div className='grid grid-cols-2 gap-4'>
+                            <div className='space-y-2'>
+                                <Label htmlFor='name'>Nome Empresarial</Label>
+                                <Input id='name' name='name' required />
+                            </div>
+                            <div className='space-y-2'>
+                                <Label htmlFor='tradeName'>Nome Fantasia</Label>
+                                <Input id='tradeName' name='tradeName' />
+                            </div>
+                        </div>
+                        <div className='space-y-2'>
+                            <Label htmlFor='address'>Endereço</Label>
+                            <Textarea id='address' name='address' rows={2} />
+                        </div>
+                        <div className='space-y-2'>
+                            <Label htmlFor='cnae'>CNAE Principal</Label>
+                            <Input id='cnae' name='cnae' />
+                        </div>
+
+                        <Separator className="my-4" />
+
+                        {/* Manual fields */}
+                        <h3 className="text-lg font-semibold">Responsáveis</h3>
+                        <div className='grid grid-cols-2 gap-4'>
+                            <div className='space-y-2'>
+                                <Label htmlFor='adminResponsibleName'>Responsável Administrativo</Label>
+                                <Input id='adminResponsibleName' name='adminResponsibleName' required />
+                            </div>
+                            <div className='space-y-2'>
+                                <Label htmlFor='adminResponsibleCPF'>CPF do Resp. Administrativo</Label>
+                                <Input id='adminResponsibleCPF' name='adminResponsibleCPF' required />
+                            </div>
+                        </div>
+                        <div className='space-y-2'>
+                            <Label htmlFor='contractResponsibleName'>Responsável pelo Contrato</Label>
+                            <Input id='contractResponsibleName' name='contractResponsibleName' required />
+                        </div>
+                        <div className='grid grid-cols-2 gap-4'>
+                            <div className='space-y-2'>
+                                <Label htmlFor='contractResponsiblePhone'>Telefone do Resp. Contrato</Label>
+                                <Input id='contractResponsiblePhone' name='contractResponsiblePhone' type="tel" required />
+                            </div>
+                            <div className='space-y-2'>
+                                <Label htmlFor='contractResponsibleEmail'>E-mail do Resp. Contrato</Label>
+                                <Input id='contractResponsibleEmail' name='contractResponsibleEmail' type="email" required />
+                            </div>
+                        </div>
+
+                        <Separator className="my-4" />
+
+                        <h3 className="text-lg font-semibold">Checklist de Documentos</h3>
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between p-2 border rounded-md">
+                                <Label>Cartão CNPJ</Label>
+                                <Button type="button" size="sm" variant="outline"><FilePlus className="mr-2 h-4 w-4"/>Adicionar</Button>
+                            </div>
+                            <div className="flex items-center justify-between p-2 border rounded-md">
+                                <Label>Contrato Social</Label>
+                                <Button type="button" size="sm" variant="outline"><FilePlus className="mr-2 h-4 w-4"/>Adicionar</Button>
+                            </div>
+                            <div className="flex items-center justify-between p-2 border rounded-md">
+                                <Label>Serviços e Tabela de Preços</Label>
+                                <Button type="button" size="sm" variant="outline"><FilePlus className="mr-2 h-4 w-4"/>Adicionar</Button>
+                            </div>
+                        </div>
+                      </fieldset>
                     </div>
-
-                    <fieldset className='grid gap-4' disabled={isCnpjLoading || !!cnpjError}>
-                      {/* Autopopulated fields */}
-                      <div className='grid grid-cols-2 gap-4'>
-                          <div className='space-y-2'>
-                              <Label htmlFor='name'>Nome Empresarial</Label>
-                              <Input id='name' name='name' required />
-                          </div>
-                          <div className='space-y-2'>
-                              <Label htmlFor='tradeName'>Nome Fantasia</Label>
-                              <Input id='tradeName' name='tradeName' />
-                          </div>
-                      </div>
-                      <div className='space-y-2'>
-                          <Label htmlFor='address'>Endereço</Label>
-                          <Textarea id='address' name='address' rows={2} />
-                      </div>
-                       <div className='space-y-2'>
-                          <Label htmlFor='cnae'>CNAE Principal</Label>
-                          <Input id='cnae' name='cnae' />
-                      </div>
-
-                      <Separator className="my-4" />
-
-                      {/* Manual fields */}
-                      <h3 className="text-lg font-semibold">Responsáveis</h3>
-                       <div className='grid grid-cols-2 gap-4'>
-                          <div className='space-y-2'>
-                              <Label htmlFor='adminResponsibleName'>Responsável Administrativo</Label>
-                              <Input id='adminResponsibleName' name='adminResponsibleName' required />
-                          </div>
-                           <div className='space-y-2'>
-                              <Label htmlFor='adminResponsibleCPF'>CPF do Resp. Administrativo</Label>
-                              <Input id='adminResponsibleCPF' name='adminResponsibleCPF' required />
-                          </div>
-                      </div>
-                       <div className='space-y-2'>
-                          <Label htmlFor='contractResponsibleName'>Responsável pelo Contrato</Label>
-                          <Input id='contractResponsibleName' name='contractResponsibleName' required />
-                      </div>
-                       <div className='grid grid-cols-2 gap-4'>
-                          <div className='space-y-2'>
-                              <Label htmlFor='contractResponsiblePhone'>Telefone do Resp. Contrato</Label>
-                              <Input id='contractResponsiblePhone' name='contractResponsiblePhone' type="tel" required />
-                          </div>
-                           <div className='space-y-2'>
-                              <Label htmlFor='contractResponsibleEmail'>E-mail do Resp. Contrato</Label>
-                              <Input id='contractResponsibleEmail' name='contractResponsibleEmail' type="email" required />
-                          </div>
-                      </div>
-
-                      <Separator className="my-4" />
-
-                      <h3 className="text-lg font-semibold">Checklist de Documentos</h3>
-                      <div className="space-y-3">
-                          <div className="flex items-center justify-between p-2 border rounded-md">
-                              <Label>Cartão CNPJ</Label>
-                              <Button type="button" size="sm" variant="outline"><FilePlus className="mr-2 h-4 w-4"/>Adicionar</Button>
-                          </div>
-                           <div className="flex items-center justify-between p-2 border rounded-md">
-                              <Label>Contrato Social</Label>
-                              <Button type="button" size="sm" variant="outline"><FilePlus className="mr-2 h-4 w-4"/>Adicionar</Button>
-                          </div>
-                           <div className="flex items-center justify-between p-2 border rounded-md">
-                              <Label>Serviços e Tabela de Preços</Label>
-                              <Button type="button" size="sm" variant="outline"><FilePlus className="mr-2 h-4 w-4"/>Adicionar</Button>
-                          </div>
-                      </div>
-                    </fieldset>
-                  </div>
+                  </ScrollArea>
                 </form>
                 <DialogFooter>
                   <Button
