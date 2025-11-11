@@ -487,17 +487,25 @@ export default function ProfilesPage() {
             </DialogDescription>
           </DialogHeader>
           <form id='permissions-form' onSubmit={handlePermissionsSubmit}>
+             <div className='sticky top-0 bg-background/95 p-2 mt-2 flex items-center border-b'>
+                <div className='flex-1' />
+                <div className='grid grid-cols-4 gap-4 w-[300px] text-center text-xs font-semibold text-muted-foreground'>
+                  {permissionActions.map((action) => (
+                    <span key={action.id}>{action.name}</span>
+                  ))}
+                </div>
+              </div>
             <ScrollArea className='h-[60vh] mt-4'>
               <Accordion type='multiple' className='w-full'>
                 {permissionModules.map((module) => (
                   <AccordionItem value={module.id} key={module.id}>
-                    <div className='flex items-center bg-muted/50 pr-4'>
-                      <AccordionTrigger className='flex-1 p-4 font-medium'>
+                    <div className='flex items-center bg-muted/30 pr-4 hover:bg-muted/50'>
+                      <AccordionTrigger className='flex-1 p-3 font-medium'>
                         {module.name}
                       </AccordionTrigger>
-                      <div className='grid grid-cols-4 gap-4 w-[400px] text-center text-xs font-semibold'>
+                      <div className='grid grid-cols-4 gap-4 w-[300px] text-center'>
                         {permissionActions.map((action) => (
-                          <div key={`${module.id}-${action.id}`}>
+                          <div key={`${module.id}-${action.id}`} className='flex justify-center'>
                             <Checkbox
                               checked={selectedPermissions.has(
                                 `${action.id}:${module.id}`
@@ -524,9 +532,9 @@ export default function ProfilesPage() {
                               <div className='flex-1 p-2 font-normal'>
                                 <Label>{subModule.name}</Label>
                               </div>
-                              <div className='grid grid-cols-4 gap-4 w-[400px] text-center'>
+                              <div className='grid grid-cols-4 gap-4 w-[300px] text-center'>
                                 {permissionActions.map((action) => (
-                                  <div key={`${subModule.id}-${action.id}`}>
+                                  <div key={`${subModule.id}-${action.id}`} className='flex justify-center'>
                                     <Checkbox
                                       checked={selectedPermissions.has(
                                         `${action.id}:${subModule.id}`
@@ -554,14 +562,6 @@ export default function ProfilesPage() {
                   </AccordionItem>
                 ))}
               </Accordion>
-              <div className='sticky bottom-0 bg-background/95 p-2 mt-2 flex items-center border-t'>
-                <div className='flex-1' />
-                <div className='grid grid-cols-4 gap-4 w-[400px] text-center text-xs font-semibold'>
-                  {permissionActions.map((action) => (
-                    <span key={action.id}>{action.name}</span>
-                  ))}
-                </div>
-              </div>
             </ScrollArea>
           </form>
           <DialogFooter className='mt-4'>
