@@ -38,6 +38,7 @@ import {
   FileText,
   MessageSquare,
   HelpCircle,
+  Loader2,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -117,6 +118,14 @@ import { Progress } from '@/components/ui/progress'
 import { useToast } from '@/hooks/use-toast'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { initialEmployeesData } from '../clients/[contractId]/employees/data'
+import {
+  addDocumentNonBlocking,
+  updateDocumentNonBlocking,
+  useCollection,
+  useFirestore,
+  useMemoFirebase,
+} from '@/firebase'
+import { collection, doc } from 'firebase/firestore'
 
 const priorityVariant = {
   Alta: 'destructive',
@@ -171,7 +180,6 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
     isDragging,
   } = useSortable({ id: ticket.id, data: { type: 'Ticket', ticket } })
   const { startWorkOnTicket } = useTicketStore()
-  // Simulate the current user is Sarah Chen
   const currentUserEmail = 'sarah.chen@aptaflow.com'
 
   const style = {
@@ -652,38 +660,28 @@ function AddTextElementDialog({
 }
 
 function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
-  const { setTickets, tickets, toggleChecklistItem } = useTicketStore()
+  const { toggleChecklistItem } = useTicketStore()
+  const firestore = useFirestore()
 
   const handleAssignMember = (ticketId: string, memberEmail: string) => {
-    setTickets(
-      tickets.map((t) => {
-        if (t.id === ticketId) {
-          const isAssigned = t.assignedTo?.includes(memberEmail)
-          const newAssignedTo = isAssigned
-            ? t.assignedTo?.filter((email) => email !== memberEmail)
-            : [...(t.assignedTo || []), memberEmail]
-          return { ...t, assignedTo: newAssignedTo }
-        }
-        return t
-      })
-    )
+    if (!firestore) return
+    const ticketDocRef = doc(firestore, 'tickets', ticketId)
+    const isAssigned = ticket.assignedTo?.includes(memberEmail)
+    const newAssignedTo = isAssigned
+      ? ticket.assignedTo?.filter((email) => email !== memberEmail)
+      : [...(ticket.assignedTo || []), memberEmail]
+    updateDocumentNonBlocking(ticketDocRef, { assignedTo: newAssignedTo })
   }
 
   const handleLabelChange = (labelId: string, checked: boolean) => {
-    setTickets(
-      tickets.map((t) => {
-        if (t.id === ticket.id) {
-          const newLabels = checked
-            ? [
-                ...(t.labels || []),
-                availableLabels.find((l) => l.id === labelId)!,
-              ]
-            : t.labels?.filter((l) => l.id !== labelId)
-          return { ...t, labels: newLabels }
-        }
-        return t
-      })
-    )
+    if (!firestore || !ticket.id) return
+    const ticketDocRef = doc(firestore, 'tickets', ticket.id)
+
+    const newLabels = checked
+      ? [...(ticket.labels || []), availableLabels.find((l) => l.id === labelId)!]
+      : ticket.labels?.filter((l) => l.id !== labelId)
+
+    updateDocumentNonBlocking(ticketDocRef, { labels: newLabels || [] })
   }
 
   const handleChecklistItemToggle = (
@@ -691,7 +689,6 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
     itemId: string,
     checked: boolean
   ) => {
-    // Assuming a logged-in user of "John Doe" for the log
     toggleChecklistItem(ticket.id, checklistId, itemId, checked, 'John Doe')
   }
 
@@ -1135,9 +1132,12 @@ function ClientOnly({ children }: { children: React.ReactNode }) {
 }
 
 export default function TicketsPage() {
-  const { tickets, addTicket, setTickets, startWorkOnTicket } =
-    useTicketStore()
-  const { addAttendee } = useAttendeeStore()
+  const firestore = useFirestore()
+  const ticketsRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'tickets') : null),
+    [firestore]
+  )
+  const { data: tickets = [], isLoading } = useCollection<Ticket>(ticketsRef)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null)
   const [priorityFilter, setPriorityFilter] = useState<string[]>([])
@@ -1146,25 +1146,20 @@ export default function TicketsPage() {
   const [clientFilter, setClientFilter] = useState<string[]>([])
   const [selectedLabels, setSelectedLabels] = useState<LabelType[]>([])
   const [assignedTo, setAssignedTo] = useState<string[]>([])
-  // Simulate the current user is Sarah Chen
   const currentUserEmail = 'sarah.chen@aptaflow.com'
 
   const filteredTickets = useMemo(() => {
     return tickets.filter((ticket) => {
       const priorityMatch =
         priorityFilter.length === 0 || priorityFilter.includes(ticket.priority)
-
       const labelMatch =
         labelFilter.length === 0 ||
         ticket.labels?.some((label) => labelFilter.includes(label.id))
-
       const staffMatch =
         staffFilter.length === 0 ||
         ticket.assignedTo?.some((staff) => staffFilter.includes(staff))
-
       const clientMatch =
         clientFilter.length === 0 || clientFilter.includes(ticket.client)
-
       return priorityMatch && labelMatch && staffMatch && clientMatch
     })
   }, [tickets, priorityFilter, labelFilter, staffFilter, clientFilter])
@@ -1179,6 +1174,8 @@ export default function TicketsPage() {
 
   const handleAddTicket = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!ticketsRef) return
+
     const formData = new FormData(event.currentTarget)
     const subject = formData.get('subject') as string
     const clientName = formData.get('client') as string
@@ -1194,34 +1191,10 @@ export default function TicketsPage() {
       relatedEmployee:
         initialEmployeesData.find((e) => e.id === relatedEmployeeId)?.name ||
         undefined,
+      status: 'Aberto' as TicketStatus,
+      updated: new Date().toISOString(),
     }
-    addTicket(newTicketData)
-
-    const isHealthRequest =
-      subject.toLowerCase().includes('exame') ||
-      subject.toLowerCase().includes('aso')
-
-    if (isHealthRequest && newTicketData.relatedEmployee) {
-      addAttendee({
-        clientName,
-        patientName: newTicketData.relatedEmployee,
-        solicitationType: subject,
-        // This is a simplified logic. In a real scenario, this would query the PCMSO
-        // based on the solicitationType and employee's role/risks.
-        exams: [
-          {
-            id: `EXM-${Date.now()}-A`,
-            name: 'Avaliação Clínica',
-            status: 'Pendente',
-          },
-          {
-            id: `EXM-${Date.now()}-B`,
-            name: 'Audiometria',
-            status: 'Pendente',
-          },
-        ],
-      })
-    }
+    addDocumentNonBlocking(ticketsRef, newTicketData)
 
     setIsDialogOpen(false)
     setSelectedLabels([])
@@ -1236,10 +1209,10 @@ export default function TicketsPage() {
 
   const handleDragOver = (event: DragOverEvent) => {
     const { active, over } = event
-    if (!over) return
+    if (!over || !firestore) return
 
-    const activeId = active.id
-    const overId = over.id
+    const activeId = active.id.toString()
+    const overId = over.id.toString()
 
     if (activeId === overId) return
 
@@ -1247,46 +1220,35 @@ export default function TicketsPage() {
     const isOverAColumn = over.data.current?.type === 'Column'
 
     if (isActiveATicket && isOverAColumn) {
-      setTickets(
-        tickets.map((t) =>
-          t.id === activeId ? { ...t, status: overId as TicketStatus } : t
-        )
-      )
+      const ticketDocRef = doc(firestore, 'tickets', activeId)
+      updateDocumentNonBlocking(ticketDocRef, {
+        status: overId,
+        updated: new Date().toISOString(),
+      })
     }
   }
 
   const handleDragEnd = (event: DragEndEvent) => {
     setActiveTicket(null)
-    const { active, over } = event
-    if (!over) return
-
-    const activeId = active.id
-    const overId = over.id
-
-    if (activeId !== overId) {
-      const activeIndex = tickets.findIndex((t) => t.id === activeId)
-      const overIndex = tickets.findIndex((t) => t.id === overId)
-
-      const isActiveATask = active.data.current?.type === 'Ticket'
-      const isOverATask = over.data.current?.type === 'Ticket'
-
-      if (isActiveATask && isOverATask) {
-        if (tickets[activeIndex].status !== tickets[overIndex].status) {
-          const updatedTickets = [...tickets]
-          updatedTickets[activeIndex] = {
-            ...updatedTickets[activeIndex],
-            status: tickets[overIndex].status,
-          }
-          setTickets(updatedTickets)
-        }
-      }
-    }
   }
 
   const handleRowClick = (ticket: Ticket) => {
-    if (ticket.status === 'Aberto') {
-      startWorkOnTicket(ticket.id, currentUserEmail)
+    if (ticket.status === 'Aberto' && ticket.id && firestore) {
+      const ticketDocRef = doc(firestore, 'tickets', ticket.id)
+      updateDocumentNonBlocking(ticketDocRef, {
+        status: 'Em Progresso',
+        assignedTo: [...(ticket.assignedTo || []), currentUserEmail],
+        updated: new Date().toISOString(),
+      })
     }
+  }
+
+  if (isLoading) {
+    return (
+      <div className='flex items-center justify-center h-full'>
+        <Loader2 className='h-8 w-8 animate-spin' />
+      </div>
+    )
   }
 
   return (
@@ -1810,5 +1772,3 @@ export default function TicketsPage() {
     </div>
   )
 }
-
-    
