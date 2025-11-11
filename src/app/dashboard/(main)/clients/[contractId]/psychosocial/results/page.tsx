@@ -7,6 +7,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, BrainCircuit } from 'lucide-react'
@@ -308,8 +309,8 @@ export default function PsychosocialResultsPage() {
             gerenciar as causas do estresse no local de trabalho.
           </p>
           <p>
-            A <strong>AptaFlow</strong> defende o uso da <strong>ARPT</strong>{' '}
-            no Programa de Gerenciamento de Risco (PGR), como uma fonte de dados
+            A <strong>AptaFlow</strong> defende o uso da <strong>ARPT</strong> no
+            Programa de Gerenciamento de Risco (PGR), como uma fonte de dados
             que pode ser usada para identificar a extensão em que o estresse
             relacionado ao trabalho é um problema na empresa avaliada.
           </p>
@@ -663,7 +664,9 @@ export default function PsychosocialResultsPage() {
               <Separator className='mt-12' />
             </div>
           ))}
-          <div className='flex justify-between text-xs mt-4'>
+        </CardContent>
+        <CardFooter>
+          <div className='flex justify-center w-full gap-8 text-xs'>
             <div className='flex items-center gap-2'>
               <span className='w-3 h-3 rounded-sm bg-destructive' />
               <span>Desfavorável</span>
@@ -677,7 +680,7 @@ export default function PsychosocialResultsPage() {
               <span>Favorável</span>
             </div>
           </div>
-        </CardContent>
+        </CardFooter>
       </Card>
     </div>
   )
