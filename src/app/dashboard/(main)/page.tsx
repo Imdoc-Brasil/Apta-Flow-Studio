@@ -29,7 +29,6 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import Link from 'next/link'
-import { useTicketStore } from './tickets/tickets-store'
 import {
   useUser,
   useFirestore,
@@ -39,10 +38,11 @@ import {
   useMemoFirebase,
   setDocumentNonBlocking,
 } from '@/firebase'
-import { doc, getDoc, serverTimestamp, collection } from 'firebase/firestore'
+import { doc, getDoc, serverTimestamp, collection, query, orderBy, limit } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
 import type { Client } from './clients/data'
 import type { Staff } from './employees/page'
+import type { Ticket } from './tickets/tickets-store'
 
 const kpiDataStatic = [
   {
@@ -60,7 +60,6 @@ const kpiDataStatic = [
 ]
 
 export default function Dashboard() {
-  const { tickets } = useTicketStore()
   const { user, isUserLoading } = useUser()
   const firestore = useFirestore()
   const { toast } = useToast()
@@ -76,6 +75,25 @@ export default function Dashboard() {
     [firestore]
   )
   const { data: staffs } = useCollection<Staff>(staffsRef)
+  
+  const ticketsQuery = useMemoFirebase(
+    () =>
+      firestore
+        ? query(
+            collection(firestore, 'tickets'),
+            orderBy('updated', 'desc'),
+            limit(5)
+          )
+        : null,
+    [firestore]
+  )
+  const { data: recentTickets } = useCollection<Ticket>(ticketsQuery)
+
+  const allTicketsQuery = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'tickets') : null),
+    [firestore]
+  )
+  const { data: allTickets } = useCollection<Ticket>(allTicketsQuery)
 
   useEffect(() => {
     const promoteToSuperAdmin = async () => {
@@ -86,8 +104,6 @@ export default function Dashboard() {
         const docSnap = await getDoc(adminRoleRef)
         if (!docSnap.exists()) {
           const creationData = { createdAt: serverTimestamp() }
-          // User is not an admin yet, promote them.
-          // This is a non-blocking write with specific error handling.
           setDocumentNonBlocking(adminRoleRef, creationData, { merge: true })
 
           toast({
@@ -97,8 +113,6 @@ export default function Dashboard() {
           })
         }
       } catch (error) {
-        // This will catch errors from getDoc, which is less likely to be a permission issue
-        // for this specific logic, but good to have.
         const permissionError = new FirestorePermissionError({
           path: adminRoleRef.path,
           operation: 'get',
@@ -116,11 +130,7 @@ export default function Dashboard() {
     (c) => c.status === 'Ativo'
   ).length
 
-  const openTicketsCount = tickets.filter((t) => t.status === 'Aberto').length
-
-  const recentTickets = [...tickets]
-    .sort((a, b) => new Date(b.updated).getTime() - new Date(a.updated).getTime())
-    .slice(0, 5)
+  const openTicketsCount = allTickets?.filter((t) => t.status === 'Aberto').length
 
   const newStaffs = (staffs || []).slice(0, 2)
 
@@ -133,9 +143,9 @@ export default function Dashboard() {
     },
     {
       title: 'Tickets Abertos',
-      value: `${openTicketsCount}`,
+      value: `${openTicketsCount || 0}`,
       description: `${
-        tickets.filter((t) => t.status === 'Em Progresso').length
+        allTickets?.filter((t) => t.status === 'Em Progresso').length || 0
       } em progresso`,
       icon: <Users className='h-4 w-4 text-muted-foreground' />,
     },
@@ -187,7 +197,7 @@ export default function Dashboard() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {recentTickets.map((ticket) => (
+                {recentTickets?.map((ticket) => (
                   <TableRow key={ticket.id}>
                     <TableCell>
                       <div className='font-medium'>{ticket.client}</div>
@@ -245,3 +255,5 @@ export default function Dashboard() {
     </>
   )
 }
+
+    
