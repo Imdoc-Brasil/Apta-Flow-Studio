@@ -17,7 +17,6 @@ import {
   Bar,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
@@ -47,7 +46,7 @@ const generateMockResponses = () => {
 
 const mockResponses = generateMockResponses()
 
-// ANALYSIS LOGIC
+// ANALYSIS LOGIC & BENCHMARK DATA
 const calculateScores = () => {
   return psychosocialSurveyData.map((group) => {
     const questionIds = group.questions.map((q) => q.id)
@@ -61,39 +60,45 @@ const calculateScores = () => {
       0
     )
     const averageScore = totalResponses > 0 ? totalScores / totalResponses : 0
+
+    let benchmark25 = 3.5
+    let benchmark75 = 4.5
+
+    // Using example benchmarks from the provided image
+    if (group.name.includes('Demand')) benchmark25 = 3.34
+    if (group.name.includes('Control')) benchmark75 = 3.75
+    
     return {
       name: group.name,
-      score: averageScore,
+      yourScore: parseFloat(averageScore.toFixed(2)),
+      benchmark25: benchmark25,
+      benchmark75: benchmark75,
     }
   })
 }
 
-const chartData = calculateScores()
+const analysisData = calculateScores()
 
 const chartConfig = {
-  score: {
-    label: 'Pontuação Média',
+  yourScore: {
+    label: 'Sua Pontuação',
     color: 'hsl(var(--primary))',
   },
-  '25th': {
-    label: 'Percentil 25 (Benchmark)',
-    color: 'hsl(var(--destructive))',
-  },
-  '75th': {
-    label: 'Percentil 75 (Benchmark)',
-    color: 'hsl(var(--accent))',
+  benchmark: {
+    label: 'Benchmark',
+    color: 'hsl(var(--muted-foreground))',
   },
 } satisfies ChartConfig
 
-const domainText = {
+const domainTextMap: { [key: string]: string } = {
   'Demandas do Trabalho':
-    'Este domínio refere-se a aspectos do trabalho como carga de trabalho, padrões de trabalho e ambiente de trabalho. Organizações com bom desempenho nesta área provavelmente têm prazos alcançáveis, demandas adequadas em relação às horas de trabalho e sistemas para responder às preocupações individuais.',
+    'Este domínio refere-se a aspectos do trabalho como carga de trabalho, padrões de trabalho e ambiente de trabalho. Organizações com bom desempenho nesta área são propensas a ter prazos alcançáveis, demandas adequadas em relação às horas de trabalho e sistemas para responder a preocupações individuais.',
   'Organização do Trabalho':
     'Refere-se ao quanto uma pessoa tem a dizer sobre a forma como faz seu trabalho. Organizações com bom desempenho nesta área provavelmente incentivam a autonomia e a iniciativa, com sistemas claros para que os funcionários influenciem seus próprios padrões de trabalho.',
   'Relacionamentos Interpessoais e Liderança':
-    'Este domínio inclui o encorajamento e o apoio fornecidos pelos colegas. Organizações com bom desempenho aqui provavelmente têm equipes prestativas e compassivas, com sistemas que facilitam o respeito e o apoio mútuo.',
+    'Este domínio inclui o encorajamento e o apoio fornecidos pela gestão e pelos colegas. Organizações com bom desempenho aqui provavelmente têm equipes prestativas e compassivas, com sistemas que facilitam o respeito e o apoio mútuo.',
   'Conflito Trabalho-Família':
-    'Isso inclui a promoção de um trabalho positivo para evitar conflitos e lidar com comportamentos inaceitáveis. Organizações com bom desempenho nesta área provavelmente promovem um trabalho positivo e lidam eficazmente com conflitos e comportamentos inaceitáveis.',
+    'Isto inclui a promoção de um trabalho positivo para evitar conflitos e lidar com comportamentos inaceitáveis. Organizações com bom desempenho nesta área provavelmente promovem um trabalho positivo e lidam eficazmente com conflitos e comportamentos inaceitáveis.',
   'Insegurança no Emprego':
     'Como a mudança organizacional (grande ou pequena) é gerenciada e comunicada na organização. Organizações com bom desempenho nesta área provavelmente têm sistemas de gestão de mudanças eficazes que garantem que a mudança seja consultada, implementada de forma ponderada e bem comunicada.',
   'Valores no Trabalho':
@@ -107,18 +112,6 @@ export default function PsychosocialResultsPage() {
   const contractId = params.contractId as string
   const searchParams = useSearchParams()
   const surveyId = searchParams.get('surveyId')
-
-  // Map the correct text based on group name
-  const domainTextMap: { [key: string]: string } = {
-    "Demandas do Trabalho": domainText["Demandas do Trabalho"],
-    "Organização do Trabalho": domainText["Organização do Trabalho"],
-    "Relacionamentos Interpessoais e Liderança": domainText["Relacionamento"],
-    "Conflito Trabalho-Família": domainText["Conflito Trabalho-Família"],
-    "Insegurança no Emprego": domainText["Insegurança no Emprego"],
-    "Valores no Trabalho": domainText["Valores no Trabalho"],
-    "Assédio Moral": domainText["Assédio Moral"],
-  };
-
 
   return (
     <div className='grid flex-1 auto-rows-max gap-8'>
@@ -141,105 +134,115 @@ export default function PsychosocialResultsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Resultados Gerais por Domínio</CardTitle>
-          <CardDescription>
-            Pontuação média para cada um dos 7 fatores de estresse, comparados
-            com o benchmark do setor. As pontuações variam de 1 (ruim) a 5
-            (desejável).
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer
-            config={chartConfig}
-            className='min-h-[400px] w-full'
-          >
-            <BarChart
-              data={chartData}
-              layout='vertical'
-              margin={{ left: 20, right: 40 }}
-            >
-              <CartesianGrid horizontal={false} />
-              <YAxis
-                dataKey='name'
-                type='category'
-                tickLine={false}
-                axisLine={false}
-                tickMargin={10}
-                width={120}
-              />
-              <XAxis dataKey='score' type='number' domain={[1, 5]} />
-              <ChartTooltip
-                cursor={{ fill: 'hsl(var(--muted))' }}
-                content={<ChartTooltipContent />}
-              />
-              <Bar dataKey='score' radius={4}>
-                {chartData.map((entry, index) => (
-                  <ReferenceLine
-                    key={`label-${index}`}
-                    y={entry.name}
-                    stroke='transparent'
-                    label={{
-                      position: 'insideRight',
-                      value: entry.score.toFixed(2),
-                      fill: 'white',
-                      fontSize: 12,
-                      fontWeight: 'bold',
-                    }}
-                  />
-                ))}
-              </Bar>
-              <ReferenceLine
-                y={0}
-                stroke='hsl(var(--destructive))'
-                strokeDasharray='3 3'
-                label={{
-                  position: 'insideTopRight',
-                  value: 'Percentil 25',
-                  fill: 'hsl(var(--destructive))',
-                  fontSize: 12,
-                }}
-              />
-              <ReferenceLine
-                y={0}
-                stroke='hsl(var(--accent))'
-                strokeDasharray='3 3'
-                label={{
-                  position: 'insideBottomRight',
-                  value: 'Percentil 75',
-                  fill: 'hsl(var(--accent))',
-                  fontSize: 12,
-                }}
-              />
-            </BarChart>
-          </ChartContainer>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
           <CardTitle>Análise Detalhada dos Domínios</CardTitle>
           <CardDescription>
             Interpretação dos resultados para cada fator de estresse e
-            recomendações.
+            recomendações. As pontuações variam de 1 (ruim) a 5 (desejável).
           </CardDescription>
         </CardHeader>
-        <CardContent className='space-y-6'>
-          {chartData.map((item) => (
+        <CardContent className='space-y-10'>
+          {analysisData.map((item) => (
             <div key={item.name}>
-              <h3 className='font-semibold text-lg'>{item.name}</h3>
-              <p className='text-muted-foreground mt-1 text-sm'>
+              <h3 className='font-headline text-2xl font-semibold'>
+                {item.name}
+              </h3>
+              <p className='text-muted-foreground mt-2 text-sm leading-relaxed'>
                 {domainTextMap[item.name]}
               </p>
-              <div className='mt-3 rounded-lg border bg-muted/30 p-4 space-y-2'>
-                <p className='text-sm font-medium'>
-                  Sua pontuação: {item.score.toFixed(2)}
-                </p>
-                <p className='text-sm text-muted-foreground'>
-                  [Análise gerada por IA sobre o desempenho e recomendação de
-                  ações aparecerá aqui...]
-                </p>
+
+              <div className='mt-6 rounded-lg border bg-muted/30 p-6 space-y-4'>
+                <h4 className='font-semibold'>Seu Desempenho no Contexto</h4>
+                <ChartContainer
+                  config={chartConfig}
+                  className='h-[80px] w-full'
+                >
+                  <BarChart
+                    data={[item]}
+                    layout='vertical'
+                    margin={{ left: 10, right: 10 }}
+                  >
+                    <XAxis type='number' dataKey='yourScore' domain={[1, 5]} hide />
+                    <YAxis type='category' dataKey='name' hide />
+                    <ChartTooltip
+                      cursor={false}
+                      content={<ChartTooltipContent hideLabel />}
+                    />
+                    <Bar
+                      dataKey='yourScore'
+                      layout='vertical'
+                      fill='var(--color-yourScore)'
+                      radius={4}
+                      barSize={20}
+                    >
+                       <text
+                        x={-10} 
+                        y={10} 
+                        textAnchor="end"
+                        fill="hsl(var(--foreground))"
+                        className="text-sm font-bold"
+                      >
+                       Sua Pontuação
+                      </text>
+                       <text
+                        x='98%'
+                        y={10} 
+                        textAnchor="end"
+                        fill="hsl(var(--primary-foreground))"
+                        className="text-sm font-bold"
+                      >
+                        {item.yourScore.toFixed(2)}
+                      </text>
+                    </Bar>
+                    <ReferenceLine
+                      x={item.benchmark25}
+                      stroke='hsl(var(--destructive))'
+                      strokeWidth={2}
+                      strokeDasharray='3 3'
+                    />
+                     <ReferenceLine
+                      x={item.benchmark75}
+                      stroke='hsl(var(--accent))'
+                      strokeWidth={2}
+                      strokeDasharray='3 3'
+                    />
+                  </BarChart>
+                </ChartContainer>
+                 <div className='flex items-center justify-between text-xs text-muted-foreground px-2'>
+                  <span>1</span>
+                  <span>2</span>
+                  <span>3</span>
+                  <span>4</span>
+                  <span>5</span>
+                </div>
+
+                <div className='text-sm text-muted-foreground pt-4'>
+                  <p>
+                    A linha{' '}
+                    <span className='font-semibold text-destructive'>
+                      vermelha
+                    </span>{' '}
+                    indica o 25º percentil e a linha{' '}
+                    <span className='font-semibold text-accent'>verde</span>{' '}
+                    indica o 75º percentil para a amostra comparativa.
+                  </p>
+                  <p className='mt-2'>
+                    Sua pontuação de{' '}
+                    <span className='font-bold text-foreground'>
+                      {item.yourScore.toFixed(2)}
+                    </span>{' '}
+                    sugere que o desempenho da sua organização está{' '}
+                    <span className='font-bold text-foreground'>
+                      {item.yourScore > item.benchmark75
+                        ? 'acima do percentil 75'
+                        : item.yourScore < item.benchmark25
+                          ? 'abaixo do percentil 25'
+                          : 'entre os percentis 25 e 75'}
+                    </span>
+                    .
+                  </p>
+                </div>
               </div>
-              <Separator className='mt-6' />
+              <Separator className='mt-10' />
             </div>
           ))}
         </CardContent>
