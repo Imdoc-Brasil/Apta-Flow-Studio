@@ -1,7 +1,13 @@
+
 'use client'
 
 import React, { useState, useMemo, useEffect } from 'react'
-import { MoreHorizontal, PlusCircle, ShieldCheck } from 'lucide-react'
+import {
+  MoreHorizontal,
+  PlusCircle,
+  ShieldCheck,
+  ChevronDown,
+} from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
   Card,
@@ -48,27 +54,69 @@ import type { Staff } from '../employees/page'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useToast } from '@/hooks/use-toast'
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion'
 
 // --- Estrutura de Permissões ---
 
 type Action = 'view' | 'create' | 'edit' | 'delete'
 type Module =
   | 'clients'
+  | 'clients.info'
+  | 'clients.tickets'
+  | 'clients.structure'
+  | 'clients.sst'
   | 'staffs'
   | 'tickets'
   | 'services'
   | 'risks'
   | 'health'
+  | 'health.queue'
+  | 'health.exams'
+  | 'health.reports'
   | 'performance'
+
 export type Permission = `${Action}:${Module}`
 
-export const permissionModules: { id: Module; name: string }[] = [
-  { id: 'clients', name: 'Clientes' },
+interface SubModule {
+  id: Module
+  name: string
+}
+
+interface PermissionModule {
+  id: Module
+  name: string
+  subModules?: SubModule[]
+}
+
+export const permissionModules: PermissionModule[] = [
+  {
+    id: 'clients',
+    name: 'Clientes',
+    subModules: [
+      { id: 'clients.info', name: 'Informações Gerais' },
+      { id: 'clients.tickets', name: 'Chamados do Cliente' },
+      { id: 'clients.structure', name: 'Estrutura da Empresa' },
+      { id: 'clients.sst', name: 'Gestão de SST' },
+    ],
+  },
   { id: 'staffs', name: 'Staffs' },
-  { id: 'tickets', name: 'Tickets' },
+  { id: 'tickets', name: 'Tickets (Geral)' },
   { id: 'services', name: 'Serviços' },
   { id: 'risks', name: 'Riscos' },
-  { id: 'health', name: 'Saúde' },
+  {
+    id: 'health',
+    name: 'Saúde',
+    subModules: [
+      { id: 'health.queue', name: 'Fila de Atendimento' },
+      { id: 'health.exams', name: 'Catálogo de Exames' },
+      { id: 'health.reports', name: 'Portal de Laudos' },
+    ],
+  },
   { id: 'performance', name: 'Desempenho' },
 ]
 
@@ -440,41 +488,80 @@ export default function ProfilesPage() {
           </DialogHeader>
           <form id='permissions-form' onSubmit={handlePermissionsSubmit}>
             <ScrollArea className='h-[60vh] mt-4'>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Módulo</TableHead>
-                    {permissionActions.map((action) => (
-                      <TableHead key={action.id} className='text-center'>
-                        {action.name}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {permissionModules.map((module) => (
-                    <TableRow key={module.id}>
-                      <TableCell className='font-medium'>
+              <Accordion type='multiple' className='w-full'>
+                {permissionModules.map((module) => (
+                  <AccordionItem value={module.id} key={module.id}>
+                    <div className='flex items-center bg-muted/50 pr-4'>
+                      <AccordionTrigger className='flex-1 p-4 font-medium'>
                         {module.name}
-                      </TableCell>
-                      {permissionActions.map((action) => {
-                        const permissionId: Permission =
-                          `${action.id}:${module.id}`
-                        return (
-                          <TableCell key={action.id} className='text-center'>
+                      </AccordionTrigger>
+                      <div className='grid grid-cols-4 gap-4 w-[400px] text-center text-xs font-semibold'>
+                        {permissionActions.map((action) => (
+                          <div key={`${module.id}-${action.id}`}>
                             <Checkbox
-                              checked={selectedPermissions.has(permissionId)}
+                              checked={selectedPermissions.has(
+                                `${action.id}:${module.id}`
+                              )}
                               onCheckedChange={(checked) =>
-                                handlePermissionChange(permissionId, !!checked)
+                                handlePermissionChange(
+                                  `${action.id}:${module.id}`,
+                                  !!checked
+                                )
                               }
                             />
-                          </TableCell>
-                        )
-                      })}
-                    </TableRow>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <AccordionContent>
+                      <div className='pl-8 py-2 space-y-2'>
+                        {module.subModules ? (
+                          module.subModules.map((subModule) => (
+                            <div
+                              key={subModule.id}
+                              className='flex items-center pr-4'
+                            >
+                              <div className='flex-1 p-2 font-normal'>
+                                <Label>{subModule.name}</Label>
+                              </div>
+                              <div className='grid grid-cols-4 gap-4 w-[400px] text-center'>
+                                {permissionActions.map((action) => (
+                                  <div key={`${subModule.id}-${action.id}`}>
+                                    <Checkbox
+                                      checked={selectedPermissions.has(
+                                        `${action.id}:${subModule.id}`
+                                      )}
+                                      onCheckedChange={(checked) =>
+                                        handlePermissionChange(
+                                          `${action.id}:${subModule.id}`,
+                                          !!checked
+                                        )
+                                      }
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className='text-sm text-muted-foreground p-4'>
+                            Nenhum submódulo para configurar. As permissões
+                            acima se aplicam a todo o módulo.
+                          </div>
+                        )}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+              <div className='sticky bottom-0 bg-background/95 p-2 mt-2 flex items-center border-t'>
+                <div className='flex-1' />
+                <div className='grid grid-cols-4 gap-4 w-[400px] text-center text-xs font-semibold'>
+                  {permissionActions.map((action) => (
+                    <span key={action.id}>{action.name}</span>
                   ))}
-                </TableBody>
-              </Table>
+                </div>
+              </div>
             </ScrollArea>
           </form>
           <DialogFooter className='mt-4'>
