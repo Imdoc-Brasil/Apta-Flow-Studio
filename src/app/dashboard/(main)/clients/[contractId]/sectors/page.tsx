@@ -22,6 +22,7 @@ import {
   List,
   Filter,
   MapPin,
+  Loader2,
 } from 'lucide-react'
 import {
   Table,
@@ -51,9 +52,9 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { initialUnitsData } from '../units/data'
+import { initialUnitsData, type Unit } from '../units/data'
 import { Badge } from '@/components/ui/badge'
-import { initialSectorsData, type Sector } from './data'
+import { type Sector } from './data'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import { useToast } from '@/hooks/use-toast'
@@ -64,6 +65,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  useFirestore,
+  useCollection,
+  useMemoFirebase,
+  addDocumentNonBlocking,
+} from '@/firebase'
+import { collection, query, where } from 'firebase/firestore'
 
 export default function SectorsPage() {
   const params = useParams()
@@ -73,21 +81,73 @@ export default function SectorsPage() {
   const searchParams = useSearchParams()
   const urlUnitId = searchParams.get('unitId')
 
-  const [sectors, setSectors] = useState(initialSectorsData)
-  const [isAddSectorDialogOpen, setIsAddSectorDialogOpen] = useState(false)
+  const firestore = useFirestore()
 
+  const [isAddSectorDialogOpen, setIsAddSectorDialogOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
   const [unitFilter, setUnitFilter] = useState<string[]>(
     urlUnitId ? [urlUnitId] : []
   )
 
+  const unitsRef = useMemoFirebase(
+    () =>
+      firestore
+        ? collection(firestore, 'clients', contractId, 'units')
+        : null,
+    [firestore, contractId]
+  )
+  const { data: units, isLoading: isLoadingUnits } = useCollection<Unit>(unitsRef)
+
+  const sectorsQuery = useMemoFirebase(() => {
+    if (!firestore || !unitsRef) return null
+    if (unitFilter.length === 0) {
+      return collection(firestore, `clients/${contractId}/sectors_placeholder_for_empty_query`)
+    }
+    // This is a simplification. For a real app, you'd query each unit's subcollection
+    // or denormalize the unitId into the sector document for easier querying.
+    // For this prototype, we'll just show all sectors if multiple units are selected.
+    // A more complex query (which Firestore doesn't support directly on subcollections) would be needed otherwise.
+    // A single subcollection query is simple:
+    if (unitFilter.length === 1) {
+        return collection(firestore, `clients/${contractId}/units/${unitFilter[0]}/sectors`)
+    }
+    // To query across all units, we'd ideally have a root `sectors` collection
+    // with `clientId` and `unitId` fields. Let's assume that for now for multi-filter.
+    // This part is a placeholder for a more complex data model.
+    return collection(firestore, `clients/${contractId}/sectors_placeholder_for_all`)
+
+  }, [firestore, contractId, unitFilter, unitsRef])
+
+  // This is a workaround for the prototype. We will fetch all sectors from all units
+  // and then filter on the client side. This is NOT recommended for production.
+  const [allSectors, setAllSectors] = useState<Sector[]>([])
+  const [isLoadingSectors, setIsLoadingSectors] = useState(true)
+
   useEffect(() => {
-    // This is an empty effect to force a re-render and fix chunk loading issues.
-  }, [])
+    if (units) {
+      setIsLoadingSectors(true)
+      const fetchAllSectors = async () => {
+        if (!firestore) return []
+        const allSectorsPromises = units.map(unit => {
+          const sectorsColRef = collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`);
+          return getDocs(sectorsColRef);
+        });
+
+        const sectorsSnapshots = await Promise.all(fetchAllSectorsPromises);
+        const sectorsData = sectorsSnapshots.flatMap(snapshot =>
+          snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sector))
+        );
+        setAllSectors(sectorsData);
+        setIsLoadingSectors(false);
+      }
+      fetchAllSectors()
+    }
+  }, [units, firestore, contractId])
+
 
   const filteredSectors = useMemo(() => {
-    let filtered = sectors
+    let filtered = allSectors;
     if (unitFilter.length > 0) {
       filtered = filtered.filter((sector) => unitFilter.includes(sector.unitId))
     }
@@ -95,37 +155,50 @@ export default function SectorsPage() {
       filtered = filtered.filter(
         (sector) =>
           sector.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          sector.description.toLowerCase().includes(searchTerm.toLowerCase())
+          (sector.description && sector.description.toLowerCase().includes(searchTerm.toLowerCase()))
       )
     }
     return filtered
-  }, [sectors, unitFilter, searchTerm])
+  }, [allSectors, unitFilter, searchTerm])
+
 
   const handleAddSector = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    if (!firestore) return
+
     const formData = new FormData(e.currentTarget)
-    const code = formData.get('code') as string
-    const newSector: Sector = {
-      id: `SEC-${Date.now().toString().slice(-4)}`,
-      code: code || `SEC-${Date.now().toString().slice(-4)}`,
+    const unitId = formData.get('unitId') as string
+    if (!unitId) {
+      toast({ title: 'Erro', description: 'Por favor, selecione uma unidade.', variant: 'destructive'})
+      return
+    }
+
+    const sectorsColRef = collection(firestore, `clients/${contractId}/units/${unitId}/sectors`)
+
+    const newSectorData = {
+      code: formData.get('code') as string,
       name: formData.get('name') as string,
       description: formData.get('description') as string,
-      unitId: formData.get('unitId') as string,
+      unitId: unitId,
     }
-    setSectors((prev) => [...prev, newSector])
-    setIsAddSectorDialogOpen(false)
+    addDocumentNonBlocking(sectorsColRef, newSectorData)
+
+    // Optimistic UI update
+    setAllSectors(prev => [...prev, {id: `optimistic-${Date.now()}`, ...newSectorData}])
+
     toast({
       title: 'Setor Adicionado!',
-      description: `O setor "${newSector.name}" foi criado.`,
+      description: `O setor "${newSectorData.name}" foi criado.`,
     })
+    setIsAddSectorDialogOpen(false)
   }
 
   const getUnitName = (unitId: string) => {
-    return initialUnitsData.find((unit) => unit.id === unitId)?.name || 'N/A'
+    return units?.find((unit) => unit.id === unitId)?.name || 'N/A'
   }
 
   const selectedUnitName =
-    unitFilter.length === 1
+    unitFilter.length === 1 && units
       ? getUnitName(unitFilter[0])
       : 'Todos os Setores'
 
@@ -138,7 +211,7 @@ export default function SectorsPage() {
             <SelectValue placeholder='Selecione a unidade' />
           </SelectTrigger>
           <SelectContent>
-            {initialUnitsData.map((unit) => (
+            {units?.map((unit) => (
               <SelectItem key={unit.id} value={unit.id}>
                 {unit.name}
               </SelectItem>
@@ -162,6 +235,8 @@ export default function SectorsPage() {
       </div>
     </div>
   )
+    
+  const isLoading = isLoadingUnits || isLoadingSectors;
 
   return (
     <>
@@ -248,7 +323,7 @@ export default function SectorsPage() {
               <DropdownMenuContent align='end'>
                 <DropdownMenuLabel>Filtrar por Unidade</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {initialUnitsData.map((unit) => (
+                {units?.map((unit) => (
                   <DropdownMenuCheckboxItem
                     key={unit.id}
                     checked={unitFilter.includes(unit.id)}
@@ -268,7 +343,11 @@ export default function SectorsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {viewMode === 'card' ? (
+          {isLoading ? (
+             <div className='flex items-center justify-center h-64'>
+                <Loader2 className='h-8 w-8 animate-spin' />
+              </div>
+          ) : viewMode === 'card' ? (
             <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
               {filteredSectors.map((sector) => (
                 <Card
@@ -379,7 +458,7 @@ export default function SectorsPage() {
               </TableBody>
             </Table>
           )}
-          {filteredSectors.length === 0 && (
+          {!isLoading && filteredSectors.length === 0 && (
             <div className='flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm h-96'>
               <div className='flex flex-col items-center gap-1 text-center'>
                 <h3 className='text-2xl font-bold tracking-tight'>
