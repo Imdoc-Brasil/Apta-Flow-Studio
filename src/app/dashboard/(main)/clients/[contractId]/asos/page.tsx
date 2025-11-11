@@ -47,6 +47,7 @@ import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import { Separator } from '@/components/ui/separator'
 import { aptaServiceUnits } from '@/app/dashboard/(main)/health/queue/data'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 const initialAsoData = [
   {
@@ -169,133 +170,138 @@ export default function AsosPage() {
                   </DialogDescription>
                 </DialogHeader>
                 <form id='new-aso-request-form' onSubmit={handleNewRequest}>
-                  <div className='grid gap-6 py-4'>
-                    <div className='space-y-2'>
-                      <Label htmlFor='aptaUnitId'>
-                        Unidade de Atendimento Apta
-                      </Label>
-                      <Select name='aptaUnitId' required>
-                        <SelectTrigger>
-                          <SelectValue placeholder='Selecione a unidade da Apta' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {aptaServiceUnits.map((unit) => (
-                            <SelectItem key={unit.id} value={unit.id}>
-                              {unit.name} ({unit.type})
+                  <ScrollArea className='h-[60vh]'>
+                    <div className='grid gap-6 p-1 pr-4'>
+                      <div className='space-y-2'>
+                        <Label htmlFor='aptaUnitId'>
+                          Unidade de Atendimento Apta
+                        </Label>
+                        <Select name='aptaUnitId' required>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Selecione a unidade da Apta' />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {aptaServiceUnits.map((unit) => (
+                              <SelectItem key={unit.id} value={unit.id}>
+                                {unit.name} ({unit.type})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className='space-y-2'>
+                        <Label htmlFor='employeeId'>Colaborador</Label>
+                        <Select name='employeeId' required>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Selecione o colaborador' />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {initialEmployeesData.map((emp) => (
+                              <SelectItem key={emp.id} value={emp.id}>
+                                {emp.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className='space-y-2'>
+                        <Label htmlFor='solicitationType'>
+                          Tipo de Atendimento
+                        </Label>
+                        <Select name='solicitationType' required>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Selecione o tipo de avaliação' />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value='Avaliação Admissional'>
+                              Avaliação Admissional
                             </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='employeeId'>Colaborador</Label>
-                      <Select name='employeeId' required>
-                        <SelectTrigger>
-                          <SelectValue placeholder='Selecione o colaborador' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {initialEmployeesData.map((emp) => (
-                            <SelectItem key={emp.id} value={emp.id}>
-                              {emp.name}
+                            <SelectItem value='Avaliação Periódica'>
+                              Avaliação Periódica
                             </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='solicitationType'>
-                        Tipo de Atendimento
-                      </Label>
-                      <Select name='solicitationType' required>
-                        <SelectTrigger>
-                          <SelectValue placeholder='Selecione o tipo de avaliação' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value='Avaliação Admissional'>
-                            Avaliação Admissional
-                          </SelectItem>
-                          <SelectItem value='Avaliação Periódica'>
-                            Avaliação Periódica
-                          </SelectItem>
-                          <SelectItem value='Avaliação de Retorno ao Trabalho'>
-                            Avaliação de Retorno ao Trabalho
-                          </SelectItem>
-                          <SelectItem value='Avaliação de Mudança de Risco'>
-                            Avaliação de Mudança de Risco
-                          </SelectItem>
-                          <SelectItem value='Avaliação Demissional'>
-                            Avaliação Demissional
-                          </SelectItem>
-                          <SelectItem value='Monitoramento Pontual' disabled>
-                            Monitoramento Pontual
-                          </SelectItem>
-                          <SelectItem value='Evolução de Afastamento' disabled>
-                            Evolução de Afastamento
-                          </SelectItem>
-                          <SelectItem value='Avaliação de Segmento' disabled>
-                            Avaliação de Segmento
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <Separator />
-
-                    <div className='space-y-2 bg-muted/50 p-3 rounded-md border'>
-                      <Label className='font-semibold'>
-                        Informações do PCMSO
-                      </Label>
-                      <p className='text-xs text-muted-foreground'>
-                        Os riscos e exames vinculados ao cargo do colaborador
-                        aparecerão aqui automaticamente.
-                      </p>
-                      <div className='space-y-2 pt-2'>
-                        <Label className='text-xs'>Riscos (PCMSO)</Label>
-                        <Textarea
-                          placeholder='[Carregado automaticamente...]'
-                          disabled
-                          rows={2}
-                        />
+                            <SelectItem value='Avaliação de Retorno ao Trabalho'>
+                              Avaliação de Retorno ao Trabalho
+                            </SelectItem>
+                            <SelectItem value='Avaliação de Mudança de Risco'>
+                              Avaliação de Mudança de Risco
+                            </SelectItem>
+                            <SelectItem value='Avaliação Demissional'>
+                              Avaliação Demissional
+                            </SelectItem>
+                            <SelectItem value='Monitoramento Pontual' disabled>
+                              Monitoramento Pontual
+                            </SelectItem>
+                            <SelectItem
+                              value='Evolução de Afastamento'
+                              disabled
+                            >
+                              Evolução de Afastamento
+                            </SelectItem>
+                            <SelectItem value='Avaliação de Segmento' disabled>
+                              Avaliação de Segmento
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
-                      <div className='space-y-2'>
-                        <Label className='text-xs'>Exames (PCMSO)</Label>
-                        <Textarea
-                          placeholder='[Carregado automaticamente...]'
-                          disabled
-                          rows={2}
-                        />
-                      </div>
-                    </div>
 
-                    <Separator />
+                      <Separator />
 
-                    <div className='space-y-4'>
-                      <Label className='font-semibold'>
-                        Informações Adicionais
-                      </Label>
-                      <div className='space-y-2'>
-                        <div className='flex items-center space-x-2'>
-                          <Checkbox id='pcd' name='pcd' />
-                          <Label htmlFor='pcd' className='font-normal'>
-                            Avaliação para Enquadramento PCD?
-                          </Label>
+                      <div className='space-y-2 bg-muted/50 p-3 rounded-md border'>
+                        <Label className='font-semibold'>
+                          Informações do PCMSO
+                        </Label>
+                        <p className='text-xs text-muted-foreground'>
+                          Os riscos e exames vinculados ao cargo do colaborador
+                          aparecerão aqui automaticamente.
+                        </p>
+                        <div className='space-y-2 pt-2'>
+                          <Label className='text-xs'>Riscos (PCMSO)</Label>
+                          <Textarea
+                            placeholder='[Carregado automaticamente...]'
+                            disabled
+                            rows={2}
+                          />
                         </div>
-                        <Textarea
-                          name='pcd-details'
-                          placeholder='Se sim, descreva se há alguma necessidade especial para o atendimento.'
-                        />
-                      </div>
-                      <div className='space-y-2'>
-                        <div className='flex items-center space-x-2'>
-                          <Checkbox id='priority' name='priority' />
-                          <Label htmlFor='priority' className='font-normal'>
-                            Atendimento prioritário?
-                          </Label>
+                        <div className='space-y-2'>
+                          <Label className='text-xs'>Exames (PCMSO)</Label>
+                          <Textarea
+                            placeholder='[Carregado automaticamente...]'
+                            disabled
+                            rows={2}
+                          />
                         </div>
-                        {/* Futuramente, mostrar as opções se o checkbox estiver marcado */}
+                      </div>
+
+                      <Separator />
+
+                      <div className='space-y-4'>
+                        <Label className='font-semibold'>
+                          Informações Adicionais
+                        </Label>
+                        <div className='space-y-2'>
+                          <div className='flex items-center space-x-2'>
+                            <Checkbox id='pcd' name='pcd' />
+                            <Label htmlFor='pcd' className='font-normal'>
+                              Avaliação para Enquadramento PCD?
+                            </Label>
+                          </div>
+                          <Textarea
+                            name='pcd-details'
+                            placeholder='Se sim, descreva se há alguma necessidade especial para o atendimento.'
+                          />
+                        </div>
+                        <div className='space-y-2'>
+                          <div className='flex items-center space-x-2'>
+                            <Checkbox id='priority' name='priority' />
+                            <Label htmlFor='priority' className='font-normal'>
+                              Atendimento prioritário?
+                            </Label>
+                          </div>
+                          {/* Futuramente, mostrar as opções se o checkbox estiver marcado */}
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  </ScrollArea>
                 </form>
                 <DialogFooter>
                   <Button
