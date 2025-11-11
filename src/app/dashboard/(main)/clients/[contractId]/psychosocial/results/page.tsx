@@ -1,3 +1,4 @@
+
 'use client'
 
 import {
@@ -10,11 +11,14 @@ import {
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, BarChart2 } from 'lucide-react'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
+import { psychosocialSurveyData } from '../data'
 
 export default function PsychosocialResultsPage() {
   const params = useParams()
   const contractId = params.contractId as string
+  const searchParams = useSearchParams()
+  const surveyId = searchParams.get('surveyId')
 
   return (
     <div className='grid flex-1 auto-rows-max gap-4'>
@@ -31,24 +35,26 @@ export default function PsychosocialResultsPage() {
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Análise de Resultados - Avaliação Anual 2023</CardTitle>
+          <CardTitle>Análise de Resultados - {surveyId || 'Avaliação Anual 2023'}</CardTitle>
           <CardDescription>
-            Visão geral dos indicadores de bem-estar e estresse no trabalho.
+            Visão geral dos indicadores de bem-estar e estresse no trabalho para
+            cada fator de estresse.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className='flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm h-96'>
-            <div className='flex flex-col items-center gap-2 text-center'>
-              <BarChart2 className='h-12 w-12 text-muted-foreground' />
-              <h3 className='text-2xl font-bold tracking-tight'>
-                Análise em Desenvolvimento
-              </h3>
-              <p className='text-sm text-muted-foreground'>
-                Os gráficos e indicadores para esta pesquisa aparecerão aqui em
-                breve.
-              </p>
-            </div>
-          </div>
+        <CardContent className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
+          {psychosocialSurveyData.map((group) => (
+            <Card key={group.id}>
+              <CardHeader>
+                <CardTitle className='text-lg'>{group.name}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                 <div className='flex flex-col items-center justify-center h-48 rounded-lg border border-dashed text-sm text-muted-foreground'>
+                    <BarChart2 className='h-8 w-8 mb-2' />
+                    <p>Gráfico de pontuação</p>
+                 </div>
+              </CardContent>
+            </Card>
+          ))}
         </CardContent>
       </Card>
     </div>
