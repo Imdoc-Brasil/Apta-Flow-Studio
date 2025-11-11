@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState, useMemo } from 'react'
@@ -47,12 +46,7 @@ interface Profile {
   name: string
 }
 
-export const initialProfiles: Profile[] = [
-  { id: '1', name: 'Gerente de Projeto Principal' },
-  { id: '2', name: 'Engenheiro de Software Sênior' },
-  { id: '3', name: 'Especialista de Suporte' },
-  { id: '4', name: 'Engenheiro de DevOps' },
-]
+export const initialProfiles: Profile[] = []
 
 export default function ProfilesPage() {
   const [profiles, setProfiles] = useState<Profile[]>(initialProfiles)
