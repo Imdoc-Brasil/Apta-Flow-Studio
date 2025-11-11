@@ -502,8 +502,8 @@ export default function ProfilesPage() {
             </DialogDescription>
           </DialogHeader>
           <form id='permissions-form' onSubmit={handlePermissionsSubmit}>
-            <div className='sticky top-0 bg-background/95 p-2 mt-2 flex items-center border-b z-10'>
-              <div className='flex-1 font-semibold pl-10'>Módulo</div>
+             <div className='sticky top-0 bg-background/95 p-2 mt-2 flex items-center border-b z-10'>
+              <div className='flex-1 font-semibold pl-4'>Módulo</div>
               <div className='grid grid-cols-4 gap-4 w-[300px] text-center text-xs font-semibold text-muted-foreground'>
                 {permissionActions.map((action) => (
                   <span key={action.id}>{action.name}</span>
@@ -514,9 +514,9 @@ export default function ProfilesPage() {
               <Accordion type='multiple' className='w-full'>
                 {permissionModules.map((module) => (
                   <AccordionItem value={module.id} key={module.id}>
-                    <div className='flex items-center pr-4 border-b hover:bg-muted/50'>
-                      <AccordionTrigger className='flex-1 p-3 font-medium text-sm hover:no-underline'>
-                        {module.name}
+                     <div className='flex items-center pr-4 border-b hover:bg-muted/50'>
+                      <AccordionTrigger className='flex-1 p-0 pl-4 font-medium text-sm hover:no-underline'>
+                        <div className='py-3'>{module.name}</div>
                       </AccordionTrigger>
                       <div className='grid grid-cols-4 gap-4 w-[300px] text-center'>
                         {permissionActions.map((action) => (
