@@ -1,6 +1,7 @@
+
 'use client'
 
-import { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { MoreHorizontal, PlusCircle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -102,6 +103,24 @@ export default function ProfilesPage() {
     return counts
   }, [staffs])
 
+  useEffect(() => {
+    if (isAddDialogOpen || isEditDialogOpen) {
+      if (profileName) {
+        const generatedCode =
+          profileName
+            .split(' ')
+            .map((word) => word[0])
+            .join('')
+            .toUpperCase() +
+          '-' +
+          Math.floor(100 + Math.random() * 900)
+        setProfileCode(generatedCode)
+      } else {
+        setProfileCode('')
+      }
+    }
+  }, [profileName, isAddDialogOpen, isEditDialogOpen])
+
   const handleAddProfile = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!profileName) return
@@ -148,7 +167,7 @@ export default function ProfilesPage() {
     setIsAddDialogOpen(true)
   }
 
-  const renderProfileForm = (profile?: Profile | null) => (
+  const renderProfileForm = () => (
     <div className='grid gap-4 py-4'>
       <div className='grid grid-cols-4 items-center gap-4'>
         <Label htmlFor='name' className='text-right'>
@@ -171,9 +190,9 @@ export default function ProfilesPage() {
           id='code'
           name='code'
           value={profileCode}
-          onChange={(e) => setProfileCode(e.target.value)}
           className='col-span-3'
-          placeholder='(Opcional)'
+          readOnly
+          placeholder='(Gerado automaticamente)'
         />
       </div>
     </div>
@@ -287,7 +306,7 @@ export default function ProfilesPage() {
             </DialogDescription>
           </DialogHeader>
           <form id='edit-profile-form' onSubmit={handleEditProfile}>
-            {renderProfileForm(currentProfile)}
+            {renderProfileForm()}
           </form>
           <DialogFooter>
             <Button
