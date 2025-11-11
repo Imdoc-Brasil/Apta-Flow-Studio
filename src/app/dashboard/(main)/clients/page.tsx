@@ -103,7 +103,7 @@ export default function ClientsPage() {
   }
 
   const handleCnpjBlur = async () => {
-    if (!cnpj || !firestore) return;
+    if (!cnpj || !firestore || !clientsRef) return;
     
     // Basic CNPJ format validation
     const cnpjRegex = /^(\d{2}\.?\d{3}\.?\d{3}\/\d{4}-?\d{2})$/
