@@ -1243,14 +1243,6 @@ export default function TicketsPage() {
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className='flex items-center justify-center h-full'>
-        <Loader2 className='h-8 w-8 animate-spin' />
-      </div>
-    )
-  }
-
   return (
     <div className='flex h-full flex-col gap-4'>
       <div className='flex items-center justify-between'>
@@ -1582,193 +1574,203 @@ export default function TicketsPage() {
           <TabsTrigger value='list'>Lista</TabsTrigger>
           <TabsTrigger value='kanban'>Quadro Kanban</TabsTrigger>
         </TabsList>
-        <TabsContent value='list'>
-          <Card>
-            <CardContent className='pt-6'>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className='w-[100px]'>ID do Ticket</TableHead>
-                    <TableHead>Assunto</TableHead>
-                    <TableHead className='hidden md:table-cell'>
-                      Cliente
-                    </TableHead>
-                    <TableHead>Prioridade</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className='hidden md:table-cell'>
-                      Última Atualização
-                    </TableHead>
-                    <TableHead>
-                      <span className='sr-only'>Ações</span>
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredTickets.map((ticket) => (
-                    <Dialog key={ticket.id}>
-                      <DialogTrigger asChild>
-                        <TableRow
-                          className='cursor-pointer'
-                          onClick={() => handleRowClick(ticket)}
-                        >
-                          <TableCell className='font-medium'>
-                            {ticket.id}
-                          </TableCell>
-                          <TableCell>
-                            <div className='flex flex-col'>
-                              <span>{ticket.subject}</span>
-                              {ticket.labels && ticket.labels.length > 0 && (
-                                <div className='flex flex-wrap gap-1 mt-1'>
-                                  {ticket.labels.map((label) => (
-                                    <span
-                                      key={label.id}
-                                      className={`px-1.5 py-0.5 text-[10px] rounded-full text-white ${label.color}`}
-                                    >
-                                      {label.name}
-                                    </span>
-                                  ))}
+        {isLoading ? (
+          <div className='flex items-center justify-center h-96'>
+            <Loader2 className='h-8 w-8 animate-spin' />
+          </div>
+        ) : (
+          <>
+            <TabsContent value='list'>
+              <Card>
+                <CardContent className='pt-6'>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className='w-[100px]'>ID do Ticket</TableHead>
+                        <TableHead>Assunto</TableHead>
+                        <TableHead className='hidden md:table-cell'>
+                          Cliente
+                        </TableHead>
+                        <TableHead>Prioridade</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className='hidden md:table-cell'>
+                          Última Atualização
+                        </TableHead>
+                        <TableHead>
+                          <span className='sr-only'>Ações</span>
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredTickets.map((ticket) => (
+                        <Dialog key={ticket.id}>
+                          <DialogTrigger asChild>
+                            <TableRow
+                              className='cursor-pointer'
+                              onClick={() => handleRowClick(ticket)}
+                            >
+                              <TableCell className='font-medium'>
+                                {ticket.id}
+                              </TableCell>
+                              <TableCell>
+                                <div className='flex flex-col'>
+                                  <span>{ticket.subject}</span>
+                                  {ticket.labels && ticket.labels.length > 0 && (
+                                    <div className='flex flex-wrap gap-1 mt-1'>
+                                      {ticket.labels.map((label) => (
+                                        <span
+                                          key={label.id}
+                                          className={`px-1.5 py-0.5 text-[10px] rounded-full text-white ${label.color}`}
+                                        >
+                                          {label.name}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
                                 </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className='hidden md:table-cell'>
-                            {ticket.client}
-                          </TableCell>
-                          <TableCell>
+                              </TableCell>
+                              <TableCell className='hidden md:table-cell'>
+                                {ticket.client}
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant={
+                                    priorityVariant[
+                                      ticket.priority as keyof typeof priorityVariant
+                                    ]
+                                  }
+                                >
+                                  {ticket.priority}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant={
+                                    statusVariant[
+                                      ticket.status as keyof typeof statusVariant
+                                    ]
+                                  }
+                                >
+                                  {ticket.status}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className='hidden md:table-cell'>
+                                <ClientSideDate dateString={ticket.updated} />
+                              </TableCell>
+                              <TableCell>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger
+                                    asChild
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <Button
+                                      aria-haspopup='true'
+                                      size='icon'
+                                      variant='ghost'
+                                    >
+                                      <MoreHorizontal className='h-4 w-4' />
+                                      <span className='sr-only'>Alternar menu</span>
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent
+                                    align='end'
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                                    <DropdownMenuItem>
+                                      Ver Detalhes
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem>Atribuir</DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem>
+                                      Fechar Ticket
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </TableCell>
+                            </TableRow>
+                          </DialogTrigger>
+                          <TicketDetailsDialog ticket={ticket} />
+                        </Dialog>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            <TabsContent value='kanban' className='flex-1'>
+              <ClientOnly>
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragStart={handleDragStart}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={handleDragOver}
+                >
+                  <div className='grid flex-1 grid-cols-1 items-start gap-6 md:grid-cols-2 lg:grid-cols-4'>
+                    <SortableContext items={kanbanColumns}>
+                      {kanbanColumns.map((status) => {
+                        const columnTickets = filteredTickets.filter(
+                          (ticket) => ticket.status === status
+                        )
+                        return (
+                          <KanbanColumn
+                            key={status}
+                            status={status}
+                            tickets={columnTickets}
+                          />
+                        )
+                      })}
+                    </SortableContext>
+                  </div>
+                  <DragOverlay>
+                    {activeTicket ? (
+                      <Card className='cursor-grabbing transform-gpu rotate-3 shadow-lg'>
+                        <CardHeader className='p-4 pb-2'>
+                          {activeTicket.labels &&
+                            activeTicket.labels.length > 0 && (
+                              <div className='flex flex-wrap gap-1 mb-2'>
+                                {activeTicket.labels.map((label) => (
+                                  <span
+                                    key={label.id}
+                                    className={`px-2 py-0.5 text-xs rounded-full text-white ${label.color}`}
+                                  >
+                                    {label.name}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          <CardTitle className='leading-tight'>
+                            {activeTicket.subject}
+                          </CardTitle>
+                          <CardDescription className='pt-1 text-xs'>
+                            {activeTicket.client} - {activeTicket.id}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardFooter className='p-4 pt-0'>
+                          <div className='flex items-center justify-between w-full'>
                             <Badge
                               variant={
                                 priorityVariant[
-                                  ticket.priority as keyof typeof priorityVariant
+                                  activeTicket.priority as keyof typeof priorityVariant
                                 ]
                               }
                             >
-                              {ticket.priority}
+                              {activeTicket.priority}
                             </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={
-                                statusVariant[
-                                  ticket.status as keyof typeof statusVariant
-                                ]
-                              }
-                            >
-                              {ticket.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className='hidden md:table-cell'>
-                            <ClientSideDate dateString={ticket.updated} />
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger
-                                asChild
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <Button
-                                  aria-haspopup='true'
-                                  size='icon'
-                                  variant='ghost'
-                                >
-                                  <MoreHorizontal className='h-4 w-4' />
-                                  <span className='sr-only'>Alternar menu</span>
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent
-                                align='end'
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                                <DropdownMenuItem>
-                                  Ver Detalhes
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>Atribuir</DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem>
-                                  Fechar Ticket
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      </DialogTrigger>
-                      <TicketDetailsDialog ticket={ticket} />
-                    </Dialog>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value='kanban' className='flex-1'>
-          <ClientOnly>
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragStart={handleDragStart}
-              onDragEnd={handleDragEnd}
-              onDragOver={handleDragOver}
-            >
-              <div className='grid flex-1 grid-cols-1 items-start gap-6 md:grid-cols-2 lg:grid-cols-4'>
-                <SortableContext items={kanbanColumns}>
-                  {kanbanColumns.map((status) => {
-                    const columnTickets = filteredTickets.filter(
-                      (ticket) => ticket.status === status
-                    )
-                    return (
-                      <KanbanColumn
-                        key={status}
-                        status={status}
-                        tickets={columnTickets}
-                      />
-                    )
-                  })}
-                </SortableContext>
-              </div>
-              <DragOverlay>
-                {activeTicket ? (
-                  <Card className='cursor-grabbing transform-gpu rotate-3 shadow-lg'>
-                    <CardHeader className='p-4 pb-2'>
-                      {activeTicket.labels &&
-                        activeTicket.labels.length > 0 && (
-                          <div className='flex flex-wrap gap-1 mb-2'>
-                            {activeTicket.labels.map((label) => (
-                              <span
-                                key={label.id}
-                                className={`px-2 py-0.5 text-xs rounded-full text-white ${label.color}`}
-                              >
-                                {label.name}
-                              </span>
-                            ))}
                           </div>
-                        )}
-                      <CardTitle className='leading-tight'>
-                        {activeTicket.subject}
-                      </CardTitle>
-                      <CardDescription className='pt-1 text-xs'>
-                        {activeTicket.client} - {activeTicket.id}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardFooter className='p-4 pt-0'>
-                      <div className='flex items-center justify-between w-full'>
-                        <Badge
-                          variant={
-                            priorityVariant[
-                              activeTicket.priority as keyof typeof priorityVariant
-                            ]
-                          }
-                        >
-                          {activeTicket.priority}
-                        </Badge>
-                      </div>
-                    </CardFooter>
-                  </Card>
-                ) : null}
-              </DragOverlay>
-            </DndContext>
-          </ClientOnly>
-        </TabsContent>
+                        </CardFooter>
+                      </Card>
+                    ) : null}
+                  </DragOverlay>
+                </DndContext>
+              </ClientOnly>
+            </TabsContent>
+          </>
+        )}
       </Tabs>
     </div>
   )
 }
+
+    
