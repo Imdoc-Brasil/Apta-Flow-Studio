@@ -46,6 +46,7 @@ import { initialClientsData } from '../../../clients/data'
 import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import { Separator } from '@/components/ui/separator'
+import { aptaServiceUnits } from '@/app/dashboard/(main)/health/queue/data'
 
 const initialAsoData = [
   {
@@ -169,6 +170,23 @@ export default function AsosPage() {
                 </DialogHeader>
                 <form id='new-aso-request-form' onSubmit={handleNewRequest}>
                   <div className='grid gap-6 py-4'>
+                    <div className='space-y-2'>
+                      <Label htmlFor='aptaUnitId'>
+                        Unidade de Atendimento Apta
+                      </Label>
+                      <Select name='aptaUnitId' required>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Selecione a unidade da Apta' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {aptaServiceUnits.map((unit) => (
+                            <SelectItem key={unit.id} value={unit.id}>
+                              {unit.name} ({unit.type})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <div className='space-y-2'>
                       <Label htmlFor='employeeId'>Colaborador</Label>
                       <Select name='employeeId' required>
