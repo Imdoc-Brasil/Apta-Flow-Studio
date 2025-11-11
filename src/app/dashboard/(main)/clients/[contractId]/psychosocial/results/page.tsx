@@ -242,8 +242,9 @@ export default function PsychosocialResultsPage() {
 
   const survey = initialSurveys.find((s) => s.id === surveyId)
 
-  const numConvidado = 50 // Placeholder
-  const numRespostas = 48 // Placeholder
+  // Placeholder data that can be made dynamic later
+  const numConvidado = 50
+  const numRespostas = 48
 
   const benchmarkData: { [key: string]: number } = {
     'Demandas do Trabalho': 3.34,
@@ -307,8 +308,8 @@ export default function PsychosocialResultsPage() {
             gerenciar as causas do estresse no local de trabalho.
           </p>
           <p>
-            A <strong>AptaFlow</strong> defende o uso da <strong>ARPT</strong> no
-            Programa de Gerenciamento de Risco (PGR), como uma fonte de dados
+            A <strong>AptaFlow</strong> defende o uso da <strong>ARPT</strong>{' '}
+            no Programa de Gerenciamento de Risco (PGR), como uma fonte de dados
             que pode ser usada para identificar a extensão em que o estresse
             relacionado ao trabalho é um problema na empresa avaliada.
           </p>
@@ -401,37 +402,37 @@ export default function PsychosocialResultsPage() {
             organizações. As pontuações acima da linha verde são melhores do que
             75% das organizações.
           </p>
-          <ul className='list-disc pl-5 space-y-2'>
+          <ul className='list-disc space-y-2 pl-5'>
             <li>
-              <strong>Demandas do Trabalho</strong> - isso inclui questões como
-              carga de trabalho, padrões de trabalho e ambiente de trabalho.
+              <strong>Demandas do Trabalho:</strong> inclui questões como carga
+              de trabalho, padrões de trabalho e ambiente de trabalho.
             </li>
             <li>
-              <strong>Organização do Trabalho</strong> – refere-se ao quanto a
+              <strong>Organização do Trabalho:</strong> refere-se ao quanto a
               pessoa tem influência sobre a maneira como realiza seu trabalho.
             </li>
             <li>
-              <strong>Apoio da Liderança e dos Colegas</strong> – inclui o
+              <strong>Apoio da Liderança e dos Colegas:</strong> inclui o
               incentivo, apoio e os recursos fornecidos pela empresa, pela
               gestão direta e pelos colegas.
             </li>
             <li>
-              <strong>Relacionamentos e Interações Pessoais</strong> – inclui a
+              <strong>Relacionamentos e Interações Pessoais:</strong> inclui a
               promoção de um ambiente de trabalho positivo para evitar conflitos
               e lidar com comportamentos inaceitáveis.
             </li>
             <li>
-              <strong>Papel no Trabalho</strong> – se as pessoas entendem seu
+              <strong>Papel no Trabalho:</strong> se as pessoas entendem seu
               papel dentro da organização e se a organização garante que elas
               não tenham papéis conflitantes.
             </li>
             <li>
-              <strong>Mudanças Organizacionais</strong> - como uma mudança
+              <strong>Mudanças Organizacionais:</strong> como uma mudança
               organizacional (grande ou pequena) é gerenciada e comunicada na
               organização.
             </li>
           </ul>
-          <p>As opções variam de 1 (ruim) a 5 (desejável).</p>
+          <p className='pt-2'>As opções variam de 1 (ruim) a 5 (desejável).</p>
 
           <div className='h-[400px] w-full pt-8'>
             <ChartContainer
@@ -554,35 +555,108 @@ export default function PsychosocialResultsPage() {
               <Separator className='my-8' />
 
               <p className='text-sm text-muted-foreground italic text-center'>
-                Seus aspectos mais favoráveis ​​e desfavoráveis ​​em relação às suas {domain.domainName} são apresentados abaixo. Essas afirmações são identificadas de forma comparativa. Portanto, recomenda-se que as pontuações sejam interpretadas dentro do contexto. Por exemplo, as afirmações com as pontuações mais altas ainda podem representar áreas de fragilidade se essas pontuações forem relativamente baixas. Em contrapartida, as afirmações com as pontuações mais baixas podem ter pontuações relativamente altas.
+                Seus aspectos mais favoráveis ​​e desfavoráveis ​​em relação às
+                suas {domain.domainName} são apresentados abaixo. Essas
+                afirmações são identificadas de forma comparativa. Portanto,
+                recomenda-se que as pontuações sejam interpretadas dentro do
+                contexto. Por exemplo, as afirmações com as pontuações mais
+                altas ainda podem representar áreas de fragilidade se essas
+                pontuações forem relativamente baixas. Em contrapartida, as
+                afirmações com as pontuações mais baixas podem ter pontuações
+                relativamente altas.
               </p>
-              
+
               <Separator className='my-8' />
 
               <div className='mt-8'>
-                <h4 className='font-semibold text-lg'>Seu desempenho no contexto</h4>
+                <h4 className='font-semibold text-lg'>
+                  Seu desempenho no contexto
+                </h4>
                 <p className='text-sm text-muted-foreground mt-2'>
-                  O gráfico a seguir mostra sua pontuação média para {domain.domainName} em comparação com os parâmetros de referência para o setor privado. A linha vermelha indica a pontuação do 25º percentil e a linha verde indica a pontuação do 75º percentil para a amostra comparativa.
+                  O gráfico a seguir mostra sua pontuação média para{' '}
+                  {domain.domainName} em comparação com os parâmetros de
+                  referência para o setor privado. A linha vermelha indica a
+                  pontuação do 25º percentil e a linha verde indica a pontuação
+                  do 75º percentil para a amostra comparativa.
                 </p>
                 <div className='h-40 w-full pt-4'>
-                    <ChartContainer config={{}} className='h-full w-full'>
-                      <BarChart layout="vertical" data={[{ name: 'Score', yourScore: domain.overallScore, benchmark: benchmarkData[domain.domainName] || 0 }]}>
-                        <CartesianGrid horizontal={false} />
-                        <XAxis type="number" domain={[1, 5]} ticks={[1, 2, 3, 4, 5]} />
-                        <YAxis dataKey="name" type="category" hide />
-                        <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
-                        <ReferenceLine x={3.0} stroke="orange" strokeDasharray="3 3" />
-                        <ReferenceLine x={benchmarkData[domain.domainName]} stroke="red" strokeDasharray="3 3" />
-                        <ReferenceLine x={4.0} stroke="green" strokeDasharray="3 3" />
-                        <Bar dataKey="yourScore" fill="hsl(var(--primary))" radius={4}>
-                           <LabelList dataKey="yourScore" position="right" offset={10} className="fill-foreground" fontSize={12} />
-                           <LabelList dataKey="benchmark" position="insideBottom" offset={20} className="fill-muted-foreground text-xs" formatter={() => `BM: ${benchmarkData[domain.domainName]}`} />
-                        </Bar>
-                      </BarChart>
-                    </ChartContainer>
+                  <ChartContainer config={{}} className='h-full w-full'>
+                    <BarChart
+                      layout='vertical'
+                      data={[
+                        {
+                          name: 'Score',
+                          yourScore: domain.overallScore,
+                          benchmark: benchmarkData[domain.domainName] || 0,
+                        },
+                      ]}
+                    >
+                      <CartesianGrid horizontal={false} />
+                      <XAxis
+                        type='number'
+                        domain={[1, 5]}
+                        ticks={[1, 2, 3, 4, 5]}
+                      />
+                      <YAxis dataKey='name' type='category' hide />
+                      <ChartTooltip
+                        cursor={false}
+                        content={<ChartTooltipContent hideLabel />}
+                      />
+                      <ReferenceLine
+                        x={3.0}
+                        stroke='orange'
+                        strokeDasharray='3 3'
+                      />
+                      <ReferenceLine
+                        x={benchmarkData[domain.domainName]}
+                        stroke='red'
+                        strokeDasharray='3 3'
+                      />
+                      <ReferenceLine
+                        x={4.0}
+                        stroke='green'
+                        strokeDasharray='3 3'
+                      />
+                      <Bar
+                        dataKey='yourScore'
+                        fill='hsl(var(--primary))'
+                        radius={4}
+                      >
+                        <LabelList
+                          dataKey='yourScore'
+                          position='right'
+                          offset={10}
+                          className='fill-foreground'
+                          fontSize={12}
+                        />
+                        <LabelList
+                          dataKey='benchmark'
+                          position='insideBottom'
+                          offset={20}
+                          className='fill-muted-foreground text-xs'
+                          formatter={() =>
+                            `BM: ${benchmarkData[domain.domainName]}`
+                          }
+                        />
+                      </Bar>
+                    </BarChart>
+                  </ChartContainer>
                 </div>
-                 <p className='text-sm text-muted-foreground mt-4'>
-                    O domínio {domain.domainName} refere-se a aspectos do trabalho como carga de trabalho, padrões de trabalho e ambiente de trabalho. Organizações com bom desempenho nessa área provavelmente têm prazos alcançáveis, demandas adequadas em relação à carga horária e sistemas implementados para responder a preocupações individuais. Sua pontuação em {domain.domainName} está acima do 75º percentil, o que sugere que a percepção dos seus funcionários sobre a carga de trabalho, os padrões de trabalho e o ambiente de trabalho é mais positiva do que a de 75% das organizações na amostra comparativa. Embora ainda possam existir pontos de risco nessa área, sua pontuação geral em {domain.domainName} indica que sua organização está tendo um bom desempenho no cumprimento dos Padrões de Gestão.
+                <p className='text-sm text-muted-foreground mt-4'>
+                  O domínio {domain.domainName} refere-se a aspectos do trabalho
+                  como carga de trabalho, padrões de trabalho e ambiente de
+                  trabalho. Organizações com bom desempenho nessa área
+                  provavelmente têm prazos alcançáveis, demandas adequadas em
+                  relação à carga horária e sistemas implementados para responder
+                  a preocupações individuais. Sua pontuação em{' '}
+                  {domain.domainName} está acima do 75º percentil, o que sugere
+                  que a percepção dos seus funcionários sobre a carga de
+                  trabalho, os padrões de trabalho e o ambiente de trabalho é
+                  mais positiva do que a de 75% das organizações na amostra
+                  comparativa. Embora ainda possam existir pontos de risco nessa
+                  área, sua pontuação geral em {domain.domainName} indica que
+                  sua organização está tendo um bom desempenho no cumprimento
+                  dos Padrões de Gestão.
                 </p>
               </div>
 
