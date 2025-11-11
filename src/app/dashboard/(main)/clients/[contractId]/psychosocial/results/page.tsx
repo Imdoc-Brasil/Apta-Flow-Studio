@@ -17,10 +17,11 @@ import {
   Bar,
   XAxis,
   YAxis,
-  Tooltip,
   ResponsiveContainer,
   ReferenceLine,
   CartesianGrid,
+  Cell,
+  LabelList,
 } from 'recharts'
 import {
   ChartContainer,
@@ -32,24 +33,37 @@ import { Separator } from '@/components/ui/separator'
 import { psychosocialSurveyData, initialSurveys } from '../data'
 import { Logo } from '@/components/logo'
 
-// SIMULATED DATA: In a real app, this would come from your database
-// Simulating 50 employees responding
+// SIMULATED DATA & ANALYSIS LOGIC
 const generateMockResponses = () => {
   const responses: { [key: string]: number[] } = {}
   psychosocialSurveyData.forEach((group) => {
     group.questions.forEach((question) => {
-      responses[question.id] = Array.from({ length: 50 }, () =>
-        Math.floor(Math.random() * 5 + 1)
-      )
+      // Skew data to look more like the example
+      responses[question.id] = Array.from({ length: 50 }, () => {
+        const rand = Math.random()
+        if (rand < 0.8) return 5 // 80% chance of being 5
+        if (rand < 0.9) return 4 // 10% chance of being 4
+        return Math.floor(Math.random() * 3 + 1) // 10% chance for 1, 2, 3
+      })
     })
   })
+  // Specific overrides to match example more closely
+  if (responses['DT01']) {
+    responses['DT01'] = Array(10)
+      .fill(2)
+      .concat(Array(40).fill(5)) // 20% Unfavourable
+  }
+  if (responses['DT05']) {
+    responses['DT05'] = Array(5)
+      .fill(3)
+      .concat(Array(45).fill(5)) // 10% Neutral
+  }
   return responses
 }
 
 const mockResponses = generateMockResponses()
 
-// ANALYSIS LOGIC & BENCHMARK DATA
-const calculateScores = () => {
+const calculateDomainScores = () => {
   return psychosocialSurveyData.map((group) => {
     const questionIds = group.questions.map((q) => q.id)
     const totalScores = questionIds.reduce((sum, qId) => {
@@ -63,33 +77,93 @@ const calculateScores = () => {
     )
     const averageScore = totalResponses > 0 ? totalScores / totalResponses : 0
 
-    // Simplified benchmark data for demonstration
-    let benchmark25 = 3.5
-    let benchmark75 = 4.5
-    
-    if (group.name.includes('Demandas')) benchmark25 = 3.34
-    if (group.name.includes('Organização')) benchmark75 = 3.75
-
-
     return {
       name: group.name,
       yourScore: parseFloat(averageScore.toFixed(2)),
-      benchmark25: benchmark25,
-      benchmark75: benchmark75,
     }
   })
 }
 
-const analysisData = calculateScores()
+const domainAnalysisData = calculateDomainScores()
 
-const chartConfig = {
+const calculateQuestionDetails = () => {
+  const details: {
+    [domainId: string]: {
+      domainName: string
+      overallScore: number
+      questions: {
+        id: string
+        text: string
+        mean: number
+        distribution: { name: string; value: number }[]
+      }[]
+    }
+  } = {}
+
+  psychosocialSurveyData.forEach((domain) => {
+    let domainTotalMean = 0
+    const questionDetails = domain.questions.map((question) => {
+      const responses = mockResponses[question.id] || []
+      const mean =
+        responses.length > 0
+          ? responses.reduce((a, b) => a + b, 0) / responses.length
+          : 0
+      domainTotalMean += mean
+
+      const unfavourable =
+        (responses.filter((r) => r <= 2).length / responses.length) * 100
+      const neutral =
+        (responses.filter((r) => r === 3).length / responses.length) * 100
+      const favourable =
+        (responses.filter((r) => r >= 4).length / responses.length) * 100
+
+      return {
+        id: question.id,
+        text: question.text,
+        mean: parseFloat(mean.toFixed(2)),
+        distribution: [
+          { name: 'Unfavourable', value: unfavourable },
+          { name: 'Neutral', value: neutral },
+          { name: 'Favourable', value: favourable },
+        ],
+      }
+    })
+
+    const overallScore =
+      questionDetails.length > 0
+        ? domainTotalMean / questionDetails.length
+        : 0
+
+    details[domain.id] = {
+      domainName: domain.name,
+      overallScore: parseFloat(overallScore.toFixed(2)),
+      questions: questionDetails,
+    }
+  })
+  return details
+}
+
+const detailedAnalysisData = calculateQuestionDetails()
+
+const domainChartConfig = {
   yourScore: {
     label: 'Sua Pontuação',
     color: 'hsl(var(--primary))',
   },
-  benchmark: {
-    label: 'Benchmark',
-    color: 'hsl(var(--muted-foreground))',
+} satisfies ChartConfig
+
+const questionChartConfig = {
+  Unfavourable: {
+    label: 'Desfavorável',
+    color: 'hsl(var(--destructive))',
+  },
+  Neutral: {
+    label: 'Neutra',
+    color: 'hsl(var(--chart-2))',
+  },
+  Favourable: {
+    label: 'Favorável',
+    color: 'hsl(var(--chart-1))',
   },
 } satisfies ChartConfig
 
@@ -167,7 +241,7 @@ export default function PsychosocialResultsPage() {
   const surveyId = searchParams.get('surveyId')
 
   const survey = initialSurveys.find((s) => s.id === surveyId)
-  
+
   const numConvidado = 50 // Placeholder
   const numRespostas = 48 // Placeholder
 
@@ -187,72 +261,191 @@ export default function PsychosocialResultsPage() {
         unitName={survey?.unit}
         creationDate={survey?.creationDate}
       />
-      
+
       <Card>
-         <CardHeader>
-          <CardTitle className='font-headline text-3xl'>Resumo Executivo</CardTitle>
+        <CardHeader>
+          <CardTitle className='font-headline text-3xl'>
+            Resumo Executivo
+          </CardTitle>
         </CardHeader>
         <CardContent className='space-y-4 text-sm text-muted-foreground'>
-            <p>
-                Este Relatório do(a) <strong>{survey?.circumstances}</strong> contém os resultados da Pesquisa realizada pela <strong>{survey?.clientName}</strong> na(s) sua(s) unidade(s): <strong>{survey?.unit}</strong>.
-            </p>
-            <p>
-                Esta pesquisa investigou as percepções sobre o trabalho do ponto de vista dos seus colaboradores. <strong>{numConvidado}</strong> foram convidados a responder à pesquisa e <strong>{numRespostas}</strong> concluíram o envio das respostas. Consulte o Apêndice A para um resumo dos detalhes [vamos criar posteriormente os Apêndices].
-            </p>
-            <p>
-                A ferramenta de <strong>Avaliação de Riscos Psicossociais Relacionados ao Trabalho (ARPT)</strong> foi desenvolvida pela <strong>AptaFlow</strong> para medir as atitudes e percepções da força de trabalho sobre aspectos do trabalho que são conhecidos por estarem associados ao estresse relacionado ao trabalho. A <strong>ARPT</strong> faz parte dos Padrões de Gerenciamento de Riscos Psicossociais Relacionados ao Trabalho da <strong>ARPT</strong>, que são a abordagem de avaliação de risco da <strong>AptaFlow</strong> para ajudar os empregadores a gerenciar as causas do estresse no local de trabalho.
-            </p>
-            <p>
-                A <strong>AptaFlow</strong> defende o uso da <strong>ARPT</strong> no Programa de Gerenciamento de Risco (PGR), como uma fonte de dados que pode ser usada para identificar a extensão em que o estresse relacionado ao trabalho é um problema na empresa avaliada.
-            </p>
-            <p>
-                Este relatório resume as respostas fornecidas pelos colaboradores e permitirá que a empresa <strong>{survey?.clientName}</strong> se concentre nas áreas prioritárias e faça melhorias direcionadas.
-            </p>
-             <h3 className='font-headline text-lg font-bold text-foreground pt-4'>Como os resultados são apresentados</h3>
-            <p>
-                O sistema de pontuação usado na pesquisa <strong>ARPT</strong> foi baseado em uma escala de 5 pontos. O sistema de pontuação é complexo, pois algumas escalas e itens são pontuados inversamente na ferramenta por razões psicométricas. Para auxiliar sua interpretação significativa, os resultados foram agrupados em três categorias: respostas favoráveis, neutras e desfavoráveis, apresentadas como porcentagens de respondentes. A categoria neutra contém respostas que pontuaram 3, onde as opções de resposta eram 'às vezes' ou 'neutro'. As categorias favorável e desfavorável combinam as duas respostas em ambos os lados da escala. Por exemplo, para o item 'Eu posso decidir quando fazer uma pausa', as respostas 'Frequentemente' e 'Sempre' são combinadas para produzir a porcentagem de respondentes que deram uma resposta favorável, enquanto as respostas 'Nunca' e 'Raramente' são combinadas para produzir a porcentagem de respondentes que deram uma resposta desfavorável. No entanto, para as pontuações de Relacionamentos, estas são apresentadas como categorias de resposta em vez de favorável/desfavorável. Isso ocorre porque, se os respondentes responderem "às vezes" às perguntas neste domínio, isso pode indicar a presença de bullying ou assédio, e qualquer relato de tais comportamentos deve ser considerado sério pela organização.
-            </p>
-            <p>
-                No primeiro gráfico abaixo, que resume o desempenho geral da sua organização, todas as pontuações são apresentadas de forma que uma pontuação alta indique características de trabalho saudáveis ​​e uma pontuação baixa indique características de trabalho menos saudáveis. Portanto, uma pontuação baixa pode indicar que é necessário fazer melhorias para proteger a saúde e o bem-estar da sua força de trabalho.
-            </p>
-            <p>
-                É útil revisar a pontuação da sua organização para cada domínio em relação aos benchmarks de uma amostra comparativa de 17.286 respondentes de 123 avaliações do setor privado da União Europeia, optamos por usar esses dados, por alguns motivos. O primeiro é pela ausência de informações e indicadores de riscos psicossociais do setor privado no Brasil e América Latina, outro é por que o Reino Unido e a União Europeia possuem a maior pesquisa e o maior banco de dados desses indicadores.
-            </p>
-            <p>
-                No entanto, é importante observar que os Padrões de Gestão são projetados como padrões em relação aos quais as organizações devem buscar atingir uma pontuação de cinco para cada domínio. Portanto, o desempenho em relação aos benchmarks deve ser analisado com cautela, e qualquer domínio para o qual o desempenho seja inferior a cinco indica uma área potencial para melhoria.
-            </p>
-            <p>Observe que pontuações que indicam desempenho razoável/bom ainda podem incluir áreas com desempenho inferior.</p>
-            <p>Revisar seus dados com uma análise mais detalhada (ou seja, por diferentes categorias demográficas) e realizar grupos focais pode ajudá-lo a explorar e validar suas pontuações com mais profundidade.</p>
-            <p>Para obter mais informações sobre os dados de referência, consulte: Edwards, J.A., & Webster, S. (2012).</p>
+          <p>
+            Este Relatório do(a) <strong>{survey?.circumstances}</strong> contém
+            os resultados da Pesquisa realizada pela{' '}
+            <strong>{survey?.clientName}</strong> na(s) sua(s) unidade(s):{' '}
+            <strong>{survey?.unit}</strong>.
+          </p>
+          <p>
+            Esta pesquisa investigou as percepções sobre o trabalho do ponto de
+            vista dos seus colaboradores. <strong>{numConvidado}</strong> foram
+            convidados a responder à pesquisa e <strong>{numRespostas}</strong>{' '}
+            concluíram o envio das respostas. Consulte o Apêndice A para um
+            resumo dos detalhes [vamos criar posteriormente os Apêndices].
+          </p>
+          <p>
+            A ferramenta de{' '}
+            <strong>
+              Avaliação de Riscos Psicossociais Relacionados ao Trabalho (ARPT)
+            </strong>{' '}
+            foi desenvolvida pela <strong>AptaFlow</strong> para medir as
+            atitudes e percepções da força de trabalho sobre aspectos do
+            trabalho que são conhecidos por estarem associados ao estresse
+            relacionado ao trabalho. A <strong>ARPT</strong> faz parte dos
+            Padrões de Gerenciamento de Riscos Psicossociais Relacionados ao
+            Trabalho da <strong>ARPT</strong>, que são a abordagem de avaliação
+            de risco da <strong>AptaFlow</strong> para ajudar os empregadores a
+            gerenciar as causas do estresse no local de trabalho.
+          </p>
+          <p>
+            A <strong>AptaFlow</strong> defende o uso da <strong>ARPT</strong> no
+            Programa de Gerenciamento de Risco (PGR), como uma fonte de dados
+            que pode ser usada para identificar a extensão em que o estresse
+            relacionado ao trabalho é um problema na empresa avaliada.
+          </p>
+          <p>
+            Este relatório resume as respostas fornecidas pelos colaboradores e
+            permitirá que a empresa <strong>{survey?.clientName}</strong> se
+            concentre nas áreas prioritárias e faça melhorias direcionadas.
+          </p>
+          <h3 className='font-headline text-lg font-bold text-foreground pt-4'>
+            Como os resultados são apresentados
+          </h3>
+          <p>
+            O sistema de pontuação usado na pesquisa <strong>ARPT</strong> foi
+            baseado em uma escala de 5 pontos. O sistema de pontuação é
+            complexo, pois algumas escalas e itens são pontuados inversamente na
+            ferramenta por razões psicométricas. Para auxiliar sua interpretação
+            significativa, os resultados foram agrupados em três categorias:
+            respostas favoráveis, neutras e desfavoráveis, apresentadas como
+            porcentagens de respondentes. A categoria neutra contém respostas
+            que pontuaram 3, onde as opções de resposta eram 'às vezes' ou
+            'neutro'. As categorias favorável e desfavorável combinam as duas
+            respostas em ambos os lados da escala. Por exemplo, para o item 'Eu
+            posso decidir quando fazer uma pausa', as respostas 'Frequentemente'
+            e 'Sempre' são combinadas para produzir a porcentagem de
+            respondentes que deram uma resposta favorável, enquanto as respostas
+            'Nunca' e 'Raramente' são combinadas para produzir a porcentagem de
+            respondentes que deram uma resposta desfavorável. No entanto, para
+            as pontuações de Relacionamentos, estas são apresentadas como
+            categorias de resposta em vez de favorável/desfavorável. Isso ocorre
+            porque, se os respondentes responderem "às vezes" às perguntas neste
+            domínio, isso pode indicar a presença de bullying ou assédio, e
+            qualquer relato de tais comportamentos deve ser considerado sério
+            pela organização.
+          </p>
+          <p>
+            No primeiro gráfico abaixo, que resume o desempenho geral da sua
+            organização, todas as pontuações são apresentadas de forma que uma
+            pontuação alta indique características de trabalho saudáveis ​​e uma
+            pontuação baixa indique características de trabalho menos saudáveis.
+            Portanto, uma pontuação baixa pode indicar que é necessário fazer
+            melhorias para proteger a saúde e o bem-estar da sua força de
+            trabalho.
+          </p>
+          <p>
+            É útil revisar a pontuação da sua organização para cada domínio em
+            relação aos benchmarks de uma amostra comparativa de 17.286
+            respondentes de 123 avaliações do setor privado da União Europeia,
+            optamos por usar esses dados, por alguns motivos. O primeiro é pela
+            ausência de informações e indicadores de riscos psicossociais do
+            setor privado no Brasil e América Latina, outro é por que o Reino
+            Unido e a União Europeia possuem a maior pesquisa e o maior banco de
+            dados desses indicadores.
+          </p>
+          <p>
+            No entanto, é importante observar que os Padrões de Gestão são
+            projetados como padrões em relação aos quais as organizações devem
+            buscar atingir uma pontuação de cinco para cada domínio. Portanto, o
+            desempenho em relação aos benchmarks deve ser analisado com cautela,
+            e qualquer domínio para o qual o desempenho seja inferior a cinco
+            indica uma área potencial para melhoria.
+          </p>
+          <p>
+            Observe que pontuações que indicam desempenho razoável/bom ainda
+            podem incluir áreas com desempenho inferior.
+          </p>
+          <p>
+            Revisar seus dados com uma análise mais detalhada (ou seja, por
+            diferentes categorias demográficas) e realizar grupos focais pode
+            ajudá-lo a explorar e validar suas pontuações com mais profundidade.
+          </p>
+          <p>
+            Para obter mais informações sobre os dados de referência, consulte:
+            Edwards, J.A., & Webster, S. (2012).
+          </p>
 
-             <h3 className='font-headline text-lg font-bold text-foreground pt-4'>Principais Conclusões</h3>
-            <p>
-                O gráfico a seguir mostra as pontuações médias da empresa <strong>{survey?.clientName}</strong> para cada um dos domínios, em comparação com os benchmarks do setor privado. A linha vermelha indica a pontuação do 25º percentil e a linha verde indica a pontuação do 75º percentil para a amostra comparativa. Isso significa que, em comparação com os
-                benchmarks, as organizações com pontuação abaixo da linha vermelha tiveram um desempenho inferior a 75% das organizações; as organizações com pontuação entre as linhas vermelha e verde ficaram entre os 50% intermediários das organizações. As pontuações acima da linha verde são melhores do que 75% das organizações.
-            </p>
-            <ul className='list-disc pl-5 space-y-2'>
-                <li><strong>Demandas do Trabalho</strong> - isso inclui questões como carga de trabalho, padrões de trabalho e ambiente de trabalho.</li>
-                <li><strong>Organização do Trabalho</strong> – refere-se ao quanto a pessoa tem influência sobre a maneira como realiza seu trabalho.</li>
-                <li><strong>Apoio da Liderança e dos Colegas</strong> – inclui o incentivo, apoio e os recursos fornecidos pela empresa, pela gestão direta e pelos colegas.</li>
-                <li><strong>Relacionamentos e Interações Pessoais</strong> – inclui a promoção de um ambiente de trabalho positivo para evitar conflitos e lidar com comportamentos inaceitáveis.</li>
-                <li><strong>Papel no Trabalho</strong> – se as pessoas entendem seu papel dentro da organização e se a organização garante que elas não tenham papéis conflitantes.</li>
-                <li><strong>Mudanças Organizacionais</strong> - como uma mudança organizacional (grande ou pequena) é gerenciada e comunicada na organização.</li>
-            </ul>
-            <p>As opções variam de 1 (ruim) a 5 (desejável).</p>
-        
-            <div className='h-[400px] w-full pt-8'>
-              <ChartContainer config={chartConfig} className="w-full h-full">
-                <BarChart data={analysisData} margin={{ top: 20, right: 30, left: 20, bottom: 80 }}>
-                  <CartesianGrid vertical={false} />
-                  <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" interval={0} />
-                  <YAxis domain={[1, 5]} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Bar dataKey="yourScore" fill="var(--color-yourScore)" radius={4} />
-                  <ReferenceLine y={3.5} label={{ value: 'Benchmark Inferior', position: 'insideTopLeft', fill: 'hsl(var(--destructive))', fontSize: 12 }} stroke="hsl(var(--destructive))" strokeDasharray="3 3" />
-                  <ReferenceLine y={4.5} label={{ value: 'Benchmark Superior', position: 'insideTopLeft', fill: 'hsl(var(--chart-2))', fontSize: 12 }} stroke="hsl(var(--chart-2))" strokeDasharray="3 3" />
-                </BarChart>
-              </ChartContainer>
-            </div>
+          <h3 className='font-headline text-lg font-bold text-foreground pt-4'>
+            Principais Conclusões
+          </h3>
+          <p>
+            O gráfico a seguir mostra as pontuações médias da empresa{' '}
+            <strong>{survey?.clientName}</strong> para cada um dos domínios, em
+            comparação com os benchmarks do setor privado. A linha vermelha
+            indica a pontuação do 25º percentil e a linha verde indica a
+            pontuação do 75º percentil para a amostra comparativa. Isso
+            significa que, em comparação com os benchmarks, as organizações com
+            pontuação abaixo da linha vermelha tiveram um desempenho inferior a
+            75% das organizações; as organizações com pontuação entre as linhas
+            vermelha e verde ficaram entre os 50% intermediários das
+            organizações. As pontuações acima da linha verde são melhores do que
+            75% das organizações.
+          </p>
+          <ul className='list-disc pl-5 space-y-2'>
+            <li>
+              <strong>Demandas do Trabalho</strong> - isso inclui questões como
+              carga de trabalho, padrões de trabalho e ambiente de trabalho.
+            </li>
+            <li>
+              <strong>Organização do Trabalho</strong> – refere-se ao quanto a
+              pessoa tem influência sobre a maneira como realiza seu trabalho.
+            </li>
+            <li>
+              <strong>Apoio da Liderança e dos Colegas</strong> – inclui o
+              incentivo, apoio e os recursos fornecidos pela empresa, pela
+              gestão direta e pelos colegas.
+            </li>
+            <li>
+              <strong>Relacionamentos e Interações Pessoais</strong> – inclui a
+              promoção de um ambiente de trabalho positivo para evitar conflitos
+              e lidar com comportamentos inaceitáveis.
+            </li>
+            <li>
+              <strong>Papel no Trabalho</strong> – se as pessoas entendem seu
+              papel dentro da organização e se a organização garante que elas
+              não tenham papéis conflitantes.
+            </li>
+            <li>
+              <strong>Mudanças Organizacionais</strong> - como uma mudança
+              organizacional (grande ou pequena) é gerenciada e comunicada na
+              organização.
+            </li>
+          </ul>
+          <p>As opções variam de 1 (ruim) a 5 (desejável).</p>
+
+          <div className='h-[400px] w-full pt-8'>
+            <ChartContainer config={domainChartConfig} className='w-full h-full'>
+              <BarChart
+                data={domainAnalysisData}
+                margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
+              >
+                <CartesianGrid vertical={false} />
+                <XAxis
+                  dataKey='name'
+                  tick={{ fontSize: 10 }}
+                  angle={-45}
+                  textAnchor='end'
+                  interval={0}
+                />
+                <YAxis domain={[1, 5]} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar
+                  dataKey='yourScore'
+                  fill='var(--color-yourScore)'
+                  radius={4}
+                />
+              </BarChart>
+            </ChartContainer>
+          </div>
         </CardContent>
       </Card>
 
@@ -264,100 +457,95 @@ export default function PsychosocialResultsPage() {
             recomendações. As pontuações variam de 1 (ruim) a 5 (desejável).
           </CardDescription>
         </CardHeader>
-        <CardContent className='space-y-10'>
-          {analysisData.map((item) => (
-            <div key={item.name}>
+        <CardContent className='space-y-12'>
+          {Object.values(detailedAnalysisData).map((domain) => (
+            <div key={domain.domainName}>
               <h3 className='font-headline text-2xl font-semibold'>
-                {item.name}
+                {domain.domainName}
               </h3>
               <p className='text-muted-foreground mt-2 text-sm leading-relaxed'>
-                {domainTextMap[item.name]}
+                {domainTextMap[domain.domainName]}
               </p>
 
-              <div className='mt-6 rounded-lg border bg-muted/30 p-6 space-y-4'>
-                <h4 className='font-semibold'>Seu Desempenho no Contexto</h4>
-                <ChartContainer
-                  config={chartConfig}
-                  className='h-[80px] w-full'
-                >
-                  <BarChart
-                    data={[item]}
-                    layout='vertical'
-                    margin={{ left: 10, right: 10 }}
+              <div className='mt-6 rounded-lg border bg-muted/30 p-6 space-y-6'>
+                <div className='grid grid-cols-[1fr_80px] items-center gap-4 text-sm font-semibold'>
+                  <h4>{domain.domainName} Geral</h4>
+                  <div className='text-right text-lg'>
+                    {domain.overallScore.toFixed(2)}
+                  </div>
+                </div>
+                {domain.questions.map((q) => (
+                  <div
+                    key={q.id}
+                    className='grid grid-cols-[1fr_80px] items-center gap-4'
                   >
-                    <XAxis
-                      type='number'
-                      dataKey='yourScore'
-                      domain={[1, 5]}
-                      hide
-                    />
-                    <YAxis type='category' dataKey='name' hide />
-                    <ChartTooltip
-                      cursor={false}
-                      content={<ChartTooltipContent hideLabel />}
-                    />
-                    <Bar
-                      dataKey='yourScore'
-                      layout='vertical'
-                      fill='var(--color-yourScore)'
-                      radius={4}
-                      barSize={20}
-                    >
-                    </Bar>
-                    <ReferenceLine
-                      x={item.benchmark25}
-                      stroke='hsl(var(--destructive))'
-                      strokeWidth={2}
-                      strokeDasharray='3 3'
-                    />
-                    <ReferenceLine
-                      x={item.benchmark75}
-                      stroke='hsl(var(--chart-2))'
-                      strokeWidth={2}
-                      strokeDasharray='3 3'
-                    />
-                  </BarChart>
-                </ChartContainer>
-                <div className='flex items-center justify-between text-xs text-muted-foreground px-2'>
-                  <span>1</span>
-                  <span>2</span>
-                  <span>3</span>
-                  <span>4</span>
-                  <span>5</span>
-                </div>
-
-                <div className='text-sm text-muted-foreground pt-4'>
-                  <p>
-                    A linha{' '}
-                    <span className='font-semibold text-destructive'>
-                      vermelha
-                    </span>{' '}
-                    indica o 25º percentil e a linha{' '}
-                    <span className='font-semibold text-accent-foreground bg-green-500 px-1 rounded-sm'>
-                      verde
-                    </span>{' '}
-                    indica o 75º percentil para a amostra comparativa.
-                  </p>
-                  <p className='mt-2'>
-                    Sua pontuação de{' '}
-                    <span className='font-bold text-foreground'>
-                      {item.yourScore.toFixed(2)}
-                    </span>{' '}
-                    sugere que o desempenho da sua organização está{' '}
-                    <span className='font-bold text-foreground'>
-                      {item.yourScore > item.benchmark75
-                        ? 'acima do percentil 75'
-                        : item.yourScore < item.benchmark25
-                        ? 'abaixo do percentil 25'
-                        : 'entre os percentis 25 e 75'}
-                    </span>
-                    .
-                  </p>
-                </div>
+                    <div className='text-sm'>{q.text}</div>
+                    <div className='text-right font-bold text-lg'>
+                      {q.mean.toFixed(2)}
+                    </div>
+                    <div className='col-span-2'>
+                      <ChartContainer
+                        config={questionChartConfig}
+                        className='h-6 w-full'
+                      >
+                        <BarChart
+                          layout='vertical'
+                          data={[
+                            {
+                              name: q.text,
+                              ...q.distribution.reduce(
+                                (acc, cur) => ({
+                                  ...acc,
+                                  [cur.name]: cur.value,
+                                }),
+                                {}
+                              ),
+                            },
+                          ]}
+                          stackOffset='expand'
+                        >
+                          <XAxis type='number' hide domain={[0, 100]} />
+                          <YAxis type='category' dataKey='name' hide />
+                          <Bar
+                            dataKey='Unfavourable'
+                            fill='var(--color-Unfavourable)'
+                            stackId='a'
+                            radius={[4, 0, 0, 4]}
+                          />
+                           <Bar
+                            dataKey='Neutral'
+                            fill='var(--color-Neutral)'
+                            stackId='a'
+                          />
+                          <Bar
+                            dataKey='Favourable'
+                            fill='var(--color-Favourable)'
+                            stackId='a'
+                             radius={[0, 4, 4, 0]}
+                          />
+                        </BarChart>
+                      </ChartContainer>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <Separator className='mt-10' />
+              <Separator className='mt-12' />
             </div>
           ))}
+            <div className="flex justify-between text-xs mt-4">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-sm bg-destructive" />
+                <span>Desfavorável</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-sm bg-chart-2" />
+                <span>Neutra</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-sm bg-chart-1" />
+                <span>Favorável</span>
+              </div>
+            </div>
         </CardContent>
       </Card>
     </div>

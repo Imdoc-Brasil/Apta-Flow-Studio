@@ -15,21 +15,20 @@ export const psychosocialSurveyData: PsychosocialStressorGroup[] = [
     id: 'DEMANDAS_TRABALHO',
     name: 'Demandas do Trabalho',
     questions: [
-      { id: 'DT01', text: 'Seu trabalho exige um ritmo acelerado?' },
       {
-        id: 'DT02',
-        text: 'Suas tarefas exigem que você esconda seus sentimentos?',
+        id: 'DT01',
+        text: 'Diferentes grupos no trabalho exigem de mim coisas que são difíceis de combinar',
       },
-      { id: 'DT03', text: 'Suas tarefas são difíceis?' },
+      { id: 'DT02', text: 'Tenho prazos inatingíveis' },
+      { id: 'DT03', text: 'Tenho que trabalhar muito intensamente' },
       {
         id: 'DT04',
-        text: 'Seu trabalho exige longos períodos de concentração intensa?',
+        text: 'Tenho que negligenciar algumas tarefas porque tenho muito o que fazer',
       },
-      { id: 'DT05', text: 'Seu trabalho é emocionalmente exigente?' },
-      {
-        id: 'DT06',
-        text: 'Você tem que lidar com pessoas emocionalmente difíceis em seu trabalho?',
-      },
+      { id: 'DT05', text: 'Não consigo fazer pausas suficientes' },
+      { id: 'DT06', text: 'Estou pressionado a trabalhar muitas horas' },
+      { id: 'DT07', text: 'Tenho que trabalhar muito rápido' },
+      { id: 'DT08', text: 'Tenho pressões de tempo irrealistas' },
     ],
   },
   {
@@ -104,7 +103,25 @@ export const psychosocialSurveyData: PsychosocialStressorGroup[] = [
         id: 'RI02',
         text: 'Você teve informações importantes para o seu trabalho retidas de você?',
       },
-      { id: 'RI03', text: 'Você foi humilhado ou ridicularizado em seu trabalho?' },
+      {
+        id: 'RI03',
+        text: 'Você foi humilhado ou ridicularizado em seu trabalho?',
+      },
+    ],
+  },
+  {
+    id: 'MUDANCAS_ORGANIZACIONAIS',
+    name: 'Mudanças Organizacionais',
+    questions: [
+      { id: 'MO01', text: 'Você está preocupado em ser demitido?' },
+      {
+        id: 'MO02',
+        text: 'As mudanças são comunicadas de forma eficaz na organização?',
+      },
+      {
+        id: 'MO03',
+        text: 'Sinto que tenho informações suficientes para entender as mudanças.',
+      },
     ],
   },
   {
@@ -122,21 +139,6 @@ export const psychosocialSurveyData: PsychosocialStressorGroup[] = [
       {
         id: 'PT03',
         text: 'Eu sei como meu trabalho se encaixa nos objetivos gerais da empresa.',
-      },
-    ],
-  },
-  {
-    id: 'MUDANCAS_ORGANIZACIONAIS',
-    name: 'Mudanças Organizacionais',
-    questions: [
-      { id: 'MO01', text: 'Você está preocupado em ser demitido?' },
-      {
-        id: 'MO02',
-        text: 'As mudanças são comunicadas de forma eficaz na organização?',
-      },
-      {
-        id: 'MO03',
-        text: 'Sinto que tenho informações suficientes para entender as mudanças.',
       },
     ],
   },
