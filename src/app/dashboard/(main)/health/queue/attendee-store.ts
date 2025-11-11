@@ -21,6 +21,7 @@ export interface Attendee {
   exams: Exam[]
   createdAt: string
   checkInTime?: string
+  allExamsCompletedAt?: string
 }
 
 export const initialAttendees: Attendee[] = [
@@ -54,6 +55,7 @@ export const initialAttendees: Attendee[] = [
     status: 'Concluído',
     createdAt: new Date('2024-07-21T14:00:00Z').toISOString(),
     checkInTime: new Date('2024-07-21T14:05:00Z').toISOString(),
+    allExamsCompletedAt: new Date('2024-07-21T14:30:00Z').toISOString(),
     exams: [
       { id: 'EXM-004', name: 'Avaliação Clínica', status: 'Realizado' },
     ],
@@ -75,7 +77,7 @@ export const initialAttendees: Attendee[] = [
 
 type AttendeeStore = {
   attendees: Attendee[]
-  addAttendee: (newAttendeeData: Omit<Attendee, 'id' | 'status' | 'createdAt'>) => void
+  addAttendee: (newAttendeeData: Omit<Attendee, 'id' | 'status' | 'createdAt' | 'allExamsCompletedAt'>) => void
   setAttendees: (attendees: Attendee[]) => void
   updateAttendeeStatus: (attendeeId: string, status: Status) => void
   updateExamStatus: (
@@ -120,18 +122,20 @@ export const useAttendeeStore = create<AttendeeStore>((set) => ({
         if (attendee.id === attendeeId) {
           const updatedExams = attendee.exams.map((exam) =>
             exam.id === examId ? { ...exam, status } : exam
-          )
-          // Opcional: Atualizar o status geral do atendimento se todos os exames estiverem concluídos
+          );
+          
           const allExamsDone = updatedExams.every(
             (e) => e.status === 'Realizado'
-          )
+          );
+
           return {
             ...attendee,
             exams: updatedExams,
             status: allExamsDone ? 'Concluído' : attendee.status,
-          }
+            allExamsCompletedAt: allExamsDone ? new Date().toISOString() : attendee.allExamsCompletedAt,
+          };
         }
-        return attendee
+        return attendee;
       }),
     })),
 }))
