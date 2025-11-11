@@ -37,8 +37,9 @@ import {
   FirestorePermissionError,
   useCollection,
   useMemoFirebase,
+  setDocumentNonBlocking,
 } from '@/firebase'
-import { doc, getDoc, setDoc, serverTimestamp, collection } from 'firebase/firestore'
+import { doc, getDoc, serverTimestamp, collection } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
 import type { Client } from './clients/data'
 import type { Staff } from './employees/page'
@@ -87,23 +88,13 @@ export default function Dashboard() {
           const creationData = { createdAt: serverTimestamp() }
           // User is not an admin yet, promote them.
           // This is a non-blocking write with specific error handling.
-          setDoc(adminRoleRef, creationData)
-            .then(() => {
-              toast({
-                title: 'Bem-vindo, Superadministrador!',
-                description:
-                  'Sua conta foi elevada para o nível de superadministrador.',
-              })
-            })
-            .catch((error) => {
-              // Construct and emit the detailed error for debugging.
-              const permissionError = new FirestorePermissionError({
-                path: adminRoleRef.path,
-                operation: 'create',
-                requestResourceData: creationData,
-              })
-              errorEmitter.emit('permission-error', permissionError)
-            })
+          setDocumentNonBlocking(adminRoleRef, creationData, { merge: true })
+
+          toast({
+            title: 'Bem-vindo, Superadministrador!',
+            description:
+              'Sua conta foi elevada para o nível de superadministrador.',
+          })
         }
       } catch (error) {
         // This will catch errors from getDoc, which is less likely to be a permission issue
@@ -254,5 +245,3 @@ export default function Dashboard() {
     </>
   )
 }
-
-    
