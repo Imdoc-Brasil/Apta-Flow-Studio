@@ -124,6 +124,18 @@ service cloud.firestore {
       allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
+    
+    /**
+     * @description Allows access to tickets based on role.
+     * @path /tickets/{ticketId}
+     * @allow (read, create): Authenticated users can read and create tickets.
+     * @allow (update, delete): Only admins can modify or delete tickets.
+     * @principle Enforces role-based access control for ticket management.
+     */
+    match /tickets/{ticketId} {
+      allow read, create: if request.auth != null;
+      allow update, delete: if isAdmin();
+    }
 
     /**
      * @description Allows access to documents associated with clients.
