@@ -73,6 +73,17 @@ import {
 } from '@/firebase'
 import { collection, doc } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
 
 type StaffStatus = 'Ativo' | 'Licença' | 'Suspenso'
 type StaffSituation = 'Online' | 'Offline'
@@ -89,6 +100,16 @@ export interface Staff {
   status: StaffStatus
   situacao: StaffSituation
 }
+
+const staffFormSchema = z.object({
+  name: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),
+  email: z.string().email({ message: 'Por favor, insira um email válido.' }),
+  perfilId: z.string({ required_error: 'Por favor, selecione um perfil.' }),
+  assinatura: z.string().min(2, { message: 'A assinatura é obrigatória.' }),
+  phone: z.string().optional(),
+})
+
+type StaffFormValues = z.infer<typeof staffFormSchema>
 
 export default function StaffsPage() {
   const firestore = useFirestore()
@@ -110,6 +131,20 @@ export default function StaffsPage() {
     'Suspenso',
   ])
   const { toast } = useToast()
+  
+  const form = useForm<StaffFormValues>({
+    resolver: zodResolver(staffFormSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      assinatura: '',
+      phone: '',
+    },
+  })
+  
+  const editForm = useForm<StaffFormValues>({
+    resolver: zodResolver(staffFormSchema),
+  })
 
   const filteredStaffs = useMemo(() => {
     if (!staffs) return []
@@ -123,17 +158,14 @@ export default function StaffsPage() {
         )
       })
       .filter((staff) => {
-        if (statusFilter.length === 0) return false // Hide all if nothing is selected
+        if (statusFilter.length === 0) return false
         return statusFilter.includes(staff.status)
       })
   }, [staffs, searchTerm, statusFilter])
 
-  const handleAddStaff = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+  function onSubmit(data: StaffFormValues) {
     if (!staffsRef) return
-
-    const formData = new FormData(event.currentTarget)
-    const name = formData.get('name') as string
+    const name = data.name
     const fallback = name
       .split(' ')
       .map((n) => n[0])
@@ -142,11 +174,7 @@ export default function StaffsPage() {
       .toUpperCase()
 
     const newStaff: Omit<Staff, 'id'> = {
-      name,
-      assinatura: formData.get('assinatura') as string,
-      perfilId: formData.get('perfil') as string,
-      email: formData.get('email') as string,
-      phone: formData.get('phone') as string,
+      ...data,
       status: 'Ativo',
       situacao: 'Offline',
       avatar: `https://i.pravatar.cc/150?u=${Math.random()}`,
@@ -159,15 +187,14 @@ export default function StaffsPage() {
       description: `${name} foi adicionado à equipe.`,
     })
     setIsAddDialogOpen(false)
+    form.reset()
   }
-
-  const handleEditStaff = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+  
+  function onEditSubmit(data: StaffFormValues) {
     if (!currentStaff?.id || !firestore) return
     const staffDocRef = doc(firestore, 'staffs', currentStaff.id)
 
-    const formData = new FormData(event.currentTarget)
-    const name = formData.get('name') as string
+    const name = data.name
     const fallback = name
       .split(' ')
       .map((n) => n[0])
@@ -176,11 +203,7 @@ export default function StaffsPage() {
       .toUpperCase()
 
     const updatedData = {
-      name,
-      assinatura: formData.get('assinatura') as string,
-      perfilId: formData.get('perfil') as string,
-      email: formData.get('email') as string,
-      phone: formData.get('phone') as string,
+      ...data,
       fallback,
     }
 
@@ -192,6 +215,7 @@ export default function StaffsPage() {
     setIsEditDialogOpen(false)
     setCurrentStaff(null)
   }
+
 
   const handleDeleteStaff = () => {
     if (!currentStaff?.id || !firestore) return
@@ -213,6 +237,13 @@ export default function StaffsPage() {
 
   const openEditDialog = (staff: Staff) => {
     setCurrentStaff(staff)
+    editForm.reset({
+        name: staff.name,
+        email: staff.email,
+        perfilId: staff.perfilId,
+        assinatura: staff.assinatura,
+        phone: staff.phone
+    })
     setIsEditDialogOpen(true)
   }
 
@@ -243,89 +274,102 @@ export default function StaffsPage() {
     }
   }
 
-  const renderStaffForm = (staff?: Staff | null) => (
-    <div className='grid gap-4 py-4'>
-      <div className='grid grid-cols-4 items-center gap-4'>
-        <Label className='text-right'>Avatar</Label>
-        <div className='col-span-3 flex items-center gap-4'>
-          <Avatar className='h-16 w-16'>
-            <AvatarImage src={staff?.avatar} />
-            <AvatarFallback>{staff?.fallback}</AvatarFallback>
-          </Avatar>
-          <Input
-            id='avatar-upload'
-            name='avatar-upload'
-            type='file'
-            className='text-sm'
-          />
+  const renderStaffForm = (formInstance: any, staff?: Staff | null) => (
+    <Form {...formInstance}>
+      <form id={staff ? 'edit-staff-form' : 'add-staff-form'} onSubmit={formInstance.handleSubmit(staff ? onEditSubmit : onSubmit)} className='grid gap-4 py-4'>
+        <div className='grid grid-cols-4 items-center gap-4'>
+          <Label className='text-right'>Avatar</Label>
+          <div className='col-span-3 flex items-center gap-4'>
+            <Avatar className='h-16 w-16'>
+              <AvatarImage src={staff?.avatar} />
+              <AvatarFallback>{staff?.fallback}</AvatarFallback>
+            </Avatar>
+            <Input
+              id='avatar-upload'
+              name='avatar-upload'
+              type='file'
+              className='text-sm'
+            />
+          </div>
         </div>
-      </div>
-      <div className='grid grid-cols-4 items-center gap-4'>
-        <Label htmlFor='name' className='text-right'>
-          Nome
-        </Label>
-        <Input
-          id='name'
-          name='name'
-          className='col-span-3'
-          defaultValue={staff?.name}
-          required
+        <FormField
+          control={formInstance.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem className='grid grid-cols-4 items-center gap-4'>
+              <FormLabel className='text-right'>Nome</FormLabel>
+              <FormControl className='col-span-3'>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage className='col-start-2 col-span-3' />
+            </FormItem>
+          )}
         />
-      </div>
-      <div className='grid grid-cols-4 items-center gap-4'>
-        <Label htmlFor='perfil' className='text-right'>
-          Perfil
-        </Label>
-        <Select name='perfil' defaultValue={staff?.perfilId} required>
-          <SelectTrigger className='col-span-3'>
-            <SelectValue placeholder='Selecione um perfil' />
-          </SelectTrigger>
-          <SelectContent>
-            {initialProfiles.map((profile) => (
-              <SelectItem key={profile.id} value={profile.id}>
-                {profile.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className='grid grid-cols-4 items-center gap-4'>
-        <Label htmlFor='assinatura' className='text-right'>
-          Assinatura
-        </Label>
-        <Input
-          id='assinatura'
-          name='assinatura'
-          className='col-span-3'
-          defaultValue={staff?.assinatura}
-          required
+        <FormField
+          control={formInstance.control}
+          name="perfilId"
+          render={({ field }) => (
+            <FormItem className='grid grid-cols-4 items-center gap-4'>
+              <FormLabel className='text-right'>Perfil</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl className='col-span-3'>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um perfil" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {initialProfiles.map((profile) => (
+                    <SelectItem key={profile.id} value={profile.id}>
+                      {profile.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage className='col-start-2 col-span-3' />
+            </FormItem>
+          )}
         />
-      </div>
-      <div className='grid grid-cols-4 items-center gap-4'>
-        <Label htmlFor='email' className='text-right'>
-          Email
-        </Label>
-        <Input
-          id='email'
-          name='email'
-          type='email'
-          className='col-span-3'
-          defaultValue={staff?.email}
-          required
+        <FormField
+          control={formInstance.control}
+          name="assinatura"
+          render={({ field }) => (
+            <FormItem className='grid grid-cols-4 items-center gap-4'>
+              <FormLabel className='text-right'>Assinatura</FormLabel>
+              <FormControl className='col-span-3'>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage className='col-start-2 col-span-3' />
+            </FormItem>
+          )}
         />
-      </div>
-      <div className='grid grid-cols-4 items-center gap-4'>
-        <Label htmlFor='phone' className='text-right'>
-          Telefone
-        </Label>
-        <Input
-          id='phone'
-          name='phone'
-          defaultValue={staff?.phone}
-          className='col-span-3'
+        <FormField
+          control={formInstance.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem className='grid grid-cols-4 items-center gap-4'>
+              <FormLabel className='text-right'>Email</FormLabel>
+              <FormControl className='col-span-3'>
+                <Input type='email' {...field} />
+              </FormControl>
+              <FormMessage className='col-start-2 col-span-3' />
+            </FormItem>
+          )}
         />
-      </div>
-    </div>
+        <FormField
+          control={formInstance.control}
+          name="phone"
+          render={({ field }) => (
+            <FormItem className='grid grid-cols-4 items-center gap-4'>
+              <FormLabel className='text-right'>Telefone</FormLabel>
+              <FormControl className='col-span-3'>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage className='col-start-2 col-span-3' />
+            </FormItem>
+          )}
+        />
+      </form>
+    </Form>
   )
 
   return (
@@ -382,7 +426,7 @@ export default function StaffsPage() {
             </div>
             <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button size='sm' className='h-8 gap-1'>
+                <Button size='sm' className='h-8 gap-1' onClick={() => form.reset()}>
                   <PlusCircle className='h-3.5 w-3.5' />
                   <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
                     Adicionar Staff
@@ -396,9 +440,7 @@ export default function StaffsPage() {
                     Preencha os detalhes para adicionar um novo membro à equipe.
                   </DialogDescription>
                 </DialogHeader>
-                <form id='add-staff-form' onSubmit={handleAddStaff}>
-                  {renderStaffForm()}
-                </form>
+                {renderStaffForm(form)}
                 <DialogFooter>
                   <Button
                     variant='outline'
@@ -441,7 +483,7 @@ export default function StaffsPage() {
               </TableHeader>
               <TableBody>
                 {filteredStaffs.map((staff) => (
-                  <TableRow key={staff.email}>
+                  <TableRow key={staff.id}>
                     <TableCell>
                       <div className='flex items-center gap-3'>
                         <Avatar className='h-9 w-9'>
@@ -575,9 +617,7 @@ export default function StaffsPage() {
               Modifique os detalhes do membro da equipe.
             </DialogDescription>
           </DialogHeader>
-          <form id='edit-staff-form' onSubmit={handleEditStaff}>
-            {renderStaffForm(currentStaff)}
-          </form>
+          {renderStaffForm(editForm, currentStaff)}
           <DialogFooter>
             <Button
               variant='outline'
