@@ -31,63 +31,60 @@ import {
   ChartConfig,
 } from '@/components/ui/chart'
 import { Separator } from '@/components/ui/separator'
-import { psychosocialSurveyData, initialSurveys } from '../data'
+import {
+  psychosocialSurveyData,
+  initialSurveys,
+  type PsychosocialStressorGroup,
+} from '../data'
 import { Logo } from '@/components/logo'
+import { useSurveyStore } from '../psychosocial-store'
+import { useMemo } from 'react'
 
-// SIMULATED DATA & ANALYSIS LOGIC
-const generateMockResponses = () => {
-  const responses: { [key: string]: number[] } = {}
-  psychosocialSurveyData.forEach((group) => {
-    group.questions.forEach((question) => {
-      // Skew data to look more like the example
-      responses[question.id] = Array.from({ length: 50 }, () => {
-        const rand = Math.random()
-        if (rand < 0.8) return 5 // 80% chance of being 5
-        if (rand < 0.9) return 4 // 10% chance of being 4
-        return Math.floor(Math.random() * 3 + 1) // 10% chance for 1, 2, 3
-      })
-    })
+// --- DYNAMIC ANALYSIS LOGIC ---
+
+// Helper function to calculate scores based on stored responses
+const calculateScoresFromResponses = (
+  responses: { [key: string]: number },
+  domains: PsychosocialStressorGroup[]
+) => {
+  const domainScores: { [key: string]: number[] } = {}
+
+  // Initialize arrays for each domain
+  domains.forEach((domain) => {
+    domainScores[domain.name] = []
   })
-  // Specific overrides to match example more closely
-  if (responses['DT01']) {
-    responses['DT01'] = Array(10)
-      .fill(2)
-      .concat(Array(40).fill(5)) // 20% Unfavourable
-  }
-  if (responses['DT05']) {
-    responses['DT05'] = Array(5)
-      .fill(3)
-      .concat(Array(45).fill(5)) // 10% Neutral
-  }
-  return responses
-}
 
-const mockResponses = generateMockResponses()
-
-const calculateDomainScores = () => {
-  return psychosocialSurveyData.map((group) => {
-    const questionIds = group.questions.map((q) => q.id)
-    const totalScores = questionIds.reduce((sum, qId) => {
-      const questionScores = mockResponses[qId] || []
-      const questionSum = questionScores.reduce((acc, score) => acc + score, 0)
-      return sum + questionSum
-    }, 0)
-    const totalResponses = questionIds.reduce(
-      (count, qId) => count + (mockResponses[qId]?.length || 0),
-      0
+  // Group scores by domain
+  for (const questionId in responses) {
+    const score = responses[questionId]
+    const domain = domains.find((d) =>
+      d.questions.some((q) => q.id === questionId)
     )
-    const averageScore = totalResponses > 0 ? totalScores / totalResponses : 0
+    if (domain) {
+      domainScores[domain.name].push(score)
+    }
+  }
 
+  // Calculate average for each domain
+  const finalScores = Object.keys(domainScores).map((domainName) => {
+    const scores = domainScores[domainName]
+    const averageScore =
+      scores.length > 0
+        ? scores.reduce((acc, val) => acc + val, 0) / scores.length
+        : 0
     return {
-      name: group.name,
+      name: domainName,
       yourScore: parseFloat(averageScore.toFixed(2)),
     }
   })
+
+  return finalScores
 }
 
-const domainAnalysisData = calculateDomainScores()
-
-const calculateQuestionDetails = () => {
+const calculateQuestionDetailsFromResponses = (
+  responses: { [key: string]: number },
+  domains: PsychosocialStressorGroup[]
+) => {
   const details: {
     [domainId: string]: {
       domainName: string
@@ -101,22 +98,39 @@ const calculateQuestionDetails = () => {
     }
   } = {}
 
-  psychosocialSurveyData.forEach((domain) => {
+  domains.forEach((domain) => {
     let domainTotalMean = 0
+    let questionCountInDomain = 0
+
     const questionDetails = domain.questions.map((question) => {
-      const responses = mockResponses[question.id] || []
+      // Find all responses for this question (assuming multiple surveys could be stored)
+      // For this implementation, we simplify and assume one set of responses.
+      const questionResponses = Object.entries(responses)
+        .filter(([key]) => key.startsWith(question.id)) // This is a simplification
+        .map(([, value]) => value)
+
       const mean =
-        responses.length > 0
-          ? responses.reduce((a, b) => a + b, 0) / responses.length
+        questionResponses.length > 0
+          ? questionResponses.reduce((a, b) => a + b, 0) /
+            questionResponses.length
           : 0
-      domainTotalMean += mean
+      if (mean > 0) {
+        domainTotalMean += mean
+        questionCountInDomain++
+      }
 
       const unfavourable =
-        (responses.filter((r) => r <= 2).length / responses.length) * 100
+        (questionResponses.filter((r) => r <= 2).length /
+          questionResponses.length) *
+        100
       const neutral =
-        (responses.filter((r) => r === 3).length / responses.length) * 100
+        (questionResponses.filter((r) => r === 3).length /
+          questionResponses.length) *
+        100
       const favourable =
-        (responses.filter((r) => r >= 4).length / responses.length) * 100
+        (questionResponses.filter((r) => r >= 4).length /
+          questionResponses.length) *
+        100
 
       return {
         id: question.id,
@@ -131,8 +145,8 @@ const calculateQuestionDetails = () => {
     })
 
     const overallScore =
-      questionDetails.length > 0
-        ? domainTotalMean / questionDetails.length
+      questionCountInDomain > 0
+        ? domainTotalMean / questionCountInDomain
         : 0
 
     details[domain.id] = {
@@ -143,8 +157,7 @@ const calculateQuestionDetails = () => {
   })
   return details
 }
-
-const detailedAnalysisData = calculateQuestionDetails()
+// --- END DYNAMIC ANALYSIS LOGIC ---
 
 const domainChartConfig = {
   yourScore: {
@@ -243,9 +256,31 @@ export default function PsychosocialResultsPage() {
 
   const survey = initialSurveys.find((s) => s.id === surveyId)
 
-  // Placeholder data that can be made dynamic later
-  const numConvidado = 50
-  const numRespostas = 48
+  // Get responses from the store
+  const { responses } = useSurveyStore()
+
+  // Calculate analysis data based on stored responses
+  const domainAnalysisData = useMemo(
+    () => calculateScoresFromResponses(responses, psychosocialSurveyData),
+    [responses]
+  )
+
+  const detailedAnalysisData = useMemo(
+    () =>
+      calculateQuestionDetailsFromResponses(responses, psychosocialSurveyData),
+    [responses]
+  )
+
+  const numConvidado = 50 // This can be made dynamic later
+  const numRespostas = useMemo(() => {
+    // A simple way to estimate number of respondents
+    const questionIds = psychosocialSurveyData[0]?.questions.map((q) => q.id)
+    if (!questionIds || questionIds.length === 0) return 0
+    const firstQuestionResponses = Object.keys(responses).filter((key) =>
+      key.startsWith(questionIds[0])
+    )
+    return firstQuestionResponses.length
+  }, [responses])
 
   const benchmarkData: { [key: string]: number } = {
     'Demandas do Trabalho': 3.34,
@@ -326,25 +361,25 @@ export default function PsychosocialResultsPage() {
           <p>
             O sistema de pontuação usado na pesquisa <strong>ARPT</strong> foi
             baseado em uma escala de 5 pontos. O sistema de pontuação é
-            complexo, pois algumas escalas e itens são pontuados inversamente na
-            ferramenta por razões psicométricas. Para auxiliar sua interpretação
-            significativa, os resultados foram agrupados em três categorias:
-            respostas favoráveis, neutras e desfavoráveis, apresentadas como
-            porcentagens de respondentes. A categoria neutra contém respostas
-            que pontuaram 3, onde as opções de resposta eram 'às vezes' ou
-            'neutro'. As categorias favorável e desfavorável combinam as duas
-            respostas em ambos os lados da escala. Por exemplo, para o item 'Eu
-            posso decidir quando fazer uma pausa', as respostas 'Frequentemente'
-            e 'Sempre' são combinadas para produzir a porcentagem de
-            respondentes que deram uma resposta favorável, enquanto as respostas
-            'Nunca' e 'Raramente' são combinadas para produzir a porcentagem de
-            respondentes que deram uma resposta desfavorável. No entanto, para
-            as pontuações de Relacionamentos, estas são apresentadas como
-            categorias de resposta em vez de favorável/desfavorável. Isso ocorre
-            porque, se os respondentes responderem "às vezes" às perguntas neste
-            domínio, isso pode indicar a presença de bullying ou assédio, e
-            qualquer relato de tais comportamentos deve ser considerado sério
-            pela organização.
+            complexo, pois algumas escalas e itens são pontuados inversamente
+            na ferramenta por razões psicométricas. Para auxiliar sua
+            interpretação significativa, os resultados foram agrupados em três
+            categorias: respostas favoráveis, neutras e desfavoráveis,
+            apresentadas como porcentagens de respondentes. A categoria neutra
+            contém respostas que pontuaram 3, onde as opções de resposta eram
+            'às vezes' ou 'neutro'. As categorias favorável e desfavorável
+            combinam as duas respostas em ambos os lados da escala. Por exemplo,
+            para o item 'Eu posso decidir quando fazer uma pausa', as respostas
+            'Frequentemente' e 'Sempre' são combinadas para produzir a
+            porcentagem de respondentes que deram uma resposta favorável,
+            enquanto as respostas 'Nunca' e 'Raramente' são combinadas para
+            produzir a porcentagem de respondentes que deram uma resposta
+            desfavorável. No entanto, para as pontuações de Relacionamentos,
+            estas são apresentadas como categorias de resposta em vez de
+            favorável/desfavorável. Isso ocorre porque, se os respondentes
+            responderem "às vezes" às perguntas neste domínio, isso pode indicar
+            a presença de bullying ou assédio, e qualquer relato de tais
+            comportamentos deve ser considerado sério pela organização.
           </p>
           <p>
             No primeiro gráfico abaixo, que resume o desempenho geral da sua

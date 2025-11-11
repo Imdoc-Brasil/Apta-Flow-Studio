@@ -27,13 +27,39 @@ import { initialRolesData } from '../dashboard/(main)/clients/[contractId]/roles
 import { psychosocialSurveyData } from '../dashboard/(main)/clients/[contractId]/psychosocial/data'
 import { Logo } from '@/components/logo'
 import { Separator } from '@/components/ui/separator'
+import { useSurveyStore } from '../dashboard/(main)/clients/[contractId]/psychosocial/psychosocial-store'
 
 export default function SurveyPage() {
   const { toast } = useToast()
+  const { addResponse } = useSurveyStore()
   const [step, setStep] = useState(1)
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    const formData = new FormData(event.currentTarget)
+    const respondentId = `resp-${Date.now()}` // Simple unique ID for this respondent
+
+    let hasMissingAnswers = false
+    psychosocialSurveyData.forEach((group) => {
+      group.questions.forEach((q) => {
+        const value = formData.get(q.id)
+        if (value) {
+          addResponse(`${q.id}-${respondentId}`, parseInt(value as string, 10))
+        } else {
+          hasMissingAnswers = true
+        }
+      })
+    })
+    
+    if (hasMissingAnswers) {
+        toast({
+            variant: "destructive",
+            title: "Perguntas não respondidas",
+            description: "Por favor, responda todas as perguntas antes de enviar.",
+        })
+        return;
+    }
+
     toast({
       title: 'Respostas Enviadas!',
       description:
@@ -41,7 +67,7 @@ export default function SurveyPage() {
     })
     setStep(3) // Go to thank you page
   }
-  
+
   if (step === 3) {
     return (
       <div className='flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4'>
@@ -156,7 +182,7 @@ export default function SurveyPage() {
                       <SelectValue placeholder='Selecione seu cargo' />
                     </SelectTrigger>
                     <SelectContent>
-                       <SelectItem value='na'>Prefiro não informar</SelectItem>
+                      <SelectItem value='na'>Prefiro não informar</SelectItem>
                       {initialRolesData.map((role) => (
                         <SelectItem key={role.id} value={role.id}>
                           {role.name}
@@ -179,7 +205,7 @@ export default function SurveyPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                 <div className='space-y-2'>
+                <div className='space-y-2'>
                   <Label htmlFor='age'>Faixa Etária</Label>
                   <Select name='age' required>
                     <SelectTrigger>
@@ -190,11 +216,11 @@ export default function SurveyPage() {
                       <SelectItem value='26-35'>26 a 35 anos</SelectItem>
                       <SelectItem value='36-45'>36 a 45 anos</SelectItem>
                       <SelectItem value='46-55'>46 a 55 anos</SelectItem>
-                       <SelectItem value='56+'>Mais de 56 anos</SelectItem>
+                      <SelectItem value='56+'>Mais de 56 anos</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                 <div className='space-y-2'>
+                <div className='space-y-2'>
                   <Label htmlFor='service-time'>Tempo de Serviço</Label>
                   <Select name='service-time' required>
                     <SelectTrigger>
@@ -218,7 +244,7 @@ export default function SurveyPage() {
             </div>
           )}
           {step === 2 && (
-             <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit}>
               <h3 className='font-semibold mb-4'>
                 Parte 2: Questionário
               </h3>
@@ -232,27 +258,33 @@ export default function SurveyPage() {
                           <p className='font-medium text-sm mb-2'>
                             {index + 1}. {q.text}
                           </p>
-                           <RadioGroup name={q.id} className='flex flex-wrap gap-x-6 gap-y-2'>
-                              <div className='flex items-center space-x-2'>
-                                <RadioGroupItem value='1' id={`${q.id}-1`} />
-                                <Label htmlFor={`${q.id}-1`}>Nunca</Label>
-                              </div>
-                              <div className='flex items-center space-x-2'>
-                                <RadioGroupItem value='2' id={`${q.id}-2`} />
-                                <Label htmlFor={`${q.id}-2`}>Raramente</Label>
-                              </div>
-                              <div className='flex items-center space-x-2'>
-                                <RadioGroupItem value='3' id={`${q.id}-3`} />
-                                <Label htmlFor={`${q.id}-3`}>Às vezes</Label>
-                              </div>
-                              <div className='flex items-center space-x-2'>
-                                <RadioGroupItem value='4' id={`${q.id}-4`} />
-                                <Label htmlFor={`${q.id}-4`}>Frequentemente</Label>
-                              </div>
-                              <div className='flex items-center space-x-2'>
-                                <RadioGroupItem value='5' id={`${q.id}-5`} />
-                                <Label htmlFor={`${q.id}-5`}>Sempre</Label>
-                              </div>
+                          <RadioGroup
+                            name={q.id}
+                            className='flex flex-wrap gap-x-6 gap-y-2'
+                            required
+                          >
+                            <div className='flex items-center space-x-2'>
+                              <RadioGroupItem value='1' id={`${q.id}-1`} />
+                              <Label htmlFor={`${q.id}-1`}>Nunca</Label>
+                            </div>
+                            <div className='flex items-center space-x-2'>
+                              <RadioGroupItem value='2' id={`${q.id}-2`} />
+                              <Label htmlFor={`${q.id}-2`}>Raramente</Label>
+                            </div>
+                            <div className='flex items-center space-x-2'>
+                              <RadioGroupItem value='3' id={`${q.id}-3`} />
+                              <Label htmlFor={`${q.id}-3`}>Às vezes</Label>
+                            </div>
+                            <div className='flex items-center space-x-2'>
+                              <RadioGroupItem value='4' id={`${q.id}-4`} />
+                              <Label htmlFor={`${q.id}-4`}>
+                                Frequentemente
+                              </Label>
+                            </div>
+                            <div className='flex items-center space-x-2'>
+                              <RadioGroupItem value='5' id={`${q.id}-5`} />
+                              <Label htmlFor={`${q.id}-5`}>Sempre</Label>
+                            </div>
                           </RadioGroup>
                         </div>
                       ))}
@@ -260,8 +292,10 @@ export default function SurveyPage() {
                   </div>
                 ))}
               </div>
-               <div className='flex justify-between items-center mt-8'>
-                <Button variant="outline" onClick={() => setStep(1)}>Voltar</Button>
+              <div className='flex justify-between items-center mt-8'>
+                <Button variant='outline' onClick={() => setStep(1)}>
+                  Voltar
+                </Button>
                 <Button type='submit'>Enviar Respostas</Button>
               </div>
             </form>
