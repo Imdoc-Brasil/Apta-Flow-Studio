@@ -12,27 +12,44 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { CreditCard, LogOut, Settings, User } from 'lucide-react'
+import { useAuth, useUser } from '@/firebase'
+import { signOut } from 'firebase/auth'
+import { useRouter } from 'next/navigation'
 
 export function UserNav() {
+  const auth = useAuth()
+  const { user } = useUser()
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth)
+      router.push('/login')
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error)
+      // Opcionalmente, mostrar um toast de erro
+    }
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant='ghost' className='relative h-8 w-8 rounded-full'>
           <Avatar className='h-8 w-8'>
             <AvatarImage
-              src='https://i.pravatar.cc/150?u=a042581f4e29026704d'
+              src={user?.photoURL || 'https://i.pravatar.cc/150?u=a042581f4e29026704d'}
               alt='@user'
             />
-            <AvatarFallback>JD</AvatarFallback>
+            <AvatarFallback>{user?.email?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className='w-56' align='end' forceMount>
         <DropdownMenuLabel className='font-normal'>
           <div className='flex flex-col space-y-1'>
-            <p className='text-sm font-medium leading-none'>John Doe</p>
+            <p className='text-sm font-medium leading-none'>{user?.displayName || 'Usuário'}</p>
             <p className='text-xs leading-none text-muted-foreground'>
-              john.doe@example.com
+              {user?.email || 'email@example.com'}
             </p>
           </div>
         </DropdownMenuLabel>
@@ -52,7 +69,7 @@ export function UserNav() {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={handleLogout}>
           <LogOut className='mr-2 h-4 w-4' />
           <span>Sair</span>
         </DropdownMenuItem>
