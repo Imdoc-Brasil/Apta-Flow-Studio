@@ -9,10 +9,68 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, BarChart2 } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
-import { psychosocialSurveyData } from '../data'
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  ReferenceLine,
+} from 'recharts'
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartConfig,
+} from '@/components/ui/chart'
+import { Separator } from '@/components/ui/separator'
+
+const chartData = [
+  { name: 'Demandas', score: 2.03 },
+  { name: 'Controle', score: 3.76 },
+  { name: 'Apoio (Gestores)', score: 3.64 },
+  { name: 'Apoio (Pares)', score: 3.81 },
+  { name: 'Relacionamento', score: 2.28 },
+  { name: 'Papel', score: 3.89 },
+  { name: 'Mudança', score: 3.48 },
+]
+
+const chartConfig = {
+  score: {
+    label: 'Pontuação Média',
+    color: 'hsl(var(--primary))',
+  },
+  '25th': {
+    label: 'Percentil 25 (Benchmark)',
+    color: 'hsl(var(--destructive))',
+  },
+  '75th': {
+    label: 'Percentil 75 (Benchmark)',
+    color: 'hsl(var(--accent))',
+  },
+} satisfies ChartConfig
+
+const domainText = {
+  Demandas:
+    'Este domínio refere-se a aspectos do trabalho como carga de trabalho, padrões de trabalho e ambiente de trabalho. Organizações com bom desempenho nesta área provavelmente têm prazos alcançáveis, demandas adequadas em relação às horas de trabalho e sistemas para responder às preocupações individuais.',
+  Controle:
+    'Refere-se ao quanto uma pessoa tem a dizer sobre a forma como faz seu trabalho. Organizações com bom desempenho nesta área provavelmente incentivam a autonomia e a iniciativa, com sistemas claros para que os funcionários influenciem seus próprios padrões de trabalho.',
+  'Apoio (Gestores)':
+    'Refere-se ao incentivo, patrocínio e recursos fornecidos pela organização e pela gestão de linha. Organizações com bom desempenho nesta área provavelmente têm sistemas claros que permitem e incentivam os gestores a apoiar sua equipe e fornecer feedback regular e construtivo.',
+  'Apoio (Pares)':
+    'Este domínio inclui o encorajamento e o apoio fornecidos pelos colegas. Organizações com bom desempenho aqui provavelmente têm equipes prestativas e compassivas, com sistemas que facilitam o respeito e o apoio mútuo.',
+  Relacionamento:
+    'Isso inclui a promoção de um trabalho positivo para evitar conflitos e lidar com comportamentos inaceitáveis. Organizações com bom desempenho nesta área provavelmente promovem um trabalho positivo e lidam eficazmente com conflitos e comportamentos inaceitáveis.',
+  Papel:
+    'Se as pessoas entendem seu papel na organização e se a organização garante que elas não tenham papéis conflitantes. Organizações com bom desempenho nesta área provavelmente promovem deveres, metas e responsabilidades claras e têm sistemas para lidar com conflitos de papéis.',
+  Mudança:
+    'Como a mudança organizacional (grande ou pequena) é gerenciada e comunicada na organização. Organizações com bom desempenho nesta área provavelmente têm sistemas de gestão de mudanças eficazes que garantem que a mudança seja consultada, implementada de forma ponderada e bem comunicada.',
+}
 
 export default function PsychosocialResultsPage() {
   const params = useParams()
@@ -21,7 +79,7 @@ export default function PsychosocialResultsPage() {
   const surveyId = searchParams.get('surveyId')
 
   return (
-    <div className='grid flex-1 auto-rows-max gap-4'>
+    <div className='grid flex-1 auto-rows-max gap-8'>
       <div className='flex items-center gap-4'>
         <Button asChild variant='outline' size='icon' className='h-7 w-7'>
           <Link href={`/dashboard/clients/${contractId}/psychosocial`}>
@@ -29,31 +87,118 @@ export default function PsychosocialResultsPage() {
             <span className='sr-only'>Voltar</span>
           </Link>
         </Button>
-        <h1 className='flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0'>
-          Resultados da Pesquisa Psicossocial
-        </h1>
+        <div>
+          <h1 className='text-2xl font-bold tracking-tight'>
+            Sumário Executivo dos Riscos Psicossociais
+          </h1>
+          <p className='text-muted-foreground'>
+            Resultados da pesquisa: {surveyId || 'Avaliação Anual 2023'}
+          </p>
+        </div>
       </div>
+
       <Card>
         <CardHeader>
-          <CardTitle>Análise de Resultados - {surveyId || 'Avaliação Anual 2023'}</CardTitle>
+          <CardTitle>Resultados Gerais por Domínio</CardTitle>
           <CardDescription>
-            Visão geral dos indicadores de bem-estar e estresse no trabalho para
-            cada fator de estresse.
+            Pontuação média para cada um dos 7 fatores de estresse, comparados
+            com o benchmark do setor. As pontuações variam de 1 (ruim) a 5
+            (desejável).
           </CardDescription>
         </CardHeader>
-        <CardContent className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
-          {psychosocialSurveyData.map((group) => (
-            <Card key={group.id}>
-              <CardHeader>
-                <CardTitle className='text-lg'>{group.name}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                 <div className='flex flex-col items-center justify-center h-48 rounded-lg border border-dashed text-sm text-muted-foreground'>
-                    <BarChart2 className='h-8 w-8 mb-2' />
-                    <p>Gráfico de pontuação</p>
-                 </div>
-              </CardContent>
-            </Card>
+        <CardContent>
+          <ChartContainer
+            config={chartConfig}
+            className='min-h-[400px] w-full'
+          >
+            <BarChart
+              data={chartData}
+              layout='vertical'
+              margin={{ left: 20, right: 40 }}
+            >
+              <CartesianGrid horizontal={false} />
+              <YAxis
+                dataKey='name'
+                type='category'
+                tickLine={false}
+                axisLine={false}
+                tickMargin={10}
+                width={120}
+              />
+              <XAxis dataKey='score' type='number' domain={[1, 5]} />
+              <ChartTooltip
+                cursor={{ fill: 'hsl(var(--muted))' }}
+                content={<ChartTooltipContent />}
+              />
+              <Bar dataKey='score' radius={4}>
+                {chartData.map((entry, index) => (
+                  <ReferenceLine
+                    key={`label-${index}`}
+                    y={entry.name}
+                    stroke='transparent'
+                    label={{
+                      position: 'insideRight',
+                      value: entry.score.toFixed(2),
+                      fill: 'white',
+                      fontSize: 12,
+                      fontWeight: 'bold',
+                    }}
+                  />
+                ))}
+              </Bar>
+              <ReferenceLine
+                y={0}
+                stroke='hsl(var(--destructive))'
+                strokeDasharray='3 3'
+                label={{
+                  position: 'insideTopRight',
+                  value: 'Percentil 25',
+                  fill: 'hsl(var(--destructive))',
+                  fontSize: 12,
+                }}
+              />
+              <ReferenceLine
+                y={0}
+                stroke='hsl(var(--accent))'
+                strokeDasharray='3 3'
+                label={{
+                  position: 'insideBottomRight',
+                  value: 'Percentil 75',
+                  fill: 'hsl(var(--accent))',
+                  fontSize: 12,
+                }}
+              />
+            </BarChart>
+          </ChartContainer>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Análise Detalhada dos Domínios</CardTitle>
+          <CardDescription>
+            Interpretação dos resultados para cada fator de estresse e
+            recomendações.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className='space-y-6'>
+          {chartData.map((item) => (
+            <div key={item.name}>
+              <h3 className='font-semibold text-lg'>{item.name}</h3>
+              <p className='text-muted-foreground mt-1 text-sm'>
+                {domainText[item.name as keyof typeof domainText]}
+              </p>
+              <div className='mt-3 rounded-lg border bg-muted/30 p-4 space-y-2'>
+                <p className='text-sm font-medium'>
+                  Sua pontuação: {item.score.toFixed(2)}
+                </p>
+                <p className='text-sm text-muted-foreground'>
+                  [Análise gerada por IA sobre o desempenho e recomendação de
+                  ações aparecerá aqui...]
+                </p>
+              </div>
+              <Separator className='mt-6' />
+            </div>
           ))}
         </CardContent>
       </Card>

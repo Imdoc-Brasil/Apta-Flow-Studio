@@ -50,7 +50,7 @@ export default function DashboardLayout({
         <Sidebar collapsible='icon'>
           <SidebarComponent />
         </Sidebar>
-        <div className='flex flex-1 flex-col sm:pl-14 group-data-[state=expanded]:sm:pl-72 transition-all duration-300'>
+        <div className='flex flex-1 flex-col sm:pl-14 group-data-[state=expanded]:sm:pl-72 transition-all duration-300 ease-in-out'>
           <header className='sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6'>
             <SidebarTrigger className='sm:flex hidden' />
             <Sheet>
@@ -61,7 +61,7 @@ export default function DashboardLayout({
                 </Button>
               </SheetTrigger>
               <SheetContent side='left' className='sm:max-w-xs'>
-                <SidebarComponent isSheet={true} />
+                <SidebarComponent />
               </SheetContent>
             </Sheet>
             <Breadcrumb />
