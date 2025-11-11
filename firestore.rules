@@ -48,6 +48,19 @@ service cloud.firestore {
       allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
+    
+    /**
+     * @description Allows access to staff data based on role.
+     * @path /staffs/{staffId}
+     * @allow (get, list): Any authenticated user can read staff data.
+     * @allow (create, update, delete): Only admins can create, update, or delete staff data.
+     * @deny (create, update, delete): Non-admin users cannot create, update, or delete staff data.
+     * @principle Enforces role-based access control for staff management.
+     */
+    match /staffs/{staffId} {
+      allow get, list: if request.auth != null;
+      allow create, update, delete: if isAdmin();
+    }
 
     /**
      * @description Allows access to contracts associated with a client.
@@ -134,7 +147,7 @@ service cloud.firestore {
       * @path /roles_admin/{userId}
       * @allow get: if isOwner(userId);
       * @allow list: if isAdmin();
-      * @allow create: if isAdmin() || !exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+      * @allow create: if isAdmin() || !isAnyAdminCreated();
       * @allow update: if isAdmin() && resource != null;
       * @allow delete: if isAdmin() && resource != null;
       * @principle Enforces role-based access control for granting admin privileges.
