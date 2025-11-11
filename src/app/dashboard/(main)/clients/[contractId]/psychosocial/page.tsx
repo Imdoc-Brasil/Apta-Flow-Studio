@@ -26,7 +26,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { PlusCircle, MoreHorizontal } from 'lucide-react'
+import { PlusCircle, MoreHorizontal, Link as LinkIcon } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/hooks/use-toast'
 import { Label } from '@/components/ui/label'
@@ -41,6 +41,15 @@ import {
 } from '@/components/ui/select'
 import { useParams } from 'next/navigation'
 import { initialUnitsData } from '../units/data'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import Link from 'next/link'
 
 type SurveyStatus = 'Planejada' | 'Em Andamento' | 'Concluída'
 
@@ -239,10 +248,26 @@ export default function PsychosocialPage() {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  <Button variant='ghost' size='icon'>
-                    <MoreHorizontal className='h-4 w-4' />
-                    <span className='sr-only'>Menu</span>
-                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button aria-haspopup='true' size='icon' variant='ghost'>
+                        <MoreHorizontal className='h-4 w-4' />
+                        <span className='sr-only'>Alternar menu</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align='end'>
+                      <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                      <DropdownMenuItem asChild>
+                        <Link href={`/survey?id=${survey.id}`} target='_blank'>
+                          <LinkIcon className='mr-2 h-4 w-4' />
+                          Abrir Link da Pesquisa
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem>Ver Resultados</DropdownMenuItem>
+                      <DropdownMenuItem>Arquivar</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
             ))}
