@@ -170,3 +170,27 @@ export const psychosocialSurveyData: PsychosocialStressorGroup[] = [
     ],
   },
 ]
+
+export type SurveyStatus = 'Planejada' | 'Em Andamento' | 'Concluída'
+
+export interface PsychosocialSurvey {
+  id: string
+  creationDate: string
+  clientName: string
+  unit: string
+  circumstances: string
+  status: SurveyStatus
+}
+
+export const initialSurveys: PsychosocialSurvey[] = [
+  {
+    id: 'SURV-2023-001',
+    creationDate: '2023-10-15',
+    clientName: 'Innovate Inc.',
+    unit: 'Matriz São Paulo',
+    circumstances: 'Avaliação Anual 2023',
+    status: 'Concluída',
+  },
+]
+
+    

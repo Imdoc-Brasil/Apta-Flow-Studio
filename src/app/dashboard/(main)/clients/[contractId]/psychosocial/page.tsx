@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState } from 'react'
@@ -50,28 +51,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import Link from 'next/link'
-
-type SurveyStatus = 'Planejada' | 'Em Andamento' | 'Concluída'
-
-interface PsychosocialSurvey {
-  id: string
-  creationDate: string
-  clientName: string
-  unit: string
-  circumstances: string
-  status: SurveyStatus
-}
-
-const initialSurveys: PsychosocialSurvey[] = [
-  {
-    id: 'SURV-2023-001',
-    creationDate: '2023-10-15',
-    clientName: 'Innovate Inc.',
-    unit: 'Matriz São Paulo',
-    circumstances: 'Avaliação Anual 2023',
-    status: 'Concluída',
-  },
-]
+import { initialSurveys, type PsychosocialSurvey, type SurveyStatus } from './data'
 
 export default function PsychosocialPage() {
   const { toast } = useToast()
@@ -82,7 +62,7 @@ export default function PsychosocialPage() {
     (u) =>
       initialClientsData.find((c) => c.name === client?.name)?.name ===
       client?.name
-  ) // This logic is a bit convoluted due to mock data structure
+  )
 
   const [surveys, setSurveys] = useState(initialSurveys)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -283,3 +263,5 @@ export default function PsychosocialPage() {
     </Card>
   )
 }
+
+    

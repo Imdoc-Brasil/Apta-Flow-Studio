@@ -28,7 +28,7 @@ import {
   ChartConfig,
 } from '@/components/ui/chart'
 import { Separator } from '@/components/ui/separator'
-import { psychosocialSurveyData } from '../data'
+import { psychosocialSurveyData, initialSurveys } from '../data'
 import { Logo } from '@/components/logo'
 
 // SIMULATED DATA: In a real app, this would come from your database
@@ -108,7 +108,15 @@ const domainTextMap: { [key: string]: string } = {
     'Refere-se ao incentivo, patrocínio e recursos fornecidos pela organização e pela gestão de linha. Organizações com bom desempenho nesta área provavelmente têm sistemas claros que permitem e incentivam os gestores a apoiar sua equipe e fornecer feedback regular e construtivo.',
 }
 
-function ReportCover() {
+function ReportCover({
+  clientName,
+  unitName,
+  creationDate,
+}: {
+  clientName?: string
+  unitName?: string
+  creationDate?: string
+}) {
   return (
     <div className='bg-background mb-8 overflow-hidden rounded-lg border shadow-lg'>
       {/* Top Section */}
@@ -127,10 +135,15 @@ function ReportCover() {
               agosto de 2024.
             </p>
             <h2 className='text-3xl text-muted-foreground mt-6'>
-              [Nome da Empresa] + [Unidade(s)]
+              {clientName} - {unitName}
             </h2>
             <p className='mt-6 text-muted-foreground'>
-              Data de Realização da Pesquisa: [Data de Realização]
+              Data de Realização da Pesquisa:{' '}
+              {creationDate
+                ? new Date(creationDate).toLocaleDateString('pt-BR', {
+                    timeZone: 'UTC',
+                  })
+                : '[Data de Realização]'}
             </p>
           </div>
         </div>
@@ -151,6 +164,8 @@ export default function PsychosocialResultsPage() {
   const searchParams = useSearchParams()
   const surveyId = searchParams.get('surveyId')
 
+  const survey = initialSurveys.find((s) => s.id === surveyId)
+
   return (
     <div className='grid flex-1 auto-rows-max gap-8'>
       <div className='flex items-center gap-4'>
@@ -162,7 +177,11 @@ export default function PsychosocialResultsPage() {
         </Button>
       </div>
 
-      <ReportCover />
+      <ReportCover
+        clientName={survey?.clientName}
+        unitName={survey?.unit}
+        creationDate={survey?.creationDate}
+      />
 
       <Card>
         <CardHeader>
@@ -259,7 +278,9 @@ export default function PsychosocialResultsPage() {
                       vermelha
                     </span>{' '}
                     indica o 25º percentil e a linha{' '}
-                    <span className='font-semibold text-accent'>verde</span>{' '}
+                    <span className='font-semibold text-accent-foreground bg-accent px-1 rounded-sm'>
+                      verde
+                    </span>{' '}
                     indica o 75º percentil para a amostra comparativa.
                   </p>
                   <p className='mt-2'>
@@ -287,3 +308,5 @@ export default function PsychosocialResultsPage() {
     </div>
   )
 }
+
+    
