@@ -50,24 +50,14 @@ service cloud.firestore {
     }
     
     /**
-     * @description Allows listing of staff data for any authenticated user.
-     * @path /staffs
-     * @allow (list): Any authenticated user can list staff data.
-     * @principle Enforces read access for staff directory.
-     */
-    match /staffs {
-      allow list: if request.auth != null;
-    }
-
-    /**
      * @description Allows access to individual staff data based on role.
      * @path /staffs/{staffId}
-     * @allow (get): Any authenticated user can read individual staff data.
+     * @allow (get, list): Any authenticated user can read and list staff data.
      * @allow (create, update, delete): Only admins can manage staff data.
      * @principle Enforces role-based access control for staff management.
      */
     match /staffs/{staffId} {
-      allow get: if request.auth != null;
+      allow get, list: if request.auth != null;
       allow create, update, delete: if isAdmin();
     }
 
