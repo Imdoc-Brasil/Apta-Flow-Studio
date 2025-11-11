@@ -115,45 +115,23 @@ function ReportCover() {
       <div className='flex h-[400px]'>
         <div className='w-20 bg-primary'></div>
         <div className='flex flex-1 flex-col p-12'>
-          <div className='flex items-start justify-between'>
-            <div className='text-primary'>
-              <svg
-                width='60'
-                height='60'
-                viewBox='0 0 73 59'
-                fill='none'
-                xmlns='http://www.w3.org/2000/svg'
-              >
-                <path
-                  d='M0 15.5455V0.90909H72.7273V15.5455H0Z'
-                  fill='currentColor'
-                />
-                <path
-                  d='M0 37.0909V22.4545H72.7273V37.0909H0Z'
-                  fill='currentColor'
-                />
-                <path
-                  d='M0 58.6364V44H72.7273V58.6364H0Z'
-                  fill='currentColor'
-                />
-                <path
-                  d='M43.6364 37.0909L36.3636 22.4545L29.0909 37.0909H43.6364Z'
-                  fill='hsl(var(--background))'
-                />
-              </svg>
-              <span className='text-2xl font-bold tracking-wider'>HSE</span>
-            </div>
+          <div className='flex items-start justify-end'>
             <Logo />
           </div>
           <div className='flex-grow flex flex-col justify-center'>
             <h1 className='font-headline text-4xl font-bold'>
-              Pesquisa Teste report
+              Relatório de Avaliação Preliminar de Riscos Psicossociais
             </h1>
-            <h2 className='text-3xl text-muted-foreground mt-2'>
-              Dra Jamima Queiroz
+            <p className='text-sm text-muted-foreground mt-2'>
+              De acordo com a NR-01, Portaria MTE nº 1.419, publicada em 27 de
+              agosto de 2024.
+            </p>
+            <h2 className='text-3xl text-muted-foreground mt-6'>
+              [Nome da Empresa] + [Unidade(s)]
             </h2>
-            <p className='mt-6 text-muted-foreground'>28 Maio 2025</p>
-            <p className='text-muted-foreground'>Filter: Current year</p>
+            <p className='mt-6 text-muted-foreground'>
+              Data de Realização da Pesquisa: [Data de Realização]
+            </p>
           </div>
         </div>
       </div>
