@@ -317,7 +317,7 @@ export default function StaffsPage() {
           </div>
           <div className='col-span-1 space-y-2'>
             <Label htmlFor='code'>Código</Label>
-            <Input id='code' name='code' value={`STF-${'####'}`} disabled />
+            <Input id='code' name='code' value={staff?.code || `STF-${'####'}`} disabled />
           </div>
         </div>
 
@@ -759,5 +759,3 @@ export default function StaffsPage() {
     </>
   )
 }
-
-    
