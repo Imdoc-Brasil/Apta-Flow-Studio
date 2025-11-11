@@ -1,6 +1,7 @@
+
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { MoreHorizontal, PlusCircle, Search, Filter } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -38,19 +39,34 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import Link from 'next/link'
-import { initialClientsData } from './data'
+import { type Client } from './data'
+import {
+  useFirestore,
+  useCollection,
+  useMemoFirebase,
+  addDocumentNonBlocking,
+} from '@/firebase'
+import { collection } from 'firebase/firestore'
+import { Loader2 } from 'lucide-react'
 
 export default function ClientsPage() {
-  const [clients, setClients] = useState(initialClientsData)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const firestore = useFirestore()
+
+  const clientsRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'clients') : null),
+    [firestore]
+  )
+
+  const { data: clients, isLoading } = useCollection<Client>(clientsRef)
 
   const handleAddClient = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!clientsRef) return
+
     const formData = new FormData(event.currentTarget)
-    const newClient = {
-      contractId: `CTR-2024-${(clients.length + 1)
-        .toString()
-        .padStart(3, '0')}`,
+    const newClientData = {
+      // contractId is often the document ID, so we let Firestore generate it.
       name: formData.get('name') as string,
       cnpj: formData.get('cnpj') as string,
       status: 'Ativo',
@@ -61,7 +77,13 @@ export default function ClientsPage() {
       contact: '',
       address: '',
     }
-    setClients((prev) => [...prev, newClient])
+
+    addDocumentNonBlocking(clientsRef, newClientData).then((docRef) => {
+      // If you need to do something with the new document's ID, you can.
+      // For example, you could update the new document with its own ID.
+      // updateDocumentNonBlocking(doc(clientsRef, docRef.id), { contractId: docRef.id });
+    })
+
     setIsDialogOpen(false)
   }
 
@@ -171,70 +193,78 @@ export default function ClientsPage() {
         </div>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Contrato</TableHead>
-              <TableHead>Cliente</TableHead>
-              <TableHead className='hidden sm:table-cell'>Status</TableHead>
-              <TableHead className='hidden md:table-cell'>
-                Responsável
-              </TableHead>
-              <TableHead>
-                <span className='sr-only'>Ações</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {clients.map((client) => (
-              <TableRow key={client.contractId}>
-                <TableCell className='font-medium'>
-                  {client.contractId}
-                </TableCell>
-                <TableCell>
-                  <Link
-                    href={`/dashboard/clients/${client.contractId}/info`}
-                    className='hover:underline'
-                  >
-                    {client.name}
-                  </Link>
-                </TableCell>
-                <TableCell className='hidden sm:table-cell'>
-                  <Badge
-                    variant={client.status === 'Ativo' ? 'secondary' : 'outline'}
-                  >
-                    {client.status}
-                  </Badge>
-                </TableCell>
-                <TableCell className='hidden md:table-cell'>
-                  {client.responsibleName}
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button aria-haspopup='true' size='icon' variant='ghost'>
-                        <MoreHorizontal className='h-4 w-4' />
-                        <span className='sr-only'>Alternar menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align='end'>
-                      <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                      <DropdownMenuItem asChild>
-                        <Link
-                          href={`/dashboard/clients/${client.contractId}/info`}
-                        >
-                          Ver Detalhes
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>Editar</DropdownMenuItem>
-                      <DropdownMenuItem>Desativar</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
+        {isLoading ? (
+          <div className='flex justify-center items-center h-64'>
+            <Loader2 className='h-8 w-8 animate-spin text-muted-foreground' />
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Contrato</TableHead>
+                <TableHead>Cliente</TableHead>
+                <TableHead className='hidden sm:table-cell'>Status</TableHead>
+                <TableHead className='hidden md:table-cell'>
+                  Responsável
+                </TableHead>
+                <TableHead>
+                  <span className='sr-only'>Ações</span>
+                </TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {clients?.map((client) => (
+                <TableRow key={client.id}>
+                  <TableCell className='font-medium'>{client.id}</TableCell>
+                  <TableCell>
+                    <Link
+                      href={`/dashboard/clients/${client.id}/info`}
+                      className='hover:underline'
+                    >
+                      {client.name}
+                    </Link>
+                  </TableCell>
+                  <TableCell className='hidden sm:table-cell'>
+                    <Badge
+                      variant={
+                        client.status === 'Ativo' ? 'secondary' : 'outline'
+                      }
+                    >
+                      {client.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className='hidden md:table-cell'>
+                    {client.responsibleName}
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          aria-haspopup='true'
+                          size='icon'
+                          variant='ghost'
+                        >
+                          <MoreHorizontal className='h-4 w-4' />
+                          <span className='sr-only'>Alternar menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align='end'>
+                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/dashboard/clients/${client.id}/info`}>
+                            Ver Detalhes
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>Editar</DropdownMenuItem>
+                        <DropdownMenuItem>Desativar</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </CardContent>
     </Card>
   )

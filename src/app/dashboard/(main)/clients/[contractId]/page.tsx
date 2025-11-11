@@ -4,12 +4,10 @@ import { useParams } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft } from 'lucide-react'
-import { initialClientsData } from '../data'
-
-const getClientById = (contractId: string) => {
-  return initialClientsData.find((client) => client.contractId === contractId)
-}
+import { ArrowLeft, Loader2 } from 'lucide-react'
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase'
+import { doc } from 'firebase/firestore'
+import { type Client } from '../data'
 
 export default function ClientDetailsPage({
   children,
@@ -18,7 +16,21 @@ export default function ClientDetailsPage({
 }) {
   const params = useParams()
   const contractId = params.contractId as string
-  const client = getClientById(contractId)
+  const firestore = useFirestore()
+
+  const clientRef = useMemoFirebase(
+    () => (firestore ? doc(firestore, 'clients', contractId) : null),
+    [firestore, contractId]
+  )
+  const { data: client, isLoading } = useDoc<Client>(clientRef)
+
+  if (isLoading) {
+    return (
+      <div className='flex items-center justify-center h-full'>
+        <Loader2 className='h-8 w-8 animate-spin' />
+      </div>
+    )
+  }
 
   if (!client) {
     return (

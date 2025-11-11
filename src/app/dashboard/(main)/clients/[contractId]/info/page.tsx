@@ -1,20 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import type { FC } from 'react'
-import { useParams, usePathname, useRouter } from 'next/navigation'
 import {
-  PlusCircle,
   ArrowLeft,
   FileText,
   Mail,
   MapPin,
   Phone,
   User,
-  Upload,
   Building,
   ArrowRight,
-  History,
 } from 'lucide-react'
 import {
   Card,
@@ -24,39 +18,44 @@ import {
   CardDescription,
   CardFooter,
 } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { initialClientsData } from '@/app/dashboard/(main)/clients/data'
 import Link from 'next/link'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { useToast } from '@/hooks/use-toast'
-import { Separator } from '@/components/ui/separator'
-import { initialUnitsData } from '../units/data'
-
-const getClientById = (contractId: string) => {
-  return initialClientsData.find((client) => client.contractId === contractId)
-}
-
-interface PgrUpdate {
-  date: string
-  description: string
-}
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase'
+import { doc, collection } from 'firebase/firestore'
+import { useParams } from 'next/navigation'
+import type { Client } from '../../data'
+import type { Unit } from '../units/data'
+import { Loader2 } from 'lucide-react'
+import { useCollection } from '@/firebase/firestore/use-collection'
 
 export default function InfoDashboard() {
   const params = useParams()
   const contractId = params.contractId as string
-  const client = getClientById(contractId)
+  const firestore = useFirestore()
+
+  const clientRef = useMemoFirebase(
+    () => (firestore ? doc(firestore, 'clients', contractId) : null),
+    [firestore, contractId]
+  )
+
+  const unitsRef = useMemoFirebase(
+    () =>
+      firestore
+        ? collection(firestore, 'clients', contractId, 'units')
+        : null,
+    [firestore, contractId]
+  )
+
+  const { data: client, isLoading: isClientLoading } = useDoc<Client>(clientRef)
+  const { data: units, isLoading: areUnitsLoading } = useCollection<Unit>(unitsRef)
+
+  if (isClientLoading || areUnitsLoading) {
+    return (
+      <div className='flex items-center justify-center h-64'>
+        <Loader2 className='h-8 w-8 animate-spin' />
+      </div>
+    )
+  }
 
   if (!client) {
     return (
@@ -161,7 +160,7 @@ export default function InfoDashboard() {
             <div className='pl-7 space-y-1'>
               <p className='text-sm'>
                 <span className='font-medium text-muted-foreground'>ID:</span>{' '}
-                {client.contractId}
+                {client.id}
               </p>
             </div>
           </div>
@@ -176,11 +175,11 @@ export default function InfoDashboard() {
         </CardHeader>
         <CardContent>
           <div className='grid gap-4 md:grid-cols-2'>
-            {initialUnitsData.map((unit) => (
+            {units?.map((unit) => (
               <Card key={unit.id}>
                 <CardHeader>
                   <CardTitle className='text-lg'>{unit.name}</CardTitle>
-                  <CardDescription>{unit.address}</CardDescription>
+                  <CardDescription>{unit.propertyInfo.address}</CardDescription>
                 </CardHeader>
                 <CardFooter>
                   <Button asChild variant='outline'>
@@ -191,6 +190,9 @@ export default function InfoDashboard() {
                 </CardFooter>
               </Card>
             ))}
+            {units?.length === 0 && (
+              <p className='text-sm text-muted-foreground'>Nenhuma unidade cadastrada.</p>
+            )}
           </div>
         </CardContent>
       </Card>

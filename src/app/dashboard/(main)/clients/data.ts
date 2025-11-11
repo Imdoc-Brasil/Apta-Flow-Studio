@@ -1,6 +1,20 @@
-export const initialClientsData = [
+
+export interface Client {
+  id: string
+  name: string
+  cnpj: string
+  status: 'Ativo' | 'Inativo'
+  responsibleName: string
+  responsibleContact: string
+  cnae: string
+  riskLevel: string
+  contact: string
+  address: string
+}
+
+export const initialClientsData: Client[] = [
   {
-    contractId: 'CTR-2024-001',
+    id: 'CTR-2024-001',
     name: 'Innovate Inc.',
     cnpj: '12.345.678/0001-99',
     status: 'Ativo',
@@ -12,7 +26,7 @@ export const initialClientsData = [
     address: 'Rua das Flores, 123, Sala 101, Centro, São Paulo, SP, 01234-567',
   },
   {
-    contractId: 'CTR-2024-002',
+    id: 'CTR-2024-002',
     name: 'Solutions Co.',
     cnpj: '98.765.432/0001-11',
     status: 'Ativo',
@@ -24,7 +38,7 @@ export const initialClientsData = [
     address: '456 Business Blvd, New York, NY',
   },
   {
-    contractId: 'CTR-2024-003',
+    id: 'CTR-2024-003',
     name: 'Quantum Dynamics',
     cnpj: '55.555.555/0001-55',
     status: 'Inativo',
@@ -36,7 +50,7 @@ export const initialClientsData = [
     address: '789 Innovation Dr, Boston, MA',
   },
   {
-    contractId: 'CTR-2024-004',
+    id: 'CTR-2024-004',
     name: 'Stellar Tech',
     cnpj: '11.222.333/0001-44',
     status: 'Ativo',
@@ -48,7 +62,7 @@ export const initialClientsData = [
     address: '101 Galaxy Way, Seattle, WA',
   },
   {
-    contractId: 'CTR-2024-005',
+    id: 'CTR-2024-005',
     name: 'Apex Innovations',
     cnpj: '44.555.666/0001-77',
     status: 'Ativo',
