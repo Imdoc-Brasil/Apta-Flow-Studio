@@ -55,8 +55,10 @@ import {
   useCollection,
   useMemoFirebase,
   addDocumentNonBlocking,
+  useUser,
+  useDoc,
 } from '@/firebase'
-import { collection, query, where, getDocs } from 'firebase/firestore'
+import { collection, query, where, getDocs, doc } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
@@ -77,18 +79,42 @@ import {
 } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { Checkbox } from '@/components/ui/checkbox'
+import type { Staff } from '../employees/page'
 
 export default function ClientsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const firestore = useFirestore()
   const { toast } = useToast()
+  const { user } = useUser()
+
+  const staffDocRef = useMemoFirebase(
+    () => (firestore && user ? doc(firestore, 'staffs', user.uid) : null),
+    [firestore, user]
+  )
+  const { data: staffProfile, isLoading: isStaffLoading } = useDoc<Staff>(staffDocRef)
 
   const clientsRef = useMemoFirebase(
     () => (firestore ? collection(firestore, 'clients') : null),
     [firestore]
   )
+  const { data: allClients, isLoading: areClientsLoading } = useCollection<Client>(clientsRef)
 
-  const { data: clients, isLoading } = useCollection<Client>(clientsRef)
+  const clients = useMemo(() => {
+    if (!allClients || !staffProfile) {
+      return []
+    }
+    // If user is a 'cliente' profile, they should see no clients on this master page
+    if (staffProfile.perfilId === 'cliente') {
+      return []
+    }
+    // If staff has specific clientIds, filter by them
+    if (staffProfile.clientIds && staffProfile.clientIds.length > 0) {
+      return allClients.filter((client) => staffProfile.clientIds?.includes(client.id))
+    }
+    // Otherwise, show all clients (admin/unrestricted access)
+    return allClients
+  }, [allClients, staffProfile])
+
 
   const [cnpj, setCnpj] = useState('')
   const [isCnpjLoading, setIsCnpjLoading] = useState(false)
@@ -184,6 +210,8 @@ export default function ClientsPage() {
   const handleRemoveSecondaryCnae = (cnaeCode: string) => {
     setSecondaryCnaes((prev) => prev.filter((c) => c.code !== cnaeCode))
   }
+
+  const isLoading = areClientsLoading || isStaffLoading
 
   return (
     <Card>
