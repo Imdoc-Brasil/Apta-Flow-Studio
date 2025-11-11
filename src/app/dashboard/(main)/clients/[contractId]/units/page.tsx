@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
@@ -45,12 +46,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Textarea } from '@/components/ui/textarea'
 import Link from 'next/link'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import {
-  initialUnitsData,
-  type Unit,
-  UnitType,
-  ContractingCompany,
-} from './data'
+import { type Unit, UnitType, ContractingCompany } from './data'
 import { Separator } from '@/components/ui/separator'
 import {
   Select,
@@ -59,6 +55,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useToast } from '@/hooks/use-toast'
+import {
+  useFirestore,
+  useCollection,
+  useMemoFirebase,
+  addDocumentNonBlocking,
+} from '@/firebase'
+import { collection, doc } from 'firebase/firestore'
+import { Loader2 } from 'lucide-react'
 
 const getClientById = (contractId: string) => {
   return initialClientsData.find((client) => client.contractId === contractId)
@@ -69,12 +74,22 @@ export default function UnitsPage() {
   const contractId = params.contractId as string
   const client = getClientById(contractId)
 
-  const [units, setUnits] = useState(initialUnitsData)
+  const firestore = useFirestore()
+  const unitsRef = useMemoFirebase(
+    () =>
+      firestore
+        ? collection(firestore, 'clients', contractId, 'units')
+        : null,
+    [firestore, contractId]
+  )
+  const { data: units, isLoading } = useCollection<Unit>(unitsRef)
+
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string[]>(['Ativa'])
   const [formType, setFormType] = useState<UnitType>('Unidade')
   const [inheritData, setInheritData] = useState(false)
+  const { toast } = useToast()
 
   const resetFormState = () => {
     setFormType('Unidade')
@@ -89,13 +104,12 @@ export default function UnitsPage() {
 
   const handleAddUnit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!unitsRef) return
+
     const formData = new FormData(event.currentTarget)
     const unitType = formData.get('type') as UnitType
 
-    const newUnit: Unit = {
-      id: `UNIT-${Math.floor(Math.random() * 1000)
-        .toString()
-        .padStart(3, '0')}`,
+    const newUnitData: Omit<Unit, 'id'> = {
       name: formData.get('name') as string,
       type: unitType,
       description: formData.get('description') as string,
@@ -128,12 +142,18 @@ export default function UnitsPage() {
       pcmsoResponsible: formData.get('pcmsoResponsible') as string,
       status: 'Ativa',
     }
-
-    setUnits((prev) => [...prev, newUnit])
+    
+    addDocumentNonBlocking(unitsRef, newUnitData)
+    
+    toast({
+      title: 'Unidade Adicionada!',
+      description: `A unidade "${newUnitData.name}" foi adicionada com sucesso.`,
+    })
     setIsAddDialogOpen(false)
   }
 
   const filteredUnits = useMemo(() => {
+    if (!units) return []
     return units.filter((unit) => {
       const matchesSearch = unit.name
         .toLowerCase()
@@ -421,7 +441,11 @@ export default function UnitsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {filteredUnits.length > 0 ? (
+          {isLoading ? (
+             <div className='flex items-center justify-center h-64'>
+                <Loader2 className='h-8 w-8 animate-spin' />
+              </div>
+          ) : filteredUnits.length > 0 ? (
             <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
               {filteredUnits.map((unit) => (
                 <Link
@@ -455,7 +479,7 @@ export default function UnitsPage() {
                   Nenhuma unidade encontrada
                 </h3>
                 <p className='text-sm text-muted-foreground'>
-                  Ajuste seus filtros ou adicione uma nova unidade.
+                  Cadastre a primeira unidade para este cliente.
                 </p>
                 <Button
                   className='mt-4'

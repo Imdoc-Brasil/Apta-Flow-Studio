@@ -18,7 +18,26 @@ export interface ContractingCompany {
   riskLevel: string
 }
 
-export const initialUnitsData = [
+export interface Unit {
+  id?: string
+  name: string
+  type: UnitType
+  description: string
+  cnpj: string
+  propertyInfo: PropertyInfo
+  status: 'Ativa' | 'Inativa'
+  cnae: string
+  riskLevel: string
+  legalResponsible: string
+  pgrResponsible: string
+  ltcatResponsible: string
+  pcmsoResponsible: string
+  cno?: string
+  contractingCompany?: ContractingCompany
+}
+
+
+export const initialUnitsData: Unit[] = [
   {
     id: 'UNIT-001',
     name: 'Matriz São Paulo',
@@ -93,21 +112,3 @@ export const initialUnitsData = [
     pcmsoResponsible: 'Dra. Sofia Almeida',
   },
 ]
-
-export type Unit = {
-  id: string
-  name: string
-  type: UnitType
-  description: string
-  cnpj: string
-  propertyInfo: PropertyInfo
-  status: 'Ativa' | 'Inativa'
-  cnae: string
-  riskLevel: string
-  legalResponsible: string
-  pgrResponsible: string
-  ltcatResponsible: string
-  pcmsoResponsible: string
-  cno?: string
-  contractingCompany?: ContractingCompany
-}
