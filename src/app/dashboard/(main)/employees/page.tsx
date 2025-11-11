@@ -269,7 +269,7 @@ export default function StaffsPage() {
       perfilId: staff.perfilId,
       assinatura: staff.assinatura,
       phone: staff.phone,
-      contractId: staff.contractId,
+      contractId: staff.contractId || '',
       clientIds: staff.clientIds || [],
     })
     setIsEditDialogOpen(true)
@@ -446,7 +446,7 @@ export default function StaffsPage() {
                     <FormLabel>Empresa Cliente</FormLabel>
                     <Select
                       onValueChange={field.onChange}
-                      defaultValue={field.value}
+                      defaultValue={field.value || ''}
                     >
                       <FormControl>
                         <SelectTrigger>
@@ -894,5 +894,6 @@ export default function StaffsPage() {
     </>
   )
 }
+    
 
     
