@@ -58,7 +58,7 @@ import {
   useUser,
   useDoc,
 } from '@/firebase'
-import { collection, query, where, getDocs, doc } from 'firebase/firestore'
+import { collection, query, where, getDocs, doc, setDoc } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
@@ -91,13 +91,15 @@ export default function ClientsPage() {
     () => (firestore && user ? doc(firestore, 'staffs', user.uid) : null),
     [firestore, user]
   )
-  const { data: staffProfile, isLoading: isStaffLoading } = useDoc<Staff>(staffDocRef)
+  const { data: staffProfile, isLoading: isStaffLoading } =
+    useDoc<Staff>(staffDocRef)
 
   const clientsRef = useMemoFirebase(
     () => (firestore ? collection(firestore, 'clients') : null),
     [firestore]
   )
-  const { data: allClients, isLoading: areClientsLoading } = useCollection<Client>(clientsRef)
+  const { data: allClients, isLoading: areClientsLoading } =
+    useCollection<Client>(clientsRef)
 
   const clients = useMemo(() => {
     if (!allClients || !staffProfile) {
@@ -109,12 +111,13 @@ export default function ClientsPage() {
     }
     // If staff has specific clientIds, filter by them
     if (staffProfile.clientIds && staffProfile.clientIds.length > 0) {
-      return allClients.filter((client) => staffProfile.clientIds?.includes(client.id))
+      return allClients.filter((client) =>
+        staffProfile.clientIds?.includes(client.id)
+      )
     }
     // Otherwise, show all clients (admin/unrestricted access)
     return allClients
   }, [allClients, staffProfile])
-
 
   const [cnpj, setCnpj] = useState('')
   const [isCnpjLoading, setIsCnpjLoading] = useState(false)
@@ -133,7 +136,20 @@ export default function ClientsPage() {
     if (!clientsRef) return
 
     const formData = new FormData(event.currentTarget)
-    const newClientData = {
+    
+    const highestContractNumber = allClients?.reduce((max, client) => {
+        const match = client.id.match(/CTR-\d{4}-(\d{3})/)
+        if(match) {
+            const num = parseInt(match[1], 10)
+            return Math.max(max, num)
+        }
+        return max
+    }, 0) || 0;
+
+    const newContractId = `CTR-${new Date().getFullYear()}-${(highestContractNumber + 1).toString().padStart(3, '0')}`;
+    
+    const newClientData: Omit<Client, 'id'> & { id?: string } = {
+      id: newContractId,
       name: formData.get('name') as string,
       tradeName: formData.get('tradeName') as string,
       cnpj: formData.get('cnpj') as string,
@@ -155,7 +171,11 @@ export default function ClientsPage() {
       ) as string,
     }
 
-    addDocumentNonBlocking(clientsRef, newClientData)
+    if (firestore) {
+       const clientDocRef = doc(firestore, 'clients', newContractId);
+       setDocumentNonBlocking(clientDocRef, newClientData, { merge: false });
+    }
+
     toast({
       title: 'Cliente Adicionado!',
       description: `O cliente "${newClientData.name}" foi adicionado com sucesso.`,
@@ -163,6 +183,7 @@ export default function ClientsPage() {
 
     setIsDialogOpen(false)
     setSecondaryCnaes([])
+    setCnpj('')
   }
 
   const handleCnpjBlur = async () => {
@@ -674,3 +695,5 @@ export default function ClientsPage() {
     </Card>
   )
 }
+
+    
