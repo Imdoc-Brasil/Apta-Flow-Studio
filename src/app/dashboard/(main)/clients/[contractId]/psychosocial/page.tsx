@@ -264,7 +264,13 @@ export default function PsychosocialPage() {
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem>Ver Resultados</DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href={`/dashboard/clients/${contractId}/psychosocial/results?surveyId=${survey.id}`}
+                        >
+                          Ver Resultados
+                        </Link>
+                      </DropdownMenuItem>
                       <DropdownMenuItem>Arquivar</DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
