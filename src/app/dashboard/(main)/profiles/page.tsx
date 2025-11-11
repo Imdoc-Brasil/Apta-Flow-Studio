@@ -1,6 +1,7 @@
+
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { MoreHorizontal, PlusCircle } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -37,6 +38,9 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase'
+import { collection } from 'firebase/firestore'
+import type { Staff } from '../employees/page'
 
 interface Profile {
   id: string
@@ -56,6 +60,25 @@ export default function ProfilesPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null)
   const [profileName, setProfileName] = useState('')
+
+  const firestore = useFirestore()
+  const staffsRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'staffs') : null),
+    [firestore]
+  )
+  const { data: staffs } = useCollection<Staff>(staffsRef)
+
+  const staffCountByProfile = useMemo(() => {
+    const counts: { [key: string]: number } = {}
+    if (staffs) {
+      for (const staff of staffs) {
+        if (staff.perfilId) {
+          counts[staff.perfilId] = (counts[staff.perfilId] || 0) + 1
+        }
+      }
+    }
+    return counts
+  }, [staffs])
 
   const handleAddProfile = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -157,6 +180,7 @@ export default function ProfilesPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Nome do Perfil</TableHead>
+              <TableHead className='text-right'>Staffs com este Perfil</TableHead>
               <TableHead>
                 <span className='sr-only'>Ações</span>
               </TableHead>
@@ -166,7 +190,10 @@ export default function ProfilesPage() {
             {profiles.map((profile) => (
               <TableRow key={profile.id}>
                 <TableCell className='font-medium'>{profile.name}</TableCell>
-                <TableCell>
+                <TableCell className='text-right'>
+                   <Badge variant="secondary">{staffCountByProfile[profile.id] || 0}</Badge>
+                </TableCell>
+                <TableCell className='text-right'>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button aria-haspopup='true' size='icon' variant='ghost'>
