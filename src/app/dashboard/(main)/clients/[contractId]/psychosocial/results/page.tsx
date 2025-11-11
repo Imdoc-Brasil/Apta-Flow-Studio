@@ -9,7 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, BrainCircuit } from 'lucide-react'
 import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
 import {
@@ -29,6 +29,7 @@ import {
 } from '@/components/ui/chart'
 import { Separator } from '@/components/ui/separator'
 import { psychosocialSurveyData } from '../data'
+import { Logo } from '@/components/logo'
 
 // SIMULATED DATA: In a real app, this would come from your database
 // Simulating 50 employees responding
@@ -67,7 +68,7 @@ const calculateScores = () => {
     // Using example benchmarks from the provided image
     if (group.name.includes('Demand')) benchmark25 = 3.34
     if (group.name.includes('Control')) benchmark75 = 3.75
-    
+
     return {
       name: group.name,
       yourScore: parseFloat(averageScore.toFixed(2)),
@@ -107,6 +108,65 @@ const domainTextMap: { [key: string]: string } = {
     'Refere-se ao incentivo, patrocínio e recursos fornecidos pela organização e pela gestão de linha. Organizações com bom desempenho nesta área provavelmente têm sistemas claros que permitem e incentivam os gestores a apoiar sua equipe e fornecer feedback regular e construtivo.',
 }
 
+function ReportCover() {
+  return (
+    <div className='bg-background mb-8 overflow-hidden rounded-lg border shadow-lg'>
+      {/* Top Section */}
+      <div className='flex h-[400px]'>
+        <div className='w-20 bg-primary'></div>
+        <div className='flex flex-1 flex-col p-12'>
+          <div className='flex items-start justify-between'>
+            <div className='text-primary'>
+              <svg
+                width='60'
+                height='60'
+                viewBox='0 0 73 59'
+                fill='none'
+                xmlns='http://www.w3.org/2000/svg'
+              >
+                <path
+                  d='M0 15.5455V0.90909H72.7273V15.5455H0Z'
+                  fill='currentColor'
+                />
+                <path
+                  d='M0 37.0909V22.4545H72.7273V37.0909H0Z'
+                  fill='currentColor'
+                />
+                <path
+                  d='M0 58.6364V44H72.7273V58.6364H0Z'
+                  fill='currentColor'
+                />
+                <path
+                  d='M43.6364 37.0909L36.3636 22.4545L29.0909 37.0909H43.6364Z'
+                  fill='hsl(var(--background))'
+                />
+              </svg>
+              <span className='text-2xl font-bold tracking-wider'>HSE</span>
+            </div>
+            <Logo />
+          </div>
+          <div className='flex-grow flex flex-col justify-center'>
+            <h1 className='font-headline text-4xl font-bold'>
+              Pesquisa Teste report
+            </h1>
+            <h2 className='text-3xl text-muted-foreground mt-2'>
+              Dra Jamima Queiroz
+            </h2>
+            <p className='mt-6 text-muted-foreground'>28 Maio 2025</p>
+            <p className='text-muted-foreground'>Filter: Current year</p>
+          </div>
+        </div>
+      </div>
+      {/* Bottom Section */}
+      <div className='flex h-[400px] items-center justify-center bg-primary p-12'>
+        <div className='relative flex h-64 w-64 items-center justify-center rounded-full bg-background'>
+          <BrainCircuit className='h-40 w-40 text-primary' />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function PsychosocialResultsPage() {
   const params = useParams()
   const contractId = params.contractId as string
@@ -122,15 +182,9 @@ export default function PsychosocialResultsPage() {
             <span className='sr-only'>Voltar</span>
           </Link>
         </Button>
-        <div>
-          <h1 className='text-2xl font-bold tracking-tight'>
-            Sumário Executivo dos Riscos Psicossociais
-          </h1>
-          <p className='text-muted-foreground'>
-            Resultados da pesquisa: {surveyId || 'Avaliação Anual 2023'}
-          </p>
-        </div>
       </div>
+
+      <ReportCover />
 
       <Card>
         <CardHeader>
@@ -161,7 +215,12 @@ export default function PsychosocialResultsPage() {
                     layout='vertical'
                     margin={{ left: 10, right: 10 }}
                   >
-                    <XAxis type='number' dataKey='yourScore' domain={[1, 5]} hide />
+                    <XAxis
+                      type='number'
+                      dataKey='yourScore'
+                      domain={[1, 5]}
+                      hide
+                    />
                     <YAxis type='category' dataKey='name' hide />
                     <ChartTooltip
                       cursor={false}
@@ -174,21 +233,21 @@ export default function PsychosocialResultsPage() {
                       radius={4}
                       barSize={20}
                     >
-                       <text
-                        x={-10} 
-                        y={10} 
-                        textAnchor="end"
-                        fill="hsl(var(--foreground))"
-                        className="text-sm font-bold"
+                      <text
+                        x={-10}
+                        y={10}
+                        textAnchor='end'
+                        fill='hsl(var(--foreground))'
+                        className='text-sm font-bold'
                       >
-                       Sua Pontuação
+                        Sua Pontuação
                       </text>
-                       <text
+                      <text
                         x='98%'
-                        y={10} 
-                        textAnchor="end"
-                        fill="hsl(var(--primary-foreground))"
-                        className="text-sm font-bold"
+                        y={10}
+                        textAnchor='end'
+                        fill='hsl(var(--primary-foreground))'
+                        className='text-sm font-bold'
                       >
                         {item.yourScore.toFixed(2)}
                       </text>
@@ -199,7 +258,7 @@ export default function PsychosocialResultsPage() {
                       strokeWidth={2}
                       strokeDasharray='3 3'
                     />
-                     <ReferenceLine
+                    <ReferenceLine
                       x={item.benchmark75}
                       stroke='hsl(var(--accent))'
                       strokeWidth={2}
@@ -207,7 +266,7 @@ export default function PsychosocialResultsPage() {
                     />
                   </BarChart>
                 </ChartContainer>
-                 <div className='flex items-center justify-between text-xs text-muted-foreground px-2'>
+                <div className='flex items-center justify-between text-xs text-muted-foreground px-2'>
                   <span>1</span>
                   <span>2</span>
                   <span>3</span>
@@ -235,8 +294,8 @@ export default function PsychosocialResultsPage() {
                       {item.yourScore > item.benchmark75
                         ? 'acima do percentil 75'
                         : item.yourScore < item.benchmark25
-                          ? 'abaixo do percentil 25'
-                          : 'entre os percentis 25 e 75'}
+                        ? 'abaixo do percentil 25'
+                        : 'entre os percentis 25 e 75'}
                     </span>
                     .
                   </p>
