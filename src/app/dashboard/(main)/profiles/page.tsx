@@ -2,7 +2,7 @@
 'use client'
 
 import React, { useState, useMemo, useEffect } from 'react'
-import { MoreHorizontal, PlusCircle } from 'lucide-react'
+import { MoreHorizontal, PlusCircle, ShieldCheck } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
   Card,
@@ -46,6 +46,35 @@ import {
 } from '@/firebase'
 import { collection } from 'firebase/firestore'
 import type { Staff } from '../employees/page'
+import { Checkbox } from '@/components/ui/checkbox'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { useToast } from '@/hooks/use-toast'
+
+// --- Estrutura de Permissões ---
+
+type Action = 'view' | 'create' | 'edit' | 'delete'
+type Module = 'clients' | 'staffs' | 'tickets' | 'services' | 'risks' | 'health' | 'performance'
+export type Permission = `${Action}:${Module}`
+
+export const permissionModules: { id: Module; name: string }[] = [
+  { id: 'clients', name: 'Clientes' },
+  { id: 'staffs', name: 'Staffs' },
+  { id: 'tickets', name: 'Tickets' },
+  { id: 'services', name: 'Serviços' },
+  { id: 'risks', name: 'Riscos' },
+  { id: 'health', name: 'Saúde' },
+  { id: 'performance', name: 'Desempenho' },
+]
+
+export const permissionActions: { id: Action; name: string }[] = [
+  { id: 'view', name: 'Ver' },
+  { id: 'create', name: 'Criar' },
+  { id: 'edit', name: 'Editar' },
+  { id: 'delete', name: 'Excluir' },
+]
+
+// --- Fim da Estrutura de Permissões ---
+
 
 interface Profile {
   id: string
@@ -53,6 +82,7 @@ interface Profile {
   code?: string
   createdBy?: string
   createdAt?: string
+  permissions?: Permission[]
 }
 
 export const initialProfiles: Profile[] = []
@@ -79,10 +109,15 @@ export default function ProfilesPage() {
   const [profiles, setProfiles] = useState<Profile[]>(initialProfiles)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false)
+  
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null)
   const [profileName, setProfileName] = useState('')
   const [profileCode, setProfileCode] = useState('')
+  const [selectedPermissions, setSelectedPermissions] = useState<Set<Permission>>(new Set())
+
   const { user } = useUser()
+  const { toast } = useToast()
 
   const firestore = useFirestore()
   const staffsRef = useMemoFirebase(
@@ -130,6 +165,7 @@ export default function ProfilesPage() {
       code: profileCode,
       createdBy: user?.email || 'Desconhecido',
       createdAt: new Date().toISOString(),
+      permissions: [],
     }
     setProfiles((prev) => [...prev, newProfile])
     setIsAddDialogOpen(false)
@@ -152,6 +188,34 @@ export default function ProfilesPage() {
     setProfileName('')
     setProfileCode('')
   }
+  
+  const handlePermissionsSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!currentProfile) return;
+    const updatedPermissions = Array.from(selectedPermissions);
+    setProfiles(prev => 
+      prev.map(p => 
+        p.id === currentProfile.id ? { ...p, permissions: updatedPermissions } : p
+      )
+    );
+    toast({
+        title: "Permissões atualizadas!",
+        description: `As permissões para o perfil "${currentProfile.name}" foram salvas.`,
+    })
+    setIsPermissionsDialogOpen(false);
+  }
+
+  const handlePermissionChange = (permission: Permission, checked: boolean) => {
+    setSelectedPermissions(prev => {
+        const newSet = new Set(prev);
+        if (checked) {
+            newSet.add(permission);
+        } else {
+            newSet.delete(permission);
+        }
+        return newSet;
+    });
+  }
 
   const openEditDialog = (profile: Profile) => {
     setCurrentProfile(profile)
@@ -165,6 +229,12 @@ export default function ProfilesPage() {
     setProfileName('')
     setProfileCode('')
     setIsAddDialogOpen(true)
+  }
+  
+  const openPermissionsDialog = (profile: Profile) => {
+    setCurrentProfile(profile);
+    setSelectedPermissions(new Set(profile.permissions || []));
+    setIsPermissionsDialogOpen(true);
   }
 
   const renderProfileForm = () => (
@@ -199,6 +269,7 @@ export default function ProfilesPage() {
   )
 
   return (
+    <>
     <Card>
       <CardHeader>
         <div className='flex items-center justify-between'>
@@ -285,7 +356,10 @@ export default function ProfilesPage() {
                     <DropdownMenuContent align='end'>
                       <DropdownMenuLabel>Ações</DropdownMenuLabel>
                       <DropdownMenuItem onClick={() => openEditDialog(profile)}>
-                        Editar
+                        Editar Nome
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => openPermissionsDialog(profile)}>
+                        Editar Permissões
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -322,5 +396,57 @@ export default function ProfilesPage() {
         </DialogContent>
       </Dialog>
     </Card>
+
+    {/* Permissions Dialog */}
+    <Dialog open={isPermissionsDialogOpen} onOpenChange={setIsPermissionsDialogOpen}>
+        <DialogContent className='max-w-4xl'>
+            <DialogHeader>
+                <DialogTitle>Editar Permissões para "{currentProfile?.name}"</DialogTitle>
+                <DialogDescription>
+                    Selecione as ações que os usuários com este perfil podem realizar em cada módulo.
+                </DialogDescription>
+            </DialogHeader>
+            <form id="permissions-form" onSubmit={handlePermissionsSubmit}>
+                <ScrollArea className='h-[60vh] mt-4'>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Módulo</TableHead>
+                                {permissionActions.map(action => (
+                                    <TableHead key={action.id} className='text-center'>{action.name}</TableHead>
+                                ))}
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {permissionModules.map(module => (
+                                <TableRow key={module.id}>
+                                    <TableCell className='font-medium'>{module.name}</TableCell>
+                                    {permissionActions.map(action => {
+                                        const permissionId: Permission = `${action.id}:${module.id}`;
+                                        return (
+                                            <TableCell key={action.id} className='text-center'>
+                                                <Checkbox
+                                                    checked={selectedPermissions.has(permissionId)}
+                                                    onCheckedChange={(checked) => handlePermissionChange(permissionId, !!checked)}
+                                                />
+                                            </TableCell>
+                                        )
+                                    })}
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </ScrollArea>
+            </form>
+            <DialogFooter className='mt-4'>
+                <Button variant="outline" onClick={() => setIsPermissionsDialogOpen(false)}>Cancelar</Button>
+                <Button type="submit" form="permissions-form">
+                    <ShieldCheck className="mr-2 h-4 w-4" />
+                    Salvar Permissões
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+    </>
   )
 }
