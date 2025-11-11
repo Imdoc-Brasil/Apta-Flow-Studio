@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { MoreHorizontal, PlusCircle, Search, Filter, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -84,6 +84,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
+import { initialClientsData } from '../clients/data'
 
 type StaffStatus = 'Ativo' | 'Licença' | 'Suspenso'
 type StaffSituation = 'Online' | 'Offline'
@@ -100,6 +101,7 @@ export interface Staff {
   phone: string
   status: StaffStatus
   situacao: StaffSituation
+  contractId?: string
 }
 
 const staffFormSchema = z.object({
@@ -108,6 +110,7 @@ const staffFormSchema = z.object({
   perfilId: z.string({ required_error: 'Por favor, selecione um perfil.' }),
   assinatura: z.string().min(2, { message: 'A assinatura é obrigatória.' }),
   phone: z.string().optional(),
+  contractId: z.string().optional(),
 })
 
 type StaffFormValues = z.infer<typeof staffFormSchema>
@@ -140,12 +143,16 @@ export default function StaffsPage() {
       email: '',
       assinatura: '',
       phone: '',
+      contractId: '',
     },
   })
   
   const editForm = useForm<StaffFormValues>({
     resolver: zodResolver(staffFormSchema),
   })
+
+  const perfilIdValue = form.watch('perfilId');
+  const editPerfilIdValue = editForm.watch('perfilId');
 
   const filteredStaffs = useMemo(() => {
     if (!staffs) return []
@@ -181,6 +188,7 @@ export default function StaffsPage() {
       situacao: 'Offline',
       avatar: `https://i.pravatar.cc/150?u=${Math.random()}`,
       fallback,
+      contractId: data.perfilId === 'cliente' ? data.contractId : undefined,
     }
 
     addDocumentNonBlocking(staffsRef, newStaff)
@@ -207,6 +215,7 @@ export default function StaffsPage() {
     const updatedData = {
       ...data,
       fallback,
+      contractId: data.perfilId === 'cliente' ? data.contractId : undefined,
     }
 
     updateDocumentNonBlocking(staffDocRef, updatedData)
@@ -244,7 +253,8 @@ export default function StaffsPage() {
         email: staff.email,
         perfilId: staff.perfilId,
         assinatura: staff.assinatura,
-        phone: staff.phone
+        phone: staff.phone,
+        contractId: staff.contractId,
     })
     setIsEditDialogOpen(true)
   }
@@ -276,7 +286,10 @@ export default function StaffsPage() {
     }
   }
 
-  const renderStaffForm = (formInstance: any, staff?: Staff | null) => (
+  const renderStaffForm = (formInstance: any, staff?: Staff | null) => {
+    const isClientProfile = staff ? editPerfilIdValue === 'cliente' : perfilIdValue === 'cliente';
+
+    return (
     <Form {...formInstance}>
       <form
         id={staff ? 'edit-staff-form' : 'add-staff-form'}
@@ -400,9 +413,41 @@ export default function StaffsPage() {
                 />
             </div>
         </div>
+        {isClientProfile && (
+            <div className='space-y-2'>
+                <FormField
+                  control={formInstance.control}
+                  name='contractId'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Empresa Cliente</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Selecione a empresa do cliente' />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {initialClientsData.map((client) => (
+                            <SelectItem key={client.id} value={client.id}>
+                              {client.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            </div>
+        )}
       </form>
     </Form>
   )
+  }
 
   return (
     <>
@@ -759,5 +804,3 @@ export default function StaffsPage() {
     </>
   )
 }
-
-    

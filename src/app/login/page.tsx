@@ -1,11 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { useAuth } from '@/firebase'
+import { useAuth, useFirestore } from '@/firebase'
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  User,
 } from 'firebase/auth'
+import { doc, getDoc } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import {
@@ -20,37 +22,59 @@ import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { Logo } from '@/components/logo'
 import { Loader2 } from 'lucide-react'
+import type { Staff } from '../dashboard/(main)/employees/page'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const auth = useAuth()
+  const firestore = useFirestore()
   const router = useRouter()
   const { toast } = useToast()
+
+  const handleSuccessfulLogin = async (user: User) => {
+    // Check if the user is a client user
+    const staffDocRef = doc(firestore, 'staffs', user.uid)
+    const staffDocSnap = await getDoc(staffDocRef)
+
+    if (staffDocSnap.exists()) {
+      const staffData = staffDocSnap.data() as Staff
+      if (staffData.perfilId === 'cliente' && staffData.contractId) {
+        // Redirect to specific client dashboard
+        toast({
+          title: 'Login bem-sucedido!',
+          description: 'Redirecionando para o painel do seu cliente...',
+        })
+        router.push(`/dashboard/clients/${staffData.contractId}/info`)
+        return
+      }
+    }
+
+    // Default redirection for admin/staff
+    toast({
+      title: 'Login bem-sucedido!',
+      description: 'Redirecionando para o painel...',
+    })
+    router.push('/dashboard')
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     try {
-      await signInWithEmailAndPassword(auth, email, password)
-      toast({
-        title: 'Login bem-sucedido!',
-        description: 'Redirecionando para o painel...',
-      })
-      router.push('/dashboard')
+      const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      await handleSuccessfulLogin(userCredential.user)
     } catch (error: any) {
       if (error.code === 'auth/invalid-credential') {
-        // This error can mean user not found or wrong password.
-        // We'll attempt to create a new user as a fallback.
         try {
-          await createUserWithEmailAndPassword(auth, email, password)
+          const userCredential = await createUserWithEmailAndPassword(auth, email, password)
           toast({
             title: 'Conta criada com sucesso!',
             description:
               'Como este é seu primeiro acesso, uma nova conta foi criada para você.',
           })
-          router.push('/dashboard')
+          await handleSuccessfulLogin(userCredential.user)
         } catch (createError: any) {
           toast({
             variant: 'destructive',
@@ -59,7 +83,6 @@ export default function LoginPage() {
           })
         }
       } else {
-        // Handle other errors (e.g., network issues)
         toast({
           variant: 'destructive',
           title: 'Erro de Login',

@@ -138,7 +138,22 @@ interface Profile {
   permissions?: Permission[]
 }
 
-export const initialProfiles: Profile[] = []
+export const initialProfiles: Profile[] = [
+  {
+    id: 'cliente',
+    name: 'Cliente',
+    code: 'CLIENT',
+    createdBy: 'sistema',
+    createdAt: new Date().toISOString(),
+    permissions: [
+      'view:clients.info',
+      'view:clients.tickets',
+      'create:clients.tickets',
+      'view:clients.structure',
+      'view:clients.sst',
+    ],
+  },
+]
 
 function ClientSideDate({ dateString }: { dateString?: string }) {
   const [formattedDate, setFormattedDate] = useState('')
@@ -487,20 +502,20 @@ export default function ProfilesPage() {
             </DialogDescription>
           </DialogHeader>
           <form id='permissions-form' onSubmit={handlePermissionsSubmit}>
-             <div className='sticky top-0 bg-background/95 p-2 mt-2 flex items-center border-b'>
-                <div className='flex-1' />
+             <div className='sticky top-0 bg-background/95 p-2 mt-2 flex items-center border-b z-10'>
+                <div className='flex-1 font-semibold pl-10'>Módulo</div>
                 <div className='grid grid-cols-4 gap-4 w-[300px] text-center text-xs font-semibold text-muted-foreground'>
                   {permissionActions.map((action) => (
                     <span key={action.id}>{action.name}</span>
                   ))}
                 </div>
               </div>
-            <ScrollArea className='h-[60vh] mt-4'>
+            <ScrollArea className='h-[60vh] mt-2'>
               <Accordion type='multiple' className='w-full'>
                 {permissionModules.map((module) => (
                   <AccordionItem value={module.id} key={module.id}>
                     <div className='flex items-center bg-muted/30 pr-4 hover:bg-muted/50'>
-                      <AccordionTrigger className='flex-1 p-3 font-medium'>
+                      <AccordionTrigger className='flex-1 p-3 font-medium text-sm'>
                         {module.name}
                       </AccordionTrigger>
                       <div className='grid grid-cols-4 gap-4 w-[300px] text-center'>
@@ -522,15 +537,15 @@ export default function ProfilesPage() {
                       </div>
                     </div>
                     <AccordionContent>
-                      <div className='pl-8 py-2 space-y-2'>
+                      <div className='pl-12 py-2 space-y-2 border-l ml-6'>
                         {module.subModules ? (
                           module.subModules.map((subModule) => (
                             <div
                               key={subModule.id}
                               className='flex items-center pr-4'
                             >
-                              <div className='flex-1 p-2 font-normal'>
-                                <Label>{subModule.name}</Label>
+                              <div className='flex-1 p-2'>
+                                <Label className="font-normal">{subModule.name}</Label>
                               </div>
                               <div className='grid grid-cols-4 gap-4 w-[300px] text-center'>
                                 {permissionActions.map((action) => (
@@ -552,9 +567,8 @@ export default function ProfilesPage() {
                             </div>
                           ))
                         ) : (
-                          <div className='text-sm text-muted-foreground p-4'>
-                            Nenhum submódulo para configurar. As permissões
-                            acima se aplicam a todo o módulo.
+                          <div className='text-sm text-muted-foreground p-4 text-center'>
+                            Nenhum submódulo para configurar.
                           </div>
                         )}
                       </div>
@@ -564,7 +578,7 @@ export default function ProfilesPage() {
               </Accordion>
             </ScrollArea>
           </form>
-          <DialogFooter className='mt-4'>
+          <DialogFooter className='mt-4 pt-4 border-t'>
             <Button
               variant='outline'
               onClick={() => setIsPermissionsDialogOpen(false)}
