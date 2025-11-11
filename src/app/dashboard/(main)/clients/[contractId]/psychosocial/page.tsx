@@ -39,6 +39,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useParams } from 'next/navigation'
+import { initialUnitsData } from '../units/data'
 
 type SurveyStatus = 'Planejada' | 'Em Andamento' | 'Concluída'
 
@@ -46,6 +48,7 @@ interface PsychosocialSurvey {
   id: string
   creationDate: string
   clientName: string
+  unit: string
   circumstances: string
   status: SurveyStatus
 }
@@ -55,6 +58,7 @@ const initialSurveys: PsychosocialSurvey[] = [
     id: 'SURV-2023-001',
     creationDate: '2023-10-15',
     clientName: 'Innovate Inc.',
+    unit: 'Matriz São Paulo',
     circumstances: 'Avaliação Anual 2023',
     status: 'Concluída',
   },
@@ -62,21 +66,34 @@ const initialSurveys: PsychosocialSurvey[] = [
 
 export default function PsychosocialPage() {
   const { toast } = useToast()
+  const params = useParams()
+  const contractId = params.contractId as string
+  const client = initialClientsData.find((c) => c.contractId === contractId)
+  const clientUnits = initialUnitsData.filter(
+    (u) =>
+      initialClientsData.find((c) => c.name === client?.name)?.name ===
+      client?.name
+  ) // This logic is a bit convoluted due to mock data structure
+
   const [surveys, setSurveys] = useState(initialSurveys)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
 
   const handleCreateSurvey = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
-    const clientName = formData.get('clientName') as string
+    const unitId = formData.get('unitId') as string
     const circumstances = formData.get('circumstances') as string
+    const unitName =
+      unitId === 'all'
+        ? 'Todas as Unidades'
+        : clientUnits.find((u) => u.id === unitId)?.name || 'N/A'
 
-    if (!clientName || !circumstances) {
+    if (!unitId || !circumstances || !client) {
       toast({
         variant: 'destructive',
         title: 'Campos Incompletos',
         description:
-          'Por favor, selecione o cliente e descreva as circunstâncias.',
+          'Por favor, selecione a unidade e descreva as circunstâncias.',
       })
       return
     }
@@ -87,7 +104,8 @@ export default function PsychosocialPage() {
         .substring(2, 6)
         .toUpperCase()}`,
       creationDate: new Date().toISOString().split('T')[0],
-      clientName,
+      clientName: client.name,
+      unit: unitName,
       circumstances,
       status: 'Planejada',
     }
@@ -142,18 +160,16 @@ export default function PsychosocialPage() {
               <form id='create-survey-form' onSubmit={handleCreateSurvey}>
                 <div className='grid gap-4 py-4'>
                   <div className='space-y-2'>
-                    <Label htmlFor='clientName'>Empresa Cliente</Label>
-                    <Select name='clientName' required>
+                    <Label htmlFor='unitId'>Unidade(s)</Label>
+                    <Select name='unitId' required>
                       <SelectTrigger>
-                        <SelectValue placeholder='Selecione a empresa' />
+                        <SelectValue placeholder='Selecione a unidade ou todas' />
                       </SelectTrigger>
                       <SelectContent>
-                        {initialClientsData.map((client) => (
-                          <SelectItem
-                            key={client.contractId}
-                            value={client.name}
-                          >
-                            {client.name}
+                        <SelectItem value='all'>Todas as Unidades</SelectItem>
+                        {clientUnits.map((unit) => (
+                          <SelectItem key={unit.id} value={unit.id}>
+                            {unit.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -193,7 +209,7 @@ export default function PsychosocialPage() {
           <TableHeader>
             <TableRow>
               <TableHead>ID da Pesquisa</TableHead>
-              <TableHead>Cliente</TableHead>
+              <TableHead>Unidade</TableHead>
               <TableHead>Circunstância</TableHead>
               <TableHead>Data de Criação</TableHead>
               <TableHead>Status</TableHead>
@@ -208,7 +224,7 @@ export default function PsychosocialPage() {
                 <TableCell className='font-mono text-sm'>
                   {survey.id}
                 </TableCell>
-                <TableCell>{survey.clientName}</TableCell>
+                <TableCell>{survey.unit}</TableCell>
                 <TableCell className='font-medium'>
                   {survey.circumstances}
                 </TableCell>
