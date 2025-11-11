@@ -1,4 +1,3 @@
-
 'use client'
 
 import React, { useState, useMemo, useEffect } from 'react'
@@ -53,7 +52,14 @@ import { useToast } from '@/hooks/use-toast'
 // --- Estrutura de Permissões ---
 
 type Action = 'view' | 'create' | 'edit' | 'delete'
-type Module = 'clients' | 'staffs' | 'tickets' | 'services' | 'risks' | 'health' | 'performance'
+type Module =
+  | 'clients'
+  | 'staffs'
+  | 'tickets'
+  | 'services'
+  | 'risks'
+  | 'health'
+  | 'performance'
 export type Permission = `${Action}:${Module}`
 
 export const permissionModules: { id: Module; name: string }[] = [
@@ -74,7 +80,6 @@ export const permissionActions: { id: Action; name: string }[] = [
 ]
 
 // --- Fim da Estrutura de Permissões ---
-
 
 interface Profile {
   id: string
@@ -110,11 +115,13 @@ export default function ProfilesPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false)
-  
+
   const [currentProfile, setCurrentProfile] = useState<Profile | null>(null)
   const [profileName, setProfileName] = useState('')
   const [profileCode, setProfileCode] = useState('')
-  const [selectedPermissions, setSelectedPermissions] = useState<Set<Permission>>(new Set())
+  const [selectedPermissions, setSelectedPermissions] = useState<
+    Set<Permission>
+  >(new Set())
 
   const { user } = useUser()
   const { toast } = useToast()
@@ -188,33 +195,40 @@ export default function ProfilesPage() {
     setProfileName('')
     setProfileCode('')
   }
-  
-  const handlePermissionsSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!currentProfile) return;
-    const updatedPermissions = Array.from(selectedPermissions);
-    setProfiles(prev => 
-      prev.map(p => 
-        p.id === currentProfile.id ? { ...p, permissions: updatedPermissions } : p
+
+  const handlePermissionsSubmit = (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault()
+    if (!currentProfile) return
+    const updatedPermissions = Array.from(selectedPermissions)
+    setProfiles((prev) =>
+      prev.map((p) =>
+        p.id === currentProfile.id
+          ? { ...p, permissions: updatedPermissions }
+          : p
       )
-    );
+    )
     toast({
-        title: "Permissões atualizadas!",
-        description: `As permissões para o perfil "${currentProfile.name}" foram salvas.`,
+      title: 'Permissões atualizadas!',
+      description: `As permissões para o perfil "${currentProfile.name}" foram salvas.`,
     })
-    setIsPermissionsDialogOpen(false);
+    setIsPermissionsDialogOpen(false)
   }
 
-  const handlePermissionChange = (permission: Permission, checked: boolean) => {
-    setSelectedPermissions(prev => {
-        const newSet = new Set(prev);
-        if (checked) {
-            newSet.add(permission);
-        } else {
-            newSet.delete(permission);
-        }
-        return newSet;
-    });
+  const handlePermissionChange = (
+    permission: Permission,
+    checked: boolean
+  ) => {
+    setSelectedPermissions((prev) => {
+      const newSet = new Set(prev)
+      if (checked) {
+        newSet.add(permission)
+      } else {
+        newSet.delete(permission)
+      }
+      return newSet
+    })
   }
 
   const openEditDialog = (profile: Profile) => {
@@ -230,11 +244,11 @@ export default function ProfilesPage() {
     setProfileCode('')
     setIsAddDialogOpen(true)
   }
-  
+
   const openPermissionsDialog = (profile: Profile) => {
-    setCurrentProfile(profile);
-    setSelectedPermissions(new Set(profile.permissions || []));
-    setIsPermissionsDialogOpen(true);
+    setCurrentProfile(profile)
+    setSelectedPermissions(new Set(profile.permissions || []))
+    setIsPermissionsDialogOpen(true)
   }
 
   const renderProfileForm = () => (
@@ -270,183 +284,213 @@ export default function ProfilesPage() {
 
   return (
     <>
-    <Card>
-      <CardHeader>
-        <div className='flex items-center justify-between'>
-          <div>
-            <CardTitle>Perfis de Acesso</CardTitle>
-            <CardDescription>
-              Gerencie os perfis de acesso e permissões dos staffs.
-            </CardDescription>
-          </div>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size='sm' className='h-8 gap-1' onClick={openAddDialog}>
-                <PlusCircle className='h-3.5 w-3.5' />
-                <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
-                  Adicionar Perfil
-                </span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Adicionar Novo Perfil</DialogTitle>
-                <DialogDescription>
-                  Crie um novo perfil para atribuir aos staffs.
-                </DialogDescription>
-              </DialogHeader>
-              <form id='add-profile-form' onSubmit={handleAddProfile}>
-                {renderProfileForm()}
-              </form>
-              <DialogFooter>
+      <Card>
+        <CardHeader>
+          <div className='flex items-center justify-between'>
+            <div>
+              <CardTitle>Perfis de Acesso</CardTitle>
+              <CardDescription>
+                Gerencie os perfis de acesso e permissões dos staffs.
+              </CardDescription>
+            </div>
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger asChild>
                 <Button
-                  variant='outline'
-                  onClick={() => setIsAddDialogOpen(false)}
+                  size='sm'
+                  className='h-8 gap-1'
+                  onClick={openAddDialog}
                 >
-                  Cancelar
+                  <PlusCircle className='h-3.5 w-3.5' />
+                  <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
+                    Adicionar Perfil
+                  </span>
                 </Button>
-                <Button type='submit' form='add-profile-form'>
-                  Salvar Perfil
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nome do Perfil</TableHead>
-              <TableHead>Código</TableHead>
-              <TableHead>Criado por</TableHead>
-              <TableHead>Data de Criação</TableHead>
-              <TableHead className='text-right'>
-                Staffs com este Perfil
-              </TableHead>
-              <TableHead>
-                <span className='sr-only'>Ações</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {profiles.map((profile) => (
-              <TableRow key={profile.id}>
-                <TableCell className='font-medium'>{profile.name}</TableCell>
-                <TableCell>{profile.code}</TableCell>
-                <TableCell className='text-muted-foreground'>
-                  {profile.createdBy}
-                </TableCell>
-                <TableCell className='text-muted-foreground'>
-                  <ClientSideDate dateString={profile.createdAt} />
-                </TableCell>
-                <TableCell className='text-right'>
-                  <Badge variant='secondary'>
-                    {staffCountByProfile[profile.id] || 0}
-                  </Badge>
-                </TableCell>
-                <TableCell className='text-right'>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button aria-haspopup='true' size='icon' variant='ghost'>
-                        <MoreHorizontal className='h-4 w-4' />
-                        <span className='sr-only'>Alternar menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align='end'>
-                      <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => openEditDialog(profile)}>
-                        Editar Nome
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => openPermissionsDialog(profile)}>
-                        Editar Permissões
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Adicionar Novo Perfil</DialogTitle>
+                  <DialogDescription>
+                    Crie um novo perfil para atribuir aos staffs.
+                  </DialogDescription>
+                </DialogHeader>
+                <form id='add-profile-form' onSubmit={handleAddProfile}>
+                  {renderProfileForm()}
+                </form>
+                <DialogFooter>
+                  <Button
+                    variant='outline'
+                    onClick={() => setIsAddDialogOpen(false)}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button type='submit' form='add-profile-form'>
+                    Salvar Perfil
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome do Perfil</TableHead>
+                <TableHead>Código</TableHead>
+                <TableHead>Criado por</TableHead>
+                <TableHead>Data de Criação</TableHead>
+                <TableHead className='text-right'>
+                  Staffs com este Perfil
+                </TableHead>
+                <TableHead>
+                  <span className='sr-only'>Ações</span>
+                </TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
+            </TableHeader>
+            <TableBody>
+              {profiles.map((profile) => (
+                <TableRow key={profile.id}>
+                  <TableCell className='font-medium'>{profile.name}</TableCell>
+                  <TableCell>{profile.code}</TableCell>
+                  <TableCell className='text-muted-foreground'>
+                    {profile.createdBy}
+                  </TableCell>
+                  <TableCell className='text-muted-foreground'>
+                    <ClientSideDate dateString={profile.createdAt} />
+                  </TableCell>
+                  <TableCell className='text-right'>
+                    <Badge variant='secondary'>
+                      {staffCountByProfile[profile.id] || 0}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className='text-right'>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          aria-haspopup='true'
+                          size='icon'
+                          variant='ghost'
+                        >
+                          <MoreHorizontal className='h-4 w-4' />
+                          <span className='sr-only'>Alternar menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align='end'>
+                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                        <DropdownMenuItem
+                          onClick={() => openEditDialog(profile)}
+                        >
+                          Editar Nome
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => openPermissionsDialog(profile)}
+                        >
+                          Editar Permissões
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
 
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
+        {/* Edit Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Editar Perfil</DialogTitle>
+              <DialogDescription>
+                Modifique os detalhes do perfil de acesso.
+              </DialogDescription>
+            </DialogHeader>
+            <form id='edit-profile-form' onSubmit={handleEditProfile}>
+              {renderProfileForm()}
+            </form>
+            <DialogFooter>
+              <Button
+                variant='outline'
+                onClick={() => setIsEditDialogOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button type='submit' form='edit-profile-form'>
+                Salvar Alterações
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </Card>
+
+      {/* Permissions Dialog */}
+      <Dialog
+        open={isPermissionsDialogOpen}
+        onOpenChange={setIsPermissionsDialogOpen}
+      >
+        <DialogContent className='max-w-4xl'>
           <DialogHeader>
-            <DialogTitle>Editar Perfil</DialogTitle>
+            <DialogTitle>
+              Editar Permissões para "{currentProfile?.name}"
+            </DialogTitle>
             <DialogDescription>
-              Modifique os detalhes do perfil de acesso.
+              Selecione as ações que os usuários com este perfil podem realizar
+              em cada módulo.
             </DialogDescription>
           </DialogHeader>
-          <form id='edit-profile-form' onSubmit={handleEditProfile}>
-            {renderProfileForm()}
+          <form id='permissions-form' onSubmit={handlePermissionsSubmit}>
+            <ScrollArea className='h-[60vh] mt-4'>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Módulo</TableHead>
+                    {permissionActions.map((action) => (
+                      <TableHead key={action.id} className='text-center'>
+                        {action.name}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {permissionModules.map((module) => (
+                    <TableRow key={module.id}>
+                      <TableCell className='font-medium'>
+                        {module.name}
+                      </TableCell>
+                      {permissionActions.map((action) => {
+                        const permissionId: Permission =
+                          `${action.id}:${module.id}`
+                        return (
+                          <TableCell key={action.id} className='text-center'>
+                            <Checkbox
+                              checked={selectedPermissions.has(permissionId)}
+                              onCheckedChange={(checked) =>
+                                handlePermissionChange(permissionId, !!checked)
+                              }
+                            />
+                          </TableCell>
+                        )
+                      })}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </ScrollArea>
           </form>
-          <DialogFooter>
+          <DialogFooter className='mt-4'>
             <Button
               variant='outline'
-              onClick={() => setIsEditDialogOpen(false)}
+              onClick={() => setIsPermissionsDialogOpen(false)}
             >
               Cancelar
             </Button>
-            <Button type='submit' form='edit-profile-form'>
-              Salvar Alterações
+            <Button type='submit' form='permissions-form'>
+              <ShieldCheck className='mr-2 h-4 w-4' />
+              Salvar Permissões
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </Card>
-
-    {/* Permissions Dialog */}
-    <Dialog open={isPermissionsDialogOpen} onOpenChange={setIsPermissionsDialogOpen}>
-        <DialogContent className='max-w-4xl'>
-            <DialogHeader>
-                <DialogTitle>Editar Permissões para "{currentProfile?.name}"</DialogTitle>
-                <DialogDescription>
-                    Selecione as ações que os usuários com este perfil podem realizar em cada módulo.
-                </DialogDescription>
-            </DialogHeader>
-            <form id="permissions-form" onSubmit={handlePermissionsSubmit}>
-                <ScrollArea className='h-[60vh] mt-4'>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Módulo</TableHead>
-                                {permissionActions.map(action => (
-                                    <TableHead key={action.id} className='text-center'>{action.name}</TableHead>
-                                ))}
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {permissionModules.map(module => (
-                                <TableRow key={module.id}>
-                                    <TableCell className='font-medium'>{module.name}</TableCell>
-                                    {permissionActions.map(action => {
-                                        const permissionId: Permission = `${action.id}:${module.id}`;
-                                        return (
-                                            <TableCell key={action.id} className='text-center'>
-                                                <Checkbox
-                                                    checked={selectedPermissions.has(permissionId)}
-                                                    onCheckedChange={(checked) => handlePermissionChange(permissionId, !!checked)}
-                                                />
-                                            </TableCell>
-                                        )
-                                    })}
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </ScrollArea>
-            </form>
-            <DialogFooter className='mt-4'>
-                <Button variant="outline" onClick={() => setIsPermissionsDialogOpen(false)}>Cancelar</Button>
-                <Button type="submit" form="permissions-form">
-                    <ShieldCheck className="mr-2 h-4 w-4" />
-                    Salvar Permissões
-                </Button>
-            </DialogFooter>
-        </DialogContent>
-    </Dialog>
     </>
   )
 }
