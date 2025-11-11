@@ -245,7 +245,7 @@ export default function Dashboard() {
                   </p>
                 </div>
                 <div className='ml-auto font-medium'>
-                  {index === 0 ? 'Entrou Hoje' : 'Entrou Ontem'}
+                  {staff.code}
                 </div>
               </div>
             ))}
@@ -255,5 +255,3 @@ export default function Dashboard() {
     </>
   )
 }
-
-    

@@ -90,6 +90,7 @@ type StaffSituation = 'Online' | 'Offline'
 
 export interface Staff {
   id?: string
+  code: string
   name: string
   perfilId: string
   assinatura: string
@@ -175,6 +176,7 @@ export default function StaffsPage() {
 
     const newStaff: Omit<Staff, 'id'> = {
       ...data,
+      code: `STF-${Math.floor(100 + Math.random() * 900)}`,
       status: 'Ativo',
       situacao: 'Offline',
       avatar: `https://i.pravatar.cc/150?u=${Math.random()}`,
@@ -276,32 +278,40 @@ export default function StaffsPage() {
 
   const renderStaffForm = (formInstance: any, staff?: Staff | null) => (
     <Form {...formInstance}>
-      <form id={staff ? 'edit-staff-form' : 'add-staff-form'} onSubmit={formInstance.handleSubmit(staff ? onEditSubmit : onSubmit)} className='grid gap-4 py-4'>
-        <div className='grid grid-cols-4 items-center gap-4'>
-          <Label className='text-right'>Avatar</Label>
-          <div className='col-span-3 flex items-center gap-4'>
+      <form id={staff ? 'edit-staff-form' : 'add-staff-form'} onSubmit={formInstance.handleSubmit(staff ? onEditSubmit : onSubmit)} className='space-y-4 py-4'>
+        <div className='flex items-center gap-4'>
             <Avatar className='h-16 w-16'>
               <AvatarImage src={staff?.avatar} />
-              <AvatarFallback>{staff?.fallback}</AvatarFallback>
+              <AvatarFallback>{staff?.fallback || 'AV'}</AvatarFallback>
             </Avatar>
-            <Input
-              id='avatar-upload'
-              name='avatar-upload'
-              type='file'
-              className='text-sm'
-            />
-          </div>
+            <div className='flex-1 space-y-2'>
+                <Label htmlFor='avatar-upload'>Avatar</Label>
+                <Input
+                id='avatar-upload'
+                name='avatar-upload'
+                type='file'
+                className='text-sm'
+                />
+            </div>
         </div>
+
+        {!staff && (
+            <div className='space-y-2'>
+                <Label htmlFor='code'>Código</Label>
+                <Input id='code' name='code' value={`STF-${'####'}`} disabled />
+            </div>
+        )}
+        
         <FormField
           control={formInstance.control}
           name="name"
           render={({ field }) => (
-            <FormItem className='grid grid-cols-4 items-center gap-4'>
-              <FormLabel className='text-right'>Nome</FormLabel>
-              <FormControl className='col-span-3'>
+            <FormItem>
+              <FormLabel>Nome</FormLabel>
+              <FormControl>
                 <Input {...field} />
               </FormControl>
-              <FormMessage className='col-start-2 col-span-3' />
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -309,10 +319,10 @@ export default function StaffsPage() {
           control={formInstance.control}
           name="perfilId"
           render={({ field }) => (
-            <FormItem className='grid grid-cols-4 items-center gap-4'>
-              <FormLabel className='text-right'>Perfil</FormLabel>
+            <FormItem>
+              <FormLabel>Perfil</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl className='col-span-3'>
+                <FormControl>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um perfil" />
                   </SelectTrigger>
@@ -325,7 +335,7 @@ export default function StaffsPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <FormMessage className='col-start-2 col-span-3' />
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -333,12 +343,12 @@ export default function StaffsPage() {
           control={formInstance.control}
           name="assinatura"
           render={({ field }) => (
-            <FormItem className='grid grid-cols-4 items-center gap-4'>
-              <FormLabel className='text-right'>Assinatura</FormLabel>
-              <FormControl className='col-span-3'>
+            <FormItem>
+              <FormLabel>Assinatura</FormLabel>
+              <FormControl>
                 <Input {...field} />
               </FormControl>
-              <FormMessage className='col-start-2 col-span-3' />
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -346,12 +356,12 @@ export default function StaffsPage() {
           control={formInstance.control}
           name="email"
           render={({ field }) => (
-            <FormItem className='grid grid-cols-4 items-center gap-4'>
-              <FormLabel className='text-right'>Email</FormLabel>
-              <FormControl className='col-span-3'>
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
                 <Input type='email' {...field} />
               </FormControl>
-              <FormMessage className='col-start-2 col-span-3' />
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -359,12 +369,12 @@ export default function StaffsPage() {
           control={formInstance.control}
           name="phone"
           render={({ field }) => (
-            <FormItem className='grid grid-cols-4 items-center gap-4'>
-              <FormLabel className='text-right'>Telefone</FormLabel>
-              <FormControl className='col-span-3'>
+            <FormItem>
+              <FormLabel>Telefone</FormLabel>
+              <FormControl>
                 <Input {...field} />
               </FormControl>
-              <FormMessage className='col-start-2 col-span-3' />
+              <FormMessage />
             </FormItem>
           )}
         />
@@ -433,7 +443,7 @@ export default function StaffsPage() {
                   </span>
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className='sm:max-w-lg'>
                 <DialogHeader>
                   <DialogTitle>Adicionar Novo Staff</DialogTitle>
                   <DialogDescription>
@@ -467,10 +477,10 @@ export default function StaffsPage() {
                 <TableRow>
                   <TableHead>Staff</TableHead>
                   <TableHead className='hidden md:table-cell'>
-                    Perfil
+                    Código
                   </TableHead>
                   <TableHead className='hidden md:table-cell'>
-                    Assinatura
+                    Perfil
                   </TableHead>
                   <TableHead className='hidden sm:table-cell'>
                     Situação
@@ -497,17 +507,14 @@ export default function StaffsPage() {
                           <p className='text-sm text-muted-foreground'>
                             {staff.email}
                           </p>
-                          <p className='text-sm text-muted-foreground'>
-                            {staff.phone}
-                          </p>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell className='hidden md:table-cell'>
-                      {getProfileName(staff.perfilId)}
+                      {staff.code}
                     </TableCell>
                     <TableCell className='hidden md:table-cell'>
-                      {staff.assinatura}
+                      {getProfileName(staff.perfilId)}
                     </TableCell>
                     <TableCell className='hidden sm:table-cell'>
                       <div className='flex items-center gap-2'>
@@ -610,7 +617,7 @@ export default function StaffsPage() {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className='sm:max-w-xl'>
+        <DialogContent className='sm:max-w-lg'>
           <DialogHeader>
             <DialogTitle>Editar Staff</DialogTitle>
             <DialogDescription>
@@ -657,6 +664,12 @@ export default function StaffsPage() {
                     {currentStaff.phone}
                   </p>
                 </div>
+              </div>
+               <div className='space-y-2'>
+                <p className='text-sm font-medium'>Código</p>
+                <p className='text-muted-foreground'>
+                  {currentStaff.code}
+                </p>
               </div>
               <div className='space-y-2'>
                 <p className='text-sm font-medium'>Perfil</p>
