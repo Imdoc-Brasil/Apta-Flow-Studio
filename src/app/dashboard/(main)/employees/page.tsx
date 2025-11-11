@@ -278,106 +278,128 @@ export default function StaffsPage() {
 
   const renderStaffForm = (formInstance: any, staff?: Staff | null) => (
     <Form {...formInstance}>
-      <form id={staff ? 'edit-staff-form' : 'add-staff-form'} onSubmit={formInstance.handleSubmit(staff ? onEditSubmit : onSubmit)} className='space-y-4 py-4'>
+      <form
+        id={staff ? 'edit-staff-form' : 'add-staff-form'}
+        onSubmit={formInstance.handleSubmit(staff ? onEditSubmit : onSubmit)}
+        className='space-y-4 py-4'
+      >
         <div className='flex items-center gap-4'>
-            <Avatar className='h-16 w-16'>
-              <AvatarImage src={staff?.avatar} />
-              <AvatarFallback>{staff?.fallback || 'AV'}</AvatarFallback>
-            </Avatar>
-            <div className='flex-1 space-y-2'>
-                <Label htmlFor='avatar-upload'>Avatar</Label>
-                <Input
-                id='avatar-upload'
-                name='avatar-upload'
-                type='file'
-                className='text-sm'
+          <Avatar className='h-16 w-16'>
+            <AvatarImage src={staff?.avatar} />
+            <AvatarFallback>{staff?.fallback || 'AV'}</AvatarFallback>
+          </Avatar>
+          <div className='flex-1 space-y-2'>
+            <Label htmlFor='avatar-upload'>Avatar</Label>
+            <Input
+              id='avatar-upload'
+              name='avatar-upload'
+              type='file'
+              className='text-sm'
+            />
+          </div>
+        </div>
+
+        <div className='grid grid-cols-3 gap-4'>
+          <div className='col-span-2 space-y-2'>
+            <FormField
+              control={formInstance.control}
+              name='name'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nome</FormLabel>
+                  <FormControl>
+                    <Input {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+          <div className='col-span-1 space-y-2'>
+            <Label htmlFor='code'>Código</Label>
+            <Input id='code' name='code' value={`STF-${'####'}`} disabled />
+          </div>
+        </div>
+
+        <div className='grid grid-cols-2 gap-4'>
+           <div className='space-y-2'>
+                <FormField
+                  control={formInstance.control}
+                  name='email'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input type='email' {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            </div>
+            <div className='space-y-2'>
+                <FormField
+                  control={formInstance.control}
+                  name='phone'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Telefone</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
             </div>
         </div>
 
-        {!staff && (
+        <div className='grid grid-cols-2 gap-4'>
             <div className='space-y-2'>
-                <Label htmlFor='code'>Código</Label>
-                <Input id='code' name='code' value={`STF-${'####'}`} disabled />
+                <FormField
+                  control={formInstance.control}
+                  name='perfilId'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Perfil</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Selecione um perfil' />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {initialProfiles.map((profile) => (
+                            <SelectItem key={profile.id} value={profile.id}>
+                              {profile.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
             </div>
-        )}
-        
-        <FormField
-          control={formInstance.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nome</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={formInstance.control}
-          name="perfilId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Perfil</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um perfil" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {initialProfiles.map((profile) => (
-                    <SelectItem key={profile.id} value={profile.id}>
-                      {profile.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={formInstance.control}
-          name="assinatura"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Assinatura</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={formInstance.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input type='email' {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={formInstance.control}
-          name="phone"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Telefone</FormLabel>
-              <FormControl>
-                <Input {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+            <div className='space-y-2'>
+                <FormField
+                  control={formInstance.control}
+                  name='assinatura'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Assinatura (Credencial)</FormLabel>
+                      <FormControl>
+                        <Input placeholder='Ex: Eng. Civil' {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            </div>
+        </div>
       </form>
     </Form>
   )
@@ -737,3 +759,5 @@ export default function StaffsPage() {
     </>
   )
 }
+
+    
