@@ -1,4 +1,3 @@
-
 'use client'
 
 import Link from 'next/link'
@@ -33,6 +32,7 @@ import {
   ArrowLeft,
   Ticket,
   MapPin,
+  Smile,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -99,6 +99,11 @@ export function ClientSidebar() {
       href: `${basePath}/pgr/history`,
       label: 'Gestão de PGR',
       icon: FileText,
+    },
+    {
+      href: `${basePath}/psychosocial`,
+      label: 'Gestão de Riscos Psicossociais',
+      icon: Smile,
     },
     { href: `${basePath}/pcmso`, label: 'Gestão de PCMSO', icon: BookUser },
     { href: `${basePath}/asos`, label: 'Gestão de ASOs', icon: ClipboardCheck },
