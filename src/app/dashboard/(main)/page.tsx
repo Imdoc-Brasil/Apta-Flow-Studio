@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useEffect } from 'react'
@@ -29,11 +30,18 @@ import {
 } from '@/components/ui/table'
 import Link from 'next/link'
 import { useTicketStore } from './tickets/tickets-store'
-import { initialClientsData } from '@/app/dashboard/(main)/clients/data'
-import { initialStaffsData } from './employees/page'
-import { useUser, useFirestore, errorEmitter, FirestorePermissionError } from '@/firebase'
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
+import {
+  useUser,
+  useFirestore,
+  errorEmitter,
+  FirestorePermissionError,
+  useCollection,
+  useMemoFirebase,
+} from '@/firebase'
+import { doc, getDoc, setDoc, serverTimestamp, collection } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
+import type { Client } from './clients/data'
+import type { Staff } from './employees/page'
 
 const kpiDataStatic = [
   {
@@ -56,13 +64,25 @@ export default function Dashboard() {
   const firestore = useFirestore()
   const { toast } = useToast()
 
+  const clientsRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'clients') : null),
+    [firestore]
+  )
+  const { data: clients } = useCollection<Client>(clientsRef)
+
+  const staffsRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'staffs') : null),
+    [firestore]
+  )
+  const { data: staffs } = useCollection<Staff>(staffsRef)
+
   useEffect(() => {
     const promoteToSuperAdmin = async () => {
-      if (!user || !firestore) return;
+      if (!user || !firestore) return
 
-      const adminRoleRef = doc(firestore, 'roles_admin', user.uid);
+      const adminRoleRef = doc(firestore, 'roles_admin', user.uid)
       try {
-        const docSnap = await getDoc(adminRoleRef);
+        const docSnap = await getDoc(adminRoleRef)
         if (!docSnap.exists()) {
           const creationData = { createdAt: serverTimestamp() }
           // User is not an admin yet, promote them.
@@ -71,8 +91,9 @@ export default function Dashboard() {
             .then(() => {
               toast({
                 title: 'Bem-vindo, Superadministrador!',
-                description: 'Sua conta foi elevada para o nível de superadministrador.',
-              });
+                description:
+                  'Sua conta foi elevada para o nível de superadministrador.',
+              })
             })
             .catch((error) => {
               // Construct and emit the detailed error for debugging.
@@ -80,42 +101,43 @@ export default function Dashboard() {
                 path: adminRoleRef.path,
                 operation: 'create',
                 requestResourceData: creationData,
-              });
-              errorEmitter.emit('permission-error', permissionError);
-            });
+              })
+              errorEmitter.emit('permission-error', permissionError)
+            })
         }
       } catch (error) {
-         // This will catch errors from getDoc, which is less likely to be a permission issue
-         // for this specific logic, but good to have.
-         const permissionError = new FirestorePermissionError({
-            path: adminRoleRef.path,
-            operation: 'get',
-          });
-         errorEmitter.emit('permission-error', permissionError);
+        // This will catch errors from getDoc, which is less likely to be a permission issue
+        // for this specific logic, but good to have.
+        const permissionError = new FirestorePermissionError({
+          path: adminRoleRef.path,
+          operation: 'get',
+        })
+        errorEmitter.emit('permission-error', permissionError)
       }
-    };
+    }
 
     if (!isUserLoading && user) {
-      promoteToSuperAdmin();
+      promoteToSuperAdmin()
     }
-  }, [user, isUserLoading, firestore, toast]);
+  }, [user, isUserLoading, firestore, toast])
 
-  const activeClientsCount = initialClientsData.filter(
+  const activeClientsCount = clients?.filter(
     (c) => c.status === 'Ativo'
   ).length
+
   const openTicketsCount = tickets.filter((t) => t.status === 'Aberto').length
 
   const recentTickets = [...tickets]
     .sort((a, b) => new Date(b.updated).getTime() - new Date(a.updated).getTime())
     .slice(0, 5)
 
-  const newStaffs = initialStaffsData.slice(0, 2)
+  const newStaffs = (staffs || []).slice(0, 2)
 
   const kpiDataDynamic = [
     {
       title: 'Clientes Ativos',
-      value: `+${activeClientsCount}`,
-      description: `Total de ${initialClientsData.length} clientes`,
+      value: `+${activeClientsCount || 0}`,
+      description: `Total de ${clients?.length || 0} clientes`,
       icon: <Briefcase className='h-4 w-4 text-muted-foreground' />,
     },
     {
@@ -232,3 +254,5 @@ export default function Dashboard() {
     </>
   )
 }
+
+    

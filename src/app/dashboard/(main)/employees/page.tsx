@@ -1,7 +1,8 @@
+
 'use client'
 
 import { useState, useMemo } from 'react'
-import { MoreHorizontal, PlusCircle, Search, Filter } from 'lucide-react'
+import { MoreHorizontal, PlusCircle, Search, Filter, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
   Card,
@@ -62,61 +63,41 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { initialProfiles } from '@/app/dashboard/(main)/profiles/page'
+import {
+  useCollection,
+  useFirestore,
+  useMemoFirebase,
+  addDocumentNonBlocking,
+  updateDocumentNonBlocking,
+  deleteDocumentNonBlocking,
+} from '@/firebase'
+import { collection, doc } from 'firebase/firestore'
+import { useToast } from '@/hooks/use-toast'
 
 type StaffStatus = 'Ativo' | 'Licença' | 'Suspenso'
 type StaffSituation = 'Online' | 'Offline'
 
-export const initialStaffsData = [
-  {
-    name: 'Sarah Chen',
-    perfilId: '1',
-    assinatura: 'Gerente de Projeto Principal',
-    avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026701d',
-    fallback: 'SC',
-    email: 'sarah.chen@aptaflow.com',
-    phone: '555-0101',
-    status: 'Ativo' as StaffStatus,
-    situacao: 'Online' as StaffSituation,
-  },
-  {
-    name: 'David Rodriguez',
-    perfilId: '2',
-    assinatura: 'Engenheiro de Software Sênior',
-    avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026702d',
-    fallback: 'DR',
-    email: 'david.r@aptaflow.com',
-    phone: '555-0102',
-    status: 'Ativo' as StaffStatus,
-    situacao: 'Offline' as StaffSituation,
-  },
-  {
-    name: 'Emily White',
-    perfilId: '3',
-    assinatura: 'Especialista de Suporte',
-    avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026703d',
-    fallback: 'EW',
-    email: 'emily.w@aptaflow.com',
-    phone: '555-0103',
-    status: 'Ativo' as StaffStatus,
-    situacao: 'Online' as StaffSituation,
-  },
-  {
-    name: 'Michael Brown',
-    perfilId: '4',
-    assinatura: 'Engenheiro de DevOps',
-    avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704d',
-    fallback: 'MB',
-    email: 'michael.b@aptaflow.com',
-    phone: '555-0104',
-    status: 'Licença' as StaffStatus,
-    situacao: 'Offline' as StaffSituation,
-  },
-]
-
-export type Staff = (typeof initialStaffsData)[0]
+export interface Staff {
+  id?: string
+  name: string
+  perfilId: string
+  assinatura: string
+  avatar: string
+  fallback: string
+  email: string
+  phone: string
+  status: StaffStatus
+  situacao: StaffSituation
+}
 
 export default function StaffsPage() {
-  const [staffs, setStaffs] = useState(initialStaffsData)
+  const firestore = useFirestore()
+  const staffsRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'staffs') : null),
+    [firestore]
+  )
+  const { data: staffs, isLoading } = useCollection<Staff>(staffsRef)
+
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
@@ -128,8 +109,10 @@ export default function StaffsPage() {
     'Licença',
     'Suspenso',
   ])
+  const { toast } = useToast()
 
   const filteredStaffs = useMemo(() => {
+    if (!staffs) return []
     return staffs
       .filter((staff) => {
         const term = searchTerm.toLowerCase()
@@ -147,6 +130,8 @@ export default function StaffsPage() {
 
   const handleAddStaff = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!staffsRef) return
+
     const formData = new FormData(event.currentTarget)
     const name = formData.get('name') as string
     const fallback = name
@@ -156,7 +141,7 @@ export default function StaffsPage() {
       .substring(0, 2)
       .toUpperCase()
 
-    const newStaff: Staff = {
+    const newStaff: Omit<Staff, 'id'> = {
       name,
       assinatura: formData.get('assinatura') as string,
       perfilId: formData.get('perfil') as string,
@@ -167,13 +152,20 @@ export default function StaffsPage() {
       avatar: `https://i.pravatar.cc/150?u=${Math.random()}`,
       fallback,
     }
-    setStaffs((prev) => [newStaff, ...prev])
+
+    addDocumentNonBlocking(staffsRef, newStaff)
+    toast({
+      title: 'Staff Adicionado!',
+      description: `${name} foi adicionado à equipe.`,
+    })
     setIsAddDialogOpen(false)
   }
 
   const handleEditStaff = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!currentStaff) return
+    if (!currentStaff?.id || !firestore) return
+    const staffDocRef = doc(firestore, 'staffs', currentStaff.id)
+
     const formData = new FormData(event.currentTarget)
     const name = formData.get('name') as string
     const fallback = name
@@ -183,40 +175,40 @@ export default function StaffsPage() {
       .substring(0, 2)
       .toUpperCase()
 
-    setStaffs((prev) =>
-      prev.map((staff) =>
-        staff.email === currentStaff.email
-          ? {
-              ...staff,
-              name,
-              assinatura: formData.get('assinatura') as string,
-              perfilId: formData.get('perfil') as string,
-              email: formData.get('email') as string,
-              phone: formData.get('phone') as string,
-              fallback,
-            }
-          : staff
-      )
-    )
+    const updatedData = {
+      name,
+      assinatura: formData.get('assinatura') as string,
+      perfilId: formData.get('perfil') as string,
+      email: formData.get('email') as string,
+      phone: formData.get('phone') as string,
+      fallback,
+    }
+
+    updateDocumentNonBlocking(staffDocRef, updatedData)
+    toast({
+      title: 'Staff Atualizado!',
+      description: 'As informações foram atualizadas com sucesso.',
+    })
     setIsEditDialogOpen(false)
     setCurrentStaff(null)
   }
 
   const handleDeleteStaff = () => {
-    if (!currentStaff) return
-    setStaffs((prev) =>
-      prev.filter((staff) => staff.email !== currentStaff.email)
-    )
+    if (!currentStaff?.id || !firestore) return
+    const staffDocRef = doc(firestore, 'staffs', currentStaff.id)
+    deleteDocumentNonBlocking(staffDocRef)
+    toast({
+      title: 'Staff Removido!',
+      variant: 'destructive',
+    })
     setIsDeleteDialogOpen(false)
     setCurrentStaff(null)
   }
 
-  const handleChangeStatus = (staffEmail: string, newStatus: StaffStatus) => {
-    setStaffs((prev) =>
-      prev.map((staff) =>
-        staff.email === staffEmail ? { ...staff, status: newStatus } : staff
-      )
-    )
+  const handleChangeStatus = (staffId: string, newStatus: StaffStatus) => {
+    if (!firestore) return
+    const staffDocRef = doc(firestore, 'staffs', staffId)
+    updateDocumentNonBlocking(staffDocRef, { status: newStatus })
   }
 
   const openEditDialog = (staff: Staff) => {
@@ -423,131 +415,154 @@ export default function StaffsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Staff</TableHead>
-                <TableHead className='hidden md:table-cell'>Perfil</TableHead>
-                <TableHead className='hidden md:table-cell'>
-                  Assinatura
-                </TableHead>
-                <TableHead className='hidden sm:table-cell'>Situação</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>
-                  <span className='sr-only'>Ações</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredStaffs.map((staff) => (
-                <TableRow key={staff.email}>
-                  <TableCell>
-                    <div className='flex items-center gap-3'>
-                      <Avatar className='h-9 w-9'>
-                        <AvatarImage src={staff.avatar} alt={staff.name} />
-                        <AvatarFallback>{staff.fallback}</AvatarFallback>
-                      </Avatar>
-                      <div className='grid gap-1'>
-                        <p className='font-medium leading-none'>{staff.name}</p>
-                        <p className='text-sm text-muted-foreground'>
-                          {staff.email}
-                        </p>
-                        <p className='text-sm text-muted-foreground'>
-                          {staff.phone}
-                        </p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className='hidden md:table-cell'>
-                    {getProfileName(staff.perfilId)}
-                  </TableCell>
-                  <TableCell className='hidden md:table-cell'>
-                    {staff.assinatura}
-                  </TableCell>
-                  <TableCell className='hidden sm:table-cell'>
-                    <div className='flex items-center gap-2'>
-                      <span
-                        className={`h-2 w-2 rounded-full ${
-                          staff.situacao === 'Online'
-                            ? 'bg-green-500'
-                            : 'bg-gray-400'
-                        }`}
-                      ></span>
-                      <span>{staff.situacao}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={getStatusBadgeVariant(staff.status)}>
-                      {staff.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          aria-haspopup='true'
-                          size='icon'
-                          variant='ghost'
-                        >
-                          <MoreHorizontal className='h-4 w-4' />
-                          <span className='sr-only'>Alternar menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align='end'>
-                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                        <DropdownMenuItem
-                          onClick={() => openDetailDialog(staff)}
-                        >
-                          Ver Detalhes
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => openEditDialog(staff)}>
-                          Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuSub>
-                          <DropdownMenuSubTrigger>
-                            Alterar Status
-                          </DropdownMenuSubTrigger>
-                          <DropdownMenuPortal>
-                            <DropdownMenuSubContent>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleChangeStatus(staff.email, 'Ativo')
-                                }
-                              >
-                                Ativo
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleChangeStatus(staff.email, 'Licença')
-                                }
-                              >
-                                Licença
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleChangeStatus(staff.email, 'Suspenso')
-                                }
-                              >
-                                Suspenso
-                              </DropdownMenuItem>
-                            </DropdownMenuSubContent>
-                          </DropdownMenuPortal>
-                        </DropdownMenuSub>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className='text-destructive'
-                          onClick={() => openDeleteDialog(staff)}
-                        >
-                          Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+          {isLoading ? (
+            <div className='flex justify-center items-center h-64'>
+              <Loader2 className='h-8 w-8 animate-spin text-muted-foreground' />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Staff</TableHead>
+                  <TableHead className='hidden md:table-cell'>
+                    Perfil
+                  </TableHead>
+                  <TableHead className='hidden md:table-cell'>
+                    Assinatura
+                  </TableHead>
+                  <TableHead className='hidden sm:table-cell'>
+                    Situação
+                  </TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>
+                    <span className='sr-only'>Ações</span>
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredStaffs.map((staff) => (
+                  <TableRow key={staff.email}>
+                    <TableCell>
+                      <div className='flex items-center gap-3'>
+                        <Avatar className='h-9 w-9'>
+                          <AvatarImage src={staff.avatar} alt={staff.name} />
+                          <AvatarFallback>{staff.fallback}</AvatarFallback>
+                        </Avatar>
+                        <div className='grid gap-1'>
+                          <p className='font-medium leading-none'>
+                            {staff.name}
+                          </p>
+                          <p className='text-sm text-muted-foreground'>
+                            {staff.email}
+                          </p>
+                          <p className='text-sm text-muted-foreground'>
+                            {staff.phone}
+                          </p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className='hidden md:table-cell'>
+                      {getProfileName(staff.perfilId)}
+                    </TableCell>
+                    <TableCell className='hidden md:table-cell'>
+                      {staff.assinatura}
+                    </TableCell>
+                    <TableCell className='hidden sm:table-cell'>
+                      <div className='flex items-center gap-2'>
+                        <span
+                          className={`h-2 w-2 rounded-full ${
+                            staff.situacao === 'Online'
+                              ? 'bg-green-500'
+                              : 'bg-gray-400'
+                          }`}
+                        ></span>
+                        <span>{staff.situacao}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getStatusBadgeVariant(staff.status)}>
+                        {staff.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            aria-haspopup='true'
+                            size='icon'
+                            variant='ghost'
+                          >
+                            <MoreHorizontal className='h-4 w-4' />
+                            <span className='sr-only'>Alternar menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end'>
+                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                          <DropdownMenuItem
+                            onClick={() => openDetailDialog(staff)}
+                          >
+                            Ver Detalhes
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => openEditDialog(staff)}
+                          >
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuSub>
+                            <DropdownMenuSubTrigger>
+                              Alterar Status
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuPortal>
+                              <DropdownMenuSubContent>
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleChangeStatus(
+                                      staff.id as string,
+                                      'Ativo'
+                                    )
+                                  }
+                                >
+                                  Ativo
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleChangeStatus(
+                                      staff.id as string,
+                                      'Licença'
+                                    )
+                                  }
+                                >
+                                  Licença
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() =>
+                                    handleChangeStatus(
+                                      staff.id as string,
+                                      'Suspenso'
+                                    )
+                                  }
+                                >
+                                  Suspenso
+                                </DropdownMenuItem>
+                              </DropdownMenuSubContent>
+                            </DropdownMenuPortal>
+                          </DropdownMenuSub>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className='text-destructive'
+                            onClick={() => openDeleteDialog(staff)}
+                          >
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
@@ -669,3 +684,5 @@ export default function StaffsPage() {
     </>
   )
 }
+
+    

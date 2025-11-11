@@ -2,6 +2,7 @@
 'use client'
 
 import { create } from 'zustand'
+import type { Staff } from '@/app/dashboard/(main)/employees/page'
 
 export const availableLabels = [
   { id: 'bug', name: 'Bug', color: 'bg-red-500' },
@@ -442,3 +443,5 @@ export const useTicketStore = create<TicketStore>((set) => ({
       }),
     })),
 }))
+
+    

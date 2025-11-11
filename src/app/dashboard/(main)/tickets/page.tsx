@@ -180,7 +180,7 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
     opacity: isDragging ? 0.5 : 1,
   }
   const assignedMembers =
-    initialStaffsData.filter((emp) =>
+    initialStaffsData.filter((emp: Staff) =>
       ticket.assignedTo?.includes(emp.email)
     ) ?? []
 
@@ -696,7 +696,7 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
   }
 
   const assignedMembers =
-    initialStaffsData.filter((emp) =>
+    initialStaffsData.filter((emp: Staff) =>
       ticket.assignedTo?.includes(emp.email)
     ) ?? []
 
@@ -947,7 +947,7 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                     </div>
                     <Separator />
                     <div className='flex flex-col gap-2'>
-                      {initialStaffsData.map((staff) => {
+                      {initialStaffsData.map((staff: Staff) => {
                         const isAssigned = ticket.assignedTo?.includes(
                           staff.email
                         )
@@ -1335,7 +1335,7 @@ export default function TicketsPage() {
                   <DropdownMenuSeparator />
                   {initialClientsData.map((client) => (
                     <DropdownMenuCheckboxItem
-                      key={client.contractId}
+                      key={client.id}
                       checked={clientFilter.includes(client.name)}
                       onCheckedChange={(checked) => {
                         setClientFilter((prev) =>
@@ -1432,7 +1432,7 @@ export default function TicketsPage() {
                         <SelectContent>
                           {initialClientsData.map((client) => (
                             <SelectItem
-                              key={client.contractId}
+                              key={client.id}
                               value={client.name}
                             >
                               {client.name}
@@ -1500,7 +1500,7 @@ export default function TicketsPage() {
                             </h4>
                             <ScrollArea className='h-48'>
                               <div className='flex flex-col gap-2 p-1'>
-                                {initialStaffsData.map((staff) => (
+                                {initialStaffsData.map((staff: Staff) => (
                                   <Label
                                     key={staff.email}
                                     className='flex items-center gap-2 font-normal'
@@ -1810,3 +1810,5 @@ export default function TicketsPage() {
     </div>
   )
 }
+
+    
