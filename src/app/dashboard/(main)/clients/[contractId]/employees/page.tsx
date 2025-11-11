@@ -9,6 +9,7 @@ import {
   Filter,
   List,
   LayoutGrid,
+  KeyRound,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -80,6 +81,14 @@ import { Separator } from '@/components/ui/separator'
 import { useRouter } from 'next/navigation'
 import { useParams } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
+import {
+  useFirestore,
+  addDocumentNonBlocking,
+  useCollection,
+  useMemoFirebase,
+} from '@/firebase'
+import { collection, doc } from 'firebase/firestore'
+import type { Staff } from '@/app/dashboard/(main)/employees/page'
 
 // Componente para formatar datas com segurança no cliente
 function ClientSideDateFormatter({ dateString }: { dateString: string }) {
@@ -117,6 +126,12 @@ export default function EmployeesPage() {
   const params = useParams()
   const contractId = params.contractId as string
   const { toast } = useToast()
+
+  const firestore = useFirestore()
+  const staffsRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'staffs') : null),
+    [firestore]
+  )
 
   const [selectedAddRole, setSelectedAddRole] = useState('')
   const roleDetails = useMemo(() => {
@@ -213,6 +228,40 @@ export default function EmployeesPage() {
         emp.id === employeeId ? { ...emp, status: newStatus } : emp
       )
     )
+  }
+
+  const handleCreatePortalAccess = (employee: Employee) => {
+    if (!staffsRef) return
+
+    const fallback = employee.name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .substring(0, 2)
+      .toUpperCase()
+
+    const newStaffData: Omit<Staff, 'id'> = {
+      name: employee.name,
+      email: employee.email,
+      phone: employee.phone,
+      perfilId: 'cliente',
+      contractId: contractId,
+      assinatura: getRoleById(employee.roleId)?.name || 'Cliente',
+      code: `CLI-${employee.id}`,
+      status: 'Ativo',
+      situacao: 'Offline',
+      avatar: employee.avatar,
+      fallback: fallback,
+    }
+
+    // This will create a user in the `staffs` collection which is used for logins.
+    // In a real scenario, you'd also create an auth user here.
+    addDocumentNonBlocking(staffsRef, newStaffData)
+
+    toast({
+      title: 'Acesso ao Portal Criado!',
+      description: `Um login foi criado para ${employee.name}. Eles receberão um email para definir a senha.`,
+    })
   }
 
   const openEditDialog = (employee: Employee) => {
@@ -357,6 +406,10 @@ export default function EmployeesPage() {
         <DropdownMenuLabel>Ações</DropdownMenuLabel>
         <DropdownMenuItem onClick={() => openEditDialog(employee)}>
           Editar
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleCreatePortalAccess(employee)}>
+          <KeyRound className='mr-2 h-4 w-4' />
+          Criar Acesso ao Portal
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuSub>

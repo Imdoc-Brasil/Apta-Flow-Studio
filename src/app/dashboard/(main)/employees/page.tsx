@@ -193,7 +193,7 @@ export default function StaffsPage() {
 
     addDocumentNonBlocking(staffsRef, newStaff)
     toast({
-      title: 'Staff Adicionado!',
+      title: 'Membro Adicionado!',
       description: `${name} foi adicionado à equipe.`,
     })
     setIsAddDialogOpen(false)
@@ -220,7 +220,7 @@ export default function StaffsPage() {
 
     updateDocumentNonBlocking(staffDocRef, updatedData)
     toast({
-      title: 'Staff Atualizado!',
+      title: 'Membro Atualizado!',
       description: 'As informações foram atualizadas com sucesso.',
     })
     setIsEditDialogOpen(false)
@@ -233,7 +233,7 @@ export default function StaffsPage() {
     const staffDocRef = doc(firestore, 'staffs', currentStaff.id)
     deleteDocumentNonBlocking(staffDocRef)
     toast({
-      title: 'Staff Removido!',
+      title: 'Membro Removido!',
       variant: 'destructive',
     })
     setIsDeleteDialogOpen(false)
@@ -453,9 +453,9 @@ export default function StaffsPage() {
     <>
       <Card>
         <CardHeader>
-          <CardTitle>Hub de Staffs</CardTitle>
+          <CardTitle>Hub de Equipe</CardTitle>
           <CardDescription>
-            Gerencie os staffs da sua empresa.
+            Gerencie a equipe interna da sua empresa.
           </CardDescription>
           <div className='flex items-center justify-between pt-4'>
             <div className='flex items-center gap-2'>
@@ -506,13 +506,13 @@ export default function StaffsPage() {
                 <Button size='sm' className='h-8 gap-1' onClick={() => form.reset()}>
                   <PlusCircle className='h-3.5 w-3.5' />
                   <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
-                    Adicionar Staff
+                    Adicionar Membro
                   </span>
                 </Button>
               </DialogTrigger>
               <DialogContent className='sm:max-w-lg'>
                 <DialogHeader>
-                  <DialogTitle>Adicionar Novo Staff</DialogTitle>
+                  <DialogTitle>Adicionar Novo Membro da Equipe</DialogTitle>
                   <DialogDescription>
                     Preencha os detalhes para adicionar um novo membro à equipe.
                   </DialogDescription>
@@ -526,7 +526,7 @@ export default function StaffsPage() {
                     Cancelar
                   </Button>
                   <Button type='submit' form='add-staff-form'>
-                    Salvar Staff
+                    Salvar
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -542,7 +542,7 @@ export default function StaffsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Staff</TableHead>
+                  <TableHead>Membro</TableHead>
                   <TableHead className='hidden md:table-cell'>
                     Código
                   </TableHead>
@@ -686,7 +686,7 @@ export default function StaffsPage() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className='sm:max-w-lg'>
           <DialogHeader>
-            <DialogTitle>Editar Staff</DialogTitle>
+            <DialogTitle>Editar Membro da Equipe</DialogTitle>
             <DialogDescription>
               Modifique os detalhes do membro da equipe.
             </DialogDescription>
@@ -710,7 +710,7 @@ export default function StaffsPage() {
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Detalhes do Staff</DialogTitle>
+            <DialogTitle>Detalhes do Membro</DialogTitle>
           </DialogHeader>
           {currentStaff && (
             <div className='grid gap-4 py-4'>
@@ -787,7 +787,7 @@ export default function StaffsPage() {
             <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta ação não pode ser desfeita. Isso irá excluir
-              permanentemente o staff{' '}
+              permanentemente o membro{' '}
               <span className='font-semibold'>{currentStaff?.name}</span>.
             </AlertDialogDescription>
           </AlertDialogHeader>
