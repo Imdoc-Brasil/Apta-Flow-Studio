@@ -1,3 +1,4 @@
+
 'use client'
 
 import {
@@ -8,7 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { MoreHorizontal, PlusCircle } from 'lucide-react'
+import { MoreHorizontal, PlusCircle, Loader2 } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,105 +45,59 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  useFirestore,
+  useCollection,
+  useMemoFirebase,
+  addDocumentNonBlocking,
+} from '@/firebase'
+import { collection } from 'firebase/firestore'
+import { useToast } from '@/hooks/use-toast'
 
-export const initialHazardData = [
-  {
-    id: 'RF-001',
-    name: 'Ruído Contínuo ou Intermitente',
-    esocialCode: '01.01.001',
-    method: 'Quantitativo',
-    category: 'Físico',
-    legalBasis: 'NR-15, Anexo 1',
-    potentialEffects: 'Perda auditiva (PAIR), estresse, problemas cardiovasculares.',
-  },
-  {
-    id: 'RF-002',
-    name: 'Vibrações de Mãos e Braços (VMB)',
-    esocialCode: '01.02.001',
-    method: 'Quantitativo',
-    category: 'Físico',
-    legalBasis: 'NR-15, Anexo 8',
-    potentialEffects: 'Doença de Raynaud, problemas articulares, formigamento.',
-  },
-  {
-    id: 'RQ-001',
-    name: 'Poeiras Minerais (Sílica)',
-    esocialCode: '02.01.018',
-    method: 'Quantitativo',
-    category: 'Químico',
-    legalBasis: 'NR-15, Anexo 12',
-    potentialEffects: 'Silicose, câncer de pulmão, doenças renais.',
-  },
-  {
-    id: 'RE-001',
-    name: 'Levantamento e transporte manual de peso',
-    esocialCode: '04.01.001',
-    method: 'Qualitativo',
-    category: 'Ergonômico',
-    legalBasis: 'NR-17',
-    potentialEffects: 'Lesões na coluna (lombalgia), hérnias, dores musculares.'
-  },
-  {
-    id: 'RA-001',
-    name: 'Arranjo físico inadequado',
-    esocialCode: '05.01.001',
-    method: 'Qualitativo',
-    category: 'Acidente',
-    legalBasis: 'NR-12',
-    potentialEffects: 'Quedas, batidas, tropeços, lesões por esforço.'
-  },
-]
+export interface Hazard {
+  id: string
+  name: string
+  esocialCode: string
+  method: string
+  category: string
+  legalBasis: string
+  potentialEffects: string
+}
 
-export type Hazard = (typeof initialHazardData)[0]
-type Epc = (typeof initialEpcData)[0]
-type Epi = (typeof initialEpiData)[0]
+export interface Epc {
+  id: string
+  name: string
+  active: boolean
+  attenuation: string
+}
 
-const initialEpcData = [
-  {
-    id: 'EPC-01',
-    name: 'Enclausuramento acústico de fontes de ruído',
-    active: true,
-    attenuation: '15 dB(A)',
-  },
-  {
-    id: 'EPC-02',
-    name: 'Sistema de ventilação e exaustão',
-    active: true,
-    attenuation: 'N/A',
-  },
-  {
-    id: 'EPC-03',
-    name: 'Guarda-corpos e rodapés',
-    active: true,
-    attenuation: 'N/A',
-  },
-]
-
-const initialEpiData = [
-  {
-    id: 'EPI-01',
-    name: 'Protetor auricular tipo concha',
-    ca: '12345',
-    active: true,
-  },
-  {
-    id: 'EPI-02',
-    name: 'Luva de segurança para proteção contra agentes mecânicos',
-    ca: '67890',
-    active: true,
-  },
-  {
-    id: 'EPI-03',
-    name: 'Respirador purificador de ar',
-    ca: '11223',
-    active: true,
-  },
-]
+export interface Epi {
+  id: string
+  name: string
+  ca: string
+  active: boolean
+}
 
 export default function RisksPage() {
-  const [hazardData, setHazardData] = useState(initialHazardData)
-  const [epcData, setEpcData] = useState(initialEpcData)
-  const [epiData, setEpiData] = useState(initialEpiData)
+  const { toast } = useToast()
+  const firestore = useFirestore()
+
+  const hazardsRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'hazards') : null),
+    [firestore]
+  )
+  const epcsRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'epcs') : null),
+    [firestore]
+  )
+  const episRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'epis') : null),
+    [firestore]
+  )
+
+  const { data: hazardData, isLoading: isLoadingHazards } = useCollection<Hazard>(hazardsRef)
+  const { data: epcData, isLoading: isLoadingEpcs } = useCollection<Epc>(epcsRef)
+  const { data: epiData, isLoading: isLoadingEpis } = useCollection<Epi>(episRef)
 
   const [isHazardDialogOpen, setIsHazardDialogOpen] = useState(false)
   const [isEpcDialogOpen, setIsEpcDialogOpen] = useState(false)
@@ -150,48 +105,59 @@ export default function RisksPage() {
 
   const handleAddHazard = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!hazardsRef) return
+    
     const formData = new FormData(event.currentTarget)
-    const newHazard: Hazard = {
-      id: `RF-${(Math.random() * 1000).toFixed(0).padStart(3, '0')}`,
+    const newHazard: Omit<Hazard, 'id'> = {
       name: formData.get('name') as string,
       esocialCode: formData.get('esocialCode') as string,
       category: formData.get('category') as string,
       method: formData.get('method') as string,
-      legalBasis: formData.get('legalBasis') as string, 
+      legalBasis: formData.get('legalBasis') as string,
       potentialEffects: formData.get('potentialEffects') as string,
     }
-    setHazardData((prev) => [newHazard, ...prev])
+    
+    addDocumentNonBlocking(hazardsRef, newHazard)
+
+    toast({ title: 'Sucesso!', description: 'Perigo/Fator de Risco adicionado.' })
     setIsHazardDialogOpen(false)
-    ;(event.target as HTMLFormElement).reset()
   }
 
   const handleAddEpc = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!epcsRef) return
+    
     const formData = new FormData(event.currentTarget)
-    const newEpc: Epc = {
-      id: `EPC-${(Math.random() * 100).toFixed(0).padStart(2, '0')}`,
+    const newEpc: Omit<Epc, 'id'> = {
       name: formData.get('name') as string,
       attenuation: (formData.get('attenuation') as string) || 'N/A',
       active: true,
     }
-    setEpcData((prev) => [newEpc, ...prev])
+    
+    addDocumentNonBlocking(epcsRef, newEpc)
+
+    toast({ title: 'Sucesso!', description: 'EPC adicionado.' })
     setIsEpcDialogOpen(false)
-    ;(event.target as HTMLFormElement).reset()
   }
 
   const handleAddEpi = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!episRef) return
+
     const formData = new FormData(event.currentTarget)
-    const newEpi: Epi = {
-      id: `EPI-${(Math.random() * 100).toFixed(0).padStart(2, '0')}`,
+    const newEpi: Omit<Epi, 'id'> = {
       name: formData.get('name') as string,
       ca: formData.get('ca') as string,
       active: true,
     }
-    setEpiData((prev) => [newEpi, ...prev])
+
+    addDocumentNonBlocking(episRef, newEpi)
+    
+    toast({ title: 'Sucesso!', description: 'EPI adicionado.' })
     setIsEpiDialogOpen(false)
-    ;(event.target as HTMLFormElement).reset()
   }
+  
+  const isLoading = isLoadingHazards || isLoadingEpcs || isLoadingEpis;
 
   return (
     <div className='grid flex-1 auto-rows-max gap-8'>
@@ -328,6 +294,11 @@ export default function RisksPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {isLoadingHazards ? (
+            <div className='flex justify-center items-center h-48'>
+              <Loader2 className='h-8 w-8 animate-spin' />
+            </div>
+          ) : (
           <Table>
             <TableHeader>
               <TableRow>
@@ -341,7 +312,7 @@ export default function RisksPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {hazardData.map((risk) => (
+              {hazardData?.map((risk) => (
                 <TableRow key={risk.id}>
                   <TableCell className='font-medium'>{risk.name}</TableCell>
                   <TableCell>
@@ -370,6 +341,7 @@ export default function RisksPage() {
               ))}
             </TableBody>
           </Table>
+          )}
         </CardContent>
       </Card>
 
@@ -439,6 +411,11 @@ export default function RisksPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+             {isLoadingEpcs ? (
+              <div className='flex justify-center items-center h-48'>
+                <Loader2 className='h-8 w-8 animate-spin' />
+              </div>
+             ) : (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -451,7 +428,7 @@ export default function RisksPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {epcData.map((epc) => (
+                {epcData?.map((epc) => (
                   <TableRow key={epc.id}>
                     <TableCell className='font-medium'>{epc.name}</TableCell>
                     <TableCell>{epc.attenuation}</TableCell>
@@ -476,6 +453,7 @@ export default function RisksPage() {
                 ))}
               </TableBody>
             </Table>
+             )}
           </CardContent>
         </Card>
 
@@ -545,43 +523,49 @@ export default function RisksPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>CA</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>
-                    <span className='sr-only'>Ações</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {epiData.map((epi) => (
-                  <TableRow key={epi.id}>
-                    <TableCell className='font-medium'>{epi.name}</TableCell>
-                    <TableCell>{epi.ca}</TableCell>
-                    <TableCell>
-                      <Badge variant={epi.active ? 'secondary' : 'outline'}>
-                        {epi.active ? 'Ativo' : 'Inativo'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup='true' size='icon' variant='ghost'>
-                            <MoreHorizontal className='h-4 w-4' />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align='end'>
-                          <DropdownMenuItem>Editar</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+            {isLoadingEpis ? (
+                <div className='flex justify-center items-center h-48'>
+                  <Loader2 className='h-8 w-8 animate-spin' />
+                </div>
+              ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>CA</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>
+                      <span className='sr-only'>Ações</span>
+                    </TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {epiData?.map((epi) => (
+                    <TableRow key={epi.id}>
+                      <TableCell className='font-medium'>{epi.name}</TableCell>
+                      <TableCell>{epi.ca}</TableCell>
+                      <TableCell>
+                        <Badge variant={epi.active ? 'secondary' : 'outline'}>
+                          {epi.active ? 'Ativo' : 'Inativo'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button aria-haspopup='true' size='icon' variant='ghost'>
+                              <MoreHorizontal className='h-4 w-4' />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align='end'>
+                            <DropdownMenuItem>Editar</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>
