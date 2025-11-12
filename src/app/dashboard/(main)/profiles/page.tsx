@@ -8,6 +8,7 @@ import {
   ShieldCheck,
   ChevronDown,
   X,
+  Loader2,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -49,8 +50,10 @@ import {
   useFirestore,
   useMemoFirebase,
   useUser,
+  addDocumentNonBlocking,
+  updateDocumentNonBlocking,
 } from '@/firebase'
-import { collection } from 'firebase/firestore'
+import { collection, doc } from 'firebase/firestore'
 import type { Staff } from '../employees/page'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -175,7 +178,6 @@ function ClientSideDate({ dateString }: { dateString?: string }) {
 }
 
 export default function ProfilesPage() {
-  const [profiles, setProfiles] = useState<Profile[]>(initialProfiles)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isPermissionsDialogOpen, setIsPermissionsDialogOpen] = useState(false)
@@ -189,13 +191,31 @@ export default function ProfilesPage() {
 
   const { user } = useUser()
   const { toast } = useToast()
-
   const firestore = useFirestore()
+
+  const profilesRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'profiles') : null),
+    [firestore]
+  )
+  const { data: firestoreProfiles, isLoading: areProfilesLoading } = useCollection<Profile>(profilesRef)
+
   const staffsRef = useMemoFirebase(
     () => (firestore ? collection(firestore, 'staffs') : null),
     [firestore]
   )
   const { data: staffs } = useCollection<Staff>(staffsRef)
+
+  const profiles = useMemo(() => {
+    const combined = [...initialProfiles]
+    if (firestoreProfiles) {
+      firestoreProfiles.forEach(fp => {
+        if (!combined.some(p => p.id === fp.id)) {
+          combined.push(fp)
+        }
+      })
+    }
+    return combined
+  }, [firestoreProfiles])
 
   const staffCountByProfile = useMemo(() => {
     const counts: { [key: string]: number } = {}
@@ -229,50 +249,49 @@ export default function ProfilesPage() {
 
   const handleAddProfile = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!profileName) return
-    const newProfile: Profile = {
-      id: `profile-${Date.now()}`,
+    if (!profileName || !profilesRef) return
+
+    const newProfileData = {
       name: profileName,
       code: profileCode,
       createdBy: user?.email || 'Desconhecido',
       createdAt: new Date().toISOString(),
       permissions: [],
     }
-    setProfiles((prev) => [...prev, newProfile])
+    addDocumentNonBlocking(profilesRef, newProfileData)
     setIsAddDialogOpen(false)
     setProfileName('')
     setProfileCode('')
+    toast({ title: 'Perfil Adicionado!' })
   }
 
   const handleEditProfile = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!currentProfile || !profileName) return
-    setProfiles((prev) =>
-      prev.map((p) =>
-        p.id === currentProfile.id
-          ? { ...p, name: profileName, code: profileCode }
-          : p
-      )
-    )
+    if (!currentProfile || !profileName || !firestore) return
+
+    const profileDocRef = doc(firestore, 'profiles', currentProfile.id)
+    updateDocumentNonBlocking(profileDocRef, {
+      name: profileName,
+      code: profileCode,
+    })
+
     setIsEditDialogOpen(false)
     setCurrentProfile(null)
     setProfileName('')
     setProfileCode('')
+    toast({ title: 'Perfil Atualizado!' })
   }
 
   const handlePermissionsSubmit = (
     event: React.FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault()
-    if (!currentProfile) return
+    if (!currentProfile || !firestore) return
+
     const updatedPermissions = Array.from(selectedPermissions)
-    setProfiles((prev) =>
-      prev.map((p) =>
-        p.id === currentProfile.id
-          ? { ...p, permissions: updatedPermissions }
-          : p
-      )
-    )
+    const profileDocRef = doc(firestore, 'profiles', currentProfile.id)
+    updateDocumentNonBlocking(profileDocRef, { permissions: updatedPermissions })
+
     toast({
       title: 'Permissões atualizadas!',
       description: `As permissões para o perfil "${currentProfile.name}" foram salvas.`,
@@ -313,6 +332,7 @@ export default function ProfilesPage() {
   }
 
   const openEditDialog = (profile: Profile) => {
+    if (profile.createdBy === 'sistema') return
     setCurrentProfile(profile)
     setProfileName(profile.name)
     setProfileCode(profile.code || '')
@@ -327,6 +347,14 @@ export default function ProfilesPage() {
   }
 
   const openPermissionsDialog = (profile: Profile) => {
+    if (profile.createdBy === 'sistema') {
+      toast({
+        variant: 'destructive',
+        title: 'Não permitido',
+        description: 'Não é possível editar as permissões do perfil de Cliente.',
+      })
+      return
+    }
     setCurrentProfile(profile)
     setSelectedPermissions(new Set(profile.permissions || []))
     setIsPermissionsDialogOpen(true)
@@ -362,6 +390,8 @@ export default function ProfilesPage() {
       </div>
     </div>
   )
+
+  const isLoading = areProfilesLoading
 
   return (
     <>
@@ -413,68 +443,77 @@ export default function ProfilesPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome do Perfil</TableHead>
-                <TableHead>Código</TableHead>
-                <TableHead>Criado por</TableHead>
-                <TableHead>Data de Criação</TableHead>
-                <TableHead className='text-right'>
-                  Staffs com este Perfil
-                </TableHead>
-                <TableHead>
-                  <span className='sr-only'>Ações</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {profiles.map((profile) => (
-                <TableRow key={profile.id}>
-                  <TableCell className='font-medium'>{profile.name}</TableCell>
-                  <TableCell>{profile.code}</TableCell>
-                  <TableCell className='text-muted-foreground'>
-                    {profile.createdBy}
-                  </TableCell>
-                  <TableCell className='text-muted-foreground'>
-                    <ClientSideDate dateString={profile.createdAt} />
-                  </TableCell>
-                  <TableCell className='text-right'>
-                    <Badge variant='secondary'>
-                      {staffCountByProfile[profile.id] || 0}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className='text-right'>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          aria-haspopup='true'
-                          size='icon'
-                          variant='ghost'
-                        >
-                          <MoreHorizontal className='h-4 w-4' />
-                          <span className='sr-only'>Alternar menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align='end'>
-                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                        <DropdownMenuItem
-                          onClick={() => openEditDialog(profile)}
-                        >
-                          Editar Nome
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => openPermissionsDialog(profile)}
-                        >
-                          Editar Permissões
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+          {isLoading ? (
+            <div className='flex items-center justify-center h-48'>
+              <Loader2 className='h-8 w-8 animate-spin' />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome do Perfil</TableHead>
+                  <TableHead>Código</TableHead>
+                  <TableHead>Criado por</TableHead>
+                  <TableHead>Data de Criação</TableHead>
+                  <TableHead className='text-right'>
+                    Staffs com este Perfil
+                  </TableHead>
+                  <TableHead>
+                    <span className='sr-only'>Ações</span>
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {profiles.map((profile) => (
+                  <TableRow key={profile.id}>
+                    <TableCell className='font-medium'>{profile.name}</TableCell>
+                    <TableCell>{profile.code}</TableCell>
+                    <TableCell className='text-muted-foreground'>
+                      {profile.createdBy}
+                    </TableCell>
+                    <TableCell className='text-muted-foreground'>
+                      <ClientSideDate dateString={profile.createdAt} />
+                    </TableCell>
+                    <TableCell className='text-right'>
+                      <Badge variant='secondary'>
+                        {staffCountByProfile[profile.id] || 0}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className='text-right'>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            aria-haspopup='true'
+                            size='icon'
+                            variant='ghost'
+                            disabled={profile.createdBy === 'sistema'}
+                          >
+                            <MoreHorizontal className='h-4 w-4' />
+                            <span className='sr-only'>Alternar menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end'>
+                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                          <DropdownMenuItem
+                            onClick={() => openEditDialog(profile)}
+                            disabled={profile.createdBy === 'sistema'}
+                          >
+                            Editar Nome
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => openPermissionsDialog(profile)}
+                            disabled={profile.createdBy === 'sistema'}
+                          >
+                            Editar Permissões
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
 
         {/* Edit Dialog */}
