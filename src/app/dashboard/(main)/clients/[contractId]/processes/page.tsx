@@ -24,6 +24,7 @@ import {
   MoreHorizontal,
   X,
   Loader2,
+  Sparkles,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -72,6 +73,8 @@ import { collection, doc, getDocs } from 'firebase/firestore'
 import type { Sector } from '../sectors/data'
 import type { Role } from '../roles/data'
 import type { Unit } from '../units/data'
+import { suggestProcessTool, SuggestProcessToolOutput } from '@/app/actions'
+
 
 type ScopeType = 'unidade' | 'setor' | 'cargo'
 
@@ -142,6 +145,10 @@ export default function ProcessesPage() {
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
   const [searchTerm, setSearchTerm] = useState('')
   const [sectorFilter, setSectorFilter] = useState<string[]>([])
+
+  const [isAssistantOpen, setIsAssistantOpen] = useState(false)
+  const [assistantLoading, setAssistantLoading] = useState(false)
+  const [assistantResult, setAssistantResult] = useState<SuggestProcessToolOutput | null>(null)
 
   const getSectorNameForProcess = (process: Process) => {
     const firstStep = process.steps[0]
@@ -247,10 +254,19 @@ export default function ProcessesPage() {
   }
 
 
-  const openProcessDialog = (process: Process | null) => {
+  const openProcessDialog = (process: Process | null, suggestedName: string = '', suggestedObjective: string = '') => {
     setEditingProcess(process)
     setFormSteps(process ? [...process.steps] : [])
     setFormObligations(process ? [...process.obligations] : [])
+    
+    // Use timeout to set default values after dialog state is updated
+    setTimeout(() => {
+      const nameInput = document.querySelector('input[name="name"]') as HTMLInputElement;
+      const objectiveInput = document.querySelector('textarea[name="objective"]') as HTMLTextAreaElement;
+      if (nameInput) nameInput.value = suggestedName || process?.name || '';
+      if (objectiveInput) objectiveInput.value = suggestedObjective || process?.objective || '';
+    }, 0);
+
     setIsProcessDialogOpen(true)
   }
 
@@ -278,6 +294,38 @@ export default function ProcessesPage() {
         : [...prev, sigla]
     )
   }
+
+  const handleAssistantSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setAssistantLoading(true);
+    setAssistantResult(null);
+
+    const formData = new FormData(e.currentTarget);
+    const projectDescription = formData.get('projectDescription') as string;
+
+    try {
+      const result = await suggestProcessTool({ projectDescription });
+      setAssistantResult(result);
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro do Assistente de IA',
+        description: 'Não foi possível obter uma sugestão. Tente novamente.',
+      });
+      console.error(error);
+    } finally {
+      setAssistantLoading(false);
+    }
+  };
+
+  const useSuggestion = () => {
+    if (assistantResult) {
+      setIsAssistantOpen(false);
+      openProcessDialog(null, assistantResult.toolName, assistantResult.justification);
+      setAssistantResult(null);
+    }
+  };
+
 
   const isLoading = areProcessesLoading || areSectorsLoading || areRolesLoading
 
@@ -353,6 +401,50 @@ export default function ProcessesPage() {
                   <LayoutGrid className='h-4 w-4' />
                 </Button>
               </div>
+                <Dialog open={isAssistantOpen} onOpenChange={setIsAssistantOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline">
+                    <Sparkles className='mr-2 h-4 w-4' /> Assistente IA
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Assistente de Processos</DialogTitle>
+                    <DialogDescription>
+                      Descreva seu objetivo ou problema, e a IA sugerirá a melhor ferramenta de processo para você.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <form id="assistant-form" onSubmit={handleAssistantSubmit}>
+                    <div className="py-4 space-y-4">
+                      <Label htmlFor="projectDescription">Descrição do Projeto/Problema</Label>
+                      <Textarea
+                        id="projectDescription"
+                        name="projectDescription"
+                        placeholder="Ex: 'Precisamos organizar o fluxo de novas demandas de marketing, desde o pedido inicial até a publicação final, garantindo que todas as etapas de aprovação sejam cumpridas.'"
+                        rows={5}
+                      />
+                      {assistantLoading && <div className="flex justify-center items-center"><Loader2 className="h-6 w-6 animate-spin" /></div>}
+                      {assistantResult && (
+                        <div className="p-4 bg-muted/50 rounded-lg border space-y-2">
+                          <h4 className="font-semibold">Sugestão da IA</h4>
+                          <p><strong>Ferramenta:</strong> {assistantResult.toolName}</p>
+                          <p><strong>Justificativa:</strong> {assistantResult.justification}</p>
+                        </div>
+                      )}
+                    </div>
+                  </form>
+                  <DialogFooter>
+                    <Button variant="ghost" onClick={() => setIsAssistantOpen(false)}>Cancelar</Button>
+                    <Button type="submit" form="assistant-form" disabled={assistantLoading}>
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Obter Sugestão
+                    </Button>
+                     <Button onClick={useSuggestion} disabled={!assistantResult}>
+                      Usar esta Sugestão
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
               <Button onClick={() => openProcessDialog(null)}>
                 <PlusCircle className='mr-2 h-4 w-4' /> Adicionar Processo
               </Button>
