@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Card,
   CardContent,
@@ -17,6 +17,8 @@ import {
   HelpCircle,
   Pencil,
   Trash2,
+  Loader2,
+  ArrowLeft,
 } from 'lucide-react'
 import {
   Dialog,
@@ -39,8 +41,16 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
+import {
+  useDoc,
+  useFirestore,
+  useMemoFirebase,
+  updateDocumentNonBlocking,
+} from '@/firebase'
+import { doc } from 'firebase/firestore'
+import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 
-// Mock Data - In a real app, this would come from an API
 export type TrainingModality = 'Online' | 'Presencial' | 'Híbrido'
 export type TrainingType = 'NR' | 'Uso de EPI' | 'Procedimento Interno' | 'Outro'
 export type ModuleType = 'Video' | 'Texto' | 'Quiz'
@@ -49,7 +59,7 @@ export interface TrainingModule {
   id: string
   title: string
   type: ModuleType
-  content: string // URL for video, markdown for text, JSON for quiz
+  content: string
 }
 
 export interface Training {
@@ -58,35 +68,9 @@ export interface Training {
   description: string
   type: TrainingType
   modality: TrainingModality
-  workload: number // in hours
+  workload: number
   modules: TrainingModule[]
-  validity: number // in months
-}
-
-const initialTraining: Training = {
-  id: 'TRN-NR-35',
-  title: 'NR-35 - Trabalho em Altura',
-  description:
-    'Capacitação para planejamento, organização e execução de trabalho em altura.',
-  type: 'NR',
-  modality: 'Híbrido',
-  workload: 8,
-  validity: 24,
-  modules: [
-    {
-      id: 'MOD-01',
-      title: 'Introdução à NR-35',
-      type: 'Texto',
-      content:
-        'A NR-35 estabelece os requisitos mínimos e as medidas de proteção para o trabalho em altura, envolvendo o planejamento, a organização e a execução, de forma a garantir a segurança e a saúde dos trabalhadores envolvidos direta ou indiretamente com esta atividade.',
-    },
-    {
-      id: 'MOD-02',
-      title: 'Equipamentos de Proteção Individual (EPIs)',
-      type: 'Video',
-      content: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', // Example video
-    },
-  ],
+  validity: number
 }
 
 const getModuleIcon = (type: ModuleType) => {
@@ -102,12 +86,19 @@ const getModuleIcon = (type: ModuleType) => {
   }
 }
 
-export default function EditTrainingPage({
-  params,
-}: {
-  params: { trainingId: string }
-}) {
-  const [training, setTraining] = useState(initialTraining)
+export default function EditTrainingPage() {
+  const params = useParams()
+  const trainingId = params.trainingId as string
+  const firestore = useFirestore()
+  const router = useRouter()
+
+  const trainingRef = useMemoFirebase(
+    () => (firestore ? doc(firestore, 'trainings', trainingId) : null),
+    [firestore, trainingId]
+  )
+  const { data: training, isLoading: isTrainingLoading } =
+    useDoc<Training>(trainingRef)
+
   const [isModuleDialogOpen, setIsModuleDialogOpen] = useState(false)
   const [editingModule, setEditingModule] = useState<TrainingModule | null>(
     null
@@ -117,29 +108,28 @@ export default function EditTrainingPage({
 
   const handleModuleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!trainingRef || !training) return
+
     const formData = new FormData(event.currentTarget)
-    const newModule: TrainingModule = {
+    const newModuleData: TrainingModule = {
       id: editingModule?.id || `MOD-${Date.now()}`,
       title: formData.get('title') as string,
       type: formData.get('type') as ModuleType,
       content: formData.get('content') as string,
     }
 
+    let updatedModules: TrainingModule[]
     if (editingModule) {
-      setTraining((prev) => ({
-        ...prev,
-        modules: prev.modules.map((m) =>
-          m.id === editingModule.id ? newModule : m
-        ),
-      }))
+      updatedModules = training.modules.map((m) =>
+        m.id === editingModule.id ? newModuleData : m
+      )
       toast({ title: 'Módulo Atualizado!' })
     } else {
-      setTraining((prev) => ({
-        ...prev,
-        modules: [...prev.modules, newModule],
-      }))
+      updatedModules = [...(training.modules || []), newModuleData]
       toast({ title: 'Módulo Adicionado!' })
     }
+
+    updateDocumentNonBlocking(trainingRef, { modules: updatedModules })
 
     setIsModuleDialogOpen(false)
     setEditingModule(null)
@@ -152,11 +142,35 @@ export default function EditTrainingPage({
   }
 
   const deleteModule = (moduleId: string) => {
-    setTraining((prev) => ({
-      ...prev,
-      modules: prev.modules.filter((m) => m.id !== moduleId),
-    }))
+    if (!trainingRef || !training) return
+    const updatedModules = training.modules.filter((m) => m.id !== moduleId)
+    updateDocumentNonBlocking(trainingRef, { modules: updatedModules })
     toast({ variant: 'destructive', title: 'Módulo Removido!' })
+  }
+
+  if (isTrainingLoading) {
+    return (
+      <div className='flex items-center justify-center h-full'>
+        <Loader2 className='h-8 w-8 animate-spin' />
+      </div>
+    )
+  }
+
+  if (!training) {
+    return (
+      <div className='flex flex-col items-center justify-center h-full text-center'>
+        <h2 className='text-2xl font-bold'>Treinamento não encontrado</h2>
+        <p className='text-muted-foreground'>
+          O treinamento que você está procurando não existe.
+        </p>
+        <Button asChild className='mt-4'>
+          <Link href='/dashboard/trainings'>
+            <ArrowLeft className='mr-2 h-4 w-4' />
+            Voltar para o Catálogo
+          </Link>
+        </Button>
+      </div>
+    )
   }
 
   return (
@@ -188,7 +202,7 @@ export default function EditTrainingPage({
           </div>
         </CardHeader>
         <CardContent>
-          {training.modules.length > 0 ? (
+          {training.modules && training.modules.length > 0 ? (
             <div className='space-y-4'>
               {training.modules.map((module) => (
                 <Card key={module.id} className='flex items-center p-4'>
