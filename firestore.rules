@@ -92,7 +92,7 @@ service cloud.firestore {
     // --- Admin and System Collections ---
 
      match /roles_admin/{userId} {
-       allow get: if isAdmin() || isOwner(userId);
+       allow get: if request.auth != null;
        allow list: if isAdmin();
        allow create: if isAdmin() || !isAnyAdminCreated();
        allow update, delete: if isAdmin() && resource != null;
