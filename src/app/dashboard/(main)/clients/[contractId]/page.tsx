@@ -9,6 +9,7 @@ import {
   User,
   Building,
   ArrowRight,
+  Ticket,
 } from 'lucide-react'
 import {
   Card,
