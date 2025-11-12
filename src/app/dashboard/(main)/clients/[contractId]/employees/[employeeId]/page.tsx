@@ -76,23 +76,21 @@ export default function EmployeeDetailsPage() {
         : null,
     [firestore, contractId, employeeId]
   )
-  const allRolesRef = useMemoFirebase(
-    () =>
-      firestore ? collection(firestore, `clients/${contractId}/roles`) : null,
-    [firestore, contractId]
-  )
-  const allUnitsRef = useMemoFirebase(
-    () =>
-      firestore ? collection(firestore, `clients/${contractId}/units`) : null,
-    [firestore, contractId]
-  )
-  const allProcessesRef = useMemoFirebase(
-    () =>
-      firestore
-        ? collection(firestore, `clients/${contractId}/processes`)
-        : null,
-    [firestore, contractId]
-  )
+  const { data: employee, isLoading: isEmployeeLoading } =
+    useDoc<Employee>(employeeRef)
+    
+  const roleRef = useMemoFirebase(() => (firestore && employee?.roleId) ? doc(firestore, `clients/${contractId}/roles`, employee.roleId) : null, [firestore, contractId, employee]);
+  const { data: role, isLoading: isRoleLoading } = useDoc<Role>(roleRef);
+  
+  const sectorRef = useMemoFirebase(() => (firestore && role?.sectorId) ? doc(firestore, `clients/${contractId}/sectors`, role.sectorId) : null, [firestore, contractId, role]);
+  // We can't directly reference the sector document because it's in a subcollection. We need the unitId.
+  // This highlights a potential data modeling improvement (denormalizing unitId into role), but for now we fetch it separately.
+  
+  const [unit, setUnit] = useState<Unit | null>(null);
+  const [sector, setSector] = useState<Sector | null>(null);
+  const [mainWorkstation, setMainWorkstation] = useState<Environment | null>(null);
+  const [isHierarchyLoading, setIsHierarchyLoading] = useState(true);
+
   const epiDeliveriesQuery = useMemoFirebase(
     () =>
       firestore
@@ -103,62 +101,39 @@ export default function EmployeeDetailsPage() {
         : null,
     [firestore, contractId, employeeId]
   )
-
-  const { data: employee, isLoading: isEmployeeLoading } =
-    useDoc<Employee>(employeeRef)
-  const { data: allRoles, isLoading: areRolesLoading } =
-    useCollection<Role>(allRolesRef)
-  const { data: allUnits, isLoading: areUnitsLoading } =
-    useCollection<Unit>(allUnitsRef)
-  const { data: allProcesses, isLoading: areProcessesLoading } =
-    useCollection<Process>(allProcessesRef)
   const { data: epiDeliveries, isLoading: areEpiDeliveriesLoading } =
     useCollection<EpiDelivery>(epiDeliveriesQuery)
 
-  const [allSectors, setAllSectors] = useState<Sector[]>([])
-  const [allEnvironments, setAllEnvironments] = useState<Environment[]>([])
-  const [isSubdataLoading, setIsSubdataLoading] = useState(true)
-
   useEffect(() => {
-    if (!allUnits || areUnitsLoading || !firestore) return;
+    if (!role || !firestore || isRoleLoading) return;
+    
+    setIsHierarchyLoading(true);
+    const findHierarchy = async () => {
+      // Because sectors are nested, we have to find which unit it belongs to.
+      // This is inefficient. A better model would have unitId on the role.
+      const unitsSnapshot = await getDocs(collection(firestore, `clients/${contractId}/units`));
+      for (const unitDoc of unitsSnapshot.docs) {
+        const sectorDocRef = doc(firestore, `clients/${contractId}/units/${unitDoc.id}/sectors`, role.sectorId);
+        const sectorDoc = await getDoc(sectorDocRef);
+        if (sectorDoc.exists()) {
+          setUnit({ id: unitDoc.id, ...unitDoc.data() } as Unit);
+          setSector({ id: sectorDoc.id, ...sectorDoc.data() } as Sector);
 
-    const fetchSubCollections = async () => {
-      setIsSubdataLoading(true)
-      try {
-        const sectorsPromises = allUnits.map(unit =>
-          getDocs(collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`))
-        );
-        const sectorsSnapshots = await Promise.all(sectorsPromises);
-        const sectorsData = sectorsSnapshots.flatMap(snapshot =>
-          snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sector))
-        );
-        setAllSectors(sectorsData);
-
-        if (sectorsData.length > 0) {
-          const environmentsPromises = allUnits.flatMap(unit =>
-            sectorsData
-              .filter(sector => sector.unitId === unit.id)
-              .map(sector => getDocs(collection(firestore, `clients/${contractId}/units/${unit.id}/sectors/${sector.id}/environments`)))
-          );
-          const environmentsSnapshots = await Promise.all(environmentsPromises);
-          const environmentsData = environmentsSnapshots.flatMap(snapshot =>
-            snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Environment))
-          );
-          setAllEnvironments(environmentsData);
-        } else {
-          setAllEnvironments([]);
+          if (role.mainWorkstationId) {
+            const envDocRef = doc(firestore, `clients/${contractId}/units/${unitDoc.id}/sectors/${sectorDoc.id}/environments`, role.mainWorkstationId);
+            const envDoc = await getDoc(envDocRef);
+            if (envDoc.exists()) {
+              setMainWorkstation({ id: envDoc.id, ...envDoc.data() } as Environment);
+            }
+          }
+          break; // Found it, exit loop
         }
-      } catch (error) {
-        console.error('Error fetching sub-collections:', error);
-        setAllSectors([]);
-        setAllEnvironments([]);
-      } finally {
-        setIsSubdataLoading(false);
       }
+      setIsHierarchyLoading(false);
     };
 
-    fetchSubCollections();
-  }, [allUnits, firestore, contractId, areUnitsLoading]);
+    findHierarchy();
+  }, [role, firestore, contractId, isRoleLoading]);
 
 
   const episDeliveredCount = epiDeliveries?.length || 0
@@ -193,58 +168,11 @@ export default function EmployeeDetailsPage() {
     },
   ]
 
-  const employeeDetails = useMemo(() => {
-    if (
-      !employee ||
-      !allRoles ||
-      !allSectors ||
-      !allUnits ||
-      !allEnvironments ||
-      !allProcesses
-    )
-      return null
-
-    const role = allRoles.find((r) => r.id === employee.roleId)
-    if (!role)
-      return {
-        employee,
-        role: null,
-        sector: null,
-        unit: null,
-        mainWorkstation: null,
-        processes: [],
-      }
-
-    const sector = allSectors.find((s) => s.id === role.sectorId)
-    if (!sector)
-      return {
-        employee,
-        role,
-        sector: null,
-        unit: null,
-        mainWorkstation: null,
-        processes: [],
-      }
-
-    const unit = allUnits.find((u) => u.id === sector.unitId)
-    const mainWorkstation = role.mainWorkstationId
-      ? allEnvironments.find((e) => e.id === role.mainWorkstationId)
-      : null
-
-    const processes = allProcesses.filter((p) =>
-      p.steps.some((step) => step.sectorId === sector.id)
-    )
-
-    return { employee, role, sector, unit, mainWorkstation, processes }
-  }, [employee, allRoles, allSectors, allUnits, allEnvironments, allProcesses])
-
   const isLoading =
     isEmployeeLoading ||
-    areRolesLoading ||
-    areUnitsLoading ||
-    areProcessesLoading ||
+    isRoleLoading ||
     areEpiDeliveriesLoading ||
-    isSubdataLoading
+    isHierarchyLoading
 
   if (isLoading) {
     return (
@@ -254,7 +182,7 @@ export default function EmployeeDetailsPage() {
     )
   }
 
-  if (!employeeDetails || !employee) {
+  if (!employee) {
     return (
       <div className='flex flex-col items-center justify-center h-full text-center'>
         <h2 className='text-2xl font-bold'>Colaborador não encontrado</h2>
@@ -272,7 +200,6 @@ export default function EmployeeDetailsPage() {
     )
   }
 
-  const { role, sector, unit, mainWorkstation, processes } = employeeDetails
 
   return (
     <div className='grid flex-1 auto-rows-max gap-4'>
@@ -406,19 +333,9 @@ export default function EmployeeDetailsPage() {
                 <p className='text-sm font-medium text-muted-foreground'>
                   Etapas/Processos Envolvidos
                 </p>
-                <div className='flex flex-wrap gap-1'>
-                  {processes && processes.length > 0 ? (
-                    processes.map((process: Process) => (
-                      <Badge key={process.id} variant='secondary'>
-                        {process.name}
-                      </Badge>
-                    ))
-                  ) : (
-                    <p className='text-xs text-muted-foreground'>
+                 <p className='text-xs text-muted-foreground'>
                       Nenhum processo principal associado a este setor.
                     </p>
-                  )}
-                </div>
               </div>
             </CardContent>
           </Card>
