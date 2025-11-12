@@ -106,35 +106,6 @@ export default function ClientsPage() {
   )
   const { data: allClients, isLoading: areClientsLoading } =
     useCollection<Client>(clientsRef)
-    
-  const clients = useMemo(() => {
-    if (areClientsLoading || isStaffLoading) {
-      return null; // Return null while loading to distinguish from an empty array
-    }
-    if (!allClients) {
-      return [];
-    }
-  
-    // Super admin sees all clients
-    if (staffProfile?.perfilId === 'super_admin') {
-      return allClients;
-    }
-    
-    // Client users see only their own company
-    if (staffProfile?.perfilId === 'cliente' && staffProfile.contractId) {
-       return allClients.filter((client) => client.id === staffProfile?.contractId);
-    }
-    
-    // Other staff see their assigned clients
-    if (staffProfile?.clientIds && staffProfile.clientIds.length > 0) {
-      return allClients.filter((client) =>
-        staffProfile.clientIds?.includes(client.id)
-      );
-    }
-    
-    // Default to an empty array if no specific rule matches and it's not a super_admin
-    return [];
-  }, [allClients, staffProfile, areClientsLoading, isStaffLoading]);
 
   const [cnpj, setCnpj] = useState('')
   const [isCnpjLoading, setIsCnpjLoading] = useState(false)
@@ -247,7 +218,37 @@ export default function ClientsPage() {
     setSecondaryCnaes((prev) => prev.filter((c) => c.code !== cnaeCode))
   }
 
-  const isLoading = clients === null;
+  const clients = useMemo(() => {
+    // Return null while loading to ensure the loading spinner is shown
+    if (areClientsLoading || isStaffLoading) {
+      return null
+    }
+    if (!allClients || !staffProfile) {
+      return []
+    }
+  
+    // Super admin sees all clients
+    if (staffProfile.perfilId === 'super_admin') {
+      return allClients
+    }
+    
+    // Client users see only their own company
+    if (staffProfile.perfilId === 'cliente' && staffProfile.contractId) {
+      return allClients.filter((client) => client.id === staffProfile?.contractId)
+    }
+    
+    // Other staff see their assigned clients
+    if (staffProfile.clientIds && staffProfile.clientIds.length > 0) {
+      return allClients.filter((client) =>
+        staffProfile.clientIds?.includes(client.id)
+      )
+    }
+    
+    // Default to an empty array if no specific rule matches
+    return []
+  }, [allClients, staffProfile, areClientsLoading, isStaffLoading])
+
+  const isLoading = clients === null
 
   return (
     <Card>
@@ -704,3 +705,5 @@ export default function ClientsPage() {
     </Card>
   )
 }
+
+    
