@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   Card,
   CardContent,
@@ -9,7 +9,13 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { MoreHorizontal, PlusCircle, Search, Factory } from 'lucide-react'
+import {
+  MoreHorizontal,
+  PlusCircle,
+  Search,
+  Factory,
+  Loader2,
+} from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -31,22 +37,52 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
-import { initialMachinesData, type Machine } from './data'
+import { type Machine } from './data'
 import { Checkbox } from '@/components/ui/checkbox'
+import { useParams } from 'next/navigation'
+import {
+  useFirestore,
+  useCollection,
+  useMemoFirebase,
+  addDocumentNonBlocking,
+  updateDocumentNonBlocking,
+} from '@/firebase'
+import { collection, doc } from 'firebase/firestore'
 
 export default function MachinesPage() {
-  const [machines, setMachines] = useState(initialMachinesData)
+  const params = useParams()
+  const contractId = params.contractId as string
+  const firestore = useFirestore()
+  const machinesRef = useMemoFirebase(
+    () =>
+      firestore
+        ? collection(firestore, `clients/${contractId}/machines`)
+        : null,
+    [firestore, contractId]
+  )
+  const { data: machines, isLoading } = useCollection<Machine>(machinesRef)
+
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingMachine, setEditingMachine] = useState<Machine | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
   const { toast } = useToast()
+
+  const filteredMachines = useMemo(() => {
+    if (!machines) return []
+    return machines.filter(
+      (m) =>
+        m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        m.model.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  }, [machines, searchTerm])
 
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const formData = new FormData(e.currentTarget)
-    const machineId = editingMachine ? editingMachine.id : `MAC-${Date.now()}`
+    if (!machinesRef || !firestore) return
 
-    const updatedMachine: Machine = {
-      id: machineId,
+    const formData = new FormData(e.currentTarget)
+
+    const machineData = {
       name: formData.get('name') as string,
       manufacturer: formData.get('manufacturer') as string,
       model: formData.get('model') as string,
@@ -57,12 +93,11 @@ export default function MachinesPage() {
     }
 
     if (editingMachine) {
-      setMachines((prev) =>
-        prev.map((m) => (m.id === machineId ? updatedMachine : m))
-      )
+      const docRef = doc(firestore, machinesRef.path, editingMachine.id)
+      updateDocumentNonBlocking(docRef, machineData)
       toast({ title: 'Sucesso!', description: 'Máquina atualizada.' })
     } else {
-      setMachines((prev) => [updatedMachine, ...prev])
+      addDocumentNonBlocking(machinesRef, machineData)
       toast({ title: 'Sucesso!', description: 'Máquina adicionada.' })
     }
 
@@ -90,6 +125,8 @@ export default function MachinesPage() {
                 type='search'
                 placeholder='Buscar por nome ou modelo...'
                 className='pl-8'
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
             <Button
@@ -105,47 +142,55 @@ export default function MachinesPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Equipamento</TableHead>
-                <TableHead>Função</TableHead>
-                <TableHead>Fonte de Risco</TableHead>
-                <TableHead>
-                  <span className='sr-only'>Ações</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {machines.map((machine) => (
-                <TableRow
-                  key={machine.id}
-                  onClick={() => openFormDialog(machine)}
-                  className='cursor-pointer'
-                >
-                  <TableCell className='font-medium'>{machine.name}</TableCell>
-                  <TableCell>
-                    <p className='line-clamp-1 text-sm text-muted-foreground'>
-                      {machine.function}
-                    </p>
-                  </TableCell>
-                  <TableCell>
-                    {machine.isRiskSource ? (
-                      <span className='text-destructive font-semibold'>Sim</span>
-                    ) : (
-                      'Não'
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Button aria-haspopup='true' size='icon' variant='ghost'>
-                      <MoreHorizontal className='h-4 w-4' />
-                      <span className='sr-only'>Alternar menu</span>
-                    </Button>
-                  </TableCell>
+          {isLoading ? (
+            <div className='flex justify-center items-center h-64'>
+              <Loader2 className='h-8 w-8 animate-spin' />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Equipamento</TableHead>
+                  <TableHead>Função</TableHead>
+                  <TableHead>Fonte de Risco</TableHead>
+                  <TableHead>
+                    <span className='sr-only'>Ações</span>
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredMachines.map((machine) => (
+                  <TableRow
+                    key={machine.id}
+                    onClick={() => openFormDialog(machine)}
+                    className='cursor-pointer'
+                  >
+                    <TableCell className='font-medium'>{machine.name}</TableCell>
+                    <TableCell>
+                      <p className='line-clamp-1 text-sm text-muted-foreground'>
+                        {machine.function}
+                      </p>
+                    </TableCell>
+                    <TableCell>
+                      {machine.isRiskSource ? (
+                        <span className='text-destructive font-semibold'>
+                          Sim
+                        </span>
+                      ) : (
+                        'Não'
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Button aria-haspopup='true' size='icon' variant='ghost'>
+                        <MoreHorizontal className='h-4 w-4' />
+                        <span className='sr-only'>Alternar menu</span>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
@@ -178,7 +223,11 @@ export default function MachinesPage() {
                 </div>
                 <div className='space-y-2'>
                   <Label htmlFor='model'>Modelo</Label>
-                  <Input id='model' name='model' defaultValue={editingMachine?.model} />
+                  <Input
+                    id='model'
+                    name='model'
+                    defaultValue={editingMachine?.model}
+                  />
                 </div>
               </div>
               <div className='space-y-2'>
@@ -202,15 +251,21 @@ export default function MachinesPage() {
                 />
               </div>
               <div className='space-y-2 border-t pt-4'>
-                 <div className='flex items-center space-x-2'>
-                    <Checkbox id='isRiskSource' name='isRiskSource' defaultChecked={editingMachine?.isRiskSource}/>
-                    <Label htmlFor='isRiskSource' className='font-semibold'>É uma fonte geradora de riscos?</Label>
-                 </div>
-                 <Textarea 
-                    name='riskDescription' 
-                    defaultValue={editingMachine?.riskDescription}
-                    placeholder='Se sim, descreva os riscos (Ex: Ruído, Vibração, Risco de Esmagamento...)'
-                 />
+                <div className='flex items-center space-x-2'>
+                  <Checkbox
+                    id='isRiskSource'
+                    name='isRiskSource'
+                    defaultChecked={editingMachine?.isRiskSource}
+                  />
+                  <Label htmlFor='isRiskSource' className='font-semibold'>
+                    É uma fonte geradora de riscos?
+                  </Label>
+                </div>
+                <Textarea
+                  name='riskDescription'
+                  defaultValue={editingMachine?.riskDescription}
+                  placeholder='Se sim, descreva os riscos (Ex: Ruído, Vibração, Risco de Esmagamento...)'
+                />
               </div>
             </div>
           </form>
