@@ -119,7 +119,7 @@ export default function InfoDashboard() {
           <div className='space-y-1'>
             <p className='text-sm font-medium text-muted-foreground'>Email</p>
             <div className='flex items-center gap-2 text-sm font-semibold'>
-              <Mail className='h-4 w-4 text-muted-foreground' /> {client.contact}
+              <Mail className='h-4 w-4 text-muted-foreground' /> {client.contractResponsibleEmail}
             </div>
           </div>
           <div className='space-y-1 col-span-full'>
@@ -138,7 +138,7 @@ export default function InfoDashboard() {
             <div className='flex items-center gap-4'>
               <User className='h-8 w-8 text-muted-foreground' />
               <div>
-                <p className='font-semibold'>{client.responsibleName}</p>
+                <p className='font-semibold'>{client.contractResponsibleName}</p>
                 <p className='text-sm text-muted-foreground'>
                   Contato Principal
                 </p>
@@ -146,7 +146,7 @@ export default function InfoDashboard() {
             </div>
             <div className='flex items-center gap-2 text-sm'>
               <Phone className='h-4 w-4 text-muted-foreground' />
-              <span>{client.responsibleContact}</span>
+              <span>{client.contractResponsiblePhone}</span>
             </div>
           </div>
           <div className='space-y-4'>
