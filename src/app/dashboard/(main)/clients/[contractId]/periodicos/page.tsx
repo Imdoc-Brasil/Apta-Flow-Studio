@@ -31,7 +31,7 @@ import { differenceInDays, addYears, parseISO, isValid } from 'date-fns'
 import type { Employee } from '../employees/data'
 import type { Role } from '../roles/data'
 import type { Sector } from '../sectors/data'
-import type { ASO } from '../asos/page'
+import type { Aso } from '../asos/page'
 import { ClientSideDateFormatter } from '@/components/client-side-date-formatter'
 
 interface PeriodicControlItem {
@@ -75,7 +75,7 @@ export default function PeriodicControlPage() {
 
   const { data: employees, isLoading: areEmployeesLoading } = useCollection<Employee>(employeesRef)
   const { data: roles, isLoading: areRolesLoading } = useCollection<Role>(rolesRef)
-  const { data: asos, isLoading: areAsosLoading } = useCollection<ASO>(asosRef)
+  const { data: asos, isLoading: areAsosLoading } = useCollection<Aso>(asosRef)
 
   // This is a bit complex because sectors are nested under units. We have to fetch all of them.
   useEffect(() => {

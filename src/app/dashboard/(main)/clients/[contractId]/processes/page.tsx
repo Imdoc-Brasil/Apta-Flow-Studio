@@ -74,6 +74,14 @@ import type { Sector } from '../sectors/data'
 import type { Role } from '../roles/data'
 import type { Unit } from '../units/data'
 import { suggestProcessTool, SuggestProcessToolOutput } from '@/app/actions'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 
 
 type ScopeType = 'unidade' | 'setor' | 'cargo'
