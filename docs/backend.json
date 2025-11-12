@@ -273,10 +273,6 @@
           "type": "string",
           "description": "The URL where the document is stored.",
           "format": "uri"
-        },
-        "relatedTo": {
-          "type": "string",
-          "description": "The entity or client the document is related to."
         }
       },
       "required": [
@@ -954,14 +950,18 @@
         }
       },
       {
-        "path": "/documents/{documentId}",
+        "path": "/clients/{clientId}/documents/{documentId}",
         "definition": {
           "entityName": "Document",
           "schema": {
             "$ref": "#/backend/entities/Document"
           },
-          "description": "Stores documents in a global repository.",
+          "description": "Stores documents for a specific client.",
           "params": [
+            {
+              "name": "clientId",
+              "description": "Unique identifier for the client."
+            },
             {
               "name": "documentId",
               "description": "Unique identifier for the document."

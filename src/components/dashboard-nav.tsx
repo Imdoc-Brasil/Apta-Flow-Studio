@@ -47,7 +47,6 @@ const mainNavItems = [
   { href: '/dashboard/services', icon: ClipboardList, label: 'Serviços' },
   { href: '/dashboard/risks', icon: ShieldAlert, label: 'Riscos' },
   { href: '/dashboard/trainings', icon: GraduationCap, label: 'Treinamentos' },
-  { href: '/dashboard/documents', icon: FileText, label: 'Documentos' },
   { href: '/dashboard/tickets', icon: Ticket, label: 'Tickets' },
   { href: '/dashboard/performance', icon: Activity, label: 'Desempenho' },
   { href: '/dashboard/processes/diagram', icon: Workflow, label: 'Processos' },
@@ -236,3 +235,5 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
     </>
   )
 }
+
+    
