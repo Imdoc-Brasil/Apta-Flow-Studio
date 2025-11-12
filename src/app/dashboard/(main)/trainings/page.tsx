@@ -97,8 +97,8 @@ export default function TrainingsPage() {
       validity: Number(formData.get('validity')),
       modules: [],
     }
-    
-    addDocumentNonBlocking(trainingsRef, newTraining);
+
+    addDocumentNonBlocking(trainingsRef, newTraining)
 
     toast({
       title: 'Treinamento Adicionado!',

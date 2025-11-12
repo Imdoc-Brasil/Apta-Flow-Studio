@@ -107,7 +107,7 @@ export default function EditTrainingPage() {
 
     let updatedModules: TrainingModule[]
     if (editingModule) {
-      updatedModules = training.modules.map((m) =>
+      updatedModules = (training.modules || []).map((m) =>
         m.id === editingModule.id ? newModuleData : m
       )
       toast({ title: 'Módulo Atualizado!' })
@@ -130,7 +130,9 @@ export default function EditTrainingPage() {
 
   const deleteModule = (moduleId: string) => {
     if (!trainingRef || !training) return
-    const updatedModules = (training.modules || []).filter((m) => m.id !== moduleId)
+    const updatedModules = (training.modules || []).filter(
+      (m) => m.id !== moduleId
+    )
     updateDocumentNonBlocking(trainingRef, { modules: updatedModules })
     toast({ variant: 'destructive', title: 'Módulo Removido!' })
   }
