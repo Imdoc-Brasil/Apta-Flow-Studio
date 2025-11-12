@@ -59,7 +59,7 @@ import {
   useFirestore,
   useMemoFirebase,
 } from '@/firebase'
-import { collection, doc } from 'firebase/firestore'
+import { collection, doc, getDocs } from 'firebase/firestore'
 import type { Client } from '../../../clients/data'
 import type { Employee } from '../../../clients/[contractId]/employees/data'
 import type { Role } from '../../../clients/[contractId]/roles/data'
@@ -108,30 +108,50 @@ export default function AttendeeEvaluationPage() {
   const [imc, setImc] = useState(0)
   const [imcStatus, setImcStatus] = useState('')
 
-  const employeesRef = useMemoFirebase(() => (firestore && contractId ? collection(firestore, `clients/${contractId}/staffs`) : null), [firestore, contractId]);
-  const rolesRef = useMemoFirebase(() => (firestore && contractId ? collection(firestore, `clients/${contractId}/roles`) : null), [firestore, contractId]);
-  const sectorsRef = useMemoFirebase(() => (firestore && contractId ? collection(firestore, `clients/${contractId}/sectors`) : null), [firestore, contractId]);
-  const clientsRef = useMemoFirebase(() => (firestore ? collection(firestore, `clients`) : null), [firestore]);
+  const { attendees } = useAttendeeStore()
+  
+  const attendee = useMemo(() => attendees.find(a => a.id === attendeeId), [attendees, attendeeId])
+  const targetClient = useMemo(() => attendee?.clientName, [attendee])
+  
+  // Memoize all data fetching
+  const { data: clientsData, isLoading: clientsLoading } = useCollection<Client>(useMemoFirebase(() => firestore ? collection(firestore, 'clients') : null, [firestore]));
+  const { data: employeesData, isLoading: employeesLoading } = useCollection<Employee>(useMemoFirebase(() => (firestore && targetClient) ? collection(firestore, 'clients', targetClient, 'staffs') : null, [firestore, targetClient]));
+  const { data: rolesData, isLoading: rolesLoading } = useCollection<Role>(useMemoFirebase(() => (firestore && targetClient) ? collection(firestore, 'clients', targetClient, 'roles') : null, [firestore, targetClient]));
+  
+  const [allSectors, setAllSectors] = useState<Sector[]>([])
+  const [sectorsLoading, setSectorsLoading] = useState(true)
 
-  const { data: employeesData } = useCollection<Employee>(employeesRef)
-  const { data: rolesData } = useCollection<Role>(rolesRef)
-  const { data: sectorsData } = useCollection<Sector>(sectorsRef)
-  const { data: clientsData } = useCollection<Client>(clientsRef)
+  useEffect(() => {
+    if (firestore && targetClient) {
+      setSectorsLoading(true);
+      const fetchAllSectors = async () => {
+        const unitsColRef = collection(firestore, 'clients', targetClient, 'units');
+        const unitsSnapshot = await getDocs(unitsColRef);
+        const sectorsPromises = unitsSnapshot.docs.map(unitDoc => 
+          getDocs(collection(firestore, `clients/${targetClient}/units/${unitDoc.id}/sectors`))
+        );
+        const sectorsSnapshots = await Promise.all(sectorsPromises);
+        setAllSectors(sectorsSnapshots.flatMap(snap => snap.docs.map(d => ({id: d.id, ...d.data()} as Sector))));
+        setSectorsLoading(false);
+      };
+      fetchAllSectors();
+    }
+  }, [firestore, targetClient]);
 
   useEffect(() => {
     setIsClient(true)
-    if (attendeeId && employeesData && rolesData && sectorsData && clientsData) {
+    if (attendee && employeesData && rolesData && !sectorsLoading && clientsData) {
       setAttendeeInfo(
         getDetailedAttendeeInfo(
           attendeeId,
           employeesData,
           rolesData,
-          sectorsData,
+          allSectors,
           clientsData
         )
       )
     }
-  }, [attendeeId, employeesData, rolesData, sectorsData, clientsData])
+  }, [attendeeId, employeesData, rolesData, allSectors, clientsData, attendee, sectorsLoading])
 
   const calculateImc = useCallback(() => {
     const w = parseFloat(weight)
@@ -155,7 +175,9 @@ export default function AttendeeEvaluationPage() {
     calculateImc()
   }, [calculateImc])
 
-  if (!isClient) {
+  const isLoading = !isClient || !attendeeInfo || employeesLoading || rolesLoading || sectorsLoading || clientsLoading;
+
+  if (isLoading) {
     return (
       <div className='flex items-center justify-center h-full'>
         <Loader2 className='h-8 w-8 animate-spin' />
@@ -163,7 +185,7 @@ export default function AttendeeEvaluationPage() {
     )
   }
 
-  if (!attendeeInfo) {
+  if (!attendeeInfo || !attendeeInfo.attendee) {
     return (
       <div className='flex flex-col items-center justify-center h-full text-center'>
         <h2 className='text-2xl font-bold'>Atendimento não encontrado</h2>
@@ -180,12 +202,12 @@ export default function AttendeeEvaluationPage() {
     )
   }
 
-  const { attendee, employee, role, sector, client } = attendeeInfo
+  const { attendee: currentAttendee, employee, role, sector, client } = attendeeInfo
 
-  const isMultiExam = attendee.exams.length > 1
+  const isMultiExam = currentAttendee.exams.length > 1
   const examType = isMultiExam
-    ? attendee.solicitationType
-    : attendee.exams[0]?.name || attendee.solicitationType
+    ? currentAttendee.solicitationType
+    : currentAttendee.exams[0]?.name || currentAttendee.solicitationType
 
   const FieldsetGroup = ({
     children,
@@ -213,38 +235,6 @@ export default function AttendeeEvaluationPage() {
     </div>
   )
 
-  const ExamField = ({
-    label,
-    children,
-  }: {
-    label: string
-    children: React.ReactNode
-  }) => (
-    <div className='flex items-center justify-between'>
-      <Label className='text-sm'>{label}</Label>
-      <div className='flex items-center gap-4'>{children}</div>
-    </div>
-  )
-
-  const NormalAlteredField = ({ label }: { label: string }) => (
-    <div className='grid grid-cols-[1fr_2fr] gap-4 items-start'>
-      <div className='flex flex-col gap-2'>
-        <Label className='text-sm font-medium pt-2'>{label}</Label>
-        <RadioGroup defaultValue='normal' className='flex'>
-          <div className='flex items-center space-x-2'>
-            <RadioGroupItem value='normal' id={`${label}-normal`} />
-            <Label htmlFor={`${label}-normal`}>Normal</Label>
-          </div>
-          <div className='flex items-center space-x-2'>
-            <RadioGroupItem value='alterado' id={`${label}-alterado`} />
-            <Label htmlFor={`${label}-alterado`}>Alterado</Label>
-          </div>
-        </RadioGroup>
-      </div>
-      <Input placeholder='Se alterado, descrever...' />
-    </div>
-  )
-
   return (
     <div className='grid flex-1 auto-rows-max gap-4'>
       <div className='flex items-center gap-4'>
@@ -255,10 +245,10 @@ export default function AttendeeEvaluationPage() {
           </Link>
         </Button>
         <h1 className='flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0'>
-          Painel de Atendimento: {attendee.patientName}
+          Painel de Atendimento: {currentAttendee.patientName}
         </h1>
         <Badge variant='outline' className='ml-auto sm:ml-0'>
-          {attendee.status}
+          {currentAttendee.status}
         </Badge>
       </div>
 
@@ -309,7 +299,7 @@ export default function AttendeeEvaluationPage() {
                   <Label>Exames a Serem Realizados (Conforme PCMSO)</Label>
                   <Textarea
                     disabled
-                    value={attendee.exams.map((e: any) => e.name).join(', ')}
+                    value={currentAttendee.exams.map((e: any) => e.name).join(', ')}
                     rows={2}
                   />
                 </div>
@@ -380,7 +370,7 @@ export default function AttendeeEvaluationPage() {
               <CardTitle>Exames Solicitados</CardTitle>
             </CardHeader>
             <CardContent className='space-y-4 text-sm'>
-              {attendee.exams.map((exam: any) => {
+              {currentAttendee.exams.map((exam: any) => {
                 const isClinical = exam.name === 'Avaliação Clínica'
                 const href = isClinical
                   ? `/dashboard/health/evaluation/${attendeeId}` // Should be current page, maybe disable?
@@ -404,7 +394,7 @@ export default function AttendeeEvaluationPage() {
                       asChild
                       size='sm'
                       variant='ghost'
-                      disabled={isClinical && attendee.status === 'Em Atendimento'}
+                      disabled={isClinical && currentAttendee.status === 'Em Atendimento'}
                     >
                       <Link href={href}>
                         Realizar Exame <ChevronRight className='ml-2 h-4 w-4' />
