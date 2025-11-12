@@ -68,7 +68,7 @@ export default function Dashboard() {
     () => (firestore ? collection(firestore, 'clients') : null),
     [firestore]
   )
-  const { data: clients } = useCollection<Client>(clientsRef)
+  const { data: clients, isLoading: areClientsLoading } = useCollection<Client>(clientsRef)
 
   const staffsRef = useMemoFirebase(
     () => (firestore ? collection(firestore, 'staffs') : null),
@@ -94,6 +94,32 @@ export default function Dashboard() {
     [firestore]
   )
   const { data: allTickets } = useCollection<Ticket>(allTicketsQuery)
+  
+  // Effect to add initial data if collection is empty
+  useEffect(() => {
+    if (firestore && !areClientsLoading && clients && clients.length === 0) {
+      const initialClientId = 'CTR-2024-001'
+      const initialClientData: Client = {
+        id: initialClientId,
+        name: 'Innovate Inc.',
+        tradeName: 'Innovate Soluções',
+        cnpj: '12.345.678/0001-99',
+        address: 'Rua da Inovação, 123, São Paulo, SP',
+        cnae: '6201501',
+        riskLevel: '1',
+        secondaryCnaes: ['6204000', '6209100'],
+        status: 'Ativo',
+        adminResponsibleName: 'Ana Silva',
+        adminResponsibleCPF: '111.222.333-44',
+        contractResponsibleName: 'Carlos Pereira',
+        contractResponsiblePhone: '(11) 98765-4321',
+        contractResponsibleEmail: 'carlos.pereira@innovate.com',
+      };
+      const clientDocRef = doc(firestore, 'clients', initialClientId);
+      setDocumentNonBlocking(clientDocRef, initialClientData, { merge: true });
+    }
+  }, [firestore, areClientsLoading, clients]);
+
 
   useEffect(() => {
     const promoteToSuperAdmin = async () => {
