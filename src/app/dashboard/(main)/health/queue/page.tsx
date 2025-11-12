@@ -107,10 +107,10 @@ const AttendeeCard = ({ attendee }: { attendee: Attendee }) => {
   }
 
   const handleCardClick = () => {
-    if (attendee.status === 'Aguardando') {
-      updateAttendeeStatus(attendee.id, 'Em Atendimento')
-      router.push(`/dashboard/health/evaluation/${attendee.id}`)
-    } else if (attendee.status === 'Em Atendimento') {
+    if (attendee.status === 'Aguardando' || attendee.status === 'Em Atendimento') {
+      if(attendee.status === 'Aguardando') {
+        updateAttendeeStatus(attendee.id, 'Em Atendimento')
+      }
       router.push(`/dashboard/health/evaluation/${attendee.id}`)
     }
   }
@@ -121,6 +121,7 @@ const AttendeeCard = ({ attendee }: { attendee: Attendee }) => {
   }
 
   const isBusy = attendee.status === 'Em Atendimento'
+  const isClickable = attendee.status === 'Aguardando' || isBusy;
 
   return (
     <Card
@@ -128,7 +129,7 @@ const AttendeeCard = ({ attendee }: { attendee: Attendee }) => {
       style={style}
       className={cn(
         'touch-none',
-        isBusy ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing',
+        isClickable ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing',
         isBusy && 'bg-blue-100 dark:bg-blue-900/50 border-blue-400'
       )}
       {...attributes}
@@ -421,7 +422,7 @@ export default function QueuePage() {
                       <SelectContent>
                         {initialClientsData.map((client) => (
                           <SelectItem
-                            key={client.contractId}
+                            key={client.id}
                             value={client.name}
                           >
                             {client.name}

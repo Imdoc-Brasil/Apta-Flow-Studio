@@ -1,7 +1,7 @@
-
 'use client'
 
 import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
 
 export type Status = 'Agendado' | 'Aguardando' | 'Em Atendimento' | 'Concluído' | 'Cancelado'
 export type ExamStatus = 'Pendente' | 'Realizado'
@@ -87,55 +87,63 @@ type AttendeeStore = {
   ) => void
 }
 
-export const useAttendeeStore = create<AttendeeStore>((set) => ({
-  attendees: initialAttendees,
-  addAttendee: (newAttendeeData) =>
-    set((state) => ({
-      attendees: [
-        {
-          ...newAttendeeData,
-          id: `att-${Date.now()}`,
-          status: 'Agendado',
-          createdAt: new Date().toISOString(),
-        },
-        ...state.attendees,
-      ],
-    })),
-  setAttendees: (attendees) => set({ attendees }),
-  updateAttendeeStatus: (attendeeId, status) =>
-    set((state) => ({
-      attendees: state.attendees.map((attendee) => {
-        if (attendee.id === attendeeId) {
-          const isCheckingIn = status === 'Aguardando' && attendee.status !== 'Aguardando';
-          return {
-            ...attendee,
-            status,
-            checkInTime: isCheckingIn ? new Date().toISOString() : attendee.checkInTime
-          };
-        }
-        return attendee;
-      }),
-    })),
-  updateExamStatus: (attendeeId, examId, status) =>
-    set((state) => ({
-      attendees: state.attendees.map((attendee) => {
-        if (attendee.id === attendeeId) {
-          const updatedExams = attendee.exams.map((exam) =>
-            exam.id === examId ? { ...exam, status } : exam
-          );
-          
-          const allExamsDone = updatedExams.every(
-            (e) => e.status === 'Realizado'
-          );
+export const useAttendeeStore = create<AttendeeStore>()(
+  persist(
+    (set) => ({
+      attendees: initialAttendees,
+      addAttendee: (newAttendeeData) =>
+        set((state) => ({
+          attendees: [
+            {
+              ...newAttendeeData,
+              id: `att-${Date.now()}`,
+              status: 'Agendado',
+              createdAt: new Date().toISOString(),
+            },
+            ...state.attendees,
+          ],
+        })),
+      setAttendees: (attendees) => set({ attendees }),
+      updateAttendeeStatus: (attendeeId, status) =>
+        set((state) => ({
+          attendees: state.attendees.map((attendee) => {
+            if (attendee.id === attendeeId) {
+              const isCheckingIn = status === 'Aguardando' && attendee.status !== 'Aguardando';
+              return {
+                ...attendee,
+                status,
+                checkInTime: isCheckingIn ? new Date().toISOString() : attendee.checkInTime
+              };
+            }
+            return attendee;
+          }),
+        })),
+      updateExamStatus: (attendeeId, examId, status) =>
+        set((state) => ({
+          attendees: state.attendees.map((attendee) => {
+            if (attendee.id === attendeeId) {
+              const updatedExams = attendee.exams.map((exam) =>
+                exam.id === examId ? { ...exam, status } : exam
+              );
+              
+              const allExamsDone = updatedExams.every(
+                (e) => e.status === 'Realizado'
+              );
 
-          return {
-            ...attendee,
-            exams: updatedExams,
-            status: allExamsDone ? 'Concluído' : attendee.status,
-            allExamsCompletedAt: allExamsDone ? new Date().toISOString() : attendee.allExamsCompletedAt,
-          };
-        }
-        return attendee;
-      }),
-    })),
-}))
+              return {
+                ...attendee,
+                exams: updatedExams,
+                status: allExamsDone ? 'Concluído' : attendee.status,
+                allExamsCompletedAt: allExamsDone ? new Date().toISOString() : attendee.allExamsCompletedAt,
+              };
+            }
+            return attendee;
+          }),
+        })),
+    }),
+    {
+      name: 'attendee-queue-storage', // name of the item in storage (must be unique)
+      storage: createJSONStorage(() => localStorage), // use localStorage
+    }
+  )
+)
