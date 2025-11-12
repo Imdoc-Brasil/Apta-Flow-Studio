@@ -251,28 +251,39 @@ export default function PgrPage() {
 
   // Data for forms
   const unitsRef = useMemoFirebase(
-    () => (firestore ? collection(firestore, `clients/${contractId}/units`) : null),
+    () =>
+      firestore ? collection(firestore, `clients/${contractId}/units`) : null,
     [firestore, contractId]
   )
-  const { data: unitsData, isLoading: areUnitsLoading } = useCollection<Unit>(unitsRef)
+  const { data: unitsData, isLoading: areUnitsLoading } =
+    useCollection<Unit>(unitsRef)
 
   const rolesRef = useMemoFirebase(
-    () => (firestore ? collection(firestore, `clients/${contractId}/roles`) : null),
+    () =>
+      firestore ? collection(firestore, `clients/${contractId}/roles`) : null,
     [firestore, contractId]
   )
-  const { data: rolesData, isLoading: areRolesLoading } = useCollection<Role>(rolesRef)
+  const { data: rolesData, isLoading: areRolesLoading } =
+    useCollection<Role>(rolesRef)
 
   const ghesRef = useMemoFirebase(
-    () => (firestore ? collection(firestore, `clients/${contractId}/ghes`) : null),
+    () =>
+      firestore ? collection(firestore, `clients/${contractId}/ghes`) : null,
     [firestore, contractId]
   )
-  const { data: ghesData, isLoading: areGhesLoading } = useCollection<GHE>(ghesRef)
+  const { data: ghesData, isLoading: areGhesLoading } = useCollection<GHE>(
+    ghesRef
+  )
 
   const employeesRef = useMemoFirebase(
-    () => (firestore ? collection(firestore, `clients/${contractId}/staffs`) : null),
+    () =>
+      firestore
+        ? collection(firestore, `clients/${contractId}/staffs`)
+        : null,
     [firestore, contractId]
   )
-  const { data: employeesData, isLoading: areEmployeesLoading } = useCollection<Employee>(employeesRef)
+  const { data: employeesData, isLoading: areEmployeesLoading } =
+    useCollection<Employee>(employeesRef)
 
   const [allSectors, setAllSectors] = useState<Sector[]>([])
   const [areSectorsLoading, setAreSectorsLoading] = useState(true)
@@ -282,11 +293,18 @@ export default function PgrPage() {
       setAreSectorsLoading(true)
       const fetchSectors = async () => {
         const sectorsPromises = unitsData.map((unit) =>
-          getDocs(collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`))
+          getDocs(
+            collection(
+              firestore,
+              `clients/${contractId}/units/${unit.id}/sectors`
+            )
+          )
         )
         const sectorsSnapshots = await Promise.all(sectorsPromises)
         const sectorsData = sectorsSnapshots.flatMap((snapshot) =>
-          snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Sector))
+          snapshot.docs.map(
+            (doc) => ({ id: doc.id, ...doc.data() } as Sector)
+          )
         )
         setAllSectors(sectorsData)
         setAreSectorsLoading(false)
@@ -297,7 +315,6 @@ export default function PgrPage() {
     }
   }, [unitsData, firestore, contractId, areUnitsLoading])
 
-
   const [isAddRiskDialogOpen, setIsAddRiskDialogOpen] = useState(false)
   const [selectedHazard, setSelectedHazard] = useState<Hazard | null>(null)
   const [showStcwInput, setShowStcwInput] = useState(false)
@@ -306,12 +323,12 @@ export default function PgrPage() {
   const [frequency, setFrequency] = useState(0)
   const [severity, setSeverity] = useState(0)
   const [derivedRisk, setDerivedRisk] = useState<RiskEvaluation | null>(null)
-  
+
   // State for dynamic selects in the form
   const [exposureGroupType, setExposureGroupType] = useState<string>('')
   const [selectedUnitId, setSelectedUnitId] = useState<string>('')
-  const [selectedExposureTarget, setSelectedExposureTarget] = useState<string>('');
-
+  const [selectedExposureTarget, setSelectedExposureTarget] =
+    useState<string>('')
 
   const handleAddRisk = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -329,7 +346,7 @@ export default function PgrPage() {
       return
     }
 
-    const sectorName = formData.get('exposureTarget') as string;
+    const sectorName = formData.get('exposureTarget') as string
 
     const newRisk: Omit<PgrInventoryItem, 'id'> = {
       hazardId: formData.get('hazard') as string,
@@ -385,13 +402,20 @@ export default function PgrPage() {
       setShowStcwInput(checked)
     }
   }
-  
+
   const sectorsInUnit = useMemo(() => {
     if (!selectedUnitId || areSectorsLoading) return []
-    return allSectors.filter(s => s.unitId === selectedUnitId)
+    return allSectors.filter((s) => s.unitId === selectedUnitId)
   }, [selectedUnitId, allSectors, areSectorsLoading])
 
-  const isLoading = isLoadingInventory || isLoadingHazards || areUnitsLoading || areSectorsLoading || areRolesLoading || areGhesLoading || areEmployeesLoading;
+  const isLoading =
+    isLoadingInventory ||
+    isLoadingHazards ||
+    areUnitsLoading ||
+    areSectorsLoading ||
+    areRolesLoading ||
+    areGhesLoading ||
+    areEmployeesLoading
 
   return (
     <div className='grid flex-1 auto-rows-max gap-4'>
@@ -443,24 +467,36 @@ export default function PgrPage() {
                           Seção 01: Identificação
                         </h3>
                         <div className='grid md:grid-cols-2 gap-4'>
-                           <div className='space-y-2'>
-                              <Label htmlFor='unitId'>Unidade</Label>
-                              <Select name='unitId' required onValueChange={setSelectedUnitId} value={selectedUnitId}>
-                                <SelectTrigger>
-                                  <SelectValue placeholder='Selecione a unidade' />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {unitsData?.map(unit => (
-                                    <SelectItem key={unit.id} value={unit.id!}>{unit.name}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                           <div className='space-y-2'>
+                          <div className='space-y-2'>
+                            <Label htmlFor='unitId'>Unidade</Label>
+                            <Select
+                              name='unitId'
+                              required
+                              onValueChange={setSelectedUnitId}
+                              value={selectedUnitId}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder='Selecione a unidade' />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {unitsData?.map((unit) => (
+                                  <SelectItem key={unit.id} value={unit.id!}>
+                                    {unit.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className='space-y-2'>
                             <Label htmlFor='exposureGroup'>
                               Grupo de Exposição
                             </Label>
-                            <Select name='exposureGroup' required onValueChange={setExposureGroupType} value={exposureGroupType}>
+                            <Select
+                              name='exposureGroup'
+                              required
+                              onValueChange={setExposureGroupType}
+                              value={exposureGroupType}
+                            >
                               <SelectTrigger>
                                 <SelectValue placeholder='Selecione o grupo' />
                               </SelectTrigger>
@@ -474,32 +510,69 @@ export default function PgrPage() {
                               </SelectContent>
                             </Select>
                           </div>
-                          
+
                           <div className='space-y-2'>
                             <Label htmlFor='exposureTarget'>
                               Alvo da Exposição
                             </Label>
-                            <Select name='exposureTarget' required disabled={!exposureGroupType || !selectedUnitId} value={selectedExposureTarget} onValueChange={setSelectedExposureTarget}>
+                            <Select
+                              name='exposureTarget'
+                              required
+                              disabled={!exposureGroupType || !selectedUnitId}
+                              value={selectedExposureTarget}
+                              onValueChange={setSelectedExposureTarget}
+                            >
                               <SelectTrigger>
                                 <SelectValue placeholder='Selecione o alvo da exposição' />
                               </SelectTrigger>
                               <SelectContent>
-                               {exposureGroupType === 'sector' && sectorsInUnit.map(sector => (
-                                  <SelectItem key={sector.id} value={sector.name}>{sector.name}</SelectItem>
-                               ))}
-                               {exposureGroupType === 'role' && rolesData?.filter(r => sectorsInUnit.some(s => s.id === r.sectorId)).map(role => (
-                                  <SelectItem key={role.id} value={role.name}>{role.name}</SelectItem>
-                               ))}
-                                {exposureGroupType === 'ghe' && ghesData?.filter(g => g.unitId === selectedUnitId).map(ghe => (
-                                  <SelectItem key={ghe.id} value={ghe.name}>{ghe.name}</SelectItem>
-                                ))}
-                                {exposureGroupType === 'employee' && employeesData?.map(employee => (
-                                  <SelectItem key={employee.id} value={employee.name}>{employee.name}</SelectItem>
-                                ))}
+                                {exposureGroupType === 'sector' &&
+                                  sectorsInUnit.map((sector) => (
+                                    <SelectItem
+                                      key={sector.id}
+                                      value={sector.name}
+                                    >
+                                      {sector.name}
+                                    </SelectItem>
+                                  ))}
+                                {exposureGroupType === 'role' &&
+                                  rolesData
+                                    ?.filter((r) =>
+                                      sectorsInUnit.some(
+                                        (s) => s.id === r.sectorId
+                                      )
+                                    )
+                                    .map((role) => (
+                                      <SelectItem
+                                        key={role.id}
+                                        value={role.name}
+                                      >
+                                        {role.name}
+                                      </SelectItem>
+                                    ))}
+                                {exposureGroupType === 'ghe' &&
+                                  ghesData
+                                    ?.filter((g) => g.unitId === selectedUnitId)
+                                    .map((ghe) => (
+                                      <SelectItem
+                                        key={ghe.id}
+                                        value={ghe.name}
+                                      >
+                                        {ghe.name}
+                                      </SelectItem>
+                                    ))}
+                                {exposureGroupType === 'employee' &&
+                                  employeesData?.map((employee) => (
+                                    <SelectItem
+                                      key={employee.id}
+                                      value={employee.name}
+                                    >
+                                      {employee.name}
+                                    </SelectItem>
+                                  ))}
                               </SelectContent>
                             </Select>
                           </div>
-
                         </div>
 
                         <div className='space-y-2'>

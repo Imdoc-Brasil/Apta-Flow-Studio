@@ -61,7 +61,6 @@ import {
   getHazardById,
   type PgrInventoryItem,
 } from '@/app/dashboard/(main)/clients/[contractId]/pgr/page'
-import type { RiskEvaluation } from '@/app/dashboard/(main)/clients/[contractId]/pgr/page'
 import { cn } from '@/lib/utils'
 import { useParams } from 'next/navigation'
 import {
@@ -73,6 +72,7 @@ import {
 import { collection, query, getDocs } from 'firebase/firestore'
 import type { Hazard } from '../../../risks/page'
 import type { Role } from '../../roles/data'
+import { ClientSideDateFormatter } from '@/components/client-side-date-formatter'
 
 interface PgrEntry {
   id?: string
@@ -87,26 +87,6 @@ interface PgrEntry {
 interface PgrUpdate {
   date: string
   description: string
-}
-
-function ClientSideDateFormatter({ dateString }: { dateString: string }) {
-  const [formattedDate, setFormattedDate] = useState('')
-
-  useEffect(() => {
-    if (dateString) {
-      const date = new Date(dateString)
-      // Ajuste para garantir que a data seja interpretada em UTC e não mude de dia
-      const timezoneOffset = date.getTimezoneOffset() * 60000
-      const adjustedDate = new Date(date.getTime() + timezoneOffset)
-      setFormattedDate(adjustedDate.toLocaleDateString('pt-BR'))
-    }
-  }, [dateString])
-
-  if (!formattedDate) {
-    return null // Retorna nulo durante a renderização do servidor e a primeira renderização do cliente
-  }
-
-  return <>{formattedDate}</>
 }
 
 export default function PgrHistoryPage() {
@@ -144,25 +124,28 @@ export default function PgrHistoryPage() {
   )
   const { data: allInventory, isLoading: isLoadingInventory } =
     useCollection<PgrInventoryItem>(inventoryRef)
-    
+
   const hazardsRef = useMemoFirebase(
     () => (firestore ? collection(firestore, 'hazards') : null),
     [firestore]
   )
-  const { data: hazardData, isLoading: isLoadingHazards } = useCollection<Hazard>(hazardsRef)
+  const { data: hazardData, isLoading: isLoadingHazards } =
+    useCollection<Hazard>(hazardsRef)
 
   const rolesRef = useMemoFirebase(
-    () => (firestore ? collection(firestore, `clients/${contractId}/roles`) : null),
+    () =>
+      firestore ? collection(firestore, `clients/${contractId}/roles`) : null,
     [firestore, contractId]
-  );
-  const { data: rolesData, isLoading: areRolesLoading } = useCollection<Role>(rolesRef);
+  )
+  const { data: rolesData, isLoading: areRolesLoading } =
+    useCollection<Role>(rolesRef)
 
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null)
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null)
   const [unitSectors, setUnitSectors] = useState<Sector[]>([])
   const [unitInventory, setUnitInventory] = useState<PgrInventoryItem[]>([])
-  const [areSectorsLoading, setAreSectorsLoading] = useState(false);
+  const [areSectorsLoading, setAreSectorsLoading] = useState(false)
 
   const [updates, setUpdates] = useState<PgrUpdate[]>([])
   const [newUpdate, setNewUpdate] = useState('')
@@ -173,7 +156,7 @@ export default function PgrHistoryPage() {
   useEffect(() => {
     const fetchSectors = async () => {
       if (selectedUnitId && firestore) {
-        setAreSectorsLoading(true);
+        setAreSectorsLoading(true)
         const unit = unitsData?.find((u) => u.id === selectedUnitId)
         setSelectedUnit(unit || null)
 
@@ -192,7 +175,7 @@ export default function PgrHistoryPage() {
         const inventory =
           allInventory?.filter((i) => i.unitId === selectedUnitId) || []
         setUnitInventory(inventory)
-        setAreSectorsLoading(false);
+        setAreSectorsLoading(false)
       } else {
         setSelectedUnit(null)
         setUnitSectors([])
@@ -258,9 +241,9 @@ export default function PgrHistoryPage() {
       description: 'O log de atualizações do PGR foi atualizado.',
     })
   }
-  
+
   const rolesInSector = (sectorId: string) => {
-    return rolesData?.filter(role => role.sectorId === sectorId) || [];
+    return rolesData?.filter((role) => role.sectorId === sectorId) || []
   }
 
   return (
@@ -423,7 +406,9 @@ export default function PgrHistoryPage() {
                           </span>
                           .
                         </p>
-                        {areSectorsLoading ? <Loader2 className='m-auto h-6 w-6 animate-spin' /> : unitSectors.length > 0 ? (
+                        {areSectorsLoading ? (
+                          <Loader2 className='m-auto h-6 w-6 animate-spin' />
+                        ) : unitSectors.length > 0 ? (
                           <div className='space-y-4'>
                             {unitSectors.map((sector) => (
                               <div
@@ -440,15 +425,17 @@ export default function PgrHistoryPage() {
                                   <h5 className='text-xs font-semibold text-muted-foreground'>
                                     CARGOS:
                                   </h5>
-                                  {areRolesLoading ? <Loader2 className='h-4 w-4 animate-spin'/> : rolesInSector(sector.id).length > 0 ? (
+                                  {areRolesLoading ? (
+                                    <Loader2 className='h-4 w-4 animate-spin' />
+                                  ) : rolesInSector(sector.id).length > 0 ? (
                                     <ul className='list-disc pl-5 text-sm'>
-                                      {rolesInSector(sector.id).map(role => (
+                                      {rolesInSector(sector.id).map((role) => (
                                         <li key={role.id}>{role.name}</li>
                                       ))}
                                     </ul>
                                   ) : (
                                     <p className='text-xs text-muted-foreground italic'>
-                                     Nenhum cargo para este setor.
+                                      Nenhum cargo para este setor.
                                     </p>
                                   )}
                                 </div>
@@ -483,7 +470,10 @@ export default function PgrHistoryPage() {
                             </TableHeader>
                             <TableBody>
                               {unitInventory.map((item) => {
-                                const hazard = getHazardById(item.hazardId, hazardData)
+                                const hazard = getHazardById(
+                                  item.hazardId,
+                                  hazardData
+                                )
                                 return (
                                   <TableRow key={item.id}>
                                     <TableCell>
@@ -558,12 +548,9 @@ export default function PgrHistoryPage() {
                         {updates.map((update, index) => (
                           <div key={index} className='flex gap-4 text-sm'>
                             <div className='text-muted-foreground whitespace-nowrap'>
-                              {new Date(update.date).toLocaleDateString(
-                                'pt-BR',
-                                {
-                                  timeZone: 'UTC',
-                                }
-                              )}
+                              <ClientSideDateFormatter
+                                dateString={update.date}
+                              />
                             </div>
                             <div className='font-medium'>
                               {update.description}
@@ -586,7 +573,10 @@ export default function PgrHistoryPage() {
                 </ScrollArea>
               </form>
               <DialogFooter className='pt-4 border-t'>
-                <Button variant='outline' onClick={() => setIsDialogOpen(false)}>
+                <Button
+                  variant='outline'
+                  onClick={() => setIsDialogOpen(false)}
+                >
                   Cancelar
                 </Button>
                 <Button type='submit' form='emit-pgr-form'>
