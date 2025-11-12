@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   Card,
   CardContent,
@@ -33,6 +33,7 @@ import {
   Link as LinkIcon,
   Check,
   ChevronsUpDown,
+  Loader2,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/hooks/use-toast'
@@ -58,17 +59,31 @@ import {
   DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu'
 import Link from 'next/link'
-import {
-  initialSurveys,
-  type PsychosocialSurvey,
-  type SurveyStatus,
-} from './data'
+import { type PsychosocialSurvey, type SurveyStatus } from './data'
 import { initialEmployeesData } from '../employees/data'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command'
 import { cn } from '@/lib/utils'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Input } from '@/components/ui/input'
+import {
+  useFirestore,
+  useCollection,
+  useMemoFirebase,
+  addDocumentNonBlocking,
+} from '@/firebase'
+import { collection } from 'firebase/firestore'
 
 const standardCircumstances = [
   {
@@ -85,22 +100,36 @@ export default function PsychosocialPage() {
   const { toast } = useToast()
   const params = useParams()
   const contractId = params.contractId as string
-  const client = initialClientsData.find((c) => c.contractId === contractId)
+  const client = initialClientsData.find((c) => c.id === contractId)
   const clientUnits = initialUnitsData.filter(
     (u) =>
       initialClientsData.find((c) => c.name === client?.name)?.name ===
       client?.name
   )
 
-  const [surveys, setSurveys] = useState(initialSurveys)
+  const firestore = useFirestore()
+  const surveysRef = useMemoFirebase(
+    () =>
+      firestore
+        ? collection(
+            firestore,
+            `clients/${contractId}/psychosocial_surveys`
+          )
+        : null,
+    [firestore, contractId]
+  )
+  const { data: surveys, isLoading } =
+    useCollection<PsychosocialSurvey>(surveysRef)
+
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedUnits, setSelectedUnits] = useState<string[]>([])
   const [circumstanceText, setCircumstanceText] = useState('')
 
   const handleCreateSurvey = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    if (!surveysRef) return
+
     const formData = new FormData(e.currentTarget)
-    
     const circumstances = formData.get('circumstances') as string
 
     if (selectedUnits.length === 0 || !circumstances || !client) {
@@ -112,22 +141,18 @@ export default function PsychosocialPage() {
       })
       return
     }
-    
+
     let unitDisplay = 'Múltiplas Unidades'
     if (selectedUnits.length === 1) {
-        if(selectedUnits[0] === 'all') {
-            unitDisplay = 'Todas as Unidades'
-        } else {
-            unitDisplay = clientUnits.find(u => u.id === selectedUnits[0])?.name || 'N/A'
-        }
+      if (selectedUnits[0] === 'all') {
+        unitDisplay = 'Todas as Unidades'
+      } else {
+        unitDisplay =
+          clientUnits.find((u) => u.id === selectedUnits[0])?.name || 'N/A'
+      }
     }
 
-
-    const newSurvey: PsychosocialSurvey = {
-      id: `SURV-${new Date().getFullYear()}-${Math.random()
-        .toString(36)
-        .substring(2, 6)
-        .toUpperCase()}`,
+    const newSurvey: Omit<PsychosocialSurvey, 'id'> = {
       creationDate: new Date().toISOString().split('T')[0],
       clientName: client.name,
       unit: unitDisplay,
@@ -135,7 +160,8 @@ export default function PsychosocialPage() {
       status: 'Planejada',
     }
 
-    setSurveys((prev) => [newSurvey, ...prev])
+    addDocumentNonBlocking(surveysRef, newSurvey)
+
     setIsDialogOpen(false)
     toast({
       title: 'Pesquisa Criada com Sucesso!',
@@ -163,7 +189,7 @@ export default function PsychosocialPage() {
     }
     setSelectedUnits((prev) => {
       const isSelected = prev.includes(unitId)
-      let newSelection = prev.filter(u => u !== 'all'); // remove 'all' if any specific unit is selected
+      let newSelection = prev.filter((u) => u !== 'all') // remove 'all' if any specific unit is selected
       if (isSelected) {
         return newSelection.filter((id) => id !== unitId)
       } else {
@@ -171,15 +197,16 @@ export default function PsychosocialPage() {
       }
     })
   }
-  
+
   const getSelectedUnitsText = () => {
     if (selectedUnits.includes('all')) return 'Todas as Unidades'
     if (selectedUnits.length === 0) return 'Selecione a(s) unidade(s)'
-    if (selectedUnits.length === 1) return clientUnits.find(u => u.id === selectedUnits[0])?.name
+    if (selectedUnits.length === 1)
+      return clientUnits.find((u) => u.id === selectedUnits[0])?.name
     return `${selectedUnits.length} unidades selecionadas`
   }
-  
-  const totalEmployees = initialEmployeesData.length; // Placeholder
+
+  const totalEmployees = initialEmployeesData.length // Placeholder
 
   return (
     <Card>
@@ -194,7 +221,12 @@ export default function PsychosocialPage() {
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={() => { setSelectedUnits([]); setCircumstanceText('')}}>
+              <Button
+                onClick={() => {
+                  setSelectedUnits([])
+                  setCircumstanceText('')
+                }}
+              >
                 <PlusCircle className='mr-2 h-4 w-4' />
                 Criar Nova Pesquisa
               </Button>
@@ -209,76 +241,106 @@ export default function PsychosocialPage() {
               </DialogHeader>
               <form id='create-survey-form' onSubmit={handleCreateSurvey}>
                 <ScrollArea className='h-[60vh] pr-4'>
-                <div className='grid gap-4 py-4'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='unitId'>Unidade(s)</Label>
-                     <Popover>
+                  <div className='grid gap-4 py-4'>
+                    <div className='space-y-2'>
+                      <Label htmlFor='unitId'>Unidade(s)</Label>
+                      <Popover>
                         <PopoverTrigger asChild>
                           <Button
-                            variant="outline"
-                            className="w-full justify-between"
+                            variant='outline'
+                            className='w-full justify-between'
                           >
                             {getSelectedUnitsText()}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                           <Command>
-                            <CommandInput placeholder="Buscar unidade..." />
-                            <CommandEmpty>Nenhuma unidade encontrada.</CommandEmpty>
-                             <CommandList>
-                                <CommandGroup>
-                                 <CommandItem onSelect={() => handleUnitSelection('all')}>
-                                    <Check className={cn("mr-2 h-4 w-4", selectedUnits.includes('all') ? "opacity-100" : "opacity-0")} />
-                                    Todas as Unidades
+                        <PopoverContent className='w-[--radix-popover-trigger-width] p-0'>
+                          <Command>
+                            <CommandInput placeholder='Buscar unidade...' />
+                            <CommandEmpty>
+                              Nenhuma unidade encontrada.
+                            </CommandEmpty>
+                            <CommandList>
+                              <CommandGroup>
+                                <CommandItem
+                                  onSelect={() => handleUnitSelection('all')}
+                                >
+                                  <Check
+                                    className={cn(
+                                      'mr-2 h-4 w-4',
+                                      selectedUnits.includes('all')
+                                        ? 'opacity-100'
+                                        : 'opacity-0'
+                                    )}
+                                  />
+                                  Todas as Unidades
+                                </CommandItem>
+                                {clientUnits.map((unit) => (
+                                  <CommandItem
+                                    key={unit.id}
+                                    onSelect={() => handleUnitSelection(unit.id)}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        'mr-2 h-4 w-4',
+                                        selectedUnits.includes(unit.id)
+                                          ? 'opacity-100'
+                                          : 'opacity-0'
+                                      )}
+                                    />
+                                    {unit.name}
                                   </CommandItem>
-                                  {clientUnits.map((unit) => (
-                                    <CommandItem key={unit.id} onSelect={() => handleUnitSelection(unit.id)}>
-                                       <Check className={cn("mr-2 h-4 w-4", selectedUnits.includes(unit.id) ? "opacity-100" : "opacity-0")} />
-                                       {unit.name}
-                                    </CommandItem>
-                                  ))}
-                                </CommandGroup>
-                             </CommandList>
-                           </Command>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
                         </PopoverContent>
                       </Popover>
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='circumstances'>
-                      Nome / Circunstâncias da Pesquisa
-                    </Label>
-                     <Select onValueChange={setCircumstanceText}>
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='circumstances'>
+                        Nome / Circunstâncias da Pesquisa
+                      </Label>
+                      <Select onValueChange={setCircumstanceText}>
                         <SelectTrigger>
-                            <SelectValue placeholder='Selecione um modelo ou digite abaixo' />
+                          <SelectValue placeholder='Selecione um modelo ou digite abaixo' />
                         </SelectTrigger>
                         <SelectContent>
-                            {standardCircumstances.map(item => (
-                                <SelectItem key={item.id} value={item.text}>{item.text}</SelectItem>
-                            ))}
+                          {standardCircumstances.map((item) => (
+                            <SelectItem key={item.id} value={item.text}>
+                              {item.text}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
-                    </Select>
-                    <Textarea
-                      id='circumstances'
-                      name='circumstances'
-                      placeholder='Ex: Avaliação Anual 2024, Investigação Pós-Incidente...'
-                      value={circumstanceText}
-                      onChange={(e) => setCircumstanceText(e.target.value)}
-                      required
-                    />
-                  </div>
-                   <div className='grid grid-cols-2 gap-4'>
-                     <div className='space-y-2'>
+                      </Select>
+                      <Textarea
+                        id='circumstances'
+                        name='circumstances'
+                        placeholder='Ex: Avaliação Anual 2024, Investigação Pós-Incidente...'
+                        value={circumstanceText}
+                        onChange={(e) => setCircumstanceText(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className='grid grid-cols-2 gap-4'>
+                      <div className='space-y-2'>
                         <Label htmlFor='month'>Mês de Aplicação</Label>
                         <Select name='month'>
-                           <SelectTrigger>
+                          <SelectTrigger>
                             <SelectValue placeholder='Selecione o mês' />
                           </SelectTrigger>
                           <SelectContent>
-                            {Array.from({length: 12}, (_, i) => new Date(0, i)).map(date => (
-                                <SelectItem key={date.getMonth()} value={(date.getMonth() + 1).toString()}>
-                                    {date.toLocaleString('pt-BR', { month: 'long' })}
-                                </SelectItem>
+                            {Array.from({ length: 12 }, (_, i) =>
+                              new Date(0, i)
+                            ).map((date) => (
+                              <SelectItem
+                                key={date.getMonth()}
+                                value={(date.getMonth() + 1).toString()}
+                              >
+                                {date.toLocaleString('pt-BR', {
+                                  month: 'long',
+                                })}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
@@ -286,36 +348,62 @@ export default function PsychosocialPage() {
                       <div className='space-y-2'>
                         <Label htmlFor='year'>Ano de Aplicação</Label>
                         <Select name='year'>
-                           <SelectTrigger>
+                          <SelectTrigger>
                             <SelectValue placeholder='Selecione o ano' />
                           </SelectTrigger>
                           <SelectContent>
-                            {Array.from({length: 5}, (_, i) => new Date().getFullYear() - i).map(year => (
-                                <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
+                            {Array.from(
+                              { length: 5 },
+                              (_, i) => new Date().getFullYear() - i
+                            ).map((year) => (
+                              <SelectItem
+                                key={year}
+                                value={year.toString()}
+                              >
+                                {year}
+                              </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </div>
-                   </div>
-                   <div className='grid grid-cols-2 gap-4'>
-                       <div className='space-y-2'>
-                          <Label htmlFor='total-active'>Total de Colaboradores Ativos</Label>
-                          <Input id='total-active' name='total-active' type='number' value={totalEmployees} disabled />
-                       </div>
-                       <div className='space-y-2'>
-                          <Label htmlFor='total-invited'>Total de Convidados</Label>
-                          <Input id='total-invited' name='total-invited' type='number' placeholder='Nº de colaboradores' />
-                       </div>
-                   </div>
-                  <p className='text-xs text-muted-foreground'>
-                    Após a criação, você poderá gerar o link e definir os
-                    parâmetros demográficos.
-                  </p>
-                </div>
+                    </div>
+                    <div className='grid grid-cols-2 gap-4'>
+                      <div className='space-y-2'>
+                        <Label htmlFor='total-active'>
+                          Total de Colaboradores Ativos
+                        </Label>
+                        <Input
+                          id='total-active'
+                          name='total-active'
+                          type='number'
+                          value={totalEmployees}
+                          disabled
+                        />
+                      </div>
+                      <div className='space-y-2'>
+                        <Label htmlFor='total-invited'>
+                          Total de Convidados
+                        </Label>
+                        <Input
+                          id='total-invited'
+                          name='total-invited'
+                          type='number'
+                          placeholder='Nº de colaboradores'
+                        />
+                      </div>
+                    </div>
+                    <p className='text-xs text-muted-foreground'>
+                      Após a criação, você poderá gerar o link e definir os
+                      parâmetros demográficos.
+                    </p>
+                  </div>
                 </ScrollArea>
               </form>
               <DialogFooter>
-                <Button variant='outline' onClick={() => setIsDialogOpen(false)}>
+                <Button
+                  variant='outline'
+                  onClick={() => setIsDialogOpen(false)}
+                >
                   Cancelar
                 </Button>
                 <Button type='submit' form='create-survey-form'>
@@ -327,71 +415,87 @@ export default function PsychosocialPage() {
         </div>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>ID da Pesquisa</TableHead>
-              <TableHead>Unidade</TableHead>
-              <TableHead>Circunstância</TableHead>
-              <TableHead>Data de Criação</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>
-                <span className='sr-only'>Ações</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {surveys.map((survey) => (
-              <TableRow key={survey.id}>
-                <TableCell className='font-mono text-sm'>
-                  {survey.id}
-                </TableCell>
-                <TableCell>{survey.unit}</TableCell>
-                <TableCell className='font-medium'>
-                  {survey.circumstances}
-                </TableCell>
-                <TableCell>
-                  {new Date(survey.creationDate).toLocaleDateString('pt-BR', {
-                    timeZone: 'UTC',
-                  })}
-                </TableCell>
-                <TableCell>
-                  <Badge variant={getStatusVariant(survey.status)}>
-                    {survey.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button aria-haspopup='true' size='icon' variant='ghost'>
-                        <MoreHorizontal className='h-4 w-4' />
-                        <span className='sr-only'>Alternar menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align='end'>
-                      <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                      <DropdownMenuItem asChild>
-                        <Link href={`/survey?id=${survey.id}`} target='_blank'>
-                          <LinkIcon className='mr-2 h-4 w-4' />
-                          Abrir Link da Pesquisa
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem asChild>
-                        <Link
-                          href={`/dashboard/clients/${contractId}/psychosocial/results?surveyId=${survey.id}`}
-                        >
-                          Ver Resultados
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>Arquivar</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
+        {isLoading ? (
+          <div className='flex items-center justify-center h-64'>
+            <Loader2 className='h-8 w-8 animate-spin' />
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>ID da Pesquisa</TableHead>
+                <TableHead>Unidade</TableHead>
+                <TableHead>Circunstância</TableHead>
+                <TableHead>Data de Criação</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>
+                  <span className='sr-only'>Ações</span>
+                </TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {surveys?.map((survey) => (
+                <TableRow key={survey.id}>
+                  <TableCell className='font-mono text-sm'>
+                    {survey.id}
+                  </TableCell>
+                  <TableCell>{survey.unit}</TableCell>
+                  <TableCell className='font-medium'>
+                    {survey.circumstances}
+                  </TableCell>
+                  <TableCell>
+                    {new Date(survey.creationDate).toLocaleDateString(
+                      'pt-BR',
+                      {
+                        timeZone: 'UTC',
+                      }
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={getStatusVariant(survey.status)}>
+                      {survey.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          aria-haspopup='true'
+                          size='icon'
+                          variant='ghost'
+                        >
+                          <MoreHorizontal className='h-4 w-4' />
+                          <span className='sr-only'>Alternar menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align='end'>
+                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                        <DropdownMenuItem asChild>
+                          <Link
+                            href={`/survey?id=${survey.id}`}
+                            target='_blank'
+                          >
+                            <LinkIcon className='mr-2 h-4 w-4' />
+                            Abrir Link da Pesquisa
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link
+                            href={`/dashboard/clients/${contractId}/psychosocial/results?surveyId=${survey.id}`}
+                          >
+                            Ver Resultados
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>Arquivar</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </CardContent>
     </Card>
   )
