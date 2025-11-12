@@ -41,7 +41,6 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
-import { initialClientsData } from '@/app/dashboard/(main)/clients/data'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Textarea } from '@/components/ui/textarea'
 import Link from 'next/link'
@@ -61,20 +60,21 @@ import {
   useCollection,
   useMemoFirebase,
   addDocumentNonBlocking,
+  useDoc,
 } from '@/firebase'
 import { collection, doc } from 'firebase/firestore'
 import { Loader2 } from 'lucide-react'
-
-const getClientById = (contractId: string) => {
-  return initialClientsData.find((client) => client.id === contractId)
-}
+import type { Client } from '../../data'
 
 export default function UnitsPage() {
   const params = useParams()
   const contractId = params.contractId as string
-  const client = getClientById(contractId)
-
   const firestore = useFirestore()
+
+  const clientRef = useMemoFirebase(
+    () => (firestore ? doc(firestore, 'clients', contractId) : null),
+    [firestore, contractId]
+  )
   const unitsRef = useMemoFirebase(
     () =>
       firestore
@@ -82,7 +82,8 @@ export default function UnitsPage() {
         : null,
     [firestore, contractId]
   )
-  const { data: units, isLoading } = useCollection<Unit>(unitsRef)
+  const { data: client, isLoading: isClientLoading } = useDoc<Client>(clientRef)
+  const { data: units, isLoading: areUnitsLoading } = useCollection<Unit>(unitsRef)
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -163,6 +164,8 @@ export default function UnitsPage() {
       return matchesSearch && matchesStatus
     })
   }, [units, searchTerm, statusFilter])
+    
+  const isLoading = isClientLoading || areUnitsLoading
 
   return (
     <>
