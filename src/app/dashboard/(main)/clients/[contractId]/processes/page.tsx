@@ -23,6 +23,7 @@ import {
   Filter,
   MoreHorizontal,
   X,
+  Loader2,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -40,7 +41,6 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { useToast } from '@/hooks/use-toast'
 import {
-  initialProcessesData,
   type Process,
   type ProcessStep,
   type ProcessType,
@@ -65,11 +65,31 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { sstPrograms } from '@/app/dashboard/(main)/services/page'
+import { useParams } from 'next/navigation'
+import {
+  useFirestore,
+  useCollection,
+  useMemoFirebase,
+  addDocumentNonBlocking,
+  updateDocumentNonBlocking,
+} from '@/firebase'
+import { collection, doc } from 'firebase/firestore'
 
 type ScopeType = 'unidade' | 'setor' | 'cargo'
 
 export default function ProcessesPage() {
-  const [processes, setProcesses] = useState(initialProcessesData)
+  const params = useParams()
+  const contractId = params.contractId as string
+  const firestore = useFirestore()
+  const processesRef = useMemoFirebase(
+    () =>
+      firestore
+        ? collection(firestore, `clients/${contractId}/processes`)
+        : null,
+    [firestore, contractId]
+  )
+  const { data: processes, isLoading } = useCollection<Process>(processesRef)
+
   const [isProcessDialogOpen, setIsProcessDialogOpen] = useState(false)
   const [editingProcess, setEditingProcess] = useState<Process | null>(null)
   const [formSteps, setFormSteps] = useState<ProcessStep[]>([])
@@ -79,66 +99,77 @@ export default function ProcessesPage() {
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
   const [searchTerm, setSearchTerm] = useState('')
   const [sectorFilter, setSectorFilter] = useState<string[]>([])
+  
+  const getSectorNameForProcess = (process: Process) => {
+     const firstStep = process.steps[0];
+     if (firstStep && firstStep.sectorId) {
+        const sector = initialSectorsData.find(s => s.id === firstStep.sectorId);
+        return sector?.name || 'Setor não definido';
+     }
+     return 'Setor não definido';
+  }
 
-  const uniqueSectors = [
-    ...new Set(initialProcessesData.map((p) => {
-        const firstStep = p.steps[0];
-        if (firstStep && firstStep.sectorId) {
-            const sector = initialSectorsData.find(s => s.id === firstStep.sectorId);
-            return sector?.name || 'Setor não definido';
-        }
-        return 'Setor não definido';
-    })),
-  ]
+  const uniqueSectors = useMemo(() => {
+    if (!processes) return []
+    return [
+      ...new Set(processes.map((p) => getSectorNameForProcess(p))),
+    ]
+  }, [processes])
 
   const filteredProcesses = useMemo(() => {
+    if (!processes) return []
     return processes.filter((process) => {
       const matchesSearch =
         process.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         process.objective.toLowerCase().includes(searchTerm.toLowerCase())
 
-       const firstStep = process.steps[0];
-       let sectorName = 'Setor não definido';
-        if (firstStep && firstStep.sectorId) {
-            const sector = initialSectorsData.find(s => s.id === firstStep.sectorId);
-            sectorName = sector?.name || 'Setor não definido';
-        }
+      const sectorName = getSectorNameForProcess(process)
 
       const matchesSector =
-        sectorFilter.length === 0 ||
-        sectorFilter.includes(sectorName)
+        sectorFilter.length === 0 || sectorFilter.includes(sectorName)
 
       return matchesSearch && matchesSector
     })
   }, [processes, searchTerm, sectorFilter])
-  
-  const handleStepChange = (index: number, field: keyof ProcessStep, value: string | boolean) => {
-    setFormSteps(prev => {
-        const newSteps = [...prev];
-        const step = { ...newSteps[index] };
-        
-        if (typeof value === 'boolean' && (field === 'isControlPoint' || field === 'isRiskSource')) {
-             (step[field] as boolean | undefined) = value;
-        } else if (typeof value === 'string') {
-            (step[field as keyof Omit<ProcessStep, 'isControlPoint' | 'isRiskSource'>] as string | undefined) = value;
-        }
 
-        // If sector is changed, reset the responsible role
-        if (field === 'sectorId') {
-            step.responsibleRole = '';
-        }
-        newSteps[index] = step;
-        return newSteps;
-    });
-  };
+  const handleStepChange = (
+    index: number,
+    field: keyof ProcessStep,
+    value: string | boolean
+  ) => {
+    setFormSteps((prev) => {
+      const newSteps = [...prev]
+      const step = { ...newSteps[index] }
+
+      if (
+        typeof value === 'boolean' &&
+        (field === 'isControlPoint' || field === 'isRiskSource')
+      ) {
+        ;(step[field] as boolean | undefined) = value
+      } else if (typeof value === 'string') {
+        ;(
+          step[
+            field as keyof Omit<ProcessStep, 'isControlPoint' | 'isRiskSource'>
+          ] as string | undefined
+        ) = value
+      }
+
+      // If sector is changed, reset the responsible role
+      if (field === 'sectorId') {
+        step.responsibleRole = ''
+      }
+      newSteps[index] = step
+      return newSteps
+    })
+  }
 
   const handleProcessSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    const formData = new FormData(e.currentTarget)
-    const processId = editingProcess ? editingProcess.id : `PROC-${Date.now()}`
+    if (!firestore || !processesRef) return
 
-    const updatedProcess: Process = {
-      id: processId,
+    const formData = new FormData(e.currentTarget)
+
+    const processData: Omit<Process, 'id'> = {
       name: formData.get('name') as string,
       objective: formData.get('objective') as string,
       type: formData.get('type') as ProcessType,
@@ -154,12 +185,11 @@ export default function ProcessesPage() {
     }
 
     if (editingProcess) {
-      setProcesses((prev) =>
-        prev.map((p) => (p.id === processId ? updatedProcess : p))
-      )
+      const docRef = doc(firestore, `clients/${contractId}/processes`, editingProcess.id as string)
+      updateDocumentNonBlocking(docRef, processData)
       toast({ title: 'Sucesso!', description: 'Processo atualizado.' })
     } else {
-      setProcesses((prev) => [updatedProcess, ...prev])
+      addDocumentNonBlocking(processesRef, processData)
       toast({ title: 'Sucesso!', description: 'Processo adicionado.' })
     }
 
@@ -197,15 +227,6 @@ export default function ProcessesPage() {
         ? prev.filter((s) => s !== sigla)
         : [...prev, sigla]
     )
-  }
-  
-  const getSectorNameForProcess = (process: Process) => {
-     const firstStep = process.steps[0];
-     if (firstStep && firstStep.sectorId) {
-        const sector = initialSectorsData.find(s => s.id === firstStep.sectorId);
-        return sector?.name || 'Setor não definido';
-     }
-     return 'Setor não definido';
   }
 
   return (
@@ -287,7 +308,11 @@ export default function ProcessesPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {viewMode === 'card' ? (
+          {isLoading ? (
+            <div className='flex justify-center items-center h-64'>
+              <Loader2 className='h-8 w-8 animate-spin' />
+            </div>
+          ) : viewMode === 'card' ? (
             <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
               {filteredProcesses.map((process) => (
                 <Card
@@ -298,7 +323,9 @@ export default function ProcessesPage() {
                   <CardHeader>
                     <div className='flex items-start justify-between'>
                       <Workflow className='h-8 w-8 text-muted-foreground' />
-                      <Badge variant='outline'>{getSectorNameForProcess(process)}</Badge>
+                      <Badge variant='outline'>
+                        {getSectorNameForProcess(process)}
+                      </Badge>
                     </div>
                     <CardTitle className='pt-4'>{process.name}</CardTitle>
                   </CardHeader>
@@ -338,7 +365,9 @@ export default function ProcessesPage() {
                       {process.name}
                     </TableCell>
                     <TableCell>
-                      <Badge variant='outline'>{getSectorNameForProcess(process)}</Badge>
+                      <Badge variant='outline'>
+                        {getSectorNameForProcess(process)}
+                      </Badge>
                     </TableCell>
                     <TableCell>{process.steps.length}</TableCell>
                     <TableCell>
@@ -352,7 +381,7 @@ export default function ProcessesPage() {
             </Table>
           )}
 
-          {filteredProcesses.length === 0 && (
+          {!isLoading && filteredProcesses.length === 0 && (
             <div className='flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm h-96'>
               <div className='flex flex-col items-center gap-1 text-center'>
                 <h3 className='text-2xl font-bold tracking-tight'>
@@ -525,123 +554,152 @@ export default function ProcessesPage() {
                   </h3>
                   <div className='space-y-4'>
                     {formSteps.map((step, index) => {
-                        const rolesForSector = initialRolesData.filter(r => r.sectorId === step.sectorId);
-                        return (
-                          <div
-                            key={step.id}
-                            className='flex items-start gap-4 p-4 border rounded-lg relative'
-                          >
-                            <div className='flex-shrink-0 flex flex-col items-center justify-center bg-primary text-primary-foreground rounded-full h-8 w-8 text-sm font-bold mt-2'>
-                              {index + 1}
-                            </div>
-                            <div className='flex-grow space-y-4'>
-                               <div className='grid grid-cols-2 gap-4'>
-                                <div className='space-y-2'>
-                                  <Label htmlFor={`step-name-${index}`}>Nome da Etapa</Label>
-                                  <Input
-                                    id={`step-name-${index}`}
-                                    name={`step-name-${index}`}
-                                    defaultValue={step.name}
-                                    required
-                                  />
-                                </div>
-                                <div className='space-y-2'>
-                                  <Label htmlFor={`step-sector-${index}`}>Setor Responsável</Label>
-                                  <Select 
-                                      name={`step-sector-${index}`}
-                                      value={step.sectorId}
-                                      onValueChange={(value) => handleStepChange(index, 'sectorId', value)}
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue placeholder='Selecione o Setor' />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {initialSectorsData.map((sector) => (
-                                        <SelectItem
-                                          key={sector.id}
-                                          value={sector.id}
-                                        >
-                                          {sector.name}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </div>
-                               <div className='space-y-2'>
-                                  <Label htmlFor={`step-role-${index}`}>Cargo Responsável</Label>
-                                  <Select 
-                                      name={`step-role-${index}`}
-                                      value={step.responsibleRole}
-                                      onValueChange={(value) => handleStepChange(index, 'responsibleRole', value)}
-                                      required
-                                      disabled={!step.sectorId || rolesForSector.length === 0}
-                                  >
-                                    <SelectTrigger>
-                                      <SelectValue placeholder='Selecione o Cargo' />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      {rolesForSector.map((role) => (
-                                        <SelectItem
-                                          key={role.id}
-                                          value={role.id}
-                                        >
-                                          {role.name}
-                                        </SelectItem>
-                                      ))}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              <div className='space-y-2'>
-                                <Label htmlFor={`step-description-${index}`}>Descrição da Atividade</Label>
-                                <Textarea
-                                  id={`step-description-${index}`}
-                                  name={`step-description-${index}`}
-                                  defaultValue={step.description}
-                                  placeholder='Descreva o que deve ser feito nesta etapa.'
-                                  rows={2}
-                                />
-                              </div>
-                              <div className='flex items-center space-x-2 pt-2'>
-                                <Checkbox
-                                  id={`control-point-${index}`}
-                                  name={`control-point-${index}`}
-                                  defaultChecked={step.isControlPoint}
-                                  onCheckedChange={(checked) => handleStepChange(index, 'isControlPoint', !!checked)}
-                                />
-                                <Label
-                                  htmlFor={`control-point-${index}`}
-                                  className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
-                                >
-                                  Este é um Ponto de Controle Crítico
-                                </Label>
-                              </div>
-                              <div className='flex items-center space-x-2'>
-                                <Checkbox
-                                  id={`risk-source-${index}`}
-                                  name={`risk-source-${index}`}
-                                  defaultChecked={step.isRiskSource}
-                                  onCheckedChange={(checked) => handleStepChange(index, 'isRiskSource', !!checked)}
-                                />
-                                <Label
-                                  htmlFor={`risk-source-${index}`}
-                                  className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
-                                >
-                                  Esta etapa é fonte geradora de risco?
-                                </Label>
-                              </div>
-                            </div>
-                            <Button
-                              type='button'
-                              variant='ghost'
-                              size='icon'
-                              className='absolute top-2 right-2 h-6 w-6 text-destructive hover:text-destructive'
-                              onClick={() => removeStep(step.id)}
-                            >
-                              <Trash2 className='h-4 w-4' />
-                            </Button>
+                      const rolesForSector = initialRolesData.filter(
+                        (r) => r.sectorId === step.sectorId
+                      )
+                      return (
+                        <div
+                          key={step.id}
+                          className='flex items-start gap-4 p-4 border rounded-lg relative'
+                        >
+                          <div className='flex-shrink-0 flex flex-col items-center justify-center bg-primary text-primary-foreground rounded-full h-8 w-8 text-sm font-bold mt-2'>
+                            {index + 1}
                           </div>
-                        )
+                          <div className='flex-grow space-y-4'>
+                            <div className='grid grid-cols-2 gap-4'>
+                              <div className='space-y-2'>
+                                <Label htmlFor={`step-name-${index}`}>
+                                  Nome da Etapa
+                                </Label>
+                                <Input
+                                  id={`step-name-${index}`}
+                                  name={`step-name-${index}`}
+                                  defaultValue={step.name}
+                                  required
+                                />
+                              </div>
+                              <div className='space-y-2'>
+                                <Label htmlFor={`step-sector-${index}`}>
+                                  Setor Responsável
+                                </Label>
+                                <Select
+                                  name={`step-sector-${index}`}
+                                  value={step.sectorId}
+                                  onValueChange={(value) =>
+                                    handleStepChange(index, 'sectorId', value)
+                                  }
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder='Selecione o Setor' />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {initialSectorsData.map((sector) => (
+                                      <SelectItem
+                                        key={sector.id}
+                                        value={sector.id}
+                                      >
+                                        {sector.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            <div className='space-y-2'>
+                              <Label htmlFor={`step-role-${index}`}>
+                                Cargo Responsável
+                              </Label>
+                              <Select
+                                name={`step-role-${index}`}
+                                value={step.responsibleRole}
+                                onValueChange={(value) =>
+                                  handleStepChange(
+                                    index,
+                                    'responsibleRole',
+                                    value
+                                  )
+                                }
+                                required
+                                disabled={
+                                  !step.sectorId || rolesForSector.length === 0
+                                }
+                              >
+                                <SelectTrigger>
+                                  <SelectValue placeholder='Selecione o Cargo' />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {rolesForSector.map((role) => (
+                                    <SelectItem key={role.id} value={role.id}>
+                                      {role.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className='space-y-2'>
+                              <Label htmlFor={`step-description-${index}`}>
+                                Descrição da Atividade
+                              </Label>
+                              <Textarea
+                                id={`step-description-${index}`}
+                                name={`step-description-${index}`}
+                                defaultValue={step.description}
+                                placeholder='Descreva o que deve ser feito nesta etapa.'
+                                rows={2}
+                              />
+                            </div>
+                            <div className='flex items-center space-x-2 pt-2'>
+                              <Checkbox
+                                id={`control-point-${index}`}
+                                name={`control-point-${index}`}
+                                defaultChecked={step.isControlPoint}
+                                onCheckedChange={(checked) =>
+                                  handleStepChange(
+                                    index,
+                                    'isControlPoint',
+                                    !!checked
+                                  )
+                                }
+                              />
+                              <Label
+                                htmlFor={`control-point-${index}`}
+                                className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
+                              >
+                                Este é um Ponto de Controle Crítico
+                              </Label>
+                            </div>
+                            <div className='flex items-center space-x-2'>
+                              <Checkbox
+                                id={`risk-source-${index}`}
+                                name={`risk-source-${index}`}
+                                defaultChecked={step.isRiskSource}
+                                onCheckedChange={(checked) =>
+                                  handleStepChange(
+                                    index,
+                                    'isRiskSource',
+                                    !!checked
+                                  )
+                                }
+                              />
+                              <Label
+                                htmlFor={`risk-source-${index}`}
+                                className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
+                              >
+                                Esta etapa é fonte geradora de risco?
+                              </Label>
+                            </div>
+                          </div>
+                          <Button
+                            type='button'
+                            variant='ghost'
+                            size='icon'
+                            className='absolute top-2 right-2 h-6 w-6 text-destructive hover:text-destructive'
+                            onClick={() => removeStep(step.id)}
+                          >
+                            <Trash2 className='h-4 w-4' />
+                          </Button>
+                        </div>
+                      )
                     })}
                     <Button
                       type='button'
