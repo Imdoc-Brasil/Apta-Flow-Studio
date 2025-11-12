@@ -17,10 +17,12 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { esocialExams, type Exam, type ExamCategory } from '../data/exams'
+import { type Exam, type ExamCategory } from '../data/exams'
 import { Input } from '@/components/ui/input'
 import { useState, useMemo } from 'react'
-import { Search } from 'lucide-react'
+import { Loader2, Search } from 'lucide-react'
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase'
+import { collection } from 'firebase/firestore'
 
 const categories: ExamCategory[] = [
   'Exame Clínico/Físico',
@@ -30,7 +32,13 @@ const categories: ExamCategory[] = [
   'Outros',
 ]
 
-const ExamsTable = ({ exams }: { exams: Exam[] }) => {
+const ExamsTable = ({
+  exams,
+  isLoading,
+}: {
+  exams: Exam[]
+  isLoading: boolean
+}) => {
   return (
     <div className='border rounded-md'>
       <Table>
@@ -41,12 +49,26 @@ const ExamsTable = ({ exams }: { exams: Exam[] }) => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {exams.map((exam) => (
-            <TableRow key={exam.code}>
-              <TableCell className='font-medium'>{exam.code}</TableCell>
-              <TableCell>{exam.name}</TableCell>
+          {isLoading ? (
+            <TableRow>
+              <TableCell colSpan={2} className='h-24 text-center'>
+                <Loader2 className='mx-auto h-6 w-6 animate-spin' />
+              </TableCell>
             </TableRow>
-          ))}
+          ) : exams.length > 0 ? (
+            exams.map((exam) => (
+              <TableRow key={exam.code}>
+                <TableCell className='font-medium'>{exam.code}</TableCell>
+                <TableCell>{exam.name}</TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={2} className='h-24 text-center'>
+                Nenhum exame encontrado.
+              </TableCell>
+            </TableRow>
+          )}
         </TableBody>
       </Table>
     </div>
@@ -55,17 +77,24 @@ const ExamsTable = ({ exams }: { exams: Exam[] }) => {
 
 export default function ExamsCatalogPage() {
   const [searchTerm, setSearchTerm] = useState('')
+  const firestore = useFirestore()
+  const examsRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'medical_exams') : null),
+    [firestore]
+  )
+  const { data: allExams, isLoading } = useCollection<Exam>(examsRef)
 
   const filteredExams = useMemo(() => {
+    if (!allExams) return []
     if (!searchTerm) {
-      return esocialExams
+      return allExams
     }
-    return esocialExams.filter(
+    return allExams.filter(
       (exam) =>
         exam.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         exam.code.includes(searchTerm)
     )
-  }, [searchTerm])
+  }, [allExams, searchTerm])
 
   const examsByCategory = (category: ExamCategory) => {
     return filteredExams.filter((exam) => exam.category === category)
@@ -108,7 +137,10 @@ export default function ExamsCatalogPage() {
             </TabsList>
             {categories.map((category) => (
               <TabsContent key={category} value={category}>
-                <ExamsTable exams={examsByCategory(category)} />
+                <ExamsTable
+                  exams={examsByCategory(category)}
+                  isLoading={isLoading}
+                />
               </TabsContent>
             ))}
           </Tabs>
