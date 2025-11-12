@@ -285,6 +285,8 @@ export default function EpisPage() {
     </div>
   )
 
+  const isLoading = isLoadingCatalog || isLoadingStock || isLoadingDeliveries || areEmployeesLoading;
+
   return (
     <>
       <Card>
@@ -353,7 +355,7 @@ export default function EpisPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {isLoadingCatalog ? (
+                  {isLoading ? (
                     renderLoading()
                   ) : (
                     <Table>
@@ -506,7 +508,7 @@ export default function EpisPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {isLoadingDeliveries ? (
+                  {isLoading ? (
                     renderLoading()
                   ) : (
                     <Table>
@@ -559,7 +561,7 @@ export default function EpisPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {isLoadingStock ? (
+                  {isLoading ? (
                     renderLoading()
                   ) : (
                     <Table>

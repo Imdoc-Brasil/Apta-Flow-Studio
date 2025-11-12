@@ -1,6 +1,7 @@
+
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import {
   Card,
   CardContent,
@@ -276,7 +277,7 @@ export default function PgrPage() {
   const [allSectors, setAllSectors] = useState<Sector[]>([])
   const [areSectorsLoading, setAreSectorsLoading] = useState(true)
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (unitsData && firestore) {
       setAreSectorsLoading(true)
       const fetchSectors = async () => {
@@ -309,6 +310,8 @@ export default function PgrPage() {
   // State for dynamic selects in the form
   const [exposureGroupType, setExposureGroupType] = useState<string>('')
   const [selectedUnitId, setSelectedUnitId] = useState<string>('')
+  const [selectedExposureTarget, setSelectedExposureTarget] = useState<string>('');
+
 
   const handleAddRisk = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -326,10 +329,12 @@ export default function PgrPage() {
       return
     }
 
+    const sectorName = formData.get('exposureTarget') as string;
+
     const newRisk: Omit<PgrInventoryItem, 'id'> = {
       hazardId: formData.get('hazard') as string,
       unitId: formData.get('unitId') as string,
-      sector: formData.get('sectorName') as string, // Using sector name for now
+      sector: sectorName,
       source: formData.get('source') as string,
       evaluation: derivedRisk,
     }
@@ -372,6 +377,7 @@ export default function PgrPage() {
     setDerivedRisk(null)
     setExposureGroupType('')
     setSelectedUnitId('')
+    setSelectedExposureTarget('')
   }
 
   const handleMethodologyChange = (checked: boolean, id: string) => {
@@ -473,7 +479,7 @@ export default function PgrPage() {
                             <Label htmlFor='exposureTarget'>
                               Alvo da Exposição
                             </Label>
-                            <Select name='exposureTarget' required disabled={!exposureGroupType || !selectedUnitId}>
+                            <Select name='exposureTarget' required disabled={!exposureGroupType || !selectedUnitId} value={selectedExposureTarget} onValueChange={setSelectedExposureTarget}>
                               <SelectTrigger>
                                 <SelectValue placeholder='Selecione o alvo da exposição' />
                               </SelectTrigger>
@@ -481,10 +487,10 @@ export default function PgrPage() {
                                {exposureGroupType === 'sector' && sectorsInUnit.map(sector => (
                                   <SelectItem key={sector.id} value={sector.name}>{sector.name}</SelectItem>
                                ))}
-                               {exposureGroupType === 'role' && rolesData?.map(role => (
+                               {exposureGroupType === 'role' && rolesData?.filter(r => sectorsInUnit.some(s => s.id === r.sectorId)).map(role => (
                                   <SelectItem key={role.id} value={role.name}>{role.name}</SelectItem>
                                ))}
-                                {exposureGroupType === 'ghe' && ghesData?.map(ghe => (
+                                {exposureGroupType === 'ghe' && ghesData?.filter(g => g.unitId === selectedUnitId).map(ghe => (
                                   <SelectItem key={ghe.id} value={ghe.name}>{ghe.name}</SelectItem>
                                 ))}
                                 {exposureGroupType === 'employee' && employeesData?.map(employee => (
@@ -492,7 +498,6 @@ export default function PgrPage() {
                                 ))}
                               </SelectContent>
                             </Select>
-                            <input type="hidden" name="sectorName" value={exposureGroupType === 'sector' ? '' : sectorsInUnit.find(s => s.id === rolesData?.find(r => r.id === '')?.sectorId)?.name || ''} />
                           </div>
 
                         </div>

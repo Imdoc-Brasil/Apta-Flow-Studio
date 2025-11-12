@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   Card,
   CardContent,
@@ -132,33 +132,45 @@ export default function RecommendationMatrixPage() {
 
   const inventoryRisks = useMemo(() => {
     if (!inventory) return []
-    return inventory
+    const riskIdsInUnit = inventory
       .filter((inv) => inv.unitId === selectedUnit)
-      .map((inv) => getHazardById(inv.hazardId))
-      .filter((h) => h !== undefined)
+      .map((inv) => inv.hazardId)
+    const uniqueRiskIds = [...new Set(riskIdsInUnit)]
+    return uniqueRiskIds
+      .map((id) => getHazardById(id))
+      .filter((h): h is Hazard => h !== undefined)
   }, [inventory, selectedUnit, hazardData])
   
-   useMemo(async () => {
+   useEffect(() => {
     if (selectedUnit && firestore) {
       setIsLoadingSub(true);
-      const sectorsQuery = collection(firestore, `clients/${contractId}/units/${selectedUnit}/sectors`);
-      const sectorsSnapshot = await getDocs(sectorsQuery);
-      const sectorsData = sectorsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sector));
-      setSectors(sectorsData);
-      
-      const envsData: Environment[] = [];
-      for (const sector of sectorsData) {
-        const envsQuery = collection(firestore, `clients/${contractId}/units/${selectedUnit}/sectors/${sector.id}/environments`);
-        const envsSnapshot = await getDocs(envsQuery);
-        envsSnapshot.forEach(doc => {
-            envsData.push({ id: doc.id, ...doc.data()} as Environment);
-        })
+      const fetchSubCollections = async () => {
+        try {
+          const sectorsQuery = collection(firestore, `clients/${contractId}/units/${selectedUnit}/sectors`);
+          const sectorsSnapshot = await getDocs(sectorsQuery);
+          const sectorsData = sectorsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sector));
+          setSectors(sectorsData);
+          
+          const envsData: Environment[] = [];
+          for (const sector of sectorsData) {
+            const envsQuery = collection(firestore, `clients/${contractId}/units/${selectedUnit}/sectors/${sector.id}/environments`);
+            const envsSnapshot = await getDocs(envsQuery);
+            envsSnapshot.forEach(doc => {
+                envsData.push({ id: doc.id, ...doc.data()} as Environment);
+            })
+          }
+          setEnvironments(envsData);
+        } catch (error) {
+          console.error("Error fetching sub-collections for recommendations: ", error);
+        } finally {
+          setIsLoadingSub(false);
+        }
       }
-      setEnvironments(envsData);
-      setIsLoadingSub(false);
+      fetchSubCollections();
     } else {
         setSectors([]);
         setEnvironments([]);
+        if(selectedUnit) setIsLoadingSub(false);
     }
   }, [selectedUnit, firestore, contractId])
   
@@ -347,7 +359,7 @@ export default function RecommendationMatrixPage() {
     { value: 'employee', label: 'Colaborador Específico' },
   ]
 
-  const isLoading = isLoadingInventory || isLoadingEpis || isLoadingHazards || isLoadingUnits || isLoadingEmployees || isLoadingRoles || isLoadingGhes;
+  const isLoading = isLoadingInventory || isLoadingEpis || isLoadingHazards || isLoadingUnits || isLoadingEmployees || isLoadingRoles || isLoadingGhes || (selectedUnit && isLoadingSub);
 
   return (
     <div className='grid flex-1 auto-rows-max gap-4'>

@@ -72,6 +72,7 @@ import {
 } from '@/firebase'
 import { collection, query, getDocs } from 'firebase/firestore'
 import type { Hazard } from '../../../risks/page'
+import type { Role } from '../../roles/data'
 
 interface PgrEntry {
   id?: string
@@ -150,11 +151,18 @@ export default function PgrHistoryPage() {
   )
   const { data: hazardData, isLoading: isLoadingHazards } = useCollection<Hazard>(hazardsRef)
 
+  const rolesRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, `clients/${contractId}/roles`) : null),
+    [firestore, contractId]
+  );
+  const { data: rolesData, isLoading: areRolesLoading } = useCollection<Role>(rolesRef);
+
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null)
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null)
   const [unitSectors, setUnitSectors] = useState<Sector[]>([])
   const [unitInventory, setUnitInventory] = useState<PgrInventoryItem[]>([])
+  const [areSectorsLoading, setAreSectorsLoading] = useState(false);
 
   const [updates, setUpdates] = useState<PgrUpdate[]>([])
   const [newUpdate, setNewUpdate] = useState('')
@@ -165,6 +173,7 @@ export default function PgrHistoryPage() {
   useEffect(() => {
     const fetchSectors = async () => {
       if (selectedUnitId && firestore) {
+        setAreSectorsLoading(true);
         const unit = unitsData?.find((u) => u.id === selectedUnitId)
         setSelectedUnit(unit || null)
 
@@ -183,6 +192,7 @@ export default function PgrHistoryPage() {
         const inventory =
           allInventory?.filter((i) => i.unitId === selectedUnitId) || []
         setUnitInventory(inventory)
+        setAreSectorsLoading(false);
       } else {
         setSelectedUnit(null)
         setUnitSectors([])
@@ -247,6 +257,10 @@ export default function PgrHistoryPage() {
       title: 'Atualização Adicionada!',
       description: 'O log de atualizações do PGR foi atualizado.',
     })
+  }
+  
+  const rolesInSector = (sectorId: string) => {
+    return rolesData?.filter(role => role.sectorId === sectorId) || [];
   }
 
   return (
@@ -409,7 +423,7 @@ export default function PgrHistoryPage() {
                           </span>
                           .
                         </p>
-                        {unitSectors.length > 0 ? (
+                        {areSectorsLoading ? <Loader2 className='m-auto h-6 w-6 animate-spin' /> : unitSectors.length > 0 ? (
                           <div className='space-y-4'>
                             {unitSectors.map((sector) => (
                               <div
@@ -426,10 +440,17 @@ export default function PgrHistoryPage() {
                                   <h5 className='text-xs font-semibold text-muted-foreground'>
                                     CARGOS:
                                   </h5>
-                                  <p className='text-xs text-muted-foreground italic'>
-                                    (A lista de cargos para este setor
-                                    aparecerá aqui)
-                                  </p>
+                                  {areRolesLoading ? <Loader2 className='h-4 w-4 animate-spin'/> : rolesInSector(sector.id).length > 0 ? (
+                                    <ul className='list-disc pl-5 text-sm'>
+                                      {rolesInSector(sector.id).map(role => (
+                                        <li key={role.id}>{role.name}</li>
+                                      ))}
+                                    </ul>
+                                  ) : (
+                                    <p className='text-xs text-muted-foreground italic'>
+                                     Nenhum cargo para este setor.
+                                    </p>
+                                  )}
                                 </div>
                               </div>
                             ))}
