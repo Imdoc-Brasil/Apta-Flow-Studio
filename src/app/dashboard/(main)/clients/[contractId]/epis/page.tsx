@@ -44,8 +44,8 @@ import {
   type Epi,
   type EpiStock,
   type EpiDelivery,
-} from '@/app/dashboard/(main)/risks/page' // Updated import
-import { initialEmployeesData } from '../employees/data'
+} from '@/app/dashboard/(main)/risks/page'
+import { type Employee } from '../employees/data'
 import {
   Select,
   SelectContent,
@@ -53,9 +53,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Switch } from '@/components/ui/switch'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Textarea } from '@/components/ui/textarea'
 import { useParams } from 'next/navigation'
 import {
   useFirestore,
@@ -91,6 +88,14 @@ export default function EpisPage() {
         : null,
     [firestore, contractId]
   )
+  const employeesRef = useMemoFirebase(
+    () =>
+      firestore
+        ? collection(firestore, `clients/${contractId}/staffs`)
+        : null,
+    [firestore, contractId]
+  )
+
 
   // Data from Firestore
   const { data: epiData, isLoading: isLoadingCatalog } =
@@ -99,6 +104,8 @@ export default function EpisPage() {
     useCollection<EpiStock>(epiStockRef)
   const { data: epiDeliveries, isLoading: isLoadingDeliveries } =
     useCollection<EpiDelivery>(epiDeliveriesRef)
+   const { data: employees, isLoading: areEmployeesLoading } = useCollection<Employee>(employeesRef);
+
 
   // Dialog states
   const [isEpiDialogOpen, setIsEpiDialogOpen] = useState(false)
@@ -133,7 +140,7 @@ export default function EpisPage() {
 
   const handleAddDelivery = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!epiDeliveriesRef || !epiStock || !firestore) return
+    if (!epiDeliveriesRef || !epiStock || !firestore || !employees) return
 
     const formData = new FormData(event.currentTarget)
     const epiId = formData.get('epiId') as string
@@ -152,7 +159,7 @@ export default function EpisPage() {
 
     const epiName = epiData?.find((e) => e.id === epiId)?.name || ''
     const employeeName =
-      initialEmployeesData.find((e) => e.id === employeeId)?.name || ''
+      employees.find((e) => e.id === employeeId)?.name || ''
 
     const newDeliveryData: Omit<EpiDelivery, 'id'> = {
       epiId,
@@ -440,7 +447,7 @@ export default function EpisPage() {
                                   <SelectValue placeholder='Selecione o colaborador' />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {initialEmployeesData.map((emp) => (
+                                  {employees?.map((emp) => (
                                     <SelectItem key={emp.id} value={emp.id}>
                                       {emp.name}
                                     </SelectItem>

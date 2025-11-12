@@ -19,13 +19,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
-import { type PgrInventoryItem, getRiskLevel } from '@/app/dashboard/(main)/clients/[contractId]/pgr/page' // Correct import
-import { initialEmployeesData } from '../../employees/data'
-import { initialRolesData } from '../../roles/data'
-import { initialSectorsData } from '../../sectors/data'
-import { initialUnitsData } from '../../units/data'
-import { initialGheData } from '../../ghe/data'
-import { initialEnvironmentsData } from '../../environments/data'
+import { type PgrInventoryItem } from '@/app/dashboard/(main)/clients/[contractId]/pgr/page'
 import { ChevronsRight, Loader2 } from 'lucide-react'
 import {
   useFirestore,
@@ -33,10 +27,16 @@ import {
   useCollection,
   useMemoFirebase,
 } from '@/firebase'
-import { collection } from 'firebase/firestore'
+import { collection, doc, getDocs } from 'firebase/firestore'
 import { useParams } from 'next/navigation'
-import type { Epi } from '@/app/dashboard/(main)/risks/page' // Correct import
+import type { Epi } from '@/app/dashboard/(main)/risks/page'
 import type { Hazard } from '@/app/dashboard/(main)/risks/page'
+import type { Employee } from '../../employees/data'
+import type { Role } from '../../roles/data'
+import type { Sector } from '../../sectors/data'
+import type { Unit } from '../../units/data'
+import type { GHE } from '../../ghe/data'
+import type { Environment } from '../../environments/data'
 
 type AssociationType =
   | 'risk'
@@ -54,6 +54,7 @@ export default function RecommendationMatrixPage() {
 
   const firestore = useFirestore()
 
+  // Firestore Refs
   const pgrInventoryRef = useMemoFirebase(
     () =>
       firestore
@@ -72,18 +73,48 @@ export default function RecommendationMatrixPage() {
         : null,
     [firestore, contractId]
   )
-  
   const hazardsRef = useMemoFirebase(
     () => (firestore ? collection(firestore, 'hazards') : null),
     [firestore]
   )
-
+  const employeesRef = useMemoFirebase(
+    () =>
+      firestore
+        ? collection(firestore, `clients/${contractId}/staffs`)
+        : null,
+    [firestore, contractId]
+  )
+  const rolesRef = useMemoFirebase(
+    () =>
+      firestore ? collection(firestore, `clients/${contractId}/roles`) : null,
+    [firestore, contractId]
+  )
+  const unitsRef = useMemoFirebase(
+    () =>
+      firestore ? collection(firestore, `clients/${contractId}/units`) : null,
+    [firestore, contractId]
+  )
+  const ghesRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, `clients/${contractId}/ghes`) : null),
+    [firestore, contractId]
+  )
+  
+  // Data from Firestore
   const { data: inventory, isLoading: isLoadingInventory } =
     useCollection<PgrInventoryItem>(pgrInventoryRef)
   const { data: epiData, isLoading: isLoadingEpis } =
     useCollection<Epi>(epiCatalogRef)
   const { data: hazardData, isLoading: isLoadingHazards } =
     useCollection<Hazard>(hazardsRef)
+  const { data: employees, isLoading: isLoadingEmployees } =
+    useCollection<Employee>(employeesRef)
+  const { data: roles, isLoading: isLoadingRoles } = useCollection<Role>(rolesRef)
+  const { data: units, isLoading: isLoadingUnits } = useCollection<Unit>(unitsRef)
+  const { data: ghes, isLoading: isLoadingGhes } = useCollection<GHE>(ghesRef)
+  
+  const [sectors, setSectors] = useState<Sector[]>([])
+  const [environments, setEnvironments] = useState<Environment[]>([])
+  const [isLoadingSub, setIsLoadingSub] = useState(true);
 
 
   const getHazardById = (id: string) => hazardData?.find((h) => h.id === id)
@@ -94,11 +125,10 @@ export default function RecommendationMatrixPage() {
     useState<AssociationType>('risk')
   const [selectedAssociationValue, setSelectedAssociationValue] = useState('')
 
-  const uniqueRoles = [
-    ...new Set(initialEmployeesData.map((employee) => employee.roleId)),
-  ]
-    .map((roleId) => initialRolesData.find((r) => r.id === roleId))
-    .filter(Boolean)
+  const uniqueRoles = useMemo(() => {
+    if (!roles) return [];
+    return [...new Map(roles.map(item => [item['name'], item])).values()];
+  }, [roles])
 
   const inventoryRisks = useMemo(() => {
     if (!inventory) return []
@@ -107,14 +137,38 @@ export default function RecommendationMatrixPage() {
       .map((inv) => getHazardById(inv.hazardId))
       .filter((h) => h !== undefined)
   }, [inventory, selectedUnit, hazardData])
+  
+   useMemo(async () => {
+    if (selectedUnit && firestore) {
+      setIsLoadingSub(true);
+      const sectorsQuery = collection(firestore, `clients/${contractId}/units/${selectedUnit}/sectors`);
+      const sectorsSnapshot = await getDocs(sectorsQuery);
+      const sectorsData = sectorsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sector));
+      setSectors(sectorsData);
+      
+      const envsData: Environment[] = [];
+      for (const sector of sectorsData) {
+        const envsQuery = collection(firestore, `clients/${contractId}/units/${selectedUnit}/sectors/${sector.id}/environments`);
+        const envsSnapshot = await getDocs(envsQuery);
+        envsSnapshot.forEach(doc => {
+            envsData.push({ id: doc.id, ...doc.data()} as Environment);
+        })
+      }
+      setEnvironments(envsData);
+      setIsLoadingSub(false);
+    } else {
+        setSectors([]);
+        setEnvironments([]);
+    }
+  }, [selectedUnit, firestore, contractId])
+  
+  
+  const unitSectors = useMemo(() => sectors.filter(s => s.unitId === selectedUnit), [sectors, selectedUnit])
+  const unitEnvironments = useMemo(() => {
+     const unitSectorIds = unitSectors.map(s => s.id);
+     return environments.filter(e => unitSectorIds.includes(e.sectorId));
+  }, [unitSectors, environments])
 
-  const unitSectors = initialSectorsData.filter(
-    (s) => s.unitId === selectedUnit
-  )
-  const unitSectorIds = unitSectors.map((s) => s.id)
-  const unitEnvironments = initialEnvironmentsData.filter((env) =>
-    unitSectorIds.includes(env.sectorId)
-  )
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -183,12 +237,13 @@ export default function RecommendationMatrixPage() {
             onValueChange={setSelectedAssociationValue}
             value={selectedAssociationValue}
             required
+            disabled={isLoadingEmployees}
           >
             <SelectTrigger>
               <SelectValue placeholder='Selecione um colaborador' />
             </SelectTrigger>
             <SelectContent>
-              {initialEmployeesData.map((employee) => (
+              {employees?.map((employee) => (
                 <SelectItem key={employee.id} value={employee.id}>
                   {employee.name}
                 </SelectItem>
@@ -202,6 +257,7 @@ export default function RecommendationMatrixPage() {
             onValueChange={setSelectedAssociationValue}
             value={selectedAssociationValue}
             required
+            disabled={isLoadingRoles}
           >
             <SelectTrigger>
               <SelectValue placeholder='Selecione um cargo' />
@@ -221,6 +277,7 @@ export default function RecommendationMatrixPage() {
             onValueChange={setSelectedAssociationValue}
             value={selectedAssociationValue}
             required
+            disabled={isLoadingSub}
           >
             <SelectTrigger>
               <SelectValue placeholder='Selecione um setor da unidade' />
@@ -240,6 +297,7 @@ export default function RecommendationMatrixPage() {
             onValueChange={setSelectedAssociationValue}
             value={selectedAssociationValue}
             required
+            disabled={isLoadingSub}
           >
             <SelectTrigger>
               <SelectValue placeholder='Selecione um posto de trabalho da unidade' />
@@ -259,15 +317,16 @@ export default function RecommendationMatrixPage() {
             onValueChange={setSelectedAssociationValue}
             value={selectedAssociationValue}
             required
+            disabled={isLoadingGhes}
           >
             <SelectTrigger>
               <SelectValue placeholder='Selecione um GHE da unidade' />
             </SelectTrigger>
             <SelectContent>
-              {initialGheData
-                .filter((g) => g.unitId === selectedUnit)
+              {ghes
+                ?.filter((g) => g.unitId === selectedUnit)
                 .map((ghe) => (
-                  <SelectItem key={ghe.id} value={ghe.id}>
+                  <SelectItem key={ghe.id!} value={ghe.id!}>
                     {ghe.name}
                   </SelectItem>
                 ))}
@@ -288,7 +347,7 @@ export default function RecommendationMatrixPage() {
     { value: 'employee', label: 'Colaborador Específico' },
   ]
 
-  const isLoading = isLoadingInventory || isLoadingEpis || isLoadingHazards;
+  const isLoading = isLoadingInventory || isLoadingEpis || isLoadingHazards || isLoadingUnits || isLoadingEmployees || isLoadingRoles || isLoadingGhes;
 
   return (
     <div className='grid flex-1 auto-rows-max gap-4'>
@@ -306,13 +365,13 @@ export default function RecommendationMatrixPage() {
             <Label htmlFor='unit-select' className='text-lg font-semibold'>
               Passo 1: Selecione a Unidade
             </Label>
-            <Select onValueChange={setSelectedUnit} value={selectedUnit}>
+            <Select onValueChange={setSelectedUnit} value={selectedUnit} disabled={isLoadingUnits}>
               <SelectTrigger id='unit-select'>
                 <SelectValue placeholder='Selecione a unidade para configurar as regras' />
               </SelectTrigger>
               <SelectContent>
-                {initialUnitsData.map((unit) => (
-                  <SelectItem key={unit.id} value={unit.id}>
+                {units?.map((unit) => (
+                  <SelectItem key={unit.id!} value={unit.id!}>
                     {unit.name}
                   </SelectItem>
                 ))}
