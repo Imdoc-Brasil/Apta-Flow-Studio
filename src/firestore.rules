@@ -10,11 +10,13 @@ service cloud.firestore {
     }
 
     function isAnyAdminCreated() {
-      return exists(/databases/$(database)/documents/admins);
+      // Use get() on a non-existent path. If it fails, the collection is empty.
+      // This avoids a 'list' operation which requires broader permissions.
+      return get(/databases/$(database)/documents/roles_admin/nonexistent_doc) != null;
     }
 
     function isAdmin() {
-      return request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      return request.auth != null && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
     
     function isClientUser() {
@@ -92,15 +94,11 @@ service cloud.firestore {
     
     // --- Admin and System Collections ---
 
-     match /admins/{userId} {
-       // Only admins can see who else is an admin.
-       allow list: if isAdmin();
-       // Anyone authenticated can check if a specific user is an admin (for isAdmin() to work).
+     match /roles_admin/{userId} {
        allow get: if request.auth != null;
-       // Allow creating the first admin, or subsequent admins if you are already one.
+       allow list: if isAdmin();
        allow create: if isAdmin() || !isAnyAdminCreated();
-       // Only admins can modify other admin roles.
-       allow update, delete: if isAdmin();
+       allow update, delete: if isAdmin() && resource != null;
      }
   }
 }

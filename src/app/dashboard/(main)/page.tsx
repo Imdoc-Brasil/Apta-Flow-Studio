@@ -38,7 +38,7 @@ import {
   useMemoFirebase,
   setDocumentNonBlocking,
 } from '@/firebase'
-import { doc, getDoc, serverTimestamp, collection, query, orderBy, limit } from 'firebase/firestore'
+import { doc, getDoc, serverTimestamp, collection, query, orderBy, limit, setDoc } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
 import type { Client } from './clients/data'
 import type { Staff } from './employees/page'
@@ -125,7 +125,8 @@ export default function Dashboard() {
     const promoteToSuperAdmin = async () => {
       if (!user || !firestore) return;
   
-      const adminRoleRef = doc(firestore, 'admins', user.uid);
+      // Use 'roles_admin' collection
+      const adminRoleRef = doc(firestore, 'roles_admin', user.uid);
       try {
         const docSnap = await getDoc(adminRoleRef);
         if (!docSnap.exists()) {
@@ -133,7 +134,7 @@ export default function Dashboard() {
             email: user.email,
             promotedAt: serverTimestamp(),
           };
-          // Using setDoc directly with .catch for our new pattern
+          
           setDoc(adminRoleRef, adminData, { merge: true }).catch((error) => {
              errorEmitter.emit(
                 'permission-error',
@@ -150,7 +151,6 @@ export default function Dashboard() {
           });
         }
       } catch (error) {
-         // This catch block handles errors from getDoc
          errorEmitter.emit(
             'permission-error',
             new FirestorePermissionError({
