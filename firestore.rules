@@ -10,7 +10,7 @@
  *   - /employees/{employeeId}: Stores employee data.
  *   - /clients/{clientId}/contracts/{contractId}: Stores contracts associated with a client.
  *   - /clients/{clientId}/serviceRequests/{serviceRequestId}: Stores service requests submitted by clients.
- *   - /clients/{clientId}/slas/{slaId}: Stores SLAs associated with clients.
+ *   - /clients/{clientId}/slas/{slaId}: Stores SLAs associated with a client.
  *   - /okrs/{okrId}: Stores OKRs (Objectives and Key Results).
  *   - /clients/{clientId}/documents/{documentId}: Stores documents associated with clients.
  *   - /roles_admin/{userId}: Documents in this collection represent users with admin privileges.
@@ -182,6 +182,16 @@ service cloud.firestore {
      * @principle Simplifies GHE management.
      */
     match /clients/{clientId}/ghes/{gheId} {
+        allow read, write: if request.auth != null;
+    }
+
+    /**
+     * @description Allows authenticated users to manage PGR inventory for a client.
+     * @path /clients/{clientId}/pgr_inventory/{inventoryId}
+     * @allow (read, write): Any authenticated user can manage PGR inventory items.
+     * @principle Simplifies PGR management.
+     */
+    match /clients/{clientId}/pgr_inventory/{inventoryId} {
         allow read, write: if request.auth != null;
     }
     

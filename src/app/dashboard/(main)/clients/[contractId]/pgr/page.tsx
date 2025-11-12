@@ -1,6 +1,7 @@
+
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import {
   Card,
   CardContent,
@@ -18,7 +19,7 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { MoreHorizontal, PlusCircle, Lock } from 'lucide-react'
+import { MoreHorizontal, PlusCircle, Lock, Loader2 } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -58,6 +59,13 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { initialSectorsData } from '../sectors/data'
+import {
+  useFirestore,
+  useCollection,
+  useMemoFirebase,
+  addDocumentNonBlocking,
+} from '@/firebase'
+import { collection } from 'firebase/firestore'
 
 type RiskLevelLabel =
   | 'Irrelevante'
@@ -82,32 +90,14 @@ export interface RiskEvaluation {
   riskDescription: string
 }
 
-export const initialInventory = [
-  {
-    inventoryId: 'INV-001',
-    hazardId: 'RF-001', // Ruído Contínuo ou Intermitente
-    unitId: 'UNIT-001', // Matriz São Paulo
-    sector: 'Produção',
-    source: 'Máquina de corte XYZ',
-    evaluation: {
-      frequency: 4,
-      severity: 3,
-      riskLevel: 4,
-      riskLabel: 'Alto' as RiskLevelLabel,
-      riskColor: 'bg-red-400' as RiskColor,
-      riskDescription:
-        'Fatores do ambiente ou elementos materiais que constituem um risco alto para a saúde e integridade física do trabalhador, cujos valores ou importâncias estão notavelmente próximos do nível de ação',
-    },
-  },
-  {
-    inventoryId: 'INV-002',
-    hazardId: 'RE-001', // Levantamento de peso
-    unitId: 'UNIT-002', // Filial Rio
-    sector: 'Logística',
-    source: 'Carregamento manual de caixas',
-    evaluation: null as RiskEvaluation | null,
-  },
-]
+export interface PgrInventoryItem {
+  id?: string
+  hazardId: string
+  unitId: string
+  sector: string
+  source: string
+  evaluation: RiskEvaluation | null
+}
 
 const methodologies = [
   {
@@ -233,8 +223,19 @@ export const getHazardById = (id: string) =>
 export default function PgrPage() {
   const params = useParams()
   const contractId = params.contractId as string
+  const firestore = useFirestore()
   const { toast } = useToast()
-  const [inventory, setInventory] = useState(initialInventory)
+
+  const inventoryRef = useMemoFirebase(
+    () =>
+      firestore
+        ? collection(firestore, `clients/${contractId}/pgr_inventory`)
+        : null,
+    [firestore, contractId]
+  )
+  const { data: inventory, isLoading } =
+    useCollection<PgrInventoryItem>(inventoryRef)
+
   const [isAddRiskDialogOpen, setIsAddRiskDialogOpen] = useState(false)
   const [selectedHazard, setSelectedHazard] = useState<Hazard | null>(null)
   const [showStcwInput, setShowStcwInput] = useState(false)
@@ -246,6 +247,8 @@ export default function PgrPage() {
 
   const handleAddRisk = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!inventoryRef) return
+
     const formData = new FormData(event.currentTarget)
 
     if (!derivedRisk || derivedRisk.riskLevel === 0) {
@@ -258,15 +261,16 @@ export default function PgrPage() {
       return
     }
 
-    const newRisk = {
-      inventoryId: `INV-${Date.now().toString().slice(-4)}`,
+    const newRisk: Omit<PgrInventoryItem, 'id'> = {
       hazardId: formData.get('hazard') as string,
-      unitId: formData.get('exposureTarget') as string,
+      unitId: formData.get('exposureTarget') as string, // Placeholder, needs actual unit selection
       sector: formData.get('exposureTarget') as string,
       source: formData.get('source') as string,
       evaluation: derivedRisk,
     }
-    setInventory((prev) => [...prev, newRisk])
+
+    addDocumentNonBlocking(inventoryRef, newRisk)
+
     setIsAddRiskDialogOpen(false)
     resetFormState()
     toast({
@@ -749,84 +753,92 @@ export default function PgrPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Perigo / Fator de Risco</TableHead>
-                    <TableHead>Setor</TableHead>
-                    <TableHead>Nível de Risco</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>
-                      <span className='sr-only'>Ações</span>
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {inventory.map((item) => {
-                    const hazard = getHazardById(item.hazardId)
-                    if (!hazard) return null
-                    return (
-                      <TableRow key={item.inventoryId}>
-                        <TableCell className='font-medium'>
-                          <div className='font-medium'>{hazard.name}</div>
-                          <div className='text-sm text-muted-foreground'>
-                            {item.source}
-                          </div>
-                        </TableCell>
-                        <TableCell>{item.sector}</TableCell>
-                        <TableCell>
-                          {item.evaluation ? (
-                            <div className='flex items-center gap-2'>
-                              <span
-                                className={cn(
-                                  'h-3 w-3 rounded-full',
-                                  item.evaluation.riskColor
-                                )}
-                              />
-                              <span>{item.evaluation.riskLabel}</span>
+              {isLoading ? (
+                <div className='flex justify-center items-center h-64'>
+                  <Loader2 className='h-8 w-8 animate-spin' />
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Perigo / Fator de Risco</TableHead>
+                      <TableHead>Setor</TableHead>
+                      <TableHead>Nível de Risco</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>
+                        <span className='sr-only'>Ações</span>
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {inventory?.map((item) => {
+                      const hazard = getHazardById(item.hazardId)
+                      if (!hazard) return null
+                      return (
+                        <TableRow key={item.id}>
+                          <TableCell className='font-medium'>
+                            <div className='font-medium'>{hazard.name}</div>
+                            <div className='text-sm text-muted-foreground'>
+                              {item.source}
                             </div>
-                          ) : (
-                            <span className='text-muted-foreground'>
-                              Não avaliado
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={item.evaluation ? 'secondary' : 'outline'}
-                          >
-                            {item.evaluation ? 'Avaliado' : 'Pendente'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                aria-haspopup='true'
-                                size='icon'
-                                variant='ghost'
-                              >
-                                <MoreHorizontal className='h-4 w-4' />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align='end'>
-                              <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                              <DropdownMenuItem>Editar Risco</DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem disabled={!item.evaluation}>
-                                Criar Plano de Ação
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className='text-destructive'>
-                                Excluir
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
+                          </TableCell>
+                          <TableCell>{item.sector}</TableCell>
+                          <TableCell>
+                            {item.evaluation ? (
+                              <div className='flex items-center gap-2'>
+                                <span
+                                  className={cn(
+                                    'h-3 w-3 rounded-full',
+                                    item.evaluation.riskColor
+                                  )}
+                                />
+                                <span>{item.evaluation.riskLabel}</span>
+                              </div>
+                            ) : (
+                              <span className='text-muted-foreground'>
+                                Não avaliado
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                item.evaluation ? 'secondary' : 'outline'
+                              }
+                            >
+                              {item.evaluation ? 'Avaliado' : 'Pendente'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  aria-haspopup='true'
+                                  size='icon'
+                                  variant='ghost'
+                                >
+                                  <MoreHorizontal className='h-4 w-4' />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align='end'>
+                                <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                                <DropdownMenuItem>Editar Risco</DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem disabled={!item.evaluation}>
+                                  Criar Plano de Ação
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className='text-destructive'>
+                                  Excluir
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
