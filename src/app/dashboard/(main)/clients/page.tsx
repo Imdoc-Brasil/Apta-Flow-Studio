@@ -217,35 +217,32 @@ export default function ClientsPage() {
   const handleRemoveSecondaryCnae = (cnaeCode: string) => {
     setSecondaryCnaes((prev) => prev.filter((c) => c.code !== cnaeCode))
   }
-  
-  const isLoading = isStaffLoading || areClientsLoading;
 
-  const getVisibleClients = () => {
+  const isLoading = isStaffLoading || areClientsLoading
+
+  const clientsToDisplay = useMemo(() => {
     if (isLoading || !allClients || !staffProfile) {
-      return [];
+      return null // Return null while loading to show spinner
     }
 
     if (staffProfile.perfilId === 'super_admin') {
-      return allClients;
+      return allClients
     }
-    
+
     if (staffProfile.perfilId === 'cliente' && staffProfile.contractId) {
       return allClients.filter(
         (client) => client.id === staffProfile?.contractId
-      );
+      )
     }
-  
+
     if (staffProfile.clientIds && staffProfile.clientIds.length > 0) {
       return allClients.filter((client) =>
         staffProfile.clientIds?.includes(client.id)
-      );
+      )
     }
-  
-    return [];
-  };
 
-  const clients = getVisibleClients();
-
+    return [] // Default to empty list if no conditions are met
+  }, [isLoading, allClients, staffProfile])
 
   return (
     <Card>
@@ -626,7 +623,7 @@ export default function ClientsPage() {
         </div>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
+        {isLoading || clientsToDisplay === null ? (
           <div className='flex justify-center items-center h-64'>
             <Loader2 className='h-8 w-8 animate-spin text-muted-foreground' />
           </div>
@@ -646,7 +643,7 @@ export default function ClientsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {clients?.map((client) => (
+              {clientsToDisplay?.map((client) => (
                 <TableRow key={client.id}>
                   <TableCell className='font-medium'>{client.id}</TableCell>
                   <TableCell>
