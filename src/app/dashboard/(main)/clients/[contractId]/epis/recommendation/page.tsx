@@ -359,7 +359,7 @@ export default function RecommendationMatrixPage() {
     { value: 'employee', label: 'Colaborador Específico' },
   ]
 
-  const isLoading = isLoadingInventory || isLoadingEpis || isLoadingHazards || isLoadingUnits || isLoadingEmployees || isLoadingRoles || isLoadingGhes || (selectedUnit && isLoadingSub);
+  const isLoading = isLoadingInventory || isLoadingEpis || isLoadingHazards || isLoadingUnits || isLoadingEmployees || isLoadingRoles || isLoadingGhes || (!!selectedUnit && isLoadingSub);
 
   return (
     <div className='grid flex-1 auto-rows-max gap-4'>
