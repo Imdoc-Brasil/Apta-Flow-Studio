@@ -15,12 +15,13 @@ import {
   MoreHorizontal,
   PlusCircle,
   Loader2,
+  Briefcase,
+  User,
+  Building2,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useMemo } from 'react'
-import {
-  type Environment,
-} from '../../environments/data'
+import { type Environment } from '../../environments/data'
 import {
   Table,
   TableBody,
@@ -50,9 +51,12 @@ import {
   updateDocumentNonBlocking,
   useDoc,
 } from '@/firebase'
-import { collection, doc } from 'firebase/firestore'
+import { collection, doc, query, where } from 'firebase/firestore'
 import type { Sector } from '../data'
 import type { Unit } from '../../units/data'
+import type { Role } from '../../roles/data'
+import type { Employee } from '../../employees/data'
+import { Badge } from '@/components/ui/badge'
 
 export default function SectorDetailsPage() {
   const params = useParams()
@@ -60,19 +64,22 @@ export default function SectorDetailsPage() {
   const contractId = params.contractId as string
   const sectorId = params.sectorId as string
   const firestore = useFirestore()
-  
-  const router = useRouter()
+
   const searchParams = useSearchParams()
-  const unitId = searchParams.get('unitId');
-  
+  const unitId = searchParams.get('unitId')
+
   const sectorRef = useMemoFirebase(() => {
     if (!firestore || !unitId || !sectorId) return null
-    return doc(firestore, `clients/${contractId}/units/${unitId}/sectors`, sectorId)
+    return doc(
+      firestore,
+      `clients/${contractId}/units/${unitId}/sectors`,
+      sectorId
+    )
   }, [firestore, contractId, unitId, sectorId])
 
   const unitRef = useMemoFirebase(() => {
-     if (!firestore || !unitId) return null
-     return doc(firestore, `clients/${contractId}/units`, unitId)
+    if (!firestore || !unitId) return null
+    return doc(firestore, `clients/${contractId}/units`, unitId)
   }, [firestore, contractId, unitId])
 
   const environmentsRef = useMemoFirebase(
@@ -86,9 +93,34 @@ export default function SectorDetailsPage() {
     [firestore, contractId, unitId, sectorId]
   )
 
+  const rolesQuery = useMemoFirebase(
+    () =>
+      firestore
+        ? query(
+            collection(firestore, `clients/${contractId}/roles`),
+            where('sectorId', '==', sectorId)
+          )
+        : null,
+    [firestore, contractId, sectorId]
+  )
+  
   const { data: sector, isLoading: isSectorLoading } = useDoc<Sector>(sectorRef)
   const { data: unit, isLoading: isUnitLoading } = useDoc<Unit>(unitRef)
-  const { data: environments, isLoading: areEnvironmentsLoading } = useCollection<Environment>(environmentsRef)
+  const { data: environments, isLoading: areEnvironmentsLoading } =
+    useCollection<Environment>(environmentsRef)
+  const { data: roles, isLoading: areRolesLoading } = useCollection<Role>(
+    rolesQuery
+  )
+
+  const allEmployeesRef = useMemoFirebase(() => (firestore ? collection(firestore, `clients/${contractId}/staffs`) : null), [firestore, contractId])
+  const { data: allEmployees, isLoading: areEmployeesLoading } = useCollection<Employee>(allEmployeesRef)
+
+  const employeesInSector = useMemo(() => {
+    if (!allEmployees || !roles) return []
+    const roleIdsInSector = roles.map(r => r.id);
+    return allEmployees.filter(emp => roleIdsInSector.includes(emp.roleId) && emp.status === 'Ativo');
+  }, [allEmployees, roles])
+
 
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false)
   const [editingEnvironment, setEditingEnvironment] =
@@ -116,7 +148,11 @@ export default function SectorDetailsPage() {
     }
 
     if (editingEnvironment) {
-      const docRef = doc(firestore, environmentsRef.path, editingEnvironment.id as string)
+      const docRef = doc(
+        firestore,
+        environmentsRef.path,
+        editingEnvironment.id as string
+      )
       updateDocumentNonBlocking(docRef, environmentData)
       toast({
         title: 'Posto de Trabalho Atualizado!',
@@ -242,11 +278,20 @@ export default function SectorDetailsPage() {
       </div>
     </ScrollArea>
   )
-  
-  const isLoading = isSectorLoading || isUnitLoading || areEnvironmentsLoading;
+
+  const isLoading =
+    isSectorLoading ||
+    isUnitLoading ||
+    areEnvironmentsLoading ||
+    areRolesLoading ||
+    areEmployeesLoading
 
   if (isLoading) {
-    return <div className='flex items-center justify-center h-full'><Loader2 className='h-8 w-8 animate-spin' /></div>
+    return (
+      <div className='flex items-center justify-center h-full'>
+        <Loader2 className='h-8 w-8 animate-spin' />
+      </div>
+    )
   }
 
   if (!sector || !unit) {
@@ -268,7 +313,7 @@ export default function SectorDetailsPage() {
 
   return (
     <>
-      <div className='grid flex-1 auto-rows-max gap-4'>
+      <div className='grid flex-1 auto-rows-max gap-8'>
         <div className='flex items-center gap-4'>
           <Button variant='outline' size='icon' className='h-7 w-7' asChild>
             <Link
@@ -278,91 +323,163 @@ export default function SectorDetailsPage() {
               <span className='sr-only'>Voltar</span>
             </Link>
           </Button>
-          <h1 className='flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0'>
-            {sector.name}
-          </h1>
+          <div>
+            <h1 className='flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0'>
+              {sector.name}
+            </h1>
+            <p className='text-sm text-muted-foreground'>
+              Unidade: {unit?.name || 'N/A'}
+            </p>
+          </div>
         </div>
-        <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
-          <Card className='md:col-span-2 lg:col-span-3'>
+
+        <div className='grid gap-8 md:grid-cols-2'>
+          <Card>
             <CardHeader>
-              <CardTitle>Detalhes do Setor</CardTitle>
-              <CardDescription>{sector.description}</CardDescription>
+              <CardTitle className='flex items-center gap-2'>
+                <Building2 className='h-5 w-5' /> Postos de Trabalho
+              </CardTitle>
+              <CardDescription>
+                Locais de trabalho e etapas de processo dentro deste setor.
+              </CardDescription>
+              <div className='flex justify-end'>
+                <Button size='sm' onClick={() => openFormDialog(null)}>
+                  <PlusCircle className='mr-2 h-4 w-4' />
+                  Adicionar Posto
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
-              <p className='text-sm text-muted-foreground'>
-                Unidade:{' '}
-                <span className='font-semibold text-foreground'>
-                  {unit?.name || 'N/A'}
-                </span>
-              </p>
+              {areEnvironmentsLoading ? (
+                <div className='flex items-center justify-center h-24'>
+                  <Loader2 className='h-6 w-6 animate-spin' />
+                </div>
+              ) : environments && environments.length > 0 ? (
+                 <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Posto de Trabalho</TableHead>
+                      <TableHead>
+                        <span className='sr-only'>Ações</span>
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {environments.map((env) => (
+                      <TableRow
+                        key={env.id}
+                        onClick={() => openFormDialog(env)}
+                        className='cursor-pointer'
+                      >
+                        <TableCell className='font-medium'>{env.name}</TableCell>
+                        <TableCell className='text-right'>
+                          <Button
+                            aria-haspopup='true'
+                            size='icon'
+                            variant='ghost'
+                          >
+                            <MoreHorizontal className='h-4 w-4' />
+                            <span className='sr-only'>Alternar menu</span>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <p className='text-center text-sm text-muted-foreground py-4'>
+                  Nenhum posto de trabalho cadastrado.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className='flex items-center gap-2'>
+                <Briefcase className='h-5 w-5' /> Cargos Vinculados
+              </CardTitle>
+              <CardDescription>
+                Funções existentes neste setor.
+              </CardDescription>
+              <div className='flex justify-end'>
+                 <Button asChild size='sm' variant='outline'>
+                    <Link href={`/dashboard/clients/${contractId}/roles?sectorId=${sectorId}`}>
+                     <PlusCircle className='mr-2 h-4 w-4' /> Adicionar Cargo
+                    </Link>
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+               {areRolesLoading ? (
+                <div className='flex items-center justify-center h-24'>
+                  <Loader2 className='h-6 w-6 animate-spin' />
+                </div>
+              ) : roles && roles.length > 0 ? (
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                        <TableHead>Cargo</TableHead>
+                        <TableHead>CBO</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {roles.map(role => (
+                            <TableRow key={role.id}>
+                                <TableCell className='font-medium'>{role.name}</TableCell>
+                                <TableCell><Badge variant="outline">{role.cbo}</Badge></TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+              ) : (
+                 <p className='text-center text-sm text-muted-foreground py-4'>
+                  Nenhum cargo cadastrado.
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Postos de Trabalho</CardTitle>
+            <CardTitle className='flex items-center gap-2'>
+              <User className='h-5 w-5' /> Colaboradores Ativos no Setor
+            </CardTitle>
             <CardDescription>
-              Locais de trabalho e etapas de processo dentro deste setor.
+              Pessoas que trabalham neste setor.
             </CardDescription>
-            <div className='flex justify-end'>
-              <Button size='sm' onClick={() => openFormDialog(null)}>
-                <PlusCircle className='mr-2 h-4 w-4' />
-                Adicionar Posto de Trabalho
-              </Button>
-            </div>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <div className='flex items-center justify-center h-48'>
-                <Loader2 className='h-8 w-8 animate-spin' />
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Posto de Trabalho</TableHead>
-                    <TableHead>Atividades</TableHead>
-                    <TableHead>
-                      <span className='sr-only'>Ações</span>
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {environments?.map((env) => (
-                    <TableRow
-                      key={env.id}
-                      onClick={() => openFormDialog(env)}
-                      className='cursor-pointer'
-                    >
-                      <TableCell className='font-medium'>{env.name}</TableCell>
-                      <TableCell>
-                        <p className='line-clamp-1 text-sm text-muted-foreground'>
-                          {env.activities}
-                        </p>
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          aria-haspopup='true'
-                          size='icon'
-                          variant='ghost'
-                        >
-                          <MoreHorizontal className='h-4 w-4' />
-                          <span className='sr-only'>Alternar menu</span>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {environments?.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={3} className='text-center h-24'>
-                        Nenhum posto de trabalho cadastrado para este setor.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            )}
+             {areEmployeesLoading ? (
+                <div className='flex items-center justify-center h-24'>
+                  <Loader2 className='h-6 w-6 animate-spin' />
+                </div>
+              ) : employeesInSector && employeesInSector.length > 0 ? (
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                        <TableHead>Nome</TableHead>
+                        <TableHead>Cargo</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {employeesInSector.map(emp => {
+                            const role = roles?.find(r => r.id === emp.roleId);
+                            return (
+                                <TableRow key={emp.id} className="cursor-pointer" onClick={() => router.push(`/dashboard/clients/${contractId}/employees/${emp.id}`)}>
+                                    <TableCell className='font-medium'>{emp.name}</TableCell>
+                                    <TableCell>{role?.name || 'N/A'}</TableCell>
+                                </TableRow>
+                            )
+                        })}
+                    </TableBody>
+                </Table>
+              ) : (
+                <p className='text-center text-sm text-muted-foreground py-4'>
+                  Nenhum colaborador encontrado neste setor.
+                </p>
+              )}
           </CardContent>
         </Card>
       </div>
