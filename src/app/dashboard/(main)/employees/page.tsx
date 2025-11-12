@@ -138,7 +138,9 @@ interface Profile {
 }
 
 const staffFormSchema = z.object({
-  name: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),
+  name: z
+    .string()
+    .min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),
   email: z.string().email({ message: 'Por favor, insira um email válido.' }),
   perfilId: z.string({ required_error: 'Por favor, selecione um perfil.' }),
   assinatura: z.string().min(2, { message: 'A assinatura é obrigatória.' }),
@@ -161,10 +163,15 @@ export default function StaffsPage() {
     () => (firestore ? collection(firestore, 'clients') : null),
     [firestore]
   )
-  const { data: clientsData, isLoading: areClientsLoading } = useCollection<Client>(clientsRef)
-  
-  const profilesRef = useMemoFirebase(() => (firestore ? collection(firestore, 'profiles') : null), [firestore]);
-  const { data: profiles, isLoading: areProfilesLoading } = useCollection<Profile>(profilesRef);
+  const { data: clientsData, isLoading: areClientsLoading } =
+    useCollection<Client>(clientsRef)
+
+  const profilesRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'profiles') : null),
+    [firestore]
+  )
+  const { data: profiles, isLoading: areProfilesLoading } =
+    useCollection<Profile>(profilesRef)
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
@@ -315,11 +322,10 @@ export default function StaffsPage() {
   const getProfileName = (perfilId: string) => {
     return profiles?.find((p) => p.id === perfilId)?.name || 'N/A'
   }
-  
+
   const getClientName = (contractId: string) => {
     return clientsData?.find((c) => c.id === contractId)?.name || 'N/A'
   }
-
 
   const getStatusBadgeVariant = (status: StaffStatus) => {
     switch (status) {
@@ -336,7 +342,7 @@ export default function StaffsPage() {
 
   const renderStaffForm = (formInstance: any, staff?: Staff | null) => {
     const isClientProfile = formInstance.watch('perfilId') === 'cliente'
-    const watchedClientIds = formInstance.watch('clientIds') || [];
+    const watchedClientIds = formInstance.watch('clientIds') || []
 
     return (
       <div className='space-y-4 py-4'>
@@ -493,90 +499,104 @@ export default function StaffsPage() {
             />
           </div>
         ) : (
-           <div className='space-y-2'>
-              <FormField
-                control={formInstance.control}
-                name='clientIds'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Acesso a Clientes</FormLabel>
-                     <Popover>
-                      <PopoverTrigger asChild>
-                         <FormControl>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            className={cn(
-                              "w-full justify-between font-normal",
-                              !field.value?.length && "text-muted-foreground"
-                            )}
-                          >
-                             Selecionar clientes...
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                        <Command>
-                          <CommandInput placeholder="Buscar cliente..." />
-                          <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
-                          <CommandList>
-                            <CommandGroup>
-                              {areClientsLoading ? <Loader2 className='mx-auto h-4 w-4 animate-spin'/> : clientsData?.map((client) => (
+          <div className='space-y-2'>
+            <FormField
+              control={formInstance.control}
+              name='clientIds'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Acesso a Clientes</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant='outline'
+                          role='combobox'
+                          className={cn(
+                            'w-full justify-between font-normal',
+                            !field.value?.length && 'text-muted-foreground'
+                          )}
+                        >
+                          Selecionar clientes...
+                          <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className='w-[--radix-popover-trigger-width] p-0'>
+                      <Command>
+                        <CommandInput placeholder='Buscar cliente...' />
+                        <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
+                        <CommandList>
+                          <CommandGroup>
+                            {areClientsLoading ? (
+                              <Loader2 className='mx-auto h-4 w-4 animate-spin' />
+                            ) : (
+                              clientsData?.map((client) => (
                                 <CommandItem
                                   key={client.id}
                                   onSelect={() => {
                                     const selected = field.value || []
-                                    const newSelection = selected.includes(client.id!)
-                                      ? selected.filter((id) => id !== client.id)
+                                    const newSelection = selected.includes(
+                                      client.id!
+                                    )
+                                      ? selected.filter(
+                                          (id) => id !== client.id
+                                        )
                                       : [...selected, client.id!]
                                     field.onChange(newSelection)
                                   }}
                                 >
                                   <Check
                                     className={cn(
-                                      "mr-2 h-4 w-4",
+                                      'mr-2 h-4 w-4',
                                       field.value?.includes(client.id!)
-                                        ? "opacity-100"
-                                        : "opacity-0"
+                                        ? 'opacity-100'
+                                        : 'opacity-0'
                                     )}
                                   />
                                   {client.name}
                                 </CommandItem>
-                              ))}
-                            </CommandList>
-                          </CommandGroup>
-                        </Command>
-                      </PopoverContent>
-                    </Popover>
-                    <FormDescription>
-                      Deixe em branco para acesso a todos os clientes.
-                    </FormDescription>
-                     <div className='mt-2 flex flex-wrap gap-1'>
-                      {watchedClientIds.map((clientId: string) => (
-                         <Badge key={clientId} variant="secondary">
-                           {getClientName(clientId)}
-                           <button
-                             type="button"
-                             className="ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                             onClick={() => field.onChange(watchedClientIds.filter((id: string) => id !== clientId))}
-                           >
-                             <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                           </button>
-                         </Badge>
-                       ))}
-                     </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-           </div>
+                              ))
+                            )}
+                          </CommandList>
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <FormDescription>
+                    Deixe em branco para acesso a todos os clientes.
+                  </FormDescription>
+                  <div className='mt-2 flex flex-wrap gap-1'>
+                    {watchedClientIds.map((clientId: string) => (
+                      <Badge key={clientId} variant='secondary'>
+                        {getClientName(clientId)}
+                        <button
+                          type='button'
+                          className='ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2'
+                          onClick={() =>
+                            field.onChange(
+                              watchedClientIds.filter(
+                                (id: string) => id !== clientId
+                              )
+                            )
+                          }
+                        >
+                          <X className='h-3 w-3 text-muted-foreground hover:text-foreground' />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         )}
       </div>
     )
   }
 
-  const isLoadingData = isLoading || areProfilesLoading || areClientsLoading;
+  const isLoadingData = isLoading || areProfilesLoading || areClientsLoading
 
   return (
     <>
@@ -652,9 +672,8 @@ export default function StaffsPage() {
                 </DialogHeader>
                 <Form {...form}>
                   <form
-                    id={'add-staff-form'}
+                    id='add-staff-form'
                     onSubmit={form.handleSubmit(onSubmit)}
-                    className='space-y-4 py-4'
                   >
                     {renderStaffForm(form)}
                   </form>
@@ -711,21 +730,25 @@ export default function StaffsPage() {
                         </div>
                       </div>
                     </TableCell>
+                    <TableCell>{getProfileName(staff.perfilId)}</TableCell>
                     <TableCell>
-                      {getProfileName(staff.perfilId)}
-                    </TableCell>
-                     <TableCell>
                       {staff.perfilId === 'cliente' && staff.contractId ? (
-                        <Badge variant="secondary">{getClientName(staff.contractId)}</Badge>
+                        <Badge variant='secondary'>
+                          {getClientName(staff.contractId)}
+                        </Badge>
                       ) : !staff.clientIds || staff.clientIds.length === 0 ? (
                         <Badge>Todos</Badge>
                       ) : (
-                        <div className="flex flex-wrap gap-1">
-                          {staff.clientIds.slice(0, 2).map(id => (
-                             <Badge key={id} variant="outline">{getClientName(id)}</Badge>
+                        <div className='flex flex-wrap gap-1'>
+                          {staff.clientIds.slice(0, 2).map((id) => (
+                            <Badge key={id} variant='outline'>
+                              {getClientName(id)}
+                            </Badge>
                           ))}
                           {staff.clientIds.length > 2 && (
-                             <Badge variant="outline">+{staff.clientIds.length - 2}</Badge>
+                            <Badge variant='outline'>
+                              +{staff.clientIds.length - 2}
+                            </Badge>
                           )}
                         </div>
                       )}
