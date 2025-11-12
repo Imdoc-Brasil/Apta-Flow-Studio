@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   Card,
   CardContent,
@@ -54,18 +54,26 @@ export default function SurveyPage() {
   const [allSectors, setAllSectors] = useState<Sector[]>([]);
   const [sectorsLoading, setSectorsLoading] = useState(true);
 
-  useMemo(async () => {
+  useEffect(() => {
     if (units && firestore) {
       setSectorsLoading(true);
-      const sectorsPromises = units.map(unit =>
-        getDocs(collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`))
-      );
-      const sectorsSnapshots = await Promise.all(sectorsPromises);
-      const sectorsData = sectorsSnapshots.flatMap(snapshot =>
-        snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sector))
-      );
-      setAllSectors(sectorsData);
-      setSectorsLoading(false);
+      const fetchAllSectors = async () => {
+        const sectorsData: Sector[] = [];
+        for (const unit of units) {
+            const sectorsColRef = collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`);
+            try {
+              const sectorsSnap = await getDocs(sectorsColRef);
+              sectorsSnap.forEach(doc => {
+                sectorsData.push({ id: doc.id, ...doc.data() } as Sector);
+              });
+            } catch(e) {
+              console.error(e);
+            }
+        }
+        setAllSectors(sectorsData);
+        setSectorsLoading(false);
+      }
+      fetchAllSectors();
     } else if (!unitsLoading) {
       setSectorsLoading(false);
     }
