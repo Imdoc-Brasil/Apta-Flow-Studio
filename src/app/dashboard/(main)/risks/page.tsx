@@ -78,6 +78,23 @@ export interface Epi {
   active: boolean
 }
 
+export interface EpiStock {
+  id: string
+  epiId: string
+  quantity: number
+  minStock: number
+}
+
+export interface EpiDelivery {
+  id: string
+  epiId: string
+  epiName: string
+  employeeId: string
+  employeeName: string
+  deliveryDate: string
+  quantity: number
+}
+
 export default function RisksPage() {
   const { toast } = useToast()
   const firestore = useFirestore()

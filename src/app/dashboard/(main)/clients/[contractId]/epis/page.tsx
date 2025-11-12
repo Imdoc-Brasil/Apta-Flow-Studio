@@ -41,11 +41,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import {
-  initialEpiData as staticEpiData, // Keep for fallback/initial structure
   type Epi,
   type EpiStock,
   type EpiDelivery,
-} from './data'
+} from '@/app/dashboard/(main)/risks/page' // Updated import
 import { initialEmployeesData } from '../employees/data'
 import {
   Select,
@@ -114,17 +113,12 @@ export default function EpisPage() {
     if (!episCatalogRef) return
 
     const formData = new FormData(event.currentTarget)
-    const newEpiData: Omit<Epi, 'id'> = {
+    const newEpiData = {
       name: formData.get('name') as string,
       ca: formData.get('ca') as string,
-      shelfLife: Number(formData.get('shelfLife')),
-      active: formData.get('active') === 'on',
-      fabricante: formData.get('fabricante') as string,
-      vencimentoCA: formData.get('vencimentoCA') as string,
-      specifications: formData.get('specifications') as string,
-      hygiene: formData.get('hygiene') as string,
-      replacement: formData.get('replacement') as string,
-      usage: formData.get('usage') as string,
+      active: true,
+      // The other fields from the old Epi type are now part of the catalog in the risks page.
+      // Keeping it simple here.
     }
 
     addDocumentNonBlocking(episCatalogRef, newEpiData)
@@ -139,7 +133,7 @@ export default function EpisPage() {
 
   const handleAddDelivery = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!epiDeliveriesRef || !epiStock) return
+    if (!epiDeliveriesRef || !epiStock || !firestore) return
 
     const formData = new FormData(event.currentTarget)
     const epiId = formData.get('epiId') as string
@@ -172,7 +166,7 @@ export default function EpisPage() {
     addDocumentNonBlocking(epiDeliveriesRef, newDeliveryData);
 
     const stockDocRef = doc(firestore, `clients/${contractId}/epi_stock`, stockItem.id as string)
-    updateDocumentNonBlocking(stockDocRef, { quantity: stockItem.quantity - quantity });
+    updateDocumentNonBlocking(stockDocRef, { quantity: stockItem.quantity - quantity })
 
 
     setIsDeliveryDialogOpen(false)
@@ -320,104 +314,21 @@ export default function EpisPage() {
                           </span>
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className='sm:max-w-2xl'>
+                      <DialogContent className='sm:max-w-md'>
                         <DialogHeader>
-                          <DialogTitle>Adicionar Novo EPI</DialogTitle>
+                          <DialogTitle>Adicionar Novo EPI ao Catálogo</DialogTitle>
                         </DialogHeader>
                         <form id='add-epi-form' onSubmit={handleAddEpi}>
-                          <ScrollArea className='h-[70vh]'>
-                            <div className='grid gap-6 p-4'>
-                              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                                <div className='space-y-2'>
-                                  <Label htmlFor='name'>Nome do EPI</Label>
-                                  <Input id='name' name='name' required />
-                                </div>
-                                <div className='space-y-2'>
-                                  <Label htmlFor='ca'>Nº do CA</Label>
-                                  <Input id='ca' name='ca' required />
-                                </div>
-                              </div>
-
-                              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                                <div className='space-y-2'>
-                                  <Label htmlFor='fabricante'>
-                                    Fabricante
-                                  </Label>
-                                  <Input id='fabricante' name='fabricante' />
-                                </div>
-                                <div className='space-y-2'>
-                                  <Label htmlFor='vencimentoCA'>
-                                    Vencimento do CA
-                                  </Label>
-                                  <Input
-                                    id='vencimentoCA'
-                                    name='vencimentoCA'
-                                    type='date'
-                                  />
-                                </div>
-                              </div>
-
-                              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                                <div className='space-y-2'>
-                                  <Label htmlFor='shelfLife'>
-                                    Vida Útil (dias)
-                                  </Label>
-                                  <Input
-                                    id='shelfLife'
-                                    name='shelfLife'
-                                    type='number'
-                                    required
-                                  />
-                                </div>
-                                <div className='flex items-center gap-2 pt-6'>
-                                  <Switch
-                                    id='active'
-                                    name='active'
-                                    defaultChecked={true}
-                                  />
-                                  <Label htmlFor='active'>Status Ativo</Label>
-                                </div>
-                              </div>
-
-                              <div className='space-y-2'>
-                                <Label htmlFor='specifications'>
-                                  Especificações Técnicas
-                                </Label>
-                                <Textarea
-                                  id='specifications'
-                                  name='specifications'
-                                  placeholder='Descreva as características técnicas do EPI...'
-                                />
-                              </div>
-
-                              <div className='space-y-2'>
-                                <Label htmlFor='usage'>Forma de Uso</Label>
-                                <Textarea
-                                  id='usage'
-                                  name='usage'
-                                  placeholder='Instruções sobre como utilizar o EPI corretamente...'
-                                />
-                              </div>
-
-                              <div className='space-y-2'>
-                                <Label htmlFor='hygiene'>Higienização</Label>
-                                <Textarea
-                                  id='hygiene'
-                                  name='hygiene'
-                                  placeholder='Instruções de limpeza e conservação...'
-                                />
-                              </div>
-
-                              <div className='space-y-2'>
-                                <Label htmlFor='replacement'>Substituição</Label>
-                                <Textarea
-                                  id='replacement'
-                                  name='replacement'
-                                  placeholder='Indicações de quando o EPI deve ser substituído...'
-                                />
-                              </div>
+                           <div className='grid gap-4 py-4'>
+                            <div className='space-y-2'>
+                              <Label htmlFor='name'>Nome do EPI</Label>
+                              <Input id='name' name='name' required />
                             </div>
-                          </ScrollArea>
+                            <div className='space-y-2'>
+                              <Label htmlFor='ca'>Nº do CA</Label>
+                              <Input id='ca' name='ca' required />
+                            </div>
+                           </div>
                           <DialogFooter>
                             <Button
                               variant='outline'
@@ -443,8 +354,6 @@ export default function EpisPage() {
                         <TableRow>
                           <TableHead>Nome</TableHead>
                           <TableHead>CA</TableHead>
-                          <TableHead>Venc. CA</TableHead>
-                          <TableHead>Vida Útil</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>
                             <span className='sr-only'>Ações</span>
@@ -458,13 +367,6 @@ export default function EpisPage() {
                               {epi.name}
                             </TableCell>
                             <TableCell>{epi.ca}</TableCell>
-                            <TableCell>
-                              {new Date(epi.vencimentoCA).toLocaleDateString(
-                                'pt-BR',
-                                { timeZone: 'UTC' }
-                              )}
-                            </TableCell>
-                            <TableCell>{epi.shelfLife} dias</TableCell>
                             <TableCell>
                               <Badge
                                 variant={epi.active ? 'secondary' : 'outline'}
@@ -607,22 +509,10 @@ export default function EpisPage() {
                           <TableHead>EPI</TableHead>
                           <TableHead>Data</TableHead>
                           <TableHead>Quantidade</TableHead>
-                          <TableHead>Próx. Troca</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {epiDeliveries?.map((delivery) => {
-                          const epi = epiData?.find(
-                            (e) => e.id === delivery.epiId
-                          )
-                          const nextChangeDate = epi
-                            ? new Date(delivery.deliveryDate)
-                            : null
-                          if (nextChangeDate && epi?.shelfLife) {
-                            nextChangeDate.setDate(
-                              nextChangeDate.getDate() + epi.shelfLife
-                            )
-                          }
                           return (
                             <TableRow key={delivery.id}>
                               <TableCell>{delivery.employeeName}</TableCell>
@@ -630,14 +520,9 @@ export default function EpisPage() {
                               <TableCell>
                                 {new Date(
                                   delivery.deliveryDate
-                                ).toLocaleDateString()}
+                                ).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
                               </TableCell>
                               <TableCell>{delivery.quantity}</TableCell>
-                              <TableCell>
-                                {nextChangeDate
-                                  ? nextChangeDate.toLocaleDateString()
-                                  : 'N/A'}
-                              </TableCell>
                             </TableRow>
                           )
                         })}
@@ -683,7 +568,7 @@ export default function EpisPage() {
                       <TableBody>
                         {epiStock?.map((item) => (
                           <TableRow
-                            key={item.epiId}
+                            key={item.id}
                             className='cursor-pointer'
                             onClick={() => openStockDialog(item)}
                           >

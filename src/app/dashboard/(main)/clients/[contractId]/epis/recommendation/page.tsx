@@ -19,11 +19,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
-import { initialEpiData } from '../data'
-import {
-  getHazardById,
-  type PgrInventoryItem,
-} from '@/app/dashboard/(main)/clients/[contractId]/pgr/page'
+import { type PgrInventoryItem, getRiskLevel } from '@/app/dashboard/(main)/clients/[contractId]/pgr/page' // Correct import
 import { initialEmployeesData } from '../../employees/data'
 import { initialRolesData } from '../../roles/data'
 import { initialSectorsData } from '../../sectors/data'
@@ -39,7 +35,8 @@ import {
 } from '@/firebase'
 import { collection } from 'firebase/firestore'
 import { useParams } from 'next/navigation'
-import type { Epi } from '../data'
+import type { Epi } from '@/app/dashboard/(main)/risks/page' // Correct import
+import type { Hazard } from '@/app/dashboard/(main)/risks/page'
 
 type AssociationType =
   | 'risk'
@@ -75,11 +72,21 @@ export default function RecommendationMatrixPage() {
         : null,
     [firestore, contractId]
   )
+  
+  const hazardsRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'hazards') : null),
+    [firestore]
+  )
 
   const { data: inventory, isLoading: isLoadingInventory } =
     useCollection<PgrInventoryItem>(pgrInventoryRef)
   const { data: epiData, isLoading: isLoadingEpis } =
     useCollection<Epi>(epiCatalogRef)
+  const { data: hazardData, isLoading: isLoadingHazards } =
+    useCollection<Hazard>(hazardsRef)
+
+
+  const getHazardById = (id: string) => hazardData?.find((h) => h.id === id)
 
   const [selectedUnit, setSelectedUnit] = useState('')
   const [selectedEpi, setSelectedEpi] = useState('')
@@ -99,7 +106,7 @@ export default function RecommendationMatrixPage() {
       .filter((inv) => inv.unitId === selectedUnit)
       .map((inv) => getHazardById(inv.hazardId))
       .filter((h) => h !== undefined)
-  }, [inventory, selectedUnit])
+  }, [inventory, selectedUnit, hazardData])
 
   const unitSectors = initialSectorsData.filter(
     (s) => s.unitId === selectedUnit
@@ -153,7 +160,7 @@ export default function RecommendationMatrixPage() {
             onValueChange={setSelectedAssociationValue}
             value={selectedAssociationValue}
             required
-            disabled={isLoadingInventory}
+            disabled={isLoadingInventory || isLoadingHazards}
           >
             <SelectTrigger>
               <SelectValue placeholder='Selecione um risco do inventário da unidade' />
@@ -281,6 +288,8 @@ export default function RecommendationMatrixPage() {
     { value: 'employee', label: 'Colaborador Específico' },
   ]
 
+  const isLoading = isLoadingInventory || isLoadingEpis || isLoadingHazards;
+
   return (
     <div className='grid flex-1 auto-rows-max gap-4'>
       <Card>
@@ -343,7 +352,7 @@ export default function RecommendationMatrixPage() {
               </div>
 
               <div className='flex items-center justify-center px-4'>
-                {isLoadingInventory || isLoadingEpis ? (
+                {isLoading ? (
                   <Loader2 className='h-8 w-8 animate-spin' />
                 ) : (
                   <ChevronsRight className='h-8 w-8 text-muted-foreground' />
@@ -373,7 +382,7 @@ export default function RecommendationMatrixPage() {
             </div>
 
             <div className='flex justify-end pt-4'>
-              <Button type='submit' disabled={!selectedUnit || isLoadingEpis || isLoadingInventory}>
+              <Button type='submit' disabled={!selectedUnit || isLoading}>
                 Criar Vínculo / Regra
               </Button>
             </div>
