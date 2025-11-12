@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   Card,
   CardContent,
@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
-import { MoreHorizontal, PlusCircle } from 'lucide-react'
+import { MoreHorizontal, PlusCircle, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
   DropdownMenu,
@@ -41,9 +41,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import {
-  initialEpiData,
-  initialEpiStock,
-  initialEpiDeliveries,
+  initialEpiData as staticEpiData, // Keep for fallback/initial structure
   type Epi,
   type EpiStock,
   type EpiDelivery,
@@ -59,12 +57,51 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Textarea } from '@/components/ui/textarea'
+import { useParams } from 'next/navigation'
+import {
+  useFirestore,
+  useCollection,
+  useMemoFirebase,
+  addDocumentNonBlocking,
+  updateDocumentNonBlocking,
+} from '@/firebase'
+import { collection, doc } from 'firebase/firestore'
 
 export default function EpisPage() {
-  const [epiData, setEpiData] = useState(initialEpiData)
-  const [epiStock, setEpiStock] = useState(initialEpiStock)
-  const [epiDeliveries, setEpiDeliveries] = useState(initialEpiDeliveries)
+  const params = useParams()
+  const contractId = params.contractId as string
+  const firestore = useFirestore()
+  const { toast } = useToast()
 
+  // Firestore Refs
+  const episCatalogRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'epis') : null),
+    [firestore]
+  )
+  const epiStockRef = useMemoFirebase(
+    () =>
+      firestore
+        ? collection(firestore, `clients/${contractId}/epi_stock`)
+        : null,
+    [firestore, contractId]
+  )
+  const epiDeliveriesRef = useMemoFirebase(
+    () =>
+      firestore
+        ? collection(firestore, `clients/${contractId}/epi_deliveries`)
+        : null,
+    [firestore, contractId]
+  )
+
+  // Data from Firestore
+  const { data: epiData, isLoading: isLoadingCatalog } =
+    useCollection<Epi>(episCatalogRef)
+  const { data: epiStock, isLoading: isLoadingStock } =
+    useCollection<EpiStock>(epiStockRef)
+  const { data: epiDeliveries, isLoading: isLoadingDeliveries } =
+    useCollection<EpiDelivery>(epiDeliveriesRef)
+
+  // Dialog states
   const [isEpiDialogOpen, setIsEpiDialogOpen] = useState(false)
   const [isDeliveryDialogOpen, setIsDeliveryDialogOpen] = useState(false)
   const [isStockDialogOpen, setIsStockDialogOpen] = useState(false)
@@ -72,13 +109,12 @@ export default function EpisPage() {
     null
   )
 
-  const { toast } = useToast()
-
   const handleAddEpi = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!episCatalogRef) return
+
     const formData = new FormData(event.currentTarget)
-    const newEpi: Epi = {
-      id: `EPI-${(Math.random() * 100).toFixed(0).padStart(2, '0')}`,
+    const newEpiData: Omit<Epi, 'id'> = {
       name: formData.get('name') as string,
       ca: formData.get('ca') as string,
       shelfLife: Number(formData.get('shelfLife')),
@@ -90,17 +126,21 @@ export default function EpisPage() {
       replacement: formData.get('replacement') as string,
       usage: formData.get('usage') as string,
     }
-    setEpiData((prev) => [newEpi, ...prev])
+
+    addDocumentNonBlocking(episCatalogRef, newEpiData)
+
     setIsEpiDialogOpen(false)
     toast({
       title: 'EPI Adicionado!',
-      description: `O EPI "${newEpi.name}" foi adicionado ao catálogo.`,
+      description: `O EPI "${newEpiData.name}" foi adicionado ao catálogo.`,
     })
     ;(event.target as HTMLFormElement).reset()
   }
 
   const handleAddDelivery = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!epiDeliveriesRef || !epiStock) return
+
     const formData = new FormData(event.currentTarget)
     const epiId = formData.get('epiId') as string
     const employeeId = formData.get('employeeId') as string
@@ -116,12 +156,11 @@ export default function EpisPage() {
       return
     }
 
-    const epiName = epiData.find((e) => e.id === epiId)?.name || ''
+    const epiName = epiData?.find((e) => e.id === epiId)?.name || ''
     const employeeName =
       initialEmployeesData.find((e) => e.id === employeeId)?.name || ''
 
-    const newDelivery: EpiDelivery = {
-      id: `DEL-${Date.now()}`,
+    const newDeliveryData: Omit<EpiDelivery, 'id'> = {
       epiId,
       epiName,
       employeeId,
@@ -129,15 +168,12 @@ export default function EpisPage() {
       deliveryDate: new Date().toISOString(),
       quantity,
     }
+    
+    addDocumentNonBlocking(epiDeliveriesRef, newDeliveryData);
 
-    setEpiDeliveries((prev) => [newDelivery, ...prev])
-    setEpiStock((prev) =>
-      prev.map((item) =>
-        item.epiId === epiId
-          ? { ...item, quantity: item.quantity - quantity }
-          : item
-      )
-    )
+    const stockDocRef = doc(firestore, `clients/${contractId}/epi_stock`, stockItem.id as string)
+    updateDocumentNonBlocking(stockDocRef, { quantity: stockItem.quantity - quantity });
+
 
     setIsDeliveryDialogOpen(false)
     toast({
@@ -148,24 +184,19 @@ export default function EpisPage() {
 
   const handleStockSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!epiStockRef || !firestore) return
+
     const formData = new FormData(event.currentTarget)
     const quantity = Number(formData.get('quantity'))
     const minStock = Number(formData.get('minStock'))
 
     if (editingStockItem) {
-      // Editing existing stock
-      setEpiStock((prev) =>
-        prev.map((item) =>
-          item.epiId === editingStockItem.epiId
-            ? { ...item, quantity, minStock }
-            : item
-        )
-      )
+      const stockDocRef = doc(firestore, `clients/${contractId}/epi_stock`, editingStockItem.id as string);
+      updateDocumentNonBlocking(stockDocRef, { quantity, minStock })
       toast({ title: 'Estoque Atualizado!' })
     } else {
-      // Adding new item to stock
       const epiId = formData.get('epiId') as string
-      if (epiStock.some((item) => item.epiId === epiId)) {
+      if (epiStock?.some((item) => item.epiId === epiId)) {
         toast({
           variant: 'destructive',
           title: 'Item já existe no estoque',
@@ -173,12 +204,12 @@ export default function EpisPage() {
         })
         return
       }
-      const newStockItem: EpiStock = {
+      const newStockItemData = {
         epiId,
         quantity,
         minStock,
       }
-      setEpiStock((prev) => [newStockItem, ...prev])
+      addDocumentNonBlocking(epiStockRef, newStockItemData)
       toast({ title: 'Item adicionado ao estoque!' })
     }
     setIsStockDialogOpen(false)
@@ -191,9 +222,9 @@ export default function EpisPage() {
   }
 
   const getEpiNameById = (epiId: string) =>
-    epiData.find((e) => e.id === epiId)?.name || 'N/A'
+    epiData?.find((e) => e.id === epiId)?.name || 'N/A'
   const getEpiCaById = (epiId: string) =>
-    epiData.find((e) => e.id === epiId)?.ca || 'N/A'
+    epiData?.find((e) => e.id === epiId)?.ca || 'N/A'
 
   const renderStockForm = (stockItem: EpiStock | null) => {
     return (
@@ -210,7 +241,7 @@ export default function EpisPage() {
                 </SelectTrigger>
                 <SelectContent>
                   {epiData
-                    .filter((epi) => epi.active)
+                    ?.filter((epi) => epi.active)
                     .map((epi) => (
                       <SelectItem key={epi.id} value={epi.id}>
                         {epi.name} (CA: {epi.ca})
@@ -246,6 +277,12 @@ export default function EpisPage() {
       </form>
     )
   }
+
+  const renderLoading = () => (
+    <div className='flex justify-center items-center h-64'>
+      <Loader2 className='h-8 w-8 animate-spin' />
+    </div>
+  )
 
   return (
     <>
@@ -398,62 +435,66 @@ export default function EpisPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nome</TableHead>
-                        <TableHead>CA</TableHead>
-                        <TableHead>Venc. CA</TableHead>
-                        <TableHead>Vida Útil</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>
-                          <span className='sr-only'>Ações</span>
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {epiData.map((epi) => (
-                        <TableRow key={epi.id}>
-                          <TableCell className='font-medium'>
-                            {epi.name}
-                          </TableCell>
-                          <TableCell>{epi.ca}</TableCell>
-                          <TableCell>
-                            {new Date(epi.vencimentoCA).toLocaleDateString(
-                              'pt-BR',
-                              { timeZone: 'UTC' }
-                            )}
-                          </TableCell>
-                          <TableCell>{epi.shelfLife} dias</TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={epi.active ? 'secondary' : 'outline'}
-                            >
-                              {epi.active ? 'Ativo' : 'Inativo'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  aria-haspopup='true'
-                                  size='icon'
-                                  variant='ghost'
-                                >
-                                  <MoreHorizontal className='h-4 w-4' />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align='end'>
-                                <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                                <DropdownMenuItem>Editar</DropdownMenuItem>
-                                <DropdownMenuItem>Desativar</DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
+                  {isLoadingCatalog ? (
+                    renderLoading()
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Nome</TableHead>
+                          <TableHead>CA</TableHead>
+                          <TableHead>Venc. CA</TableHead>
+                          <TableHead>Vida Útil</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>
+                            <span className='sr-only'>Ações</span>
+                          </TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {epiData?.map((epi) => (
+                          <TableRow key={epi.id}>
+                            <TableCell className='font-medium'>
+                              {epi.name}
+                            </TableCell>
+                            <TableCell>{epi.ca}</TableCell>
+                            <TableCell>
+                              {new Date(epi.vencimentoCA).toLocaleDateString(
+                                'pt-BR',
+                                { timeZone: 'UTC' }
+                              )}
+                            </TableCell>
+                            <TableCell>{epi.shelfLife} dias</TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={epi.active ? 'secondary' : 'outline'}
+                              >
+                                {epi.active ? 'Ativo' : 'Inativo'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    aria-haspopup='true'
+                                    size='icon'
+                                    variant='ghost'
+                                  >
+                                    <MoreHorizontal className='h-4 w-4' />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align='end'>
+                                  <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                                  <DropdownMenuItem>Editar</DropdownMenuItem>
+                                  <DropdownMenuItem>Desativar</DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -515,7 +556,7 @@ export default function EpisPage() {
                                 </SelectTrigger>
                                 <SelectContent>
                                   {epiData
-                                    .filter((epi) => epi.active)
+                                    ?.filter((epi) => epi.active)
                                     .map((epi) => (
                                       <SelectItem key={epi.id} value={epi.id}>
                                         {epi.name} (CA: {epi.ca})
@@ -556,49 +597,53 @@ export default function EpisPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Colaborador</TableHead>
-                        <TableHead>EPI</TableHead>
-                        <TableHead>Data</TableHead>
-                        <TableHead>Quantidade</TableHead>
-                        <TableHead>Próx. Troca</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {epiDeliveries.map((delivery) => {
-                        const epi = epiData.find(
-                          (e) => e.id === delivery.epiId
-                        )
-                        const nextChangeDate = epi
-                          ? new Date(delivery.deliveryDate)
-                          : null
-                        if (nextChangeDate && epi?.shelfLife) {
-                          nextChangeDate.setDate(
-                            nextChangeDate.getDate() + epi.shelfLife
+                  {isLoadingDeliveries ? (
+                    renderLoading()
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Colaborador</TableHead>
+                          <TableHead>EPI</TableHead>
+                          <TableHead>Data</TableHead>
+                          <TableHead>Quantidade</TableHead>
+                          <TableHead>Próx. Troca</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {epiDeliveries?.map((delivery) => {
+                          const epi = epiData?.find(
+                            (e) => e.id === delivery.epiId
                           )
-                        }
-                        return (
-                          <TableRow key={delivery.id}>
-                            <TableCell>{delivery.employeeName}</TableCell>
-                            <TableCell>{delivery.epiName}</TableCell>
-                            <TableCell>
-                              {new Date(
-                                delivery.deliveryDate
-                              ).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell>{delivery.quantity}</TableCell>
-                            <TableCell>
-                              {nextChangeDate
-                                ? nextChangeDate.toLocaleDateString()
-                                : 'N/A'}
-                            </TableCell>
-                          </TableRow>
-                        )
-                      })}
-                    </TableBody>
-                  </Table>
+                          const nextChangeDate = epi
+                            ? new Date(delivery.deliveryDate)
+                            : null
+                          if (nextChangeDate && epi?.shelfLife) {
+                            nextChangeDate.setDate(
+                              nextChangeDate.getDate() + epi.shelfLife
+                            )
+                          }
+                          return (
+                            <TableRow key={delivery.id}>
+                              <TableCell>{delivery.employeeName}</TableCell>
+                              <TableCell>{delivery.epiName}</TableCell>
+                              <TableCell>
+                                {new Date(
+                                  delivery.deliveryDate
+                                ).toLocaleDateString()}
+                              </TableCell>
+                              <TableCell>{delivery.quantity}</TableCell>
+                              <TableCell>
+                                {nextChangeDate
+                                  ? nextChangeDate.toLocaleDateString()
+                                  : 'N/A'}
+                              </TableCell>
+                            </TableRow>
+                          )
+                        })}
+                      </TableBody>
+                    </Table>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -622,44 +667,48 @@ export default function EpisPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>EPI</TableHead>
-                        <TableHead>CA</TableHead>
-                        <TableHead>Quantidade em Estoque</TableHead>
-                        <TableHead>Estoque Mínimo</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {epiStock.map((item) => (
-                        <TableRow
-                          key={item.epiId}
-                          className='cursor-pointer'
-                          onClick={() => openStockDialog(item)}
-                        >
-                          <TableCell>{getEpiNameById(item.epiId)}</TableCell>
-                          <TableCell>{getEpiCaById(item.epiId)}</TableCell>
-                          <TableCell>{item.quantity}</TableCell>
-                          <TableCell>{item.minStock}</TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={
-                                item.quantity > item.minStock
-                                  ? 'secondary'
-                                  : 'destructive'
-                              }
-                            >
-                              {item.quantity > item.minStock
-                                ? 'Em estoque'
-                                : 'Estoque baixo'}
-                            </Badge>
-                          </TableCell>
+                  {isLoadingStock ? (
+                    renderLoading()
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>EPI</TableHead>
+                          <TableHead>CA</TableHead>
+                          <TableHead>Quantidade em Estoque</TableHead>
+                          <TableHead>Estoque Mínimo</TableHead>
+                          <TableHead>Status</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {epiStock?.map((item) => (
+                          <TableRow
+                            key={item.epiId}
+                            className='cursor-pointer'
+                            onClick={() => openStockDialog(item)}
+                          >
+                            <TableCell>{getEpiNameById(item.epiId)}</TableCell>
+                            <TableCell>{getEpiCaById(item.epiId)}</TableCell>
+                            <TableCell>{item.quantity}</TableCell>
+                            <TableCell>{item.minStock}</TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={
+                                  item.quantity > item.minStock
+                                    ? 'secondary'
+                                    : 'destructive'
+                                }
+                              >
+                                {item.quantity > item.minStock
+                                  ? 'Em estoque'
+                                  : 'Estoque baixo'}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
