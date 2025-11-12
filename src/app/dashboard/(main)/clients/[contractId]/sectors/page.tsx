@@ -194,7 +194,7 @@ export default function SectorsPage() {
           </SelectTrigger>
           <SelectContent>
             {units?.map((unit) => (
-              <SelectItem key={unit.id} value={unit.id}>
+              <SelectItem key={unit.id} value={unit.id!}>
                 {unit.name}
               </SelectItem>
             ))}
@@ -308,11 +308,11 @@ export default function SectorsPage() {
                 {units?.map((unit) => (
                   <DropdownMenuCheckboxItem
                     key={unit.id}
-                    checked={unitFilter.includes(unit.id)}
+                    checked={unitFilter.includes(unit.id!)}
                     onCheckedChange={(checked) => {
                       setUnitFilter((prev) =>
                         checked
-                          ? [...prev, unit.id]
+                          ? [...prev, unit.id!]
                           : prev.filter((id) => id !== unit.id)
                       )
                     }}
@@ -375,7 +375,7 @@ export default function SectorsPage() {
                       size='sm'
                     >
                       <Link
-                        href={`/dashboard/clients/${contractId}/environments?sectorId=${sector.id}`}
+                        href={`/dashboard/clients/${contractId}/environments?unitId=${sector.unitId}&sectorId=${sector.id}`}
                         onClick={(e) => e.stopPropagation()}
                       >
                         Ver Postos de Trabalho{' '}

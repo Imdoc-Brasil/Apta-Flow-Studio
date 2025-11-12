@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import {
   Card,
   CardContent,
@@ -60,14 +60,6 @@ export default function SectorDetailsPage() {
   const contractId = params.contractId as string
   const sectorId = params.sectorId as string
   const firestore = useFirestore()
-  
-  // We need to find which unit this sector belongs to.
-  // This is a workaround. A better data model would have unitId on the sector document
-  // even if it's in a subcollection, or query all units and their sectors.
-  // For now, we'll assume we can figure out the unitId from URL or another source if needed.
-  // Let's assume the sector document itself contains the unitId.
-  // The current `useDoc` doesn't know the full path without the unitId. This is a problem.
-  // Let's fetch the unit from the URL if it was passed, or try to find it.
   
   const router = useRouter()
   const searchParams = useSearchParams()

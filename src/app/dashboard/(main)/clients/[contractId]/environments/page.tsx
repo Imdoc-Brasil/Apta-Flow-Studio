@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { MoreHorizontal, PlusCircle, Search, Filter } from 'lucide-react'
 import {
   Card,
@@ -27,20 +27,11 @@ import {
   DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuCheckboxItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { type Environment } from './data'
-import { initialSectorsData } from '../sectors/data'
+import { type Sector } from '../sectors/data'
 import {
   Select,
   SelectContent,
@@ -49,7 +40,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
-import { Badge } from '@/components/ui/badge'
 import { useSearchParams, useParams } from 'next/navigation'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
@@ -58,10 +48,10 @@ import {
   useMemoFirebase,
   addDocumentNonBlocking,
   updateDocumentNonBlocking,
-  deleteDocumentNonBlocking,
 } from '@/firebase'
-import { collection, doc } from 'firebase/firestore'
+import { collection, doc, getDocs } from 'firebase/firestore'
 import { Loader2 } from 'lucide-react'
+import type { Unit } from '../units/data'
 
 export default function EnvironmentsPage() {
   const params = useParams()
@@ -73,27 +63,55 @@ export default function EnvironmentsPage() {
   const [editingEnvironment, setEditingEnvironment] =
     useState<Environment | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedUnit, setSelectedUnit] = useState<string>('')
   const [sectorFilter, setSectorFilter] = useState<string>(urlSectorId || '')
   const { toast } = useToast()
 
   const firestore = useFirestore()
 
-  // This is a simplified approach for the prototype.
-  // In a real-world app, you might query a root 'environments' collection
-  // or fetch them dynamically based on the selected sector.
-  // For now, we assume a single subcollection path if a filter is active.
-  const environmentsRef = useMemoFirebase(
-    () =>
-      firestore && sectorFilter
-        ? collection(
-            firestore,
-            `clients/${contractId}/sectors/${sectorFilter}/environments`
-          )
-        : null,
-    [firestore, contractId, sectorFilter]
+  const unitsRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, `clients/${contractId}/units`) : null),
+    [firestore, contractId]
   )
+  const { data: unitsData, isLoading: areUnitsLoading } = useCollection<Unit>(unitsRef)
 
-  const { data: environments, isLoading } =
+  const [allSectors, setAllSectors] = useState<Sector[]>([])
+  const [areSectorsLoading, setAreSectorsLoading] = useState(true)
+
+  useEffect(() => {
+    if (unitsData && firestore) {
+      setAreSectorsLoading(true)
+      const fetchSectors = async () => {
+        const sectorsPromises = unitsData.map((unit) =>
+          getDocs(collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`))
+        )
+        const sectorsSnapshots = await Promise.all(sectorsPromises)
+        const sectorsData = sectorsSnapshots.flatMap((snapshot) =>
+          snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Sector))
+        )
+        setAllSectors(sectorsData)
+        setAreSectorsLoading(false)
+      }
+      fetchSectors()
+    } else if (!areUnitsLoading) {
+      setAreSectorsLoading(false)
+    }
+  }, [unitsData, firestore, contractId, areUnitsLoading])
+  
+  const unitSectors = useMemo(() => {
+    if (!selectedUnit) return []
+    return allSectors.filter(s => s.unitId === selectedUnit);
+  }, [allSectors, selectedUnit])
+
+  const environmentsRef = useMemoFirebase(() => {
+    if (!firestore || !selectedUnit || !sectorFilter) return null
+    return collection(
+      firestore,
+      `clients/${contractId}/units/${selectedUnit}/sectors/${sectorFilter}/environments`
+    )
+  }, [firestore, contractId, selectedUnit, sectorFilter])
+
+  const { data: environments, isLoading: areEnvironmentsLoading } =
     useCollection<Environment>(environmentsRef)
 
   const filteredEnvironments = useMemo(() => {
@@ -107,21 +125,25 @@ export default function EnvironmentsPage() {
   }, [environments, searchTerm])
 
   const getSectorName = (sectorId: string) => {
-    return initialSectorsData.find((s) => s.id === sectorId)?.name || 'N/A'
+    return allSectors.find((s) => s.id === sectorId)?.name || 'N/A'
   }
 
   const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!sectorFilter || !firestore) {
+    if (!selectedUnit || !sectorFilter || !firestore) {
       toast({
         variant: 'destructive',
         title: 'Erro',
         description:
-          'Selecione um setor antes de adicionar um posto de trabalho.',
+          'Selecione uma unidade e um setor antes de adicionar um posto de trabalho.',
       })
       return
     }
 
+    const colRef = collection(
+      firestore,
+      `clients/${contractId}/units/${selectedUnit}/sectors/${sectorFilter}/environments`
+    )
     const formData = new FormData(event.currentTarget)
     const environmentData = {
       name: formData.get('name') as string,
@@ -139,11 +161,7 @@ export default function EnvironmentsPage() {
 
     if (editingEnvironment) {
       // Update
-      const docRef = doc(
-        firestore,
-        `clients/${contractId}/sectors/${sectorFilter}/environments`,
-        editingEnvironment.id as string
-      )
+      const docRef = doc(firestore, colRef.path, editingEnvironment.id as string)
       updateDocumentNonBlocking(docRef, environmentData)
       toast({
         title: 'Posto de Trabalho Atualizado!',
@@ -151,10 +169,6 @@ export default function EnvironmentsPage() {
       })
     } else {
       // Create
-      const colRef = collection(
-        firestore,
-        `clients/${contractId}/sectors/${sectorFilter}/environments`
-      )
       addDocumentNonBlocking(colRef, environmentData)
       toast({
         title: 'Posto de Trabalho Adicionado!',
@@ -167,11 +181,11 @@ export default function EnvironmentsPage() {
   }
 
   const openFormDialog = (environment: Environment | null) => {
-    if (!sectorFilter) {
+    if (!selectedUnit || !sectorFilter) {
       toast({
-        title: 'Selecione um Setor',
+        title: 'Seleção Necessária',
         description:
-          'Por favor, filtre por um setor antes de adicionar ou editar um posto de trabalho.',
+          'Por favor, filtre por uma unidade e setor antes de adicionar ou editar um posto de trabalho.',
         variant: 'destructive',
       })
       return
@@ -179,6 +193,8 @@ export default function EnvironmentsPage() {
     setEditingEnvironment(environment)
     setIsFormDialogOpen(true)
   }
+  
+  const isLoading = areUnitsLoading || areSectorsLoading || areEnvironmentsLoading;
 
   const renderEnvironmentForm = (environment?: Environment | null) => (
     <ScrollArea className='h-[70vh]'>
@@ -305,13 +321,26 @@ export default function EnvironmentsPage() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <Select value={sectorFilter} onValueChange={setSectorFilter}>
-                <SelectTrigger className='w-[280px]'>
+              <Select value={selectedUnit} onValueChange={setSelectedUnit}>
+                <SelectTrigger className='w-[220px]'>
+                  <SelectValue placeholder='Filtrar por Unidade...' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value=''>Todas as Unidades</SelectItem>
+                  {unitsData?.map((unit) => (
+                    <SelectItem key={unit.id} value={unit.id!}>
+                      {unit.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+               <Select value={sectorFilter} onValueChange={setSectorFilter} disabled={!selectedUnit}>
+                <SelectTrigger className='w-[220px]'>
                   <SelectValue placeholder='Filtrar por Setor...' />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value=''>Todos os Setores</SelectItem>
-                  {initialSectorsData.map((sector) => (
+                  {unitSectors.map((sector) => (
                     <SelectItem key={sector.id} value={sector.id}>
                       {sector.name}
                     </SelectItem>
@@ -323,7 +352,7 @@ export default function EnvironmentsPage() {
               size='sm'
               className='h-8 gap-1'
               onClick={() => openFormDialog(null)}
-              disabled={!sectorFilter}
+              disabled={!selectedUnit || !sectorFilter}
             >
               <PlusCircle className='h-3.5 w-3.5' />
               <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
@@ -337,9 +366,9 @@ export default function EnvironmentsPage() {
             <div className='flex justify-center items-center h-48'>
               <Loader2 className='h-8 w-8 animate-spin' />
             </div>
-          ) : !sectorFilter ? (
+          ) : !selectedUnit || !sectorFilter ? (
             <div className='text-center py-10 text-muted-foreground'>
-              <p>Por favor, selecione um setor para ver os postos de trabalho.</p>
+              <p>Por favor, selecione uma unidade e um setor para ver os postos de trabalho.</p>
             </div>
           ) : (
             <Table>
