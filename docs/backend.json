@@ -515,6 +515,65 @@
         "method"
       ]
     },
+    "Epc": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "EPC",
+      "description": "Represents a Collective Protection Equipment (EPC).",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the EPC."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the EPC."
+        },
+        "active": {
+          "type": "boolean",
+          "description": "Indicates if the EPC is active in the catalog."
+        },
+        "attenuation": {
+          "type": "string",
+          "description": "Attenuation level or efficiency of the EPC (e.g., '15 dB(A)')."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "active"
+      ]
+    },
+    "Epi": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "EPI",
+      "description": "Represents an Individual Protection Equipment (EPI).",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the EPI."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the EPI."
+        },
+        "ca": {
+          "type": "string",
+          "description": "The Approval Certificate (CA) number of the EPI."
+        },
+        "active": {
+          "type": "boolean",
+          "description": "Indicates if the EPI is active in the catalog."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "ca",
+        "active"
+      ]
+    },
     "PgrInventoryItem": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "PgrInventoryItem",
@@ -1008,6 +1067,38 @@
         }
       },
       {
+        "path": "/epcs/{epcId}",
+        "definition": {
+          "entityName": "Epc",
+          "schema": {
+            "$ref": "#/backend/entities/Epc"
+          },
+          "description": "Catalog of all possible Collective Protection Equipments.",
+          "params": [
+            {
+              "name": "epcId",
+              "description": "Unique identifier for the EPC."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/epis/{epiId}",
+        "definition": {
+          "entityName": "Epi",
+          "schema": {
+            "$ref": "#/backend/entities/Epi"
+          },
+          "description": "Catalog of all possible Individual Protection Equipments.",
+          "params": [
+            {
+              "name": "epiId",
+              "description": "Unique identifier for the EPI."
+            }
+          ]
+        }
+      },
+      {
         "path": "/clients/{clientId}/pgr_inventory/{inventoryId}",
         "definition": {
           "entityName": "PgrInventoryItem",
@@ -1108,3 +1199,4 @@
     "reasoning": "The Firestore data structure is designed to support AptaFlow's core features while adhering to the principles of Authorization Independence, Structural Segregation, Access Modeling, and Data Clarity. The design prioritizes security and scalability by denormalizing authorization data where necessary and structuring collections to enforce consistent security rules.\n\n**Authorization Independence (CRITICAL):**\nAuthorization Independence is achieved through denormalization. For instance, subcollections related to clients (contracts, service requests, documents, SLAs) include the `clientId` field. This allows security rules to validate access based on the authenticated user's relationship to the client without needing to perform `get()` operations to fetch parent document data.\n\n**Structural Segregation:**\nDifferent types of data are stored in separate collections to ensure that all documents within a collection share the same security posture. For example, client data is stored in the `/clients` collection, while employee data is stored in the `/employees` collection.\n\n**Access Modeling:**\n*   **Path-Based Ownership:** The `/users/{userId}` collection is used to store user-specific data. This structure simplifies ownership-based security rules.\n*   **Membership Map (Not Applicable):** Since the application's description doesn't define collaborative data, the membership map is not applicable.\n*   **Global Roles (DBAC):** Global admin roles are stored in the `/roles_admin/{uid}` collection.\n\n**QAPs (Rules are not Filters):**\nThe structure supports secure `list` operations:\n*   Data segregation ensures that listing operations can be scoped to specific collections with consistent security rules.\n*   Denormalization of authorization context (`clientId` in client-related subcollections) allows rules to validate list access based on the current user's relationship to the client, without requiring filtering.\n\n**Invariants:**\n*   Ownership is enforced through the use of `clientId` and `employeeId` fields.\n*   Timestamps (`submittedDate`, `uploadDate`, `startDate`, `endDate`) can be validated in security rules to ensure data integrity.\n*   Denormalized data (e.g., `clientId` in subcollections) allows for maintaining consistency across related documents.\n\nThis structure enables simple, robust, and easily debuggable security rules while supporting the required application features."
   }
 }
+    

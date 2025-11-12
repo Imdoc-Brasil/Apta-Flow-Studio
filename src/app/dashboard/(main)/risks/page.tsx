@@ -112,7 +112,8 @@ export default function RisksPage() {
     [firestore]
   )
 
-  const { data: hazardData, isLoading: isLoadingHazards } = useCollection<Hazard>(hazardsRef)
+  const { data: hazardData, isLoading: isLoadingHazards } =
+    useCollection<Hazard>(hazardsRef)
   const { data: epcData, isLoading: isLoadingEpcs } = useCollection<Epc>(epcsRef)
   const { data: epiData, isLoading: isLoadingEpis } = useCollection<Epi>(episRef)
 
@@ -123,7 +124,7 @@ export default function RisksPage() {
   const handleAddHazard = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!hazardsRef) return
-    
+
     const formData = new FormData(event.currentTarget)
     const newHazard: Omit<Hazard, 'id'> = {
       name: formData.get('name') as string,
@@ -133,24 +134,27 @@ export default function RisksPage() {
       legalBasis: formData.get('legalBasis') as string,
       potentialEffects: formData.get('potentialEffects') as string,
     }
-    
+
     addDocumentNonBlocking(hazardsRef, newHazard)
 
-    toast({ title: 'Sucesso!', description: 'Perigo/Fator de Risco adicionado.' })
+    toast({
+      title: 'Sucesso!',
+      description: 'Perigo/Fator de Risco adicionado.',
+    })
     setIsHazardDialogOpen(false)
   }
 
   const handleAddEpc = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!epcsRef) return
-    
+
     const formData = new FormData(event.currentTarget)
     const newEpc: Omit<Epc, 'id'> = {
       name: formData.get('name') as string,
       attenuation: (formData.get('attenuation') as string) || 'N/A',
       active: true,
     }
-    
+
     addDocumentNonBlocking(epcsRef, newEpc)
 
     toast({ title: 'Sucesso!', description: 'EPC adicionado.' })
@@ -169,12 +173,12 @@ export default function RisksPage() {
     }
 
     addDocumentNonBlocking(episRef, newEpi)
-    
+
     toast({ title: 'Sucesso!', description: 'EPI adicionado.' })
     setIsEpiDialogOpen(false)
   }
-  
-  const isLoading = isLoadingHazards || isLoadingEpcs || isLoadingEpis;
+
+  const isLoading = isLoadingHazards || isLoadingEpcs || isLoadingEpis
 
   return (
     <div className='grid flex-1 auto-rows-max gap-8'>
@@ -269,7 +273,7 @@ export default function RisksPage() {
                         </SelectContent>
                       </Select>
                     </div>
-                     <div className='grid grid-cols-4 items-center gap-4'>
+                    <div className='grid grid-cols-4 items-center gap-4'>
                       <Label htmlFor='legalBasis' className='text-right'>
                         Base Legal
                       </Label>
@@ -279,7 +283,7 @@ export default function RisksPage() {
                         className='col-span-3'
                       />
                     </div>
-                     <div className='grid grid-cols-4 items-center gap-4'>
+                    <div className='grid grid-cols-4 items-center gap-4'>
                       <Label htmlFor='potentialEffects' className='text-right'>
                         Efeitos
                       </Label>
@@ -316,48 +320,52 @@ export default function RisksPage() {
               <Loader2 className='h-8 w-8 animate-spin' />
             </div>
           ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Agente/Risco</TableHead>
-                <TableHead>Cód. eSocial</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead>Método</TableHead>
-                <TableHead>
-                  <span className='sr-only'>Ações</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {hazardData?.map((risk) => (
-                <TableRow key={risk.id}>
-                  <TableCell className='font-medium'>{risk.name}</TableCell>
-                  <TableCell>
-                    <Badge variant='outline'>{risk.esocialCode}</Badge>
-                  </TableCell>
-                  <TableCell>{risk.category}</TableCell>
-                  <TableCell>{risk.method}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup='true' size='icon' variant='ghost'>
-                          <MoreHorizontal className='h-4 w-4' />
-                          <span className='sr-only'>Alternar menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align='end'>
-                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                        <DropdownMenuItem>Editar</DropdownMenuItem>
-                        <DropdownMenuItem className='text-destructive'>
-                          Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Agente/Risco</TableHead>
+                  <TableHead>Cód. eSocial</TableHead>
+                  <TableHead>Categoria</TableHead>
+                  <TableHead>Método</TableHead>
+                  <TableHead>
+                    <span className='sr-only'>Ações</span>
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {hazardData?.map((risk) => (
+                  <TableRow key={risk.id}>
+                    <TableCell className='font-medium'>{risk.name}</TableCell>
+                    <TableCell>
+                      <Badge variant='outline'>{risk.esocialCode}</Badge>
+                    </TableCell>
+                    <TableCell>{risk.category}</TableCell>
+                    <TableCell>{risk.method}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            aria-haspopup='true'
+                            size='icon'
+                            variant='ghost'
+                          >
+                            <MoreHorizontal className='h-4 w-4' />
+                            <span className='sr-only'>Alternar menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end'>
+                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                          <DropdownMenuItem>Editar</DropdownMenuItem>
+                          <DropdownMenuItem className='text-destructive'>
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
@@ -428,49 +436,53 @@ export default function RisksPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-             {isLoadingEpcs ? (
+            {isLoadingEpcs ? (
               <div className='flex justify-center items-center h-48'>
                 <Loader2 className='h-8 w-8 animate-spin' />
               </div>
-             ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Atenuação</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>
-                    <span className='sr-only'>Ações</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {epcData?.map((epc) => (
-                  <TableRow key={epc.id}>
-                    <TableCell className='font-medium'>{epc.name}</TableCell>
-                    <TableCell>{epc.attenuation}</TableCell>
-                    <TableCell>
-                      <Badge variant={epc.active ? 'secondary' : 'outline'}>
-                        {epc.active ? 'Ativo' : 'Inativo'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup='true' size='icon' variant='ghost'>
-                            <MoreHorizontal className='h-4 w-4' />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align='end'>
-                          <DropdownMenuItem>Editar</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Atenuação</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>
+                      <span className='sr-only'>Ações</span>
+                    </TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-             )}
+                </TableHeader>
+                <TableBody>
+                  {epcData?.map((epc) => (
+                    <TableRow key={epc.id}>
+                      <TableCell className='font-medium'>{epc.name}</TableCell>
+                      <TableCell>{epc.attenuation}</TableCell>
+                      <TableCell>
+                        <Badge variant={epc.active ? 'secondary' : 'outline'}>
+                          {epc.active ? 'Ativo' : 'Inativo'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              aria-haspopup='true'
+                              size='icon'
+                              variant='ghost'
+                            >
+                              <MoreHorizontal className='h-4 w-4' />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align='end'>
+                            <DropdownMenuItem>Editar</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
 
@@ -541,10 +553,10 @@ export default function RisksPage() {
           </CardHeader>
           <CardContent>
             {isLoadingEpis ? (
-                <div className='flex justify-center items-center h-48'>
-                  <Loader2 className='h-8 w-8 animate-spin' />
-                </div>
-              ) : (
+              <div className='flex justify-center items-center h-48'>
+                <Loader2 className='h-8 w-8 animate-spin' />
+              </div>
+            ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -569,7 +581,11 @@ export default function RisksPage() {
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button aria-haspopup='true' size='icon' variant='ghost'>
+                            <Button
+                              aria-haspopup='true'
+                              size='icon'
+                              variant='ghost'
+                            >
                               <MoreHorizontal className='h-4 w-4' />
                             </Button>
                           </DropdownMenuTrigger>
@@ -589,3 +605,5 @@ export default function RisksPage() {
     </div>
   )
 }
+
+    
