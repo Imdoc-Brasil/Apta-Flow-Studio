@@ -127,38 +127,15 @@ export default function Dashboard() {
   
       // Use 'roles_admin' collection
       const adminRoleRef = doc(firestore, 'roles_admin', user.uid);
-      try {
-        const docSnap = await getDoc(adminRoleRef);
-        if (!docSnap.exists()) {
-          const adminData = {
-            email: user.email,
-            promotedAt: serverTimestamp(),
-          };
-          
-          setDoc(adminRoleRef, adminData, { merge: true }).catch((error) => {
-             errorEmitter.emit(
-                'permission-error',
-                new FirestorePermissionError({
-                  path: adminRoleRef.path,
-                  operation: 'create',
-                  requestResourceData: adminData,
-                })
-             );
-          });
-          toast({
-            title: 'Bem-vindo, Superadministrador!',
-            description: 'Sua conta foi elevada para o nível de superadministrador.',
-          });
-        }
-      } catch (error) {
-         errorEmitter.emit(
-            'permission-error',
-            new FirestorePermissionError({
-              path: adminRoleRef.path,
-              operation: 'get',
-            })
-         );
-      }
+      const adminData = {
+        email: user.email,
+        promotedAt: serverTimestamp(),
+      };
+      
+      // We don't need to check for existence first. `setDoc` with `merge:true`
+      // will create or update the document without needing read permissions.
+      setDocumentNonBlocking(adminRoleRef, adminData, { merge: true });
+
     };
   
     if (!isUserLoading && user) {
