@@ -14,6 +14,7 @@ import {
   ChevronRight,
   List,
   FileHeart,
+  FilePlus,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -30,10 +31,10 @@ const healthServices = [
     href: '/dashboard/health/exams',
     icon: Stethoscope,
   },
-   {
+  {
     name: 'Configuração de Exames Clínicos',
     description: 'Defina os parâmetros e modelos para as avaliações clínicas.',
-    href: '/dashboard/health/clinical-exams',
+    href: '/dashboard/health/clinical-exams/settings',
     icon: FileHeart,
   },
   {
@@ -41,7 +42,7 @@ const healthServices = [
     description:
       'Acesse o assistente de IA e configure os modelos de laudos.',
     href: '/dashboard/health/reports-portal',
-    icon: FileHeart,
+    icon: FilePlus,
   },
 ]
 

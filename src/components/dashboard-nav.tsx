@@ -68,15 +68,10 @@ const saudeSubNavItems = [
     subItems: [],
   },
   {
-    href: '/dashboard/health/clinical-exams',
-    label: 'Exames Clínicos',
+    href: '/dashboard/health/clinical-exams/settings',
+    label: 'Config. Exames Clínicos',
     icon: FileHeart,
-    subItems: [
-      {
-        href: '/dashboard/health/clinical-exams/settings',
-        label: 'Config. Avaliação Clínica',
-      },
-    ],
+    subItems: [],
   },
   {
     href: '/dashboard/health/reports-portal',
@@ -105,9 +100,6 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
 
   const isSaudeActive = getIsActive('/dashboard/health')
   const [isSaudeOpen, setIsSaudeOpen] = useState(isSaudeActive)
-  const [isExamesClinicosOpen, setIsExamesClinicosOpen] = useState(
-    getIsActive('/dashboard/health/clinical-exams')
-  )
   const [isPortalLaudosOpen, setIsPortalLaudosOpen] = useState(
     getIsActive('/dashboard/health/reports-portal')
   )
@@ -115,11 +107,7 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
   useEffect(() => {
     if (isSaudeActive) setIsSaudeOpen(true)
     // Do not auto-collapse if not active, let user control it
-    // else setIsSaudeOpen(false) 
-
-    if (getIsActive('/dashboard/health/clinical-exams'))
-      setIsExamesClinicosOpen(true)
-    // else setIsExamesClinicosOpen(false)
+    // else setIsSaudeOpen(false)
 
     if (getIsActive('/dashboard/health/reports-portal'))
       setIsPortalLaudosOpen(true)
@@ -177,16 +165,8 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
                   <li key={item.label}>
                     {item.subItems.length > 0 ? (
                       <Collapsible
-                        open={
-                          item.href.includes('clinical-exams')
-                            ? isExamesClinicosOpen
-                            : isPortalLaudosOpen
-                        }
-                        onOpenChange={
-                          item.href.includes('clinical-exams')
-                            ? setIsExamesClinicosOpen
-                            : setIsPortalLaudosOpen
-                        }
+                        open={isPortalLaudosOpen}
+                        onOpenChange={setIsPortalLaudosOpen}
                       >
                         <CollapsibleTrigger asChild>
                           <div className='w-full'>
@@ -205,13 +185,7 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
                                 <ChevronRight
                                   className={cn(
                                     'h-4 w-4 transition-transform group-data-[collapsible=icon]:hidden',
-                                    ((item.href.includes('clinical-exams') &&
-                                      isExamesClinicosOpen) ||
-                                      (item.href.includes(
-                                        'reports-portal'
-                                      ) &&
-                                        isPortalLaudosOpen)) &&
-                                      'rotate-90'
+                                    isPortalLaudosOpen && 'rotate-90'
                                   )}
                                 />
                               </SidebarMenuButton>
