@@ -61,6 +61,7 @@ export type Ticket = {
   priority: 'Alta' | 'Média' | 'Baixa'
   status: TicketStatus
   updated: string
+  createdAt: string
   description?: string
   assignedTo?: string[]
   labels?: Label[]
@@ -125,6 +126,7 @@ export const useTicketStore = create<TicketStore>()(
                 .toUpperCase()}`,
               status: 'Aberto',
               updated: new Date().toISOString(),
+              createdAt: new Date().toISOString(),
               assignedTo: newTicket.assignedTo || [],
               labels: newTicket.labels || [],
               checklists: [],
@@ -301,3 +303,5 @@ export const useTicketStore = create<TicketStore>()(
     }
   )
 )
+
+    

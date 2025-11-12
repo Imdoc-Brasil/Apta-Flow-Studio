@@ -27,7 +27,7 @@ import {
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase'
 import { collection, query, where } from 'firebase/firestore'
 import { type Ticket } from '../tickets/tickets-store'
-import { format, subDays, startOfMonth, endOfMonth, eachMonthOfInterval } from 'date-fns'
+import { format, subDays, startOfMonth, endOfMonth, eachMonthOfInterval, differenceInHours, parseISO, isValid } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 const chartConfig1 = {
@@ -70,7 +70,8 @@ export default function AnalyticsPage() {
     const monthMap = new Map(months.map(m => [m.month.toLowerCase(), m]));
 
     tickets.forEach(ticket => {
-      const ticketDate = new Date(ticket.updated);
+      if (!ticket.createdAt) return;
+      const ticketDate = new Date(ticket.createdAt);
       if (ticketDate >= interval.start && ticketDate <= interval.end) {
         const monthName = format(ticketDate, 'MMMM', { locale: ptBR }).toLowerCase();
         const monthData = monthMap.get(monthName)
@@ -90,14 +91,16 @@ export default function AnalyticsPage() {
     const last7Days = Array.from({ length: 7 }, (_, i) => subDays(now, i)).reverse();
 
     return last7Days.map(day => {
-      const dayStart = new Date(day.setHours(0, 0, 0, 0)).toISOString();
-      const dayEnd = new Date(day.setHours(23, 59, 59, 999)).toISOString();
+      const dayStart = new Date(day.setHours(0, 0, 0, 0));
+      const dayEnd = new Date(day.setHours(23, 59, 59, 999));
 
       const resolvedTickets = tickets.filter(
         ticket =>
           (ticket.status === 'Resolvido' || ticket.status === 'Fechado') &&
-          ticket.updated >= dayStart &&
-          ticket.updated <= dayEnd
+          isValid(parseISO(ticket.createdAt)) &&
+          isValid(parseISO(ticket.updated)) &&
+          parseISO(ticket.updated) >= dayStart &&
+          parseISO(ticket.updated) <= dayEnd
       );
 
       if (resolvedTickets.length === 0) {
@@ -108,10 +111,9 @@ export default function AnalyticsPage() {
       }
       
       const totalTime = resolvedTickets.reduce((acc, ticket) => {
-         // This is a simplified calculation. A real app would need a "createdAt" field.
-         // Assuming 'updated' is resolution time and created at is... somewhere.
-         // For now, let's just create a random time diff.
-         return acc + Math.random() * 24; 
+         const createdAt = parseISO(ticket.createdAt);
+         const resolvedAt = parseISO(ticket.updated);
+         return acc + differenceInHours(resolvedAt, createdAt);
       }, 0);
 
       return {
@@ -202,3 +204,5 @@ export default function AnalyticsPage() {
     </div>
   )
 }
+
+    

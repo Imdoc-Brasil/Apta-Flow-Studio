@@ -910,7 +910,7 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                 <h3 className='font-semibold'>Aberto</h3>
               </div>
               <p className='text-sm'>
-                <TimeAgo dateString={ticket.updated} />
+                <TimeAgo dateString={ticket.createdAt} />
               </p>
             </div>
           </div>
@@ -1218,7 +1218,7 @@ export default function TicketsPage() {
     
     // We need to fetch the employees for the selected client to find the name
     // This is a simplification; in a real app, you'd probably have this data more readily available
-    const newTicketData = {
+    const newTicketData: Omit<Ticket, 'id'> = {
       subject,
       client: clientName,
       priority: formData.get('priority') as Ticket['priority'],
@@ -1228,6 +1228,7 @@ export default function TicketsPage() {
       relatedEmployee: relatedEmployeeId, // For now, we save the ID
       status: 'Aberto' as TicketStatus,
       updated: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
     }
     addDocumentNonBlocking(ticketsRef, newTicketData)
 
@@ -1794,3 +1795,5 @@ export default function TicketsPage() {
     </div>
   )
 }
+
+    

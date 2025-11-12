@@ -646,6 +646,7 @@ export default function ClientTicketsPage() {
       relatedEmployee: employeeName,
       status: 'Aberto' as Ticket['status'],
       updated: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
     }
 
     addDocumentNonBlocking(ticketsRef, newTicketData)
