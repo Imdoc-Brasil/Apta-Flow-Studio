@@ -40,11 +40,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { useToast } from '@/hooks/use-toast'
-import {
-  type Process,
-  type ProcessStep,
-  type ProcessType,
-} from './data'
+import { type Process, type ProcessStep, type ProcessType } from './data'
 import { initialSectorsData } from '../sectors/data'
 import { initialRolesData } from '../roles/data'
 import {
@@ -99,21 +95,19 @@ export default function ProcessesPage() {
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
   const [searchTerm, setSearchTerm] = useState('')
   const [sectorFilter, setSectorFilter] = useState<string[]>([])
-  
+
   const getSectorNameForProcess = (process: Process) => {
-     const firstStep = process.steps[0];
-     if (firstStep && firstStep.sectorId) {
-        const sector = initialSectorsData.find(s => s.id === firstStep.sectorId);
-        return sector?.name || 'Setor não definido';
-     }
-     return 'Setor não definido';
+    const firstStep = process.steps[0]
+    if (firstStep && firstStep.sectorId) {
+      const sector = initialSectorsData.find((s) => s.id === firstStep.sectorId)
+      return sector?.name || 'Setor não definido'
+    }
+    return 'Setor não definido'
   }
 
   const uniqueSectors = useMemo(() => {
     if (!processes) return []
-    return [
-      ...new Set(processes.map((p) => getSectorNameForProcess(p))),
-    ]
+    return [...new Set(processes.map((p) => getSectorNameForProcess(p)))]
   }, [processes])
 
   const filteredProcesses = useMemo(() => {
@@ -185,7 +179,11 @@ export default function ProcessesPage() {
     }
 
     if (editingProcess) {
-      const docRef = doc(firestore, `clients/${contractId}/processes`, editingProcess.id as string)
+      const docRef = doc(
+        firestore,
+        `clients/${contractId}/processes`,
+        editingProcess.id as string
+      )
       updateDocumentNonBlocking(docRef, processData)
       toast({ title: 'Sucesso!', description: 'Processo atualizado.' })
     } else {
@@ -731,5 +729,3 @@ export default function ProcessesPage() {
     </>
   )
 }
-
-    
