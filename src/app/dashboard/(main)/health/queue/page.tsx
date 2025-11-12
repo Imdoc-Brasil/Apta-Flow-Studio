@@ -27,7 +27,7 @@ import {
   CardFooter,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { PlusCircle, MoreHorizontal, UserCheck, Upload, Search } from 'lucide-react'
+import { PlusCircle, MoreHorizontal, UserCheck, Upload, Search, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
   Dialog,
@@ -47,14 +47,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { initialClientsData } from '@/app/dashboard/(main)/clients/data'
-import { initialEmployeesData } from '@/app/dashboard/(main)/clients/[contractId]/employees/data'
 import { useToast } from '@/hooks/use-toast'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { aptaServiceUnits } from './data'
 import { useAttendeeStore, type Attendee, type Status } from './attendee-store'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase'
+import { collection } from 'firebase/firestore'
+import type { Client } from '../../../clients/data'
+import type { Employee } from '../../../clients/[contractId]/employees/data'
+
 
 const statusLabels: Record<Status, string> = {
   Agendado: 'Agendado',
@@ -225,8 +228,18 @@ const PlaceholderContent = ({ title }: { title: string }) => (
 )
 
 export default function QueuePage() {
-  const { attendees, addAttendee, updateAttendeeStatus } =
-    useAttendeeStore()
+  const { attendees, addAttendee, updateAttendeeStatus } = useAttendeeStore()
+  const firestore = useFirestore()
+  
+  const clientsRef = useMemoFirebase(() => (firestore ? collection(firestore, 'clients') : null), [firestore]);
+  const { data: clientsData, isLoading: areClientsLoading } = useCollection<Client>(clientsRef);
+
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  
+  const employeesRef = useMemoFirebase(() => (firestore && selectedClientId) ? collection(firestore, `clients/${selectedClientId}/staffs`) : null, [firestore, selectedClientId]);
+  const { data: employeesData, isLoading: areEmployeesLoading } = useCollection<Employee>(employeesRef);
+
+
   const [activeAttendee, setActiveAttendee] = useState<Attendee | null>(null)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isImportDialogOpen, setIsImportDialogOpen] = useState(false)
@@ -280,13 +293,14 @@ export default function QueuePage() {
   const handleAddAttendee = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
-    const clientName = formData.get('clientName') as string
+    const clientId = formData.get('clientName') as string
     const employeeId = formData.get('employeeId') as string
     const solicitationType = formData.get('solicitationType') as string
 
-    const patient = initialEmployeesData.find((emp) => emp.id === employeeId)
+    const client = clientsData?.find(c => c.id === clientId);
+    const patient = employeesData?.find((emp) => emp.id === employeeId)
 
-    if (!clientName || !patient || !solicitationType) {
+    if (!client || !patient || !solicitationType) {
       toast({
         variant: 'destructive',
         title: 'Campos incompletos',
@@ -296,7 +310,7 @@ export default function QueuePage() {
     }
 
     addAttendee({
-      clientName,
+      clientName: client.name,
       patientName: patient.name,
       solicitationType,
       exams: [
@@ -329,6 +343,8 @@ export default function QueuePage() {
     })
     setIsImportDialogOpen(false)
   }
+  
+  const isLoading = areClientsLoading || areEmployeesLoading;
 
   return (
     <div className='flex h-full flex-col gap-4'>
@@ -415,15 +431,15 @@ export default function QueuePage() {
                 <div className='grid gap-4 py-4'>
                   <div className='space-y-2'>
                     <Label htmlFor='clientName'>Empresa Cliente</Label>
-                    <Select name='clientName' required>
+                    <Select name='clientName' required onValueChange={setSelectedClientId}>
                       <SelectTrigger>
                         <SelectValue placeholder='Selecione a empresa' />
                       </SelectTrigger>
                       <SelectContent>
-                        {initialClientsData.map((client) => (
+                        {areClientsLoading ? <Loader2 className="mx-auto animate-spin" /> : clientsData?.map((client) => (
                           <SelectItem
                             key={client.id}
-                            value={client.name}
+                            value={client.id}
                           >
                             {client.name}
                           </SelectItem>
@@ -433,12 +449,12 @@ export default function QueuePage() {
                   </div>
                   <div className='space-y-2'>
                     <Label htmlFor='employeeId'>Paciente</Label>
-                    <Select name='employeeId' required>
+                    <Select name='employeeId' required disabled={!selectedClientId || areEmployeesLoading}>
                       <SelectTrigger>
                         <SelectValue placeholder='Selecione o colaborador' />
                       </SelectTrigger>
                       <SelectContent>
-                        {initialEmployeesData.map((employee) => (
+                        {areEmployeesLoading ? <Loader2 className="mx-auto animate-spin" /> : employeesData?.map((employee) => (
                           <SelectItem key={employee.id} value={employee.id}>
                             {employee.name}
                           </SelectItem>
