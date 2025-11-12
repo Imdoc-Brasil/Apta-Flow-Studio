@@ -109,22 +109,22 @@ export default function ClientsPage() {
     
   const clients = useMemo(() => {
     // Wait until both data sources are loaded before filtering
-    if (areClientsLoading || isStaffLoading || !allClients || !staffProfile) {
+    if (areClientsLoading || isStaffLoading || !allClients) {
       return [];
     }
   
     // Super admin sees all clients
-    if (staffProfile.perfilId === 'super_admin') {
+    if (staffProfile?.perfilId === 'super_admin') {
       return allClients;
     }
     
     // Client users see only their own company
-    if (staffProfile.perfilId === 'cliente') {
-       return allClients.filter((client) => client.id === staffProfile.contractId);
+    if (staffProfile?.perfilId === 'cliente') {
+       return allClients.filter((client) => client.id === staffProfile?.contractId);
     }
     
     // Other staff see their assigned clients
-    if (staffProfile.clientIds && staffProfile.clientIds.length > 0) {
+    if (staffProfile?.clientIds && staffProfile.clientIds.length > 0) {
       return allClients.filter((client) =>
         staffProfile.clientIds?.includes(client.id)
       );
