@@ -29,10 +29,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import {
-  initialHazardData,
-  type Hazard,
-} from '@/app/dashboard/(main)/risks/page'
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -50,9 +46,10 @@ import {
   useMemoFirebase,
   addDocumentNonBlocking,
 } from '@/firebase'
-import { collection, doc } from 'firebase/firestore'
+import { collection } from 'firebase/firestore'
 import { useParams } from 'next/navigation'
 import type { Exam } from '@/app/dashboard/(main)/health/data/exams'
+import type { Hazard } from '@/app/dashboard/(main)/risks/page'
 
 interface PcmsoRule {
   id: string
@@ -65,6 +62,13 @@ export default function PcmsoPage() {
   const contractId = params.contractId as string
   const firestore = useFirestore()
   const { toast } = useToast()
+
+  const hazardsRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'hazards') : null),
+    [firestore]
+  )
+  const { data: hazardData, isLoading: isLoadingHazards } =
+    useCollection<Hazard>(hazardsRef)
 
   const medicalExamsRef = useMemoFirebase(
     () => (firestore ? collection(firestore, 'medical_exams') : null),
@@ -88,7 +92,7 @@ export default function PcmsoPage() {
   const [selectedExams, setSelectedExams] = useState<string[]>([])
 
   const getRiskName = (riskId: string) => {
-    return initialHazardData.find((h) => h.id === riskId)?.name || 'N/A'
+    return hazardData?.find((h) => h.id === riskId)?.name || 'N/A'
   }
 
   const getExamName = (examId: string) => {
@@ -126,8 +130,8 @@ export default function PcmsoPage() {
       description: 'A nova regra do PCMSO foi salva.',
     })
   }
-  
-  const isLoading = isLoadingExams || isLoadingRules;
+
+  const isLoading = isLoadingExams || isLoadingRules || isLoadingHazards
 
   return (
     <>
@@ -206,7 +210,7 @@ export default function PcmsoPage() {
                     <SelectValue placeholder='Selecione um risco' />
                   </SelectTrigger>
                   <SelectContent>
-                    {initialHazardData.map((hazard) => (
+                    {hazardData?.map((hazard) => (
                       <SelectItem key={hazard.id} value={hazard.id}>
                         {hazard.name}
                       </SelectItem>
@@ -225,9 +229,9 @@ export default function PcmsoPage() {
                 </Label>
                 <ScrollArea className='h-64 rounded-md border p-4'>
                   {isLoadingExams ? (
-                     <div className='flex justify-center items-center h-full'>
-                        <Loader2 className='h-6 w-6 animate-spin' />
-                     </div>
+                    <div className='flex justify-center items-center h-full'>
+                      <Loader2 className='h-6 w-6 animate-spin' />
+                    </div>
                   ) : (
                     <div className='space-y-2'>
                       {medicalExams?.map((exam) => (
@@ -273,3 +277,5 @@ export default function PcmsoPage() {
     </>
   )
 }
+
+    
