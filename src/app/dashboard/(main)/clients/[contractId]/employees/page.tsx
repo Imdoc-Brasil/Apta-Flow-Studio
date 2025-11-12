@@ -74,9 +74,6 @@ import {
 } from '@/components/ui/select'
 import { initialProfiles } from '@/app/dashboard/(main)/profiles/page'
 import type { Employee, EmployeeStatus } from './data'
-import { initialRolesData } from '../roles/data'
-import { initialSectorsData } from '../sectors/data'
-import { initialUnitsData } from '../units/data'
 import { Separator } from '@/components/ui/separator'
 import { useRouter } from 'next/navigation'
 import { useParams } from 'next/navigation'
@@ -89,8 +86,12 @@ import {
   useCollection,
   useMemoFirebase,
 } from '@/firebase'
-import { collection, doc } from 'firebase/firestore'
+import { collection, doc, getDocs } from 'firebase/firestore'
 import type { Staff } from '@/app/dashboard/(main)/employees/page'
+import type { Role } from '../roles/data'
+import type { Sector } from '../sectors/data'
+import type { Unit } from '../units/data'
+
 
 // Componente para formatar datas com segurança no cliente
 function ClientSideDateFormatter({ dateString }: { dateString: string }) {
@@ -133,7 +134,37 @@ export default function EmployeesPage() {
     () => (firestore ? collection(firestore, `clients/${contractId}/staffs`) : null),
     [firestore, contractId]
   )
-  const { data: employees, isLoading } = useCollection<Employee>(employeesRef)
+  const rolesRef = useMemoFirebase(
+    () =>
+      firestore ? collection(firestore, `clients/${contractId}/roles`) : null,
+    [firestore, contractId]
+  )
+  const { data: employees, isLoading: areEmployeesLoading } = useCollection<Employee>(employeesRef)
+  const { data: rolesData, isLoading: areRolesLoading } = useCollection<Role>(rolesRef)
+  
+  const [allSectors, setAllSectors] = useState<Sector[]>([])
+  const [allUnits, setAllUnits] = useState<Unit[]>([])
+  
+  useEffect(() => {
+    if (firestore && contractId) {
+      const fetchRelatedData = async () => {
+        const unitsQuery = collection(firestore, `clients/${contractId}/units`);
+        const unitsSnapshot = await getDocs(unitsQuery);
+        const units = unitsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Unit));
+        setAllUnits(units);
+        
+        const sectorsPromises = units.map(unit => 
+          getDocs(collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`))
+        );
+        const sectorsSnapshots = await Promise.all(sectorsPromises);
+        const sectors = sectorsSnapshots.flatMap(snapshot => 
+          snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sector))
+        );
+        setAllSectors(sectors);
+      };
+      fetchRelatedData();
+    }
+  }, [firestore, contractId])
 
   const staffsRef = useMemoFirebase(
     () => (firestore ? collection(firestore, 'staffs') : null),
@@ -142,17 +173,17 @@ export default function EmployeesPage() {
 
   const [selectedAddRole, setSelectedAddRole] = useState('')
   const roleDetails = useMemo(() => {
-    if (!selectedAddRole) return null
-    const role = initialRolesData.find((r) => r.id === selectedAddRole)
+    if (!selectedAddRole || !rolesData || !allSectors || !allUnits) return null
+    const role = rolesData.find((r) => r.id === selectedAddRole)
     if (!role) return null
-    const sector = initialSectorsData.find((s) => s.id === role.sectorId)
+    const sector = allSectors.find((s) => s.id === role.sectorId)
     if (!sector) return null
-    const unit = initialUnitsData.find((u) => u.id === sector.unitId)
+    const unit = allUnits.find((u) => u.id === sector.unitId)
     return { role, sector, unit }
-  }, [selectedAddRole])
+  }, [selectedAddRole, rolesData, allSectors, allUnits])
 
   const getRoleById = (roleId: string) =>
-    initialRolesData.find((r) => r.id === roleId)
+    rolesData?.find((r) => r.id === roleId)
 
   const filteredEmployees = useMemo(() => {
     if (!employees) return []
@@ -171,7 +202,7 @@ export default function EmployeesPage() {
         if (statusFilter.length === 0) return false // Hide all if nothing is selected
         return statusFilter.includes(employee.status)
       })
-  }, [employees, searchTerm, statusFilter])
+  }, [employees, searchTerm, statusFilter, rolesData])
 
   const handleAddEmployee = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -303,6 +334,8 @@ export default function EmployeesPage() {
         return 'default'
     }
   }
+  
+  const isLoading = areEmployeesLoading || areRolesLoading;
 
   const renderAddEmployeeForm = () => (
     <div className='grid gap-4 py-4'>
@@ -318,7 +351,7 @@ export default function EmployeesPage() {
             <SelectValue placeholder='Selecione o cargo para o novo colaborador' />
           </SelectTrigger>
           <SelectContent>
-            {initialRolesData.map((role) => (
+            {rolesData?.map((role) => (
               <SelectItem key={role.id} value={role.id}>
                 {role.name}
               </SelectItem>
@@ -375,7 +408,7 @@ export default function EmployeesPage() {
             <SelectValue placeholder='Selecione o cargo' />
           </SelectTrigger>
           <SelectContent>
-            {initialRolesData.map((role) => (
+            {rolesData?.map((role) => (
               <SelectItem key={role.id} value={role.id}>
                 {role.name}
               </SelectItem>
@@ -712,3 +745,5 @@ export default function EmployeesPage() {
   )
 }
 export type { Employee, EmployeeStatus } from './data'
+
+    
