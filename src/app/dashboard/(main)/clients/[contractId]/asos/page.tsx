@@ -154,6 +154,7 @@ export default function AsosPage() {
       priority: 'Média',
       description: `Pedido de atendimento para ${solicitationType} do colaborador ${employee.name}.`,
       relatedEmployee: employee.name,
+      createdAt: new Date().toISOString(),
     }
     addDocumentNonBlocking(ticketsRef, newTicketData)
 
