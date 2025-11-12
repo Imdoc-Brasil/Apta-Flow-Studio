@@ -51,9 +51,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { type GHE } from './data'
-import { initialUnitsData } from '../units/data'
-import { initialRolesData } from '../roles/data'
-import { initialSectorsData } from '../sectors/data'
+import { type Unit } from '../units/data'
+import { type Role } from '../roles/data'
+import { type Sector } from '../sectors/data'
 import {
   Select,
   SelectContent,
@@ -73,7 +73,7 @@ import {
   useCollection,
   useMemoFirebase,
 } from '@/firebase'
-import { collection } from 'firebase/firestore'
+import { collection, getDocs } from 'firebase/firestore'
 
 export default function GhePage() {
   const params = useParams()
@@ -81,10 +81,51 @@ export default function GhePage() {
 
   const firestore = useFirestore()
   const ghesRef = useMemoFirebase(
-    () => (firestore ? collection(firestore, `clients/${contractId}/ghes`) : null),
+    () =>
+      firestore ? collection(firestore, `clients/${contractId}/ghes`) : null,
     [firestore, contractId]
   )
-  const { data: ghes, isLoading } = useCollection<GHE>(ghesRef)
+  const unitsRef = useMemoFirebase(
+    () =>
+      firestore ? collection(firestore, `clients/${contractId}/units`) : null,
+    [firestore, contractId]
+  )
+  const rolesRef = useMemoFirebase(
+    () =>
+      firestore ? collection(firestore, `clients/${contractId}/roles`) : null,
+    [firestore, contractId]
+  )
+
+  const { data: ghes, isLoading: areGhesLoading } = useCollection<GHE>(ghesRef)
+  const { data: unitsData, isLoading: areUnitsLoading } =
+    useCollection<Unit>(unitsRef)
+  const { data: rolesData, isLoading: areRolesLoading } =
+    useCollection<Role>(rolesRef)
+
+  const [allSectors, setAllSectors] = useState<Sector[]>([])
+  const [areSectorsLoading, setAreSectorsLoading] = useState(true)
+
+  useMemo(async () => {
+    if (unitsData && firestore) {
+      setAreSectorsLoading(true)
+      const sectorsPromises = unitsData.map((unit) =>
+        getDocs(
+          collection(
+            firestore,
+            `clients/${contractId}/units/${unit.id}/sectors`
+          )
+        )
+      )
+      const sectorsSnapshots = await Promise.all(sectorsPromises)
+      const sectorsData = sectorsSnapshots.flatMap((snapshot) =>
+        snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Sector))
+      )
+      setAllSectors(sectorsData)
+      setAreSectorsLoading(false)
+    } else if (!areUnitsLoading) {
+      setAreSectorsLoading(false)
+    }
+  }, [unitsData, firestore, contractId, areUnitsLoading])
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
@@ -100,21 +141,20 @@ export default function GhePage() {
   const [roleSearchTerm, setRoleSearchTerm] = useState('')
 
   const getRoleName = (roleId: string) => {
-    return initialRolesData.find((role) => role.id === roleId)?.name || 'N/A'
+    return rolesData?.find((role) => role.id === roleId)?.name || 'N/A'
   }
 
   const getSectorName = (sectorId: string) => {
-    return (
-      initialSectorsData.find((sector) => sector.id === sectorId)?.name || 'N/A'
-    )
+    return allSectors?.find((sector) => sector.id === sectorId)?.name || 'N/A'
   }
 
   const rolesWithSectors = useMemo(() => {
-    return initialRolesData.map((role) => ({
+    if (!rolesData) return []
+    return rolesData.map((role) => ({
       ...role,
       sectorName: getSectorName(role.sectorId),
     }))
-  }, [])
+  }, [rolesData, allSectors])
 
   const availableRoles = useMemo(() => {
     return rolesWithSectors.filter(
@@ -179,9 +219,9 @@ export default function GhePage() {
       unitId: formData.get('unitId') as string,
       roleIds: selectedRoles,
     }
-    
+
     addDocumentNonBlocking(ghesRef, newGheData)
-    
+
     setIsAddDialogOpen(false)
     resetRoleSelection()
     toast({
@@ -191,7 +231,7 @@ export default function GhePage() {
   }
 
   const getUnitName = (unitId: string) => {
-    return initialUnitsData.find((unit) => unit.id === unitId)?.name || 'N/A'
+    return unitsData?.find((unit) => unit.id === unitId)?.name || 'N/A'
   }
 
   const handleOpenDetails = (ghe: GHE) => {
@@ -203,6 +243,8 @@ export default function GhePage() {
     resetRoleSelection()
     setIsAddDialogOpen(true)
   }
+  
+  const isLoading = areGhesLoading || areUnitsLoading || areRolesLoading || areSectorsLoading;
 
   return (
     <>
@@ -235,14 +277,14 @@ export default function GhePage() {
                 <DropdownMenuContent align='end'>
                   <DropdownMenuLabel>Filtrar por Unidade</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {initialUnitsData.map((unit) => (
+                  {unitsData?.map((unit) => (
                     <DropdownMenuCheckboxItem
                       key={unit.id}
-                      checked={unitFilter.includes(unit.id)}
+                      checked={unitFilter.includes(unit.id!)}
                       onCheckedChange={(checked) => {
                         setUnitFilter((prev) =>
                           checked
-                            ? [...prev, unit.id]
+                            ? [...prev, unit.id!]
                             : prev.filter((id) => id !== unit.id)
                         )
                       }}
@@ -311,8 +353,8 @@ export default function GhePage() {
                               <SelectValue placeholder='Selecione a unidade' />
                             </SelectTrigger>
                             <SelectContent>
-                              {initialUnitsData.map((unit) => (
-                                <SelectItem key={unit.id} value={unit.id}>
+                              {unitsData?.map((unit) => (
+                                <SelectItem key={unit.id} value={unit.id!}>
                                   {unit.name}
                                 </SelectItem>
                               ))}
@@ -361,7 +403,9 @@ export default function GhePage() {
                                         type='button'
                                         size='sm'
                                         variant='outline'
-                                        onClick={() => handleSelectRole(role.id)}
+                                        onClick={() =>
+                                          handleSelectRole(role.id)
+                                        }
                                       >
                                         Incluir
                                       </Button>
@@ -467,7 +511,9 @@ export default function GhePage() {
                         className='cursor-pointer'
                         onClick={() => handleOpenDetails(ghe)}
                       >
-                        <TableCell className='font-medium'>{ghe.name}</TableCell>
+                        <TableCell className='font-medium'>
+                          {ghe.name}
+                        </TableCell>
                         <TableCell className='hidden md:table-cell'>
                           <p className='line-clamp-1 text-sm text-muted-foreground'>
                             {ghe.description}
