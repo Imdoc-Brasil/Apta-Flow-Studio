@@ -80,6 +80,7 @@ import {
   deleteDocumentNonBlocking,
   useUser,
   useDoc,
+  setDocumentNonBlocking,
 } from '@/firebase'
 import { collection, doc } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
@@ -171,6 +172,37 @@ export default function StaffsPage() {
   )
   const { data: profiles, isLoading: areProfilesLoading } =
     useCollection<Profile>(profilesRef)
+    
+  // Effect to add initial data if collection is empty
+  useEffect(() => {
+    if (firestore && !isLoading && staffs) {
+      const superAdminExists = staffs.some(
+        (s) => s.id === 'gilbert@aptaesocial.com.br'
+      )
+      if (!superAdminExists) {
+        const superAdminData: Staff = {
+          id: 'gilbert@aptaesocial.com.br',
+          name: 'Gilbert Jackson',
+          email: 'gilbert@aptaesocial.com.br',
+          phone: '71999055517',
+          perfilId: 'super_admin',
+          assinatura: 'Diretor Médico | CRM-BA 21452',
+          code: 'ADM-001',
+          status: 'Ativo',
+          situacao: 'Offline',
+          avatar: `https://i.pravatar.cc/150?u=gilbert`,
+          fallback: 'GJ',
+        }
+        const staffDocRef = doc(
+          firestore,
+          'staffs',
+          superAdminData.id as string
+        )
+        setDocumentNonBlocking(staffDocRef, superAdminData, { merge: true })
+      }
+    }
+  }, [firestore, isLoading, staffs])
+
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)

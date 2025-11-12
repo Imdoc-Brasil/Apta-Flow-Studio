@@ -1,4 +1,3 @@
-
 'use client'
 
 import React, { useState, useMemo, useEffect } from 'react'
@@ -52,6 +51,7 @@ import {
   useUser,
   addDocumentNonBlocking,
   updateDocumentNonBlocking,
+  setDocumentNonBlocking,
 } from '@/firebase'
 import { collection, doc } from 'firebase/firestore'
 import type { Staff } from '../employees/page'
@@ -184,7 +184,51 @@ export default function ProfilesPage() {
     () => (firestore ? collection(firestore, 'profiles') : null),
     [firestore]
   )
-  const { data: profiles, isLoading: areProfilesLoading } = useCollection<Profile>(profilesRef)
+  const { data: profiles, isLoading: areProfilesLoading } =
+    useCollection<Profile>(profilesRef)
+    
+  // Effect to add initial data if collection is empty
+  useEffect(() => {
+    if (firestore && !areProfilesLoading && profiles) {
+      const superAdminProfileExists = profiles.some(p => p.id === 'super_admin');
+      if (!superAdminProfileExists) {
+        const superAdminProfile = {
+          id: 'super_admin',
+          name: 'Super Administrador',
+          code: 'SADM',
+          createdBy: 'sistema',
+          createdAt: new Date().toISOString(),
+          permissions: permissionModules.flatMap(m =>
+            permissionActions.map(a => `${a.id}:${m.id}`)
+          ) as Permission[],
+        };
+        const profileDocRef = doc(firestore, 'profiles', superAdminProfile.id);
+        setDocumentNonBlocking(profileDocRef, superAdminProfile, { merge: true });
+      }
+
+      const clientProfileExists = profiles.some(p => p.id === 'cliente');
+      if (!clientProfileExists) {
+        const clientProfile = {
+          id: 'cliente',
+          name: 'Cliente',
+          code: 'CLT',
+          createdBy: 'sistema',
+          createdAt: new Date().toISOString(),
+          permissions: [
+            'view:clients',
+            'view:clients.info',
+            'view:clients.tickets',
+            'create:clients.tickets',
+            'view:clients.structure',
+            'view:clients.sst',
+          ] as Permission[],
+        };
+        const profileDocRef = doc(firestore, 'profiles', clientProfile.id);
+        setDocumentNonBlocking(profileDocRef, clientProfile, { merge: true });
+      }
+    }
+  }, [firestore, areProfilesLoading, profiles]);
+
 
   const staffsRef = useMemoFirebase(
     () => (firestore ? collection(firestore, 'staffs') : null),
@@ -326,7 +370,7 @@ export default function ProfilesPage() {
       toast({
         variant: 'destructive',
         title: 'Não permitido',
-        description: 'Não é possível editar as permissões do perfil de Cliente.',
+        description: 'Não é possível editar as permissões de perfis do sistema.',
       })
       return
     }
