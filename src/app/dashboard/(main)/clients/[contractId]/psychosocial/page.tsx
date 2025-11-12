@@ -39,7 +39,6 @@ import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/hooks/use-toast'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { initialClientsData } from '../../../clients/data'
 import {
   Select,
   SelectContent,
@@ -48,7 +47,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useParams } from 'next/navigation'
-import { initialUnitsData } from '../units/data'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,7 +54,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu'
 import Link from 'next/link'
 import { type PsychosocialSurvey, type SurveyStatus } from './data'
@@ -82,8 +79,12 @@ import {
   useCollection,
   useMemoFirebase,
   addDocumentNonBlocking,
+  useDoc,
 } from '@/firebase'
-import { collection } from 'firebase/firestore'
+import { collection, doc } from 'firebase/firestore'
+import type { Client } from '../../../clients/data'
+import type { Unit } from '../units/data'
+
 
 const standardCircumstances = [
   {
@@ -100,14 +101,11 @@ export default function PsychosocialPage() {
   const { toast } = useToast()
   const params = useParams()
   const contractId = params.contractId as string
-  const client = initialClientsData.find((c) => c.id === contractId)
-  const clientUnits = initialUnitsData.filter(
-    (u) =>
-      initialClientsData.find((c) => c.name === client?.name)?.name ===
-      client?.name
-  )
-
   const firestore = useFirestore()
+  
+  const clientRef = useMemoFirebase(() => (firestore ? doc(firestore, 'clients', contractId) : null), [firestore, contractId]);
+  const unitsRef = useMemoFirebase(() => (firestore ? collection(firestore, `clients/${contractId}/units`) : null), [firestore, contractId]);
+  
   const surveysRef = useMemoFirebase(
     () =>
       firestore
@@ -118,12 +116,15 @@ export default function PsychosocialPage() {
         : null,
     [firestore, contractId]
   )
-  const { data: surveys, isLoading } =
-    useCollection<PsychosocialSurvey>(surveysRef)
+  const { data: client, isLoading: isClientLoading } = useDoc<Client>(clientRef)
+  const { data: clientUnits, isLoading: areUnitsLoading } = useCollection<Unit>(unitsRef);
+  const { data: surveys, isLoading: areSurveysLoading } = useCollection<PsychosocialSurvey>(surveysRef)
 
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedUnits, setSelectedUnits] = useState<string[]>([])
   const [circumstanceText, setCircumstanceText] = useState('')
+  
+  const isLoading = isClientLoading || areUnitsLoading || areSurveysLoading;
 
   const handleCreateSurvey = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -148,7 +149,7 @@ export default function PsychosocialPage() {
         unitDisplay = 'Todas as Unidades'
       } else {
         unitDisplay =
-          clientUnits.find((u) => u.id === selectedUnits[0])?.name || 'N/A'
+          clientUnits?.find((u) => u.id === selectedUnits[0])?.name || 'N/A'
       }
     }
 
@@ -202,7 +203,7 @@ export default function PsychosocialPage() {
     if (selectedUnits.includes('all')) return 'Todas as Unidades'
     if (selectedUnits.length === 0) return 'Selecione a(s) unidade(s)'
     if (selectedUnits.length === 1)
-      return clientUnits.find((u) => u.id === selectedUnits[0])?.name
+      return clientUnits?.find((u) => u.id === selectedUnits[0])?.name
     return `${selectedUnits.length} unidades selecionadas`
   }
 
@@ -275,15 +276,15 @@ export default function PsychosocialPage() {
                                   />
                                   Todas as Unidades
                                 </CommandItem>
-                                {clientUnits.map((unit) => (
+                                {clientUnits?.map((unit) => (
                                   <CommandItem
                                     key={unit.id}
-                                    onSelect={() => handleUnitSelection(unit.id)}
+                                    onSelect={() => handleUnitSelection(unit.id!)}
                                   >
                                     <Check
                                       className={cn(
                                         'mr-2 h-4 w-4',
-                                        selectedUnits.includes(unit.id)
+                                        selectedUnits.includes(unit.id!)
                                           ? 'opacity-100'
                                           : 'opacity-0'
                                       )}
@@ -500,3 +501,5 @@ export default function PsychosocialPage() {
     </Card>
   )
 }
+
+    

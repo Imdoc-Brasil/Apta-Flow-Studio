@@ -10,7 +10,7 @@ import {
   CardFooter,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, BrainCircuit } from 'lucide-react'
+import { ArrowLeft, BrainCircuit, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
 import {
@@ -33,13 +33,15 @@ import {
 import { Separator } from '@/components/ui/separator'
 import {
   psychosocialSurveyData,
-  initialSurveys,
+  type PsychosocialSurvey,
   type PsychosocialStressorGroup,
 } from '../data'
 import { Logo } from '@/components/logo'
 import { useSurveyStore } from '../psychosocial-store'
 import { useMemo } from 'react'
 import { cn } from '@/lib/utils'
+import { useDoc, useFirestore, useMemoFirebase } from '@/firebase'
+import { doc } from 'firebase/firestore'
 
 // --- DYNAMIC ANALYSIS LOGIC ---
 
@@ -260,8 +262,15 @@ export default function PsychosocialResultsPage() {
   const contractId = params.contractId as string
   const searchParams = useSearchParams()
   const surveyId = searchParams.get('surveyId')
+  const firestore = useFirestore();
 
-  const survey = initialSurveys.find((s) => s.id === surveyId)
+  const surveyRef = useMemoFirebase(
+    () => (firestore && surveyId ? doc(firestore, `clients/${contractId}/psychosocial_surveys`, surveyId) : null),
+    [firestore, contractId, surveyId]
+  )
+
+  const { data: survey, isLoading } = useDoc<PsychosocialSurvey>(surveyRef)
+
 
   // Get responses from the store
   const { responses } = useSurveyStore()
@@ -296,6 +305,10 @@ export default function PsychosocialResultsPage() {
     'Relacionamentos e Interações Pessoais': 4.31,
     'Papel no Trabalho': 4.09,
     'Mudanças Organizacionais': 3.1,
+  }
+  
+  if (isLoading) {
+    return <div className='flex items-center justify-center h-full'><Loader2 className='h-8 w-8 animate-spin' /></div>
   }
 
   return (
@@ -732,3 +745,5 @@ export default function PsychosocialResultsPage() {
     </div>
   )
 }
+
+    
