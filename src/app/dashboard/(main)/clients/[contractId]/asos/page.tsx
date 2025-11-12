@@ -58,6 +58,7 @@ import { collection, doc } from 'firebase/firestore'
 import type { Ticket } from '@/app/dashboard/(main)/tickets/tickets-store'
 import type { Employee } from '../employees/data'
 import type { Client } from '../../data'
+import { ClientSideDateFormatter } from '@/components/client-side-date-formatter'
 
 interface Aso {
   id: string
@@ -407,9 +408,7 @@ export default function AsosPage() {
                   <TableCell className='font-medium'>{aso.employee}</TableCell>
                   <TableCell>{aso.type}</TableCell>
                   <TableCell>
-                    {new Date(aso.issueDate).toLocaleDateString('pt-BR', {
-                      timeZone: 'UTC',
-                    })}
+                    <ClientSideDateFormatter dateString={aso.issueDate} />
                   </TableCell>
                   <TableCell>{aso.validity}</TableCell>
                   <TableCell>

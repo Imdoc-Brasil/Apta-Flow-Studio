@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
@@ -89,24 +90,7 @@ import type { Staff } from '@/app/dashboard/(main)/employees/page'
 import type { Role } from '../roles/data'
 import type { Sector } from '../sectors/data'
 import type { Unit } from '../units/data'
-
-// Componente para formatar datas com segurança no cliente
-function ClientSideDateFormatter({ dateString }: { dateString: string }) {
-  const [formattedDate, setFormattedDate] = useState('')
-
-  useEffect(() => {
-    if (dateString) {
-      // Usar new Date() pode ser inconsistente. Para evitar erros de hidratação,
-      // criamos a data com base em UTC para depois formatar.
-      const date = new Date(dateString)
-      const timezoneOffset = date.getTimezoneOffset() * 60000
-      const adjustedDate = new Date(date.getTime() + timezoneOffset)
-      setFormattedDate(adjustedDate.toLocaleDateString('pt-BR'))
-    }
-  }, [dateString])
-
-  return <>{formattedDate || '...'}</> // Mostra '...' enquanto carrega
-}
+import { ClientSideDateFormatter } from '@/components/client-side-date-formatter'
 
 export default function EmployeesPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)

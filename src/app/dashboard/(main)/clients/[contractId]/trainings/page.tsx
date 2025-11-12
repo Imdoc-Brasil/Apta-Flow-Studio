@@ -52,6 +52,7 @@ import {
 } from '@/firebase'
 import { collection } from 'firebase/firestore'
 import { useParams } from 'next/navigation'
+import { ClientSideDateFormatter } from '@/components/client-side-date-formatter'
 
 type TrainingModality = 'Online' | 'Presencial' | 'Híbrido'
 type ScheduledStatus = 'Agendado' | 'Em Andamento' | 'Concluído' | 'Cancelado'
@@ -381,9 +382,7 @@ export default function ClientTrainingsPage() {
                   <TableRow key={st.id}>
                     <TableCell className='font-medium'>{st.title}</TableCell>
                     <TableCell>
-                      {new Date(st.scheduledDate).toLocaleDateString('pt-BR', {
-                        timeZone: 'UTC',
-                      })}
+                      <ClientSideDateFormatter dateString={st.scheduledDate} />
                     </TableCell>
                     <TableCell>{getInstructorName(st.instructorId)}</TableCell>
                     <TableCell>{st.enrolledEmployees.length}</TableCell>

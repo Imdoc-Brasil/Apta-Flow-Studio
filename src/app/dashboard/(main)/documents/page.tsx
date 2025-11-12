@@ -58,6 +58,7 @@ import {
 } from '@/firebase'
 import { collection, doc } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
+import { ClientSideDateFormatter } from '@/components/client-side-date-formatter'
 
 interface Document {
   id: string
@@ -251,7 +252,7 @@ export default function DocumentsPage() {
                       {doc.relatedTo}
                     </TableCell>
                     <TableCell className='hidden md:table-cell'>
-                      {new Date(doc.modified).toLocaleDateString('pt-BR')}
+                      <ClientSideDateFormatter dateString={doc.modified} />
                     </TableCell>
                     <TableCell className='text-right'>{doc.size}</TableCell>
                     <TableCell>

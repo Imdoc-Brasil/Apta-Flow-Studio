@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
@@ -45,21 +46,7 @@ import type { Unit } from '../units/data'
 import type { Environment } from '../../environments/data'
 import type { Process } from '../../processes/data'
 import type { EpiDelivery } from '../../epis/data'
-
-function ClientSideDateFormatter({ dateString }: { dateString: string }) {
-  const [formattedDate, setFormattedDate] = useState('')
-
-  useEffect(() => {
-    if (dateString) {
-      const date = new Date(dateString)
-      const timezoneOffset = date.getTimezoneOffset() * 60000
-      const adjustedDate = new Date(date.getTime() + timezoneOffset)
-      setFormattedDate(adjustedDate.toLocaleDateString('pt-BR'))
-    }
-  }, [dateString])
-
-  return <>{formattedDate || '...'}</>
-}
+import { ClientSideDateFormatter } from '@/components/client-side-date-formatter'
 
 const getStatusBadgeVariant = (status: Employee['status']) => {
   switch (status) {
