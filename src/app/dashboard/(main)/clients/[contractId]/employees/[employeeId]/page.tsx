@@ -116,17 +116,15 @@ export default function EmployeeDetailsPage() {
     useCollection<EpiDelivery>(epiDeliveriesQuery)
 
   const [allSectors, setAllSectors] = useState<Sector[]>([])
-  const [areSectorsLoading, setAreSectorsLoading] = useState(true)
   const [allEnvironments, setAllEnvironments] = useState<Environment[]>([])
-  const [areEnvironmentsLoading, setAreEnvironmentsLoading] = useState(true)
+  const [isSubdataLoading, setIsSubdataLoading] = useState(true)
 
   useEffect(() => {
     if (allUnits && firestore) {
-      setAreSectorsLoading(true)
-      setAreEnvironmentsLoading(true)
+      setIsSubdataLoading(true)
       const fetchSubCollections = async () => {
         try {
-          // Fetch Sectors
+          // Fetch all sectors from all units
           const sectorsPromises = allUnits.map((unit) =>
             getDocs(
               collection(
@@ -143,45 +141,35 @@ export default function EmployeeDetailsPage() {
           )
           setAllSectors(sectorsData)
 
-          // Fetch Environments
+          // Fetch all environments from all sectors of all units
           if (sectorsData.length > 0) {
-            const environmentsPromises = allUnits.flatMap((unit) =>
+             const environmentsPromises = allUnits.flatMap(unit =>
               sectorsData
-                .filter((sector) => sector.unitId === unit.id)
-                .map((sector) =>
-                  getDocs(
-                    collection(
-                      firestore,
-                      `clients/${contractId}/units/${unit.id}/sectors/${sector.id}/environments`
-                    )
-                  )
-                )
-            )
-            const environmentsSnapshots = await Promise.all(
-              environmentsPromises.flat()
-            )
-            const environmentsData = environmentsSnapshots.flatMap((snapshot) =>
-              snapshot.docs.map(
-                (doc) => ({ id: doc.id, ...doc.data() } as Environment)
-              )
-            )
-            setAllEnvironments(environmentsData)
+                .filter(sector => sector.unitId === unit.id)
+                .map(sector => getDocs(collection(firestore, `clients/${contractId}/units/${unit.id}/sectors/${sector.id}/environments`)))
+            );
+            const environmentsSnapshots = await Promise.all(environmentsPromises.flat());
+            const environmentsData = environmentsSnapshots.flatMap(snapshot =>
+              snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Environment))
+            );
+            setAllEnvironments(environmentsData);
           } else {
             setAllEnvironments([])
           }
         } catch (error) {
           console.error('Error fetching sub-collections: ', error)
+          setAllSectors([]);
+          setAllEnvironments([]);
         } finally {
-          setAreSectorsLoading(false)
-          setAreEnvironmentsLoading(false)
+          setIsSubdataLoading(false)
         }
       }
       fetchSubCollections()
-    } else {
-      setAreSectorsLoading(false)
-      setAreEnvironmentsLoading(false)
+    } else if (!areUnitsLoading) {
+      // Handle case where there are no units
+      setIsSubdataLoading(false)
     }
-  }, [allUnits, firestore, contractId])
+  }, [allUnits, firestore, contractId, areUnitsLoading])
 
   const episDeliveredCount = epiDeliveries?.length || 0
 
@@ -263,11 +251,10 @@ export default function EmployeeDetailsPage() {
   const isLoading =
     isEmployeeLoading ||
     areRolesLoading ||
-    areSectorsLoading ||
     areUnitsLoading ||
-    areEnvironmentsLoading ||
     areProcessesLoading ||
-    areEpiDeliveriesLoading
+    areEpiDeliveriesLoading ||
+    isSubdataLoading
 
   if (isLoading) {
     return (
