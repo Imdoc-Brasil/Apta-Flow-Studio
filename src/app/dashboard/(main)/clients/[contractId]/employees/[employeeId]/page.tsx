@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
@@ -37,9 +36,9 @@ import {
   useFirestore,
   useMemoFirebase,
 } from '@/firebase'
-import { doc, collection, getDocs } from 'firebase/firestore'
+import { doc, collection, getDocs, query, where } from 'firebase/firestore'
 
-import type { Employee, EmployeeStatus } from '../employees/data'
+import type { Employee } from '../employees/data'
 import type { Role } from '../roles/data'
 import type { Sector } from '../sectors/data'
 import type { Unit } from '../units/data'
@@ -107,12 +106,15 @@ export default function EmployeeDetailsPage() {
         : null,
     [firestore, contractId]
   )
-  const epiDeliveriesRef = useMemoFirebase(
+  const epiDeliveriesQuery = useMemoFirebase(
     () =>
       firestore
-        ? collection(firestore, `clients/${contractId}/epi_deliveries`)
+        ? query(
+            collection(firestore, `clients/${contractId}/epi_deliveries`),
+            where('employeeId', '==', employeeId)
+          )
         : null,
-    [firestore, contractId]
+    [firestore, contractId, employeeId]
   )
 
   const { data: employee, isLoading: isEmployeeLoading } =
@@ -124,7 +126,7 @@ export default function EmployeeDetailsPage() {
   const { data: allProcesses, isLoading: areProcessesLoading } =
     useCollection<Process>(allProcessesRef)
   const { data: epiDeliveries, isLoading: areEpiDeliveriesLoading } =
-    useCollection<EpiDelivery>(epiDeliveriesRef)
+    useCollection<EpiDelivery>(epiDeliveriesQuery)
 
   const [allSectors, setAllSectors] = useState<Sector[]>([])
   const [areSectorsLoading, setAreSectorsLoading] = useState(true)
@@ -138,35 +140,50 @@ export default function EmployeeDetailsPage() {
       const fetchSubCollections = async () => {
         try {
           // Fetch Sectors
-          const sectorsPromises = allUnits.map(unit => 
-            getDocs(collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`))
+          const sectorsPromises = allUnits.map((unit) =>
+            getDocs(
+              collection(
+                firestore,
+                `clients/${contractId}/units/${unit.id}/sectors`
+              )
+            )
           )
           const sectorsSnapshots = await Promise.all(sectorsPromises)
-          const sectorsData = sectorsSnapshots.flatMap(snapshot =>
-            snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sector))
+          const sectorsData = sectorsSnapshots.flatMap((snapshot) =>
+            snapshot.docs.map(
+              (doc) => ({ id: doc.id, ...doc.data() } as Sector)
+            )
           )
           setAllSectors(sectorsData)
-          
+
           // Fetch Environments
           if (sectorsData.length > 0) {
-            const environmentsPromises = allUnits.flatMap(unit => 
+            const environmentsPromises = allUnits.flatMap((unit) =>
               sectorsData
-                .filter(sector => sector.unitId === unit.id)
-                .map(sector => 
-                  getDocs(collection(firestore, `clients/${contractId}/units/${unit.id}/sectors/${sector.id}/environments`))
+                .filter((sector) => sector.unitId === unit.id)
+                .map((sector) =>
+                  getDocs(
+                    collection(
+                      firestore,
+                      `clients/${contractId}/units/${unit.id}/sectors/${sector.id}/environments`
+                    )
+                  )
                 )
-            );
-            const environmentsSnapshots = await Promise.all(environmentsPromises.flat())
-            const environmentsData = environmentsSnapshots.flatMap(snapshot =>
-              snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Environment))
+            )
+            const environmentsSnapshots = await Promise.all(
+              environmentsPromises.flat()
+            )
+            const environmentsData = environmentsSnapshots.flatMap((snapshot) =>
+              snapshot.docs.map(
+                (doc) => ({ id: doc.id, ...doc.data() } as Environment)
+              )
             )
             setAllEnvironments(environmentsData)
           } else {
-             setAllEnvironments([])
+            setAllEnvironments([])
           }
-
         } catch (error) {
-          console.error("Error fetching sub-collections: ", error)
+          console.error('Error fetching sub-collections: ', error)
         } finally {
           setAreSectorsLoading(false)
           setAreEnvironmentsLoading(false)
@@ -179,10 +196,7 @@ export default function EmployeeDetailsPage() {
     }
   }, [allUnits, firestore, contractId])
 
-  const episDeliveredCount = useMemo(() => {
-    if (!epiDeliveries) return 0
-    return epiDeliveries.filter((d) => d.employeeId === employeeId).length
-  }, [epiDeliveries, employeeId])
+  const episDeliveredCount = epiDeliveries?.length || 0
 
   const summaryIndicators = [
     {
@@ -215,25 +229,58 @@ export default function EmployeeDetailsPage() {
   ]
 
   const employeeDetails = useMemo(() => {
-    if (!employee || !allRoles || !allSectors || !allUnits || !allEnvironments || !allProcesses) return null
+    if (
+      !employee ||
+      !allRoles ||
+      !allSectors ||
+      !allUnits ||
+      !allEnvironments ||
+      !allProcesses
+    )
+      return null
 
     const role = allRoles.find((r) => r.id === employee.roleId)
-    if (!role) return { employee, role: null, sector: null, unit: null, mainWorkstation: null, processes: [] }
+    if (!role)
+      return {
+        employee,
+        role: null,
+        sector: null,
+        unit: null,
+        mainWorkstation: null,
+        processes: [],
+      }
 
     const sector = allSectors.find((s) => s.id === role.sectorId)
-    if (!sector) return { employee, role, sector: null, unit: null, mainWorkstation: null, processes: [] }
+    if (!sector)
+      return {
+        employee,
+        role,
+        sector: null,
+        unit: null,
+        mainWorkstation: null,
+        processes: [],
+      }
 
     const unit = allUnits.find((u) => u.id === sector.unitId)
     const mainWorkstation = role.mainWorkstationId
       ? allEnvironments.find((e) => e.id === role.mainWorkstationId)
       : null
 
-    const processes = allProcesses.filter((p) => p.steps.some(step => step.sectorId === sector.id))
+    const processes = allProcesses.filter((p) =>
+      p.steps.some((step) => step.sectorId === sector.id)
+    )
 
     return { employee, role, sector, unit, mainWorkstation, processes }
   }, [employee, allRoles, allSectors, allUnits, allEnvironments, allProcesses])
-  
-  const isLoading = isEmployeeLoading || areRolesLoading || areSectorsLoading || areUnitsLoading || areEnvironmentsLoading || areProcessesLoading || areEpiDeliveriesLoading
+
+  const isLoading =
+    isEmployeeLoading ||
+    areRolesLoading ||
+    areSectorsLoading ||
+    areUnitsLoading ||
+    areEnvironmentsLoading ||
+    areProcessesLoading ||
+    areEpiDeliveriesLoading
 
   if (isLoading) {
     return (
@@ -248,7 +295,8 @@ export default function EmployeeDetailsPage() {
       <div className='flex flex-col items-center justify-center h-full text-center'>
         <h2 className='text-2xl font-bold'>Colaborador não encontrado</h2>
         <p className='text-muted-foreground'>
-          O colaborador que você está procurando não existe ou os dados estão incompletos.
+          O colaborador que você está procurando não existe ou os dados estão
+          incompletos.
         </p>
         <Button asChild className='mt-4'>
           <Link href={`/dashboard/clients/${contractId}/employees`}>

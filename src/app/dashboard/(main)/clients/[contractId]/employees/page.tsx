@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
@@ -72,7 +71,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { initialProfiles } from '@/app/dashboard/(main)/profiles/page'
 import type { Employee, EmployeeStatus } from './data'
 import { Separator } from '@/components/ui/separator'
 import { useRouter } from 'next/navigation'
@@ -91,7 +89,6 @@ import type { Staff } from '@/app/dashboard/(main)/employees/page'
 import type { Role } from '../roles/data'
 import type { Sector } from '../sectors/data'
 import type { Unit } from '../units/data'
-
 
 // Componente para formatar datas com segurança no cliente
 function ClientSideDateFormatter({ dateString }: { dateString: string }) {
@@ -120,7 +117,6 @@ export default function EmployeesPage() {
   const [statusFilter, setStatusFilter] = useState<string[]>([
     'Ativo',
     'Férias',
-    'Desligado',
     'Candidato',
   ])
   const [viewMode, setViewMode] = useState<'list' | 'card'>('list')
@@ -131,7 +127,10 @@ export default function EmployeesPage() {
 
   const firestore = useFirestore()
   const employeesRef = useMemoFirebase(
-    () => (firestore ? collection(firestore, `clients/${contractId}/staffs`) : null),
+    () =>
+      firestore
+        ? collection(firestore, `clients/${contractId}/staffs`)
+        : null,
     [firestore, contractId]
   )
   const rolesRef = useMemoFirebase(
@@ -139,32 +138,46 @@ export default function EmployeesPage() {
       firestore ? collection(firestore, `clients/${contractId}/roles`) : null,
     [firestore, contractId]
   )
-  const { data: employees, isLoading: areEmployeesLoading } = useCollection<Employee>(employeesRef)
-  const { data: rolesData, isLoading: areRolesLoading } = useCollection<Role>(rolesRef)
-  
+  const unitsRef = useMemoFirebase(
+    () =>
+      firestore ? collection(firestore, `clients/${contractId}/units`) : null,
+    [firestore, contractId]
+  )
+
+  const { data: employees, isLoading: areEmployeesLoading } =
+    useCollection<Employee>(employeesRef)
+  const { data: rolesData, isLoading: areRolesLoading } =
+    useCollection<Role>(rolesRef)
+  const { data: allUnits, isLoading: areUnitsLoading } =
+    useCollection<Unit>(unitsRef)
+
   const [allSectors, setAllSectors] = useState<Sector[]>([])
-  const [allUnits, setAllUnits] = useState<Unit[]>([])
-  
+  const [areSectorsLoading, setAreSectorsLoading] = useState(true)
+
   useEffect(() => {
-    if (firestore && contractId) {
-      const fetchRelatedData = async () => {
-        const unitsQuery = collection(firestore, `clients/${contractId}/units`);
-        const unitsSnapshot = await getDocs(unitsQuery);
-        const units = unitsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Unit));
-        setAllUnits(units);
-        
-        const sectorsPromises = units.map(unit => 
-          getDocs(collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`))
-        );
-        const sectorsSnapshots = await Promise.all(sectorsPromises);
-        const sectors = sectorsSnapshots.flatMap(snapshot => 
-          snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sector))
-        );
-        setAllSectors(sectors);
-      };
-      fetchRelatedData();
+    if (allUnits && firestore) {
+      setAreSectorsLoading(true)
+      const fetchSectors = async () => {
+        const sectorsPromises = allUnits.map((unit) =>
+          getDocs(
+            collection(
+              firestore,
+              `clients/${contractId}/units/${unit.id}/sectors`
+            )
+          )
+        )
+        const sectorsSnapshots = await Promise.all(sectorsPromises)
+        const sectors = sectorsSnapshots.flatMap((snapshot) =>
+          snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Sector))
+        )
+        setAllSectors(sectors)
+        setAreSectorsLoading(false)
+      }
+      fetchSectors()
+    } else if (!areUnitsLoading) {
+      setAreSectorsLoading(false)
     }
-  }, [firestore, contractId])
+  }, [allUnits, firestore, contractId, areUnitsLoading])
 
   const staffsRef = useMemoFirebase(
     () => (firestore ? collection(firestore, 'staffs') : null),
@@ -220,7 +233,7 @@ export default function EmployeesPage() {
       admissionDate: new Date().toISOString().split('T')[0],
       avatar: `https://i.pravatar.cc/150?u=${Math.random()}`,
     }
-    
+
     addDocumentNonBlocking(employeesRef, newEmployee)
 
     setIsAddDialogOpen(false)
@@ -234,7 +247,11 @@ export default function EmployeesPage() {
   const handleEditEmployee = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!currentEmployee?.id || !firestore) return
-    const employeeDocRef = doc(firestore, `clients/${contractId}/staffs`, currentEmployee.id)
+    const employeeDocRef = doc(
+      firestore,
+      `clients/${contractId}/staffs`,
+      currentEmployee.id
+    )
 
     const formData = new FormData(event.currentTarget)
     const name = formData.get('name') as string
@@ -247,20 +264,24 @@ export default function EmployeesPage() {
     }
 
     updateDocumentNonBlocking(employeeDocRef, updatedData)
-    
+
     setIsEditDialogOpen(false)
     setCurrentEmployee(null)
-    toast({ title: "Colaborador atualizado!"})
+    toast({ title: 'Colaborador atualizado!' })
   }
 
   const handleDeleteEmployee = () => {
     if (!currentEmployee?.id || !firestore) return
-    const employeeDocRef = doc(firestore, `clients/${contractId}/staffs`, currentEmployee.id)
+    const employeeDocRef = doc(
+      firestore,
+      `clients/${contractId}/staffs`,
+      currentEmployee.id
+    )
     deleteDocumentNonBlocking(employeeDocRef)
-    
+
     setIsDeleteDialogOpen(false)
     setCurrentEmployee(null)
-    toast({ title: 'Colaborador excluído!', variant: 'destructive'})
+    toast({ title: 'Colaborador excluído!', variant: 'destructive' })
   }
 
   const handleChangeStatus = (
@@ -268,7 +289,11 @@ export default function EmployeesPage() {
     newStatus: EmployeeStatus
   ) => {
     if (!firestore) return
-    const employeeDocRef = doc(firestore, `clients/${contractId}/staffs`, employeeId)
+    const employeeDocRef = doc(
+      firestore,
+      `clients/${contractId}/staffs`,
+      employeeId
+    )
     updateDocumentNonBlocking(employeeDocRef, { status: newStatus })
   }
 
@@ -334,8 +359,9 @@ export default function EmployeesPage() {
         return 'default'
     }
   }
-  
-  const isLoading = areEmployeesLoading || areRolesLoading;
+
+  const isLoading =
+    areEmployeesLoading || areRolesLoading || areUnitsLoading || areSectorsLoading
 
   const renderAddEmployeeForm = () => (
     <div className='grid gap-4 py-4'>
@@ -686,7 +712,9 @@ export default function EmployeesPage() {
               </TableBody>
             </Table>
           ) : (
-             <div className='text-center p-8'>Modo de visualização em cartão desabilitado.</div>
+            <div className='text-center p-8'>
+              Modo de visualização em cartão desabilitado.
+            </div>
           )}
         </CardContent>
       </Card>
@@ -744,6 +772,3 @@ export default function EmployeesPage() {
     </>
   )
 }
-export type { Employee, EmployeeStatus } from './data'
-
-    
