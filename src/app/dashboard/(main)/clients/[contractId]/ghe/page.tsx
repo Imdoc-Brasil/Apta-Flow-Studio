@@ -88,16 +88,16 @@ export default function GhePage() {
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
-  const [selectedGhe, setSelectedGhe = useState<GHE | null>(null)
-  const [searchTerm, setSearchTerm = useState('')
-  const [unitFilter, setUnitFilter = useState<string[]>([])
-  const [viewMode, setViewMode = useState<'card' | 'list'>('card')
+  const [selectedGhe, setSelectedGhe] = useState<GHE | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [unitFilter, setUnitFilter] = useState<string[]>([])
+  const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
   const { toast } = useToast()
   const router = useRouter()
 
   // States for the list builder
-  const [selectedRoles, setSelectedRoles = useState<string[]>([])
-  const [roleSearchTerm, setRoleSearchTerm = useState('')
+  const [selectedRoles, setSelectedRoles] = useState<string[]>([])
+  const [roleSearchTerm, setRoleSearchTerm] = useState('')
 
   const getRoleName = (roleId: string) => {
     return initialRolesData.find((role) => role.id === roleId)?.name || 'N/A'
