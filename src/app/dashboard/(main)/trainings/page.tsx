@@ -55,9 +55,10 @@ import {
   addDocumentNonBlocking,
 } from '@/firebase'
 import { collection } from 'firebase/firestore'
+import type { TrainingModule } from './[trainingId]/page'
 
-type TrainingModality = 'Online' | 'Presencial' | 'Híbrido'
-type TrainingType = 'NR' | 'Uso de EPI' | 'Procedimento Interno' | 'Outro'
+export type TrainingModality = 'Online' | 'Presencial' | 'Híbrido'
+export type TrainingType = 'NR' | 'Uso de EPI' | 'Procedimento Interno' | 'Outro'
 
 export interface Training {
   id: string
@@ -67,6 +68,7 @@ export interface Training {
   modality: TrainingModality
   workload: number // in hours
   validity: number // in months
+  modules?: TrainingModule[]
 }
 
 export default function TrainingsPage() {
@@ -93,6 +95,7 @@ export default function TrainingsPage() {
       modality: formData.get('modality') as TrainingModality,
       workload: Number(formData.get('workload')),
       validity: Number(formData.get('validity')),
+      modules: [],
     }
     
     addDocumentNonBlocking(trainingsRef, newTraining);
@@ -305,4 +308,3 @@ export default function TrainingsPage() {
     </>
   )
 }
-export type { Training, TrainingModality, TrainingType }

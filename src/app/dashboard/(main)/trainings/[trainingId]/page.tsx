@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   Card,
   CardContent,
@@ -27,7 +27,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -50,9 +49,8 @@ import {
 import { doc } from 'firebase/firestore'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import type { Training } from '../page'
 
-export type TrainingModality = 'Online' | 'Presencial' | 'Híbrido'
-export type TrainingType = 'NR' | 'Uso de EPI' | 'Procedimento Interno' | 'Outro'
 export type ModuleType = 'Video' | 'Texto' | 'Quiz'
 
 export interface TrainingModule {
@@ -60,17 +58,6 @@ export interface TrainingModule {
   title: string
   type: ModuleType
   content: string
-}
-
-export interface Training {
-  id: string
-  title: string
-  description: string
-  type: TrainingType
-  modality: TrainingModality
-  workload: number
-  modules: TrainingModule[]
-  validity: number
 }
 
 const getModuleIcon = (type: ModuleType) => {
@@ -143,7 +130,7 @@ export default function EditTrainingPage() {
 
   const deleteModule = (moduleId: string) => {
     if (!trainingRef || !training) return
-    const updatedModules = training.modules.filter((m) => m.id !== moduleId)
+    const updatedModules = (training.modules || []).filter((m) => m.id !== moduleId)
     updateDocumentNonBlocking(trainingRef, { modules: updatedModules })
     toast({ variant: 'destructive', title: 'Módulo Removido!' })
   }

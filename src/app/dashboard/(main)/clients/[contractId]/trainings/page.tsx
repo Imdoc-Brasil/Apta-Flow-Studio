@@ -39,9 +39,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
-import { Training } from '@/app/dashboard/(main)/trainings/page'
-import { initialEmployeesData } from '../employees/data'
-import { initialStaffsData } from '@/app/dashboard/(main)/employees/page'
+import type { Training } from '@/app/dashboard/(main)/trainings/page'
+import type { Employee } from '../employees/data'
+import type { Staff } from '@/app/dashboard/(main)/employees/page'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import {
@@ -77,9 +77,6 @@ export default function ClientTrainingsPage() {
     () => (firestore ? collection(firestore, 'trainings') : null),
     [firestore]
   )
-  const { data: catalogTrainings, isLoading: isLoadingCatalog } =
-    useCollection<Training>(trainingsCatalogRef)
-
   const scheduledTrainingsRef = useMemoFirebase(
     () =>
       firestore
@@ -87,27 +84,44 @@ export default function ClientTrainingsPage() {
         : null,
     [firestore, contractId]
   )
+  const employeesRef = useMemoFirebase(
+    () =>
+      firestore
+        ? collection(firestore, `clients/${contractId}/staffs`)
+        : null,
+    [firestore, contractId]
+  )
+  const staffsRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'staffs') : null),
+    [firestore]
+  )
+
+  const { data: catalogTrainings, isLoading: isLoadingCatalog } =
+    useCollection<Training>(trainingsCatalogRef)
   const { data: scheduledTrainings, isLoading: isLoadingScheduled } =
     useCollection<ScheduledTraining>(scheduledTrainingsRef)
+  const { data: employees, isLoading: areEmployeesLoading } =
+    useCollection<Employee>(employeesRef)
+  const { data: staffs, isLoading: areStaffsLoading } =
+    useCollection<Staff>(staffsRef)
 
   const [isSchedulingDialogOpen, setIsSchedulingDialogOpen] = useState(false)
-
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([])
   const [searchTerm, setSearchTerm] = useState('')
 
   const availableEmployees = useMemo(() => {
-    return initialEmployeesData.filter(
+    if (!employees) return []
+    return employees.filter(
       (emp) =>
         !selectedEmployees.includes(emp.id) &&
         emp.name.toLowerCase().includes(searchTerm.toLowerCase())
     )
-  }, [selectedEmployees, searchTerm])
+  }, [employees, selectedEmployees, searchTerm])
 
   const currentSelectedEmployees = useMemo(() => {
-    return initialEmployeesData.filter((emp) =>
-      selectedEmployees.includes(emp.id)
-    )
-  }, [selectedEmployees])
+    if (!employees) return []
+    return employees.filter((emp) => selectedEmployees.includes(emp.id))
+  }, [employees, selectedEmployees])
 
   const handleSelectEmployee = (employeeId: string) => {
     setSelectedEmployees((prev) => [...prev, employeeId])
@@ -160,10 +174,10 @@ export default function ClientTrainingsPage() {
   }
 
   const getInstructorName = (staffId: string) => {
-    return initialStaffsData.find((s) => s.email === staffId)?.name || 'N/A'
+    return staffs?.find((s) => s.id === staffId)?.name || 'N/A'
   }
   
-  const isLoading = isLoadingCatalog || isLoadingScheduled;
+  const isLoading = isLoadingCatalog || isLoadingScheduled || areEmployeesLoading || areStaffsLoading
 
   return (
     <>
@@ -217,7 +231,6 @@ export default function ClientTrainingsPage() {
                       <div className='space-y-2'>
                         <Label>Colaboradores</Label>
                         <div className='grid grid-cols-2 gap-4'>
-                          {/* Coluna da Esquerda: Disponíveis */}
                           <div className='rounded-md border p-4 space-y-2'>
                             <div className='relative'>
                               <Search className='absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
@@ -257,7 +270,6 @@ export default function ClientTrainingsPage() {
                             </ScrollArea>
                           </div>
 
-                          {/* Coluna da Direita: Selecionados */}
                           <div className='rounded-md border p-4 space-y-2'>
                             <h4 className='font-medium text-sm'>
                               Selecionados ({currentSelectedEmployees.length})
@@ -303,10 +315,10 @@ export default function ClientTrainingsPage() {
                               <SelectValue placeholder='Selecione um instrutor' />
                             </SelectTrigger>
                             <SelectContent>
-                              {initialStaffsData.map((staff) => (
+                              {staffs?.map((staff) => (
                                 <SelectItem
-                                  key={staff.email}
-                                  value={staff.email}
+                                  key={staff.id}
+                                  value={staff.id!}
                                 >
                                   {staff.name}
                                 </SelectItem>
@@ -400,5 +412,3 @@ export default function ClientTrainingsPage() {
     </>
   )
 }
-
-    

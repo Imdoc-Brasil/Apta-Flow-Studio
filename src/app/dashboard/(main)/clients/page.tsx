@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   MoreHorizontal,
   PlusCircle,
@@ -54,11 +54,17 @@ import {
   useFirestore,
   useCollection,
   useMemoFirebase,
-  addDocumentNonBlocking,
+  setDocumentNonBlocking,
   useUser,
   useDoc,
 } from '@/firebase'
-import { collection, query, where, getDocs, doc, setDoc } from 'firebase/firestore'
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  doc,
+} from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
@@ -105,17 +111,14 @@ export default function ClientsPage() {
     if (!allClients || !staffProfile) {
       return []
     }
-    // If user is a 'cliente' profile, they should see no clients on this master page
     if (staffProfile.perfilId === 'cliente') {
       return []
     }
-    // If staff has specific clientIds, filter by them
     if (staffProfile.clientIds && staffProfile.clientIds.length > 0) {
       return allClients.filter((client) =>
         staffProfile.clientIds?.includes(client.id)
       )
     }
-    // Otherwise, show all clients (admin/unrestricted access)
     return allClients
   }, [allClients, staffProfile])
 
@@ -133,21 +136,26 @@ export default function ClientsPage() {
 
   const handleAddClient = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!clientsRef) return
+    if (!clientsRef || !firestore) return
 
     const formData = new FormData(event.currentTarget)
-    
-    const highestContractNumber = allClients?.reduce((max, client) => {
+
+    const highestContractNumber =
+      allClients?.reduce((max, client) => {
         const match = client.id.match(/CTR-\d{4}-(\d{3})/)
-        if(match) {
-            const num = parseInt(match[1], 10)
-            return Math.max(max, num)
+        if (match) {
+          const num = parseInt(match[1], 10)
+          return Math.max(max, num)
         }
         return max
-    }, 0) || 0;
+      }, 0) || 0
 
-    const newContractId = `CTR-${new Date().getFullYear()}-${(highestContractNumber + 1).toString().padStart(3, '0')}`;
-    
+    const newContractId = `CTR-${new Date().getFullYear()}-${(
+      highestContractNumber + 1
+    )
+      .toString()
+      .padStart(3, '0')}`
+
     const newClientData: Omit<Client, 'id'> & { id?: string } = {
       id: newContractId,
       name: formData.get('name') as string,
@@ -171,10 +179,8 @@ export default function ClientsPage() {
       ) as string,
     }
 
-    if (firestore) {
-       const clientDocRef = doc(firestore, 'clients', newContractId);
-       setDocumentNonBlocking(clientDocRef, newClientData, { merge: false });
-    }
+    const clientDocRef = doc(firestore, 'clients', newContractId)
+    setDocumentNonBlocking(clientDocRef, newClientData, { merge: false })
 
     toast({
       title: 'Cliente Adicionado!',
@@ -189,7 +195,6 @@ export default function ClientsPage() {
   const handleCnpjBlur = async () => {
     if (!cnpj || !firestore || !clientsRef) return
 
-    // Basic CNPJ format validation
     const cnpjRegex = /^(\d{2}\.?\d{3}\.?\d{3}\/\d{4}-?\d{2})$/
     if (!cnpjRegex.test(cnpj)) {
       setCnpjError('Formato de CNPJ inválido.')
@@ -204,9 +209,6 @@ export default function ClientsPage() {
 
     if (!querySnapshot.empty) {
       setCnpjError('Este CNPJ já está cadastrado.')
-    } else {
-      // Here you would call the external API
-      // For now, we'll just clear the loading state
     }
 
     setIsCnpjLoading(false)
@@ -225,7 +227,6 @@ export default function ClientsPage() {
     ) {
       setSecondaryCnaes((prev) => [...prev, selectedCnae])
     }
-    // Não fechar o popover: setIsSecondaryCnaePopoverOpen(false)
   }
 
   const handleRemoveSecondaryCnae = (cnaeCode: string) => {
@@ -312,7 +313,6 @@ export default function ClientsPage() {
                         className='grid gap-4'
                         disabled={isCnpjLoading || !!cnpjError}
                       >
-                        {/* Autopopulated fields */}
                         <div className='grid grid-cols-2 gap-4'>
                           <div className='space-y-2'>
                             <Label htmlFor='name'>Nome Empresarial</Label>
@@ -364,9 +364,6 @@ export default function ClientsPage() {
                                           key={item.code}
                                           value={`${item.code} ${item.description}`}
                                           onSelect={() =>
-                                            handleCnaeSelect(item)
-                                          }
-                                          onClick={() =>
                                             handleCnaeSelect(item)
                                           }
                                         >
@@ -452,9 +449,8 @@ export default function ClientsPage() {
                                         <CommandItem
                                           key={item.code}
                                           value={`${item.code} ${item.description}`}
-                                          onSelect={(currentValue) => {
+                                          onSelect={() => {
                                             handleSecondaryCnaeSelect(item)
-                                            // Não fecha o popover
                                           }}
                                         >
                                           <div className='flex flex-col'>
@@ -495,7 +491,6 @@ export default function ClientsPage() {
 
                         <Separator className='my-4' />
 
-                        {/* Manual fields */}
                         <h3 className='text-lg font-semibold'>Responsáveis</h3>
                         <div className='grid grid-cols-2 gap-4'>
                           <div className='space-y-2'>
@@ -695,5 +690,3 @@ export default function ClientsPage() {
     </Card>
   )
 }
-
-    
