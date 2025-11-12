@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useParams } from 'next/navigation'
@@ -12,7 +11,12 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, MoreHorizontal, PlusCircle } from 'lucide-react'
+import {
+  ArrowLeft,
+  MoreHorizontal,
+  PlusCircle,
+  Loader2,
+} from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import {
@@ -40,6 +44,14 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
+import {
+  useFirestore,
+  useCollection,
+  useMemoFirebase,
+  addDocumentNonBlocking,
+  updateDocumentNonBlocking,
+} from '@/firebase'
+import { collection, doc } from 'firebase/firestore'
 
 const getSectorById = (sectorId: string): Sector | undefined => {
   return initialSectorsData.find((sector) => sector.id === sectorId)
@@ -54,21 +66,37 @@ export default function SectorDetailsPage() {
   const { toast } = useToast()
   const contractId = params.contractId as string
   const sectorId = params.sectorId as string
+  
+  // Note: These are still using static data to find the parent sector/unit.
+  // In a real app, this might come from a context or a separate Firestore query.
   const sector = getSectorById(sectorId)
   const unit = sector ? getUnitById(sector.unitId) : undefined
 
-  const [environments, setEnvironments] = useState(() =>
-    initialEnvironmentsData.filter((env) => env.sectorId === sectorId)
+  const firestore = useFirestore()
+  const environmentsRef = useMemoFirebase(
+    () =>
+      firestore && unit
+        ? collection(
+            firestore,
+            `clients/${contractId}/units/${unit.id}/sectors/${sectorId}/environments`
+          )
+        : null,
+    [firestore, contractId, unit, sectorId]
   )
+
+  const { data: environments, isLoading } = useCollection<Environment>(environmentsRef)
+
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false)
   const [editingEnvironment, setEditingEnvironment] =
     useState<Environment | null>(null)
 
   const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!environmentsRef || !firestore) return
+
     const formData = new FormData(event.currentTarget)
 
-    const environmentData: Omit<Environment, 'id' | 'sectorId'> = {
+    const environmentData = {
       name: formData.get('name') as string,
       description: formData.get('description') as string,
       activities: formData.get('activities') as string,
@@ -83,23 +111,17 @@ export default function SectorDetailsPage() {
     }
 
     if (editingEnvironment) {
-      const updatedEnv = { ...editingEnvironment, ...environmentData }
-      setEnvironments(prev => prev.map(e => e.id === updatedEnv.id ? updatedEnv : e))
+      const docRef = doc(firestore, environmentsRef.path, editingEnvironment.id)
+      updateDocumentNonBlocking(docRef, environmentData)
       toast({
         title: 'Posto de Trabalho Atualizado!',
         description: `O posto de trabalho "${environmentData.name}" foi atualizado.`,
       })
     } else {
-      // Create
-      const newEnvironment: Environment = {
-        id: `ENV-${Date.now().toString().slice(-4)}`,
-        sectorId: sectorId,
-        ...environmentData,
-      }
-      setEnvironments((prev) => [...prev, newEnvironment])
+      addDocumentNonBlocking(environmentsRef, environmentData)
       toast({
         title: 'Posto de Trabalho Adicionado!',
-        description: `O posto de trabalho "${newEnvironment.name}" foi criado.`,
+        description: `O posto de trabalho "${environmentData.name}" foi criado.`,
       })
     }
 
@@ -280,46 +302,56 @@ export default function SectorDetailsPage() {
             </div>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Posto de Trabalho</TableHead>
-                  <TableHead>Atividades</TableHead>
-                  <TableHead>
-                    <span className='sr-only'>Ações</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {environments.map((env) => (
-                  <TableRow
-                    key={env.id}
-                    onClick={() => openFormDialog(env)}
-                    className='cursor-pointer'
-                  >
-                    <TableCell className='font-medium'>{env.name}</TableCell>
-                    <TableCell>
-                      <p className='line-clamp-1 text-sm text-muted-foreground'>
-                        {env.activities}
-                      </p>
-                    </TableCell>
-                    <TableCell>
-                      <Button aria-haspopup='true' size='icon' variant='ghost'>
-                        <MoreHorizontal className='h-4 w-4' />
-                        <span className='sr-only'>Alternar menu</span>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {environments.length === 0 && (
+            {isLoading ? (
+              <div className='flex items-center justify-center h-48'>
+                <Loader2 className='h-8 w-8 animate-spin' />
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={3} className='text-center h-24'>
-                      Nenhum posto de trabalho cadastrado para este setor.
-                    </TableCell>
+                    <TableHead>Posto de Trabalho</TableHead>
+                    <TableHead>Atividades</TableHead>
+                    <TableHead>
+                      <span className='sr-only'>Ações</span>
+                    </TableHead>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {environments?.map((env) => (
+                    <TableRow
+                      key={env.id}
+                      onClick={() => openFormDialog(env)}
+                      className='cursor-pointer'
+                    >
+                      <TableCell className='font-medium'>{env.name}</TableCell>
+                      <TableCell>
+                        <p className='line-clamp-1 text-sm text-muted-foreground'>
+                          {env.activities}
+                        </p>
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          aria-haspopup='true'
+                          size='icon'
+                          variant='ghost'
+                        >
+                          <MoreHorizontal className='h-4 w-4' />
+                          <span className='sr-only'>Alternar menu</span>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {environments?.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={3} className='text-center h-24'>
+                        Nenhum posto de trabalho cadastrado para este setor.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
       </div>
