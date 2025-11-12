@@ -163,6 +163,8 @@ export default function SectorsPage() {
       description: formData.get('description') as string,
       unitId: unitId,
     }
+    
+    // Non-blocking update
     addDocumentNonBlocking(sectorsColRef, newSectorData)
 
     // Optimistic UI update

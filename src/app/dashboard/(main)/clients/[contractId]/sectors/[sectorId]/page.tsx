@@ -100,7 +100,7 @@ export default function SectorDetailsPage() {
 
     const formData = new FormData(event.currentTarget)
 
-    const environmentData = {
+    const environmentData: Omit<Environment, 'id'> = {
       name: formData.get('name') as string,
       description: formData.get('description') as string,
       activities: formData.get('activities') as string,
