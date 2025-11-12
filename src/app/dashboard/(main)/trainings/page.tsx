@@ -306,5 +306,3 @@ export default function TrainingsPage() {
   )
 }
 export type { Training, TrainingModality, TrainingType }
-
-    
