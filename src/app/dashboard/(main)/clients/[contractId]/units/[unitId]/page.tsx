@@ -1,7 +1,7 @@
+
 'use client'
 
-import { useParams } from 'next/navigation'
-import { initialUnitsData, type Unit } from '../data'
+import { useParams, useRouter } from 'next/navigation'
 import {
   Card,
   CardContent,
@@ -10,13 +10,10 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, ChevronDown, Pencil } from 'lucide-react'
+import { ArrowLeft, ChevronDown, Pencil, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
-import { initialSectorsData } from '../../sectors/data'
-import { initialRolesData } from '../../roles/data'
-import { initialEmployeesData } from '../../employees/data'
 import { cn } from '@/lib/utils'
 import {
   DropdownMenu,
@@ -31,7 +28,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
@@ -39,39 +35,91 @@ import { Textarea } from '@/components/ui/textarea'
 import { useState, useMemo } from 'react'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useToast } from '@/hooks/use-toast'
-
-const getUnitById = (unitId: string): Unit | undefined => {
-  return initialUnitsData.find((unit) => unit.id === unitId)
-}
+import { useDoc, useFirestore, useMemoFirebase, useCollection } from '@/firebase'
+import { doc, collection } from 'firebase/firestore'
+import type { Unit } from '../data'
+import type { Sector } from '../../sectors/data'
+import type { Role } from '../../roles/data'
+import type { Employee } from '../../employees/data'
 
 export default function UnitDetailsPage() {
   const params = useParams()
+  const router = useRouter()
   const { toast } = useToast()
   const contractId = params.contractId as string
   const unitId = params.unitId as string
-  const [currentUnit, setCurrentUnit] = useState(() => getUnitById(unitId))
+  const firestore = useFirestore()
+
+  const unitRef = useMemoFirebase(
+    () =>
+      firestore
+        ? doc(firestore, `clients/${contractId}/units`, unitId)
+        : null,
+    [firestore, contractId, unitId]
+  )
+  const allUnitsRef = useMemoFirebase(
+    () =>
+      firestore ? collection(firestore, `clients/${contractId}/units`) : null,
+    [firestore, contractId]
+  )
+  const sectorsRef = useMemoFirebase(
+    () =>
+      firestore
+        ? collection(firestore, `clients/${contractId}/units/${unitId}/sectors`)
+        : null,
+    [firestore, contractId, unitId]
+  )
+  const allRolesRef = useMemoFirebase(
+    () =>
+      firestore ? collection(firestore, `clients/${contractId}/roles`) : null,
+    [firestore, contractId]
+  )
+  const allEmployeesRef = useMemoFirebase(
+    () =>
+      firestore
+        ? collection(firestore, `clients/${contractId}/staffs`)
+        : null,
+    [firestore, contractId]
+  )
+  
+  const { data: currentUnit, isLoading: isUnitLoading } = useDoc<Unit>(unitRef)
+  const { data: allUnits, isLoading: areUnitsLoading } = useCollection<Unit>(allUnitsRef)
+  const { data: sectors, isLoading: areSectorsLoading } = useCollection<Sector>(sectorsRef)
+  const { data: allRoles, isLoading: areRolesLoading } = useCollection<Role>(allRolesRef)
+  const { data: allEmployees, isLoading: areEmployeesLoading } = useCollection<Employee>(allEmployeesRef)
+
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
   const { totalSectors, totalRoles, totalEmployees } = useMemo(() => {
-    const sectorsInUnit = initialSectorsData.filter((s) => s.unitId === unitId)
-    const sectorIdsInUnit = sectorsInUnit.map((s) => s.id)
+    if (!sectors || !allRoles || !allEmployees) {
+      return { totalSectors: 0, totalRoles: 0, totalEmployees: 0 }
+    }
 
-    const rolesInUnit = initialRolesData.filter((r) =>
+    const sectorIdsInUnit = sectors.map((s) => s.id)
+
+    const rolesInUnit = allRoles.filter((r) =>
       sectorIdsInUnit.includes(r.sectorId)
     )
     const roleIdsInUnit = rolesInUnit.map((r) => r.id)
 
-    const employeesInUnit = initialEmployeesData.filter(
+    const employeesInUnit = allEmployees.filter(
       (e) => e.status === 'Ativo' && roleIdsInUnit.includes(e.roleId)
     )
 
     return {
-      totalSectors: sectorsInUnit.length,
+      totalSectors: sectors.length,
       totalRoles: rolesInUnit.length,
       totalEmployees: employeesInUnit.length,
     }
-  }, [unitId])
+  }, [sectors, allRoles, allEmployees])
+
+  const isLoading =
+    isUnitLoading ||
+    areUnitsLoading ||
+    areSectorsLoading ||
+    areRolesLoading ||
+    areEmployeesLoading
 
   const expiredAsos = 0 // Placeholder
   const pcdEmployees = 0 // Placeholder
@@ -87,6 +135,14 @@ export default function UnitDetailsPage() {
       description: 'As informações da unidade foram atualizadas.',
     })
     setIsEditDialogOpen(false)
+  }
+
+  if (isLoading) {
+    return (
+      <div className='flex items-center justify-center h-full'>
+        <Loader2 className='h-8 w-8 animate-spin' />
+      </div>
+    )
   }
 
   if (!currentUnit) {
@@ -254,11 +310,10 @@ export default function UnitDetailsPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align='start'>
-              {initialUnitsData.map((navUnit) => (
+              {allUnits?.map((navUnit) => (
                 <Link
                   key={navUnit.id}
                   href={`/dashboard/clients/${contractId}/units/${navUnit.id}`}
-                  onClick={() => setCurrentUnit(getUnitById(navUnit.id))}
                 >
                   <DropdownMenuItem
                     disabled={navUnit.id === unitId}
@@ -552,3 +607,5 @@ export default function UnitDetailsPage() {
     </>
   )
 }
+
+    
