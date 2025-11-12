@@ -51,9 +51,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { type GHE } from './data'
-import { type Unit } from '../units/data'
-import { type Role } from '../roles/data'
-import { type Sector } from '../sectors/data'
+import type { Unit } from '../units/data'
+import type { Role } from '../roles/data'
+import type { Sector } from '../sectors/data'
 import {
   Select,
   SelectContent,
@@ -106,20 +106,21 @@ export default function GhePage() {
   const [areSectorsLoading, setAreSectorsLoading] = useState(true)
 
   useEffect(() => {
-    if (unitsData && firestore) {
-      setAreSectorsLoading(true)
+    if (unitsData && firestore && !areUnitsLoading) {
+      setAreSectorsLoading(true);
       const fetchSectors = async () => {
         try {
-          const sectorsPromises = unitsData.map((unit) =>
+          const sectorsPromises = unitsData.map(unit =>
             getDocs(collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`))
           );
           const sectorsSnapshots = await Promise.all(sectorsPromises);
-          const sectorsData = sectorsSnapshots.flatMap((snapshot) =>
-            snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Sector))
+          const sectorsData = sectorsSnapshots.flatMap(snapshot =>
+            snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sector))
           );
           setAllSectors(sectorsData);
         } catch (error) {
           console.error("Error fetching sectors: ", error);
+          setAllSectors([]);
         } finally {
           setAreSectorsLoading(false);
         }
