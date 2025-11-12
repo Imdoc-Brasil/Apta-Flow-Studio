@@ -184,7 +184,7 @@ export default function RisksPage() {
     <div className='grid flex-1 auto-rows-max gap-8'>
       <div className='flex items-center gap-4'>
         <h1 className='flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0'>
-          Gestão de Riscos Ocupacionais
+          Catálogos Globais de SST
         </h1>
       </div>
 
@@ -605,5 +605,3 @@ export default function RisksPage() {
     </div>
   )
 }
-
-    

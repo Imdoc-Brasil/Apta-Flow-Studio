@@ -62,6 +62,7 @@ import {
   updateDocumentNonBlocking,
 } from '@/firebase'
 import { collection, doc } from 'firebase/firestore'
+import { ClientSideDateFormatter } from '@/components/client-side-date-formatter'
 
 export default function EpisPage() {
   const params = useParams()
@@ -298,117 +299,12 @@ export default function EpisPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue='catalog'>
+          <Tabs defaultValue='delivery'>
             <TabsList className='grid w-full grid-cols-3'>
-              <TabsTrigger value='catalog'>Catálogo de EPIs</TabsTrigger>
               <TabsTrigger value='delivery'>Gestão de Entrega</TabsTrigger>
               <TabsTrigger value='stock'>Controle de Estoque</TabsTrigger>
+              <TabsTrigger value='catalog' disabled>Catálogo (Global)</TabsTrigger>
             </TabsList>
-
-            {/* Tab: Catálogo de EPIs */}
-            <TabsContent value='catalog'>
-              <Card>
-                <CardHeader>
-                  <CardTitle className='flex items-center justify-between'>
-                    Catálogo
-                    <Dialog
-                      open={isEpiDialogOpen}
-                      onOpenChange={setIsEpiDialogOpen}
-                    >
-                      <DialogTrigger asChild>
-                        <Button size='sm' className='h-8 gap-1'>
-                          <PlusCircle className='h-3.5 w-3.5' />
-                          <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
-                            Adicionar EPI
-                          </span>
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className='sm:max-w-md'>
-                        <DialogHeader>
-                          <DialogTitle>Adicionar Novo EPI ao Catálogo</DialogTitle>
-                        </DialogHeader>
-                        <form id='add-epi-form' onSubmit={handleAddEpi}>
-                           <div className='grid gap-4 py-4'>
-                            <div className='space-y-2'>
-                              <Label htmlFor='name'>Nome do EPI</Label>
-                              <Input id='name' name='name' required />
-                            </div>
-                            <div className='space-y-2'>
-                              <Label htmlFor='ca'>Nº do CA</Label>
-                              <Input id='ca' name='ca' required />
-                            </div>
-                           </div>
-                          <DialogFooter>
-                            <Button
-                              variant='outline'
-                              onClick={() => setIsEpiDialogOpen(false)}
-                            >
-                              Cancelar
-                            </Button>
-                            <Button type='submit' form='add-epi-form'>
-                              Salvar
-                            </Button>
-                          </DialogFooter>
-                        </form>
-                      </DialogContent>
-                    </Dialog>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {isLoading ? (
-                    renderLoading()
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Nome</TableHead>
-                          <TableHead>CA</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>
-                            <span className='sr-only'>Ações</span>
-                          </TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {epiData?.map((epi) => (
-                          <TableRow key={epi.id}>
-                            <TableCell className='font-medium'>
-                              {epi.name}
-                            </TableCell>
-                            <TableCell>{epi.ca}</TableCell>
-                            <TableCell>
-                              <Badge
-                                variant={epi.active ? 'secondary' : 'outline'}
-                              >
-                                {epi.active ? 'Ativo' : 'Inativo'}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button
-                                    aria-haspopup='true'
-                                    size='icon'
-                                    variant='ghost'
-                                  >
-                                    <MoreHorizontal className='h-4 w-4' />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align='end'>
-                                  <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                                  <DropdownMenuItem>Editar</DropdownMenuItem>
-                                  <DropdownMenuItem>Desativar</DropdownMenuItem>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </CardContent>
-              </Card>
-            </TabsContent>
 
             {/* Tab: Gestão de Entrega */}
             <TabsContent value='delivery'>
@@ -463,14 +359,15 @@ export default function EpisPage() {
                               </Label>
                               <Select name='epiId' required>
                                 <SelectTrigger className='col-span-3'>
-                                  <SelectValue placeholder='Selecione o EPI' />
+                                  <SelectValue placeholder='Selecione o EPI do estoque' />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {epiData
-                                    ?.filter((epi) => epi.active)
-                                    .map((epi) => (
-                                      <SelectItem key={epi.id} value={epi.id}>
-                                        {epi.name} (CA: {epi.ca})
+                                  {epiStock
+                                    ?.map((item) => ({...item, epiDetails: epiData?.find(e => e.id === item.epiId)}))
+                                    .filter(item => item.epiDetails?.active)
+                                    .map((item) => (
+                                      <SelectItem key={item.id} value={item.epiId}>
+                                        {getEpiNameById(item.epiId)} (Estoque: {item.quantity})
                                       </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -527,9 +424,7 @@ export default function EpisPage() {
                               <TableCell>{delivery.employeeName}</TableCell>
                               <TableCell>{delivery.epiName}</TableCell>
                               <TableCell>
-                                {new Date(
-                                  delivery.deliveryDate
-                                ).toLocaleDateString('pt-BR', { timeZone: 'UTC' })}
+                                <ClientSideDateFormatter dateString={delivery.deliveryDate} />
                               </TableCell>
                               <TableCell>{delivery.quantity}</TableCell>
                             </TableRow>
@@ -606,6 +501,10 @@ export default function EpisPage() {
                 </CardContent>
               </Card>
             </TabsContent>
+            
+            <TabsContent value='catalog'>
+             {/* This tab is now just a placeholder as the catalog is global */}
+            </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
@@ -643,3 +542,4 @@ export default function EpisPage() {
     </>
   )
 }
+
