@@ -301,7 +301,7 @@ export default function SectorsPage() {
               <DropdownMenuTrigger asChild>
                 <Button variant='outline' size='sm' className='h-10 gap-1'>
                   <Filter className='h-3.5 w-3.5' />
-                  <span className='sr-only sm:not-sr-only'>Filtrar</span>
+                  <span className='sr-only sm:not-sr-only'>Filtrar Unidade</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align='end'>

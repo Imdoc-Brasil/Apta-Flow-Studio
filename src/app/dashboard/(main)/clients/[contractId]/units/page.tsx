@@ -441,7 +441,7 @@ export default function UnitsPage() {
             </Dialog>
           </CardTitle>
           <CardDescription>
-            Selecione uma unidade para visualizar seus setores.
+            Visualize e gerencie as unidades, obras e contratos ativos do cliente.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -454,7 +454,12 @@ export default function UnitsPage() {
               {filteredUnits.map((unit) => (
                 <Card
                   key={unit.id}
-                  className='flex flex-col h-full hover:shadow-md transition-shadow'
+                  className='flex flex-col h-full hover:shadow-md transition-shadow cursor-pointer'
+                   onClick={() =>
+                    router.push(
+                      `/dashboard/clients/${contractId}/units/${unit.id}`
+                    )
+                  }
                 >
                   <CardHeader>
                     <div className='flex justify-between items-start'>
@@ -475,11 +480,7 @@ export default function UnitsPage() {
                       asChild
                       variant='outline'
                       className='w-full'
-                      onClick={() =>
-                        router.push(
-                          `/dashboard/clients/${contractId}/sectors?unitId=${unit.id}`
-                        )
-                      }
+                      onClick={(e) => e.stopPropagation()}
                     >
                       <Link
                         href={`/dashboard/clients/${contractId}/sectors?unitId=${unit.id}`}
