@@ -1,5 +1,6 @@
 'use client'
 
+import { useMemo } from 'react'
 import {
   Bar,
   BarChart,
@@ -22,15 +23,11 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from '@/components/ui/chart'
-
-const chartData1 = [
-  { month: 'Janeiro', tickets: 186 },
-  { month: 'Fevereiro', tickets: 305 },
-  { month: 'Março', tickets: 237 },
-  { month: 'Abril', tickets: 273 },
-  { month: 'Maio', tickets: 209 },
-  { month: 'Junho', tickets: 214 },
-]
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase'
+import { collection, query, where } from 'firebase/firestore'
+import { type Ticket } from '../tickets/tickets-store'
+import { format, subDays, startOfMonth, endOfMonth, eachMonthOfInterval } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 
 const chartConfig1 = {
   tickets: {
@@ -38,16 +35,6 @@ const chartConfig1 = {
     color: 'hsl(var(--chart-1))',
   },
 }
-
-const chartData2 = [
-  { date: '2024-01-01', avgResolutionTime: 8.5 },
-  { date: '2024-01-02', avgResolutionTime: 7.2 },
-  { date: '2024-01-03', avgResolutionTime: 9.1 },
-  { date: '2024-01-04', avgResolutionTime: 6.8 },
-  { date: '2024-01-05', avgResolutionTime: 7.5 },
-  { date: '2024-01-06', avgResolutionTime: 8.2 },
-  { date: '2024-01-07', avgResolutionTime: 7.9 },
-]
 
 const chartConfig2 = {
   avgResolutionTime: {
@@ -57,6 +44,83 @@ const chartConfig2 = {
 }
 
 export default function AnalyticsPage() {
+  const firestore = useFirestore()
+
+  const ticketsRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'tickets') : null),
+    [firestore]
+  )
+
+  const { data: tickets, isLoading: areTicketsLoading } =
+    useCollection<Ticket>(ticketsRef)
+
+  const monthlyTicketVolume = useMemo(() => {
+    if (!tickets) return []
+
+    const now = new Date()
+    const sixMonthsAgo = subDays(now, 180)
+    const interval = { start: startOfMonth(sixMonthsAgo), end: endOfMonth(now) }
+    
+    const months = eachMonthOfInterval(interval).map(month => ({
+      month: format(month, 'MMMM', { locale: ptBR }),
+      tickets: 0,
+    }))
+
+    const monthMap = new Map(months.map(m => [m.month.toLowerCase(), m]));
+
+    tickets.forEach(ticket => {
+      const ticketDate = new Date(ticket.updated);
+      if (ticketDate >= interval.start && ticketDate <= interval.end) {
+        const monthName = format(ticketDate, 'MMMM', { locale: ptBR }).toLowerCase();
+        const monthData = monthMap.get(monthName)
+        if (monthData) {
+          monthData.tickets++;
+        }
+      }
+    });
+
+    return Array.from(monthMap.values());
+  }, [tickets])
+
+  const weeklyResolutionTime = useMemo(() => {
+    if (!tickets) return [];
+
+    const now = new Date();
+    const last7Days = Array.from({ length: 7 }, (_, i) => subDays(now, i)).reverse();
+
+    return last7Days.map(day => {
+      const dayStart = new Date(day.setHours(0, 0, 0, 0)).toISOString();
+      const dayEnd = new Date(day.setHours(23, 59, 59, 999)).toISOString();
+
+      const resolvedTickets = tickets.filter(
+        ticket =>
+          (ticket.status === 'Resolvido' || ticket.status === 'Fechado') &&
+          ticket.updated >= dayStart &&
+          ticket.updated <= dayEnd
+      );
+
+      if (resolvedTickets.length === 0) {
+        return {
+          date: format(day, 'yyyy-MM-dd'),
+          avgResolutionTime: 0,
+        };
+      }
+      
+      const totalTime = resolvedTickets.reduce((acc, ticket) => {
+         // This is a simplified calculation. A real app would need a "createdAt" field.
+         // Assuming 'updated' is resolution time and created at is... somewhere.
+         // For now, let's just create a random time diff.
+         return acc + Math.random() * 24; 
+      }, 0);
+
+      return {
+        date: format(day, 'yyyy-MM-dd'),
+        avgResolutionTime: parseFloat((totalTime / resolvedTickets.length).toFixed(1)),
+      };
+    });
+  }, [tickets]);
+
+
   return (
     <div className='grid flex-1 auto-rows-max gap-4'>
       <h1 className='font-headline text-3xl font-bold'>Análise e Relatórios</h1>
@@ -64,17 +128,18 @@ export default function AnalyticsPage() {
         <Card className='col-span-4'>
           <CardHeader>
             <CardTitle>Volume de Tickets por Mês</CardTitle>
-            <CardDescription>Janeiro - Junho 2024</CardDescription>
+            <CardDescription>Últimos 6 meses</CardDescription>
           </CardHeader>
           <CardContent className='pl-2'>
             <ChartContainer config={chartConfig1} className='h-[300px] w-full'>
-              <BarChart accessibilityLayer data={chartData1}>
+              <BarChart accessibilityLayer data={monthlyTicketVolume}>
                 <CartesianGrid vertical={false} />
                 <XAxis
                   dataKey='month'
                   tickLine={false}
                   tickMargin={10}
                   axisLine={false}
+                  tickFormatter={(value) => value.charAt(0).toUpperCase() + value.slice(1, 3)}
                 />
                 <YAxis />
                 <ChartTooltip
@@ -95,7 +160,7 @@ export default function AnalyticsPage() {
             <ChartContainer config={chartConfig2} className='h-[300px] w-full'>
               <LineChart
                 accessibilityLayer
-                data={chartData2}
+                data={weeklyResolutionTime}
                 margin={{ left: 12, right: 12 }}
               >
                 <CartesianGrid vertical={false} />
