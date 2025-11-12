@@ -71,6 +71,7 @@ import {
   addDocumentNonBlocking,
 } from '@/firebase'
 import { collection, query, getDocs } from 'firebase/firestore'
+import type { Hazard } from '../../../risks/page'
 
 interface PgrEntry {
   id?: string
@@ -122,7 +123,7 @@ export default function PgrHistoryPage() {
   )
   const { data: pgrHistory, isLoading: isLoadingHistory } =
     useCollection<PgrEntry>(pgrHistoryRef)
-  
+
   const unitsRef = useMemoFirebase(
     () =>
       firestore
@@ -130,7 +131,8 @@ export default function PgrHistoryPage() {
         : null,
     [firestore, contractId]
   )
-  const { data: unitsData, isLoading: isLoadingUnits } = useCollection<Unit>(unitsRef)
+  const { data: unitsData, isLoading: isLoadingUnits } =
+    useCollection<Unit>(unitsRef)
 
   const inventoryRef = useMemoFirebase(
     () =>
@@ -142,49 +144,60 @@ export default function PgrHistoryPage() {
   const { data: allInventory, isLoading: isLoadingInventory } =
     useCollection<PgrInventoryItem>(inventoryRef)
     
+  const hazardsRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'hazards') : null),
+    [firestore]
+  )
+  const { data: hazardData, isLoading: isLoadingHazards } = useCollection<Hazard>(hazardsRef)
+
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null)
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null)
   const [unitSectors, setUnitSectors] = useState<Sector[]>([])
-  const [unitInventory, setUnitInventory] = useState<PgrInventoryItem[]>(
-    []
-  )
+  const [unitInventory, setUnitInventory] = useState<PgrInventoryItem[]>([])
 
   const [updates, setUpdates] = useState<PgrUpdate[]>([])
   const [newUpdate, setNewUpdate] = useState('')
   const [newUpdateDate, setNewUpdateDate] = useState(
     new Date().toISOString().split('T')[0]
   )
-  
+
   useEffect(() => {
     const fetchSectors = async () => {
-       if (selectedUnitId && firestore) {
-          const unit = unitsData?.find((u) => u.id === selectedUnitId)
-          setSelectedUnit(unit || null)
-          
-          const sectorsQuery = query(collection(firestore, `clients/${contractId}/units/${selectedUnitId}/sectors`));
-          const sectorsSnapshot = await getDocs(sectorsQuery);
-          const sectors = sectorsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sector));
-          setUnitSectors(sectors);
-          
-          const inventory = allInventory?.filter((i) => i.unitId === selectedUnitId) || []
-          setUnitInventory(inventory)
-       } else {
-          setSelectedUnit(null)
-          setUnitSectors([])
-          setUnitInventory([])
-       }
+      if (selectedUnitId && firestore) {
+        const unit = unitsData?.find((u) => u.id === selectedUnitId)
+        setSelectedUnit(unit || null)
+
+        const sectorsQuery = query(
+          collection(
+            firestore,
+            `clients/${contractId}/units/${selectedUnitId}/sectors`
+          )
+        )
+        const sectorsSnapshot = await getDocs(sectorsQuery)
+        const sectors = sectorsSnapshot.docs.map(
+          (doc) => ({ id: doc.id, ...doc.data() } as Sector)
+        )
+        setUnitSectors(sectors)
+
+        const inventory =
+          allInventory?.filter((i) => i.unitId === selectedUnitId) || []
+        setUnitInventory(inventory)
+      } else {
+        setSelectedUnit(null)
+        setUnitSectors([])
+        setUnitInventory([])
+      }
     }
     fetchSectors()
   }, [selectedUnitId, firestore, unitsData, contractId, allInventory])
-
 
   const getNextVersion = () => {
     if (!pgrHistory || pgrHistory.length === 0) return '1.0'
     const latestVersion = Math.max(
       ...pgrHistory.map((p) => parseFloat(p.version))
     )
-    return (latestVersion + 1).toFixed(1)
+    return (latestVersion + 0.1).toFixed(1)
   }
 
   const handleEmitPgr = (event: React.FormEvent<HTMLFormElement>) => {
@@ -207,9 +220,9 @@ export default function PgrHistoryPage() {
       status: 'Vigente',
       unit: selectedUnit.name,
     }
-    
+
     addDocumentNonBlocking(pgrHistoryRef, newPgr)
-    
+
     setIsDialogOpen(false)
     setSelectedUnitId(null)
     setUpdates([])
@@ -279,11 +292,15 @@ export default function PgrHistoryPage() {
                             <SelectValue placeholder='Selecione uma unidade' />
                           </SelectTrigger>
                           <SelectContent>
-                           {isLoadingUnits ? <Loader2 className='m-auto h-4 w-4 animate-spin'/> : unitsData?.map((unit) => (
-                              <SelectItem key={unit.id} value={unit.id!}>
-                                {unit.name}
-                              </SelectItem>
-                            ))}
+                            {isLoadingUnits ? (
+                              <Loader2 className='m-auto h-4 w-4 animate-spin' />
+                            ) : (
+                              unitsData?.map((unit) => (
+                                <SelectItem key={unit.id} value={unit.id!}>
+                                  {unit.name}
+                                </SelectItem>
+                              ))
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
@@ -431,8 +448,8 @@ export default function PgrHistoryPage() {
                         <legend className='-ml-1 px-1 text-sm font-medium'>
                           Seção: Inventário de Riscos da Unidade
                         </legend>
-                        {isLoadingInventory ? (
-                            <Loader2 className='m-auto h-6 w-6 animate-spin' />
+                        {isLoadingInventory || isLoadingHazards ? (
+                          <Loader2 className='m-auto h-6 w-6 animate-spin' />
                         ) : unitInventory.length > 0 ? (
                           <Table>
                             <TableHeader>
@@ -445,7 +462,7 @@ export default function PgrHistoryPage() {
                             </TableHeader>
                             <TableBody>
                               {unitInventory.map((item) => {
-                                const hazard = getHazardById(item.hazardId)
+                                const hazard = getHazardById(item.hazardId, hazardData)
                                 return (
                                   <TableRow key={item.id}>
                                     <TableCell>

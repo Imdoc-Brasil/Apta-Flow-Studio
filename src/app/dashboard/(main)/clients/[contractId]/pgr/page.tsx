@@ -53,15 +53,19 @@ import { cn } from '@/lib/utils'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { initialSectorsData } from '../sectors/data'
 import {
   useFirestore,
   useCollection,
   useMemoFirebase,
   addDocumentNonBlocking,
 } from '@/firebase'
-import { collection } from 'firebase/firestore'
+import { collection, getDocs } from 'firebase/firestore'
 import type { Hazard } from '../../../risks/page'
+import type { Unit } from '../units/data'
+import type { Sector } from '../sectors/data'
+import type { Role } from '../roles/data'
+import type { GHE } from '../ghe/data'
+import type { Employee } from '../employees/data'
 
 type RiskLevelLabel =
   | 'Irrelevante'
@@ -213,6 +217,14 @@ export const getRiskLevel = (
   }
 }
 
+export const getHazardById = (
+  hazardId: string,
+  hazards?: Hazard[] | null
+) => {
+  if (!hazards) return null
+  return hazards.find((h) => h.id === hazardId)
+}
+
 export default function PgrPage() {
   const params = useParams()
   const contractId = params.contractId as string
@@ -226,7 +238,7 @@ export default function PgrPage() {
         : null,
     [firestore, contractId]
   )
-  const { data: inventory, isLoading } =
+  const { data: inventory, isLoading: isLoadingInventory } =
     useCollection<PgrInventoryItem>(inventoryRef)
 
   const hazardsRef = useMemoFirebase(
@@ -236,6 +248,55 @@ export default function PgrPage() {
   const { data: hazardData, isLoading: isLoadingHazards } =
     useCollection<Hazard>(hazardsRef)
 
+  // Data for forms
+  const unitsRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, `clients/${contractId}/units`) : null),
+    [firestore, contractId]
+  )
+  const { data: unitsData, isLoading: areUnitsLoading } = useCollection<Unit>(unitsRef)
+
+  const rolesRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, `clients/${contractId}/roles`) : null),
+    [firestore, contractId]
+  )
+  const { data: rolesData, isLoading: areRolesLoading } = useCollection<Role>(rolesRef)
+
+  const ghesRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, `clients/${contractId}/ghes`) : null),
+    [firestore, contractId]
+  )
+  const { data: ghesData, isLoading: areGhesLoading } = useCollection<GHE>(ghesRef)
+
+  const employeesRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, `clients/${contractId}/staffs`) : null),
+    [firestore, contractId]
+  )
+  const { data: employeesData, isLoading: areEmployeesLoading } = useCollection<Employee>(employeesRef)
+
+  const [allSectors, setAllSectors] = useState<Sector[]>([])
+  const [areSectorsLoading, setAreSectorsLoading] = useState(true)
+
+  React.useEffect(() => {
+    if (unitsData && firestore) {
+      setAreSectorsLoading(true)
+      const fetchSectors = async () => {
+        const sectorsPromises = unitsData.map((unit) =>
+          getDocs(collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`))
+        )
+        const sectorsSnapshots = await Promise.all(sectorsPromises)
+        const sectorsData = sectorsSnapshots.flatMap((snapshot) =>
+          snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Sector))
+        )
+        setAllSectors(sectorsData)
+        setAreSectorsLoading(false)
+      }
+      fetchSectors()
+    } else if (!areUnitsLoading) {
+      setAreSectorsLoading(false)
+    }
+  }, [unitsData, firestore, contractId, areUnitsLoading])
+
+
   const [isAddRiskDialogOpen, setIsAddRiskDialogOpen] = useState(false)
   const [selectedHazard, setSelectedHazard] = useState<Hazard | null>(null)
   const [showStcwInput, setShowStcwInput] = useState(false)
@@ -244,8 +305,10 @@ export default function PgrPage() {
   const [frequency, setFrequency] = useState(0)
   const [severity, setSeverity] = useState(0)
   const [derivedRisk, setDerivedRisk] = useState<RiskEvaluation | null>(null)
-
-  const getHazardById = (id: string) => hazardData?.find((h) => h.id === id)
+  
+  // State for dynamic selects in the form
+  const [exposureGroupType, setExposureGroupType] = useState<string>('')
+  const [selectedUnitId, setSelectedUnitId] = useState<string>('')
 
   const handleAddRisk = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -265,8 +328,8 @@ export default function PgrPage() {
 
     const newRisk: Omit<PgrInventoryItem, 'id'> = {
       hazardId: formData.get('hazard') as string,
-      unitId: formData.get('exposureTarget') as string, // Placeholder, needs actual unit selection
-      sector: formData.get('exposureTarget') as string,
+      unitId: formData.get('unitId') as string,
+      sector: formData.get('sectorName') as string, // Using sector name for now
       source: formData.get('source') as string,
       evaluation: derivedRisk,
     }
@@ -307,6 +370,8 @@ export default function PgrPage() {
     setFrequency(0)
     setSeverity(0)
     setDerivedRisk(null)
+    setExposureGroupType('')
+    setSelectedUnitId('')
   }
 
   const handleMethodologyChange = (checked: boolean, id: string) => {
@@ -314,6 +379,13 @@ export default function PgrPage() {
       setShowStcwInput(checked)
     }
   }
+  
+  const sectorsInUnit = useMemo(() => {
+    if (!selectedUnitId || areSectorsLoading) return []
+    return allSectors.filter(s => s.unitId === selectedUnitId)
+  }, [selectedUnitId, allSectors, areSectorsLoading])
+
+  const isLoading = isLoadingInventory || isLoadingHazards || areUnitsLoading || areSectorsLoading || areRolesLoading || areGhesLoading || areEmployeesLoading;
 
   return (
     <div className='grid flex-1 auto-rows-max gap-4'>
@@ -365,16 +437,28 @@ export default function PgrPage() {
                           Seção 01: Identificação
                         </h3>
                         <div className='grid md:grid-cols-2 gap-4'>
-                          <div className='space-y-2'>
+                           <div className='space-y-2'>
+                              <Label htmlFor='unitId'>Unidade</Label>
+                              <Select name='unitId' required onValueChange={setSelectedUnitId} value={selectedUnitId}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder='Selecione a unidade' />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {unitsData?.map(unit => (
+                                    <SelectItem key={unit.id} value={unit.id!}>{unit.name}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                           <div className='space-y-2'>
                             <Label htmlFor='exposureGroup'>
                               Grupo de Exposição
                             </Label>
-                            <Select name='exposureGroup' required>
+                            <Select name='exposureGroup' required onValueChange={setExposureGroupType} value={exposureGroupType}>
                               <SelectTrigger>
                                 <SelectValue placeholder='Selecione o grupo' />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value='unit'>Unidade</SelectItem>
                                 <SelectItem value='sector'>Setor</SelectItem>
                                 <SelectItem value='role'>Cargo</SelectItem>
                                 <SelectItem value='ghe'>GHE</SelectItem>
@@ -384,26 +468,33 @@ export default function PgrPage() {
                               </SelectContent>
                             </Select>
                           </div>
+                          
                           <div className='space-y-2'>
                             <Label htmlFor='exposureTarget'>
                               Alvo da Exposição
                             </Label>
-                            <Select name='exposureTarget' required>
+                            <Select name='exposureTarget' required disabled={!exposureGroupType || !selectedUnitId}>
                               <SelectTrigger>
-                                <SelectValue placeholder='Selecione o setor' />
+                                <SelectValue placeholder='Selecione o alvo da exposição' />
                               </SelectTrigger>
                               <SelectContent>
-                                {initialSectorsData.map((sector) => (
-                                  <SelectItem
-                                    key={sector.id}
-                                    value={sector.name}
-                                  >
-                                    {sector.name}
-                                  </SelectItem>
+                               {exposureGroupType === 'sector' && sectorsInUnit.map(sector => (
+                                  <SelectItem key={sector.id} value={sector.name}>{sector.name}</SelectItem>
+                               ))}
+                               {exposureGroupType === 'role' && rolesData?.map(role => (
+                                  <SelectItem key={role.id} value={role.name}>{role.name}</SelectItem>
+                               ))}
+                                {exposureGroupType === 'ghe' && ghesData?.map(ghe => (
+                                  <SelectItem key={ghe.id} value={ghe.name}>{ghe.name}</SelectItem>
+                                ))}
+                                {exposureGroupType === 'employee' && employeesData?.map(employee => (
+                                  <SelectItem key={employee.id} value={employee.name}>{employee.name}</SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
+                            <input type="hidden" name="sectorName" value={exposureGroupType === 'sector' ? '' : sectorsInUnit.find(s => s.id === rolesData?.find(r => r.id === '')?.sectorId)?.name || ''} />
                           </div>
+
                         </div>
 
                         <div className='space-y-2'>
@@ -414,7 +505,9 @@ export default function PgrPage() {
                             name='hazard'
                             required
                             onValueChange={(value) =>
-                              setSelectedHazard(getHazardById(value) || null)
+                              setSelectedHazard(
+                                getHazardById(value, hazardData) || null
+                              )
                             }
                           >
                             <SelectTrigger>
@@ -755,7 +848,7 @@ export default function PgrPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {isLoading || isLoadingHazards ? (
+              {isLoading ? (
                 <div className='flex justify-center items-center h-64'>
                   <Loader2 className='h-8 w-8 animate-spin' />
                 </div>
@@ -774,7 +867,7 @@ export default function PgrPage() {
                   </TableHeader>
                   <TableBody>
                     {inventory?.map((item) => {
-                      const hazard = getHazardById(item.hazardId)
+                      const hazard = getHazardById(item.hazardId, hazardData)
                       if (!hazard) return null
                       return (
                         <TableRow key={item.id}>
