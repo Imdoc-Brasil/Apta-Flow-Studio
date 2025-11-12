@@ -95,7 +95,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-import { initialClientsData, type Client } from '../clients/data'
+import type { Client } from '../clients/data'
 import {
   Popover,
   PopoverContent,
@@ -110,7 +110,6 @@ import {
   CommandList,
 } from '@/components/ui/command'
 import { cn } from '@/lib/utils'
-import { Checkbox } from '@/components/ui/checkbox'
 
 type StaffStatus = 'Ativo' | 'Licença' | 'Suspenso'
 type StaffSituation = 'Online' | 'Offline'
@@ -483,7 +482,7 @@ export default function StaffsPage() {
                       </FormControl>
                       <SelectContent>
                         {clientsData?.map((client) => (
-                          <SelectItem key={client.id} value={client.id}>
+                          <SelectItem key={client.id} value={client.id!}>
                             {client.name}
                           </SelectItem>
                         ))}
@@ -522,23 +521,23 @@ export default function StaffsPage() {
                           <Command>
                             <CommandInput placeholder="Buscar cliente..." />
                             <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
-                            <CommandGroup>
-                              <CommandList>
-                                {clientsData?.map((client) => (
+                            <CommandList>
+                              <CommandGroup>
+                                {areClientsLoading ? <Loader2 className='mx-auto h-4 w-4 animate-spin'/> : clientsData?.map((client) => (
                                   <CommandItem
                                     key={client.id}
                                     onSelect={() => {
                                       const selected = field.value || []
-                                      const newSelection = selected.includes(client.id)
+                                      const newSelection = selected.includes(client.id!)
                                         ? selected.filter((id) => id !== client.id)
-                                        : [...selected, client.id]
+                                        : [...selected, client.id!]
                                       field.onChange(newSelection)
                                     }}
                                   >
                                     <Check
                                       className={cn(
                                         "mr-2 h-4 w-4",
-                                        field.value?.includes(client.id)
+                                        field.value?.includes(client.id!)
                                           ? "opacity-100"
                                           : "opacity-0"
                                       )}
