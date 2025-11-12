@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   Card,
   CardContent,
@@ -41,8 +41,6 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { useToast } from '@/hooks/use-toast'
 import { type Process, type ProcessStep, type ProcessType } from './data'
-import { initialSectorsData } from '../sectors/data'
-import { initialRolesData } from '../roles/data'
 import {
   Select,
   SelectContent,
@@ -69,7 +67,10 @@ import {
   addDocumentNonBlocking,
   updateDocumentNonBlocking,
 } from '@/firebase'
-import { collection, doc } from 'firebase/firestore'
+import { collection, doc, getDocs } from 'firebase/firestore'
+import type { Sector } from '../sectors/data'
+import type { Role } from '../roles/data'
+import type { Unit } from '../units/data'
 
 type ScopeType = 'unidade' | 'setor' | 'cargo'
 
@@ -84,7 +85,52 @@ export default function ProcessesPage() {
         : null,
     [firestore, contractId]
   )
-  const { data: processes, isLoading } = useCollection<Process>(processesRef)
+  const { data: processes, isLoading: areProcessesLoading } =
+    useCollection<Process>(processesRef)
+
+  const rolesRef = useMemoFirebase(
+    () =>
+      firestore ? collection(firestore, `clients/${contractId}/roles`) : null,
+    [firestore, contractId]
+  )
+  const { data: rolesData, isLoading: areRolesLoading } =
+    useCollection<Role>(rolesRef)
+
+  const unitsRef = useMemoFirebase(
+    () =>
+      firestore ? collection(firestore, `clients/${contractId}/units`) : null,
+    [firestore, contractId]
+  )
+  const { data: unitsData, isLoading: areUnitsLoading } =
+    useCollection<Unit>(unitsRef)
+
+  const [allSectors, setAllSectors] = useState<Sector[]>([])
+  const [areSectorsLoading, setAreSectorsLoading] = useState(true)
+
+  useEffect(() => {
+    if (unitsData && firestore) {
+      setAreSectorsLoading(true)
+      const fetchSectors = async () => {
+        const sectorsPromises = unitsData.map((unit) =>
+          getDocs(
+            collection(
+              firestore,
+              `clients/${contractId}/units/${unit.id}/sectors`
+            )
+          )
+        )
+        const sectorsSnapshots = await Promise.all(sectorsPromises)
+        const sectorsData = sectorsSnapshots.flatMap((snapshot) =>
+          snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Sector))
+        )
+        setAllSectors(sectorsData)
+        setAreSectorsLoading(false)
+      }
+      fetchSectors()
+    } else if (!areUnitsLoading) {
+      setAreSectorsLoading(false)
+    }
+  }, [unitsData, firestore, contractId, areUnitsLoading])
 
   const [isProcessDialogOpen, setIsProcessDialogOpen] = useState(false)
   const [editingProcess, setEditingProcess] = useState<Process | null>(null)
@@ -99,16 +145,19 @@ export default function ProcessesPage() {
   const getSectorNameForProcess = (process: Process) => {
     const firstStep = process.steps[0]
     if (firstStep && firstStep.sectorId) {
-      const sector = initialSectorsData.find((s) => s.id === firstStep.sectorId)
+      const sector = allSectors.find((s) => s.id === firstStep.sectorId)
       return sector?.name || 'Setor não definido'
     }
     return 'Setor não definido'
   }
 
   const uniqueSectors = useMemo(() => {
-    if (!processes) return []
-    return [...new Set(processes.map((p) => getSectorNameForProcess(p)))]
-  }, [processes])
+    if (!processes || !allSectors) return []
+    const sectorIds = new Set(
+      processes.flatMap((p) => p.steps.map((s) => s.sectorId))
+    )
+    return allSectors.filter((s) => sectorIds.has(s.id)).map((s) => s.name)
+  }, [processes, allSectors])
 
   const filteredProcesses = useMemo(() => {
     if (!processes) return []
@@ -226,6 +275,8 @@ export default function ProcessesPage() {
         : [...prev, sigla]
     )
   }
+
+  const isLoading = areProcessesLoading || areSectorsLoading || areRolesLoading
 
   return (
     <>
@@ -552,9 +603,9 @@ export default function ProcessesPage() {
                   </h3>
                   <div className='space-y-4'>
                     {formSteps.map((step, index) => {
-                      const rolesForSector = initialRolesData.filter(
-                        (r) => r.sectorId === step.sectorId
-                      )
+                      const rolesForSector =
+                        rolesData?.filter((r) => r.sectorId === step.sectorId) ||
+                        []
                       return (
                         <div
                           key={step.id}
@@ -591,7 +642,7 @@ export default function ProcessesPage() {
                                     <SelectValue placeholder='Selecione o Setor' />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {initialSectorsData.map((sector) => (
+                                    {allSectors.map((sector) => (
                                       <SelectItem
                                         key={sector.id}
                                         value={sector.id}
