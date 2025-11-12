@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   Card,
   CardContent,
@@ -18,7 +18,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { Check, PlusCircle, ChevronsRight } from 'lucide-react'
+import { PlusCircle, ChevronsRight, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/hooks/use-toast'
 import {
@@ -28,7 +28,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { initialHazardData, type Hazard } from '@/app/dashboard/(main)/risks/page'
+import {
+  initialHazardData,
+  type Hazard,
+} from '@/app/dashboard/(main)/risks/page'
 import {
   Dialog,
   DialogContent,
@@ -41,17 +44,15 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
-
-const initialMedicalExams = [
-  { id: 'EXM-01', name: 'Avaliação Clínica Ocupacional' },
-  { id: 'EXM-02', name: 'Audiometria' },
-  { id: 'EXM-03', name: 'Acuidade Visual' },
-  { id: 'EXM-04', name: 'Espirometria' },
-  { id: 'EXM-05', name: 'Eletrocardiograma (ECG)' },
-  { id: 'EXM-06', name: 'Eletroencefalograma (EEG)' },
-  { id: 'EXM-07', name: 'Raio-X de Tórax' },
-  { id: 'EXM-08', name: 'Hemograma Completo' },
-]
+import {
+  useFirestore,
+  useCollection,
+  useMemoFirebase,
+  addDocumentNonBlocking,
+} from '@/firebase'
+import { collection, doc } from 'firebase/firestore'
+import { useParams } from 'next/navigation'
+import type { Exam } from '@/app/dashboard/(main)/health/data/exams'
 
 interface PcmsoRule {
   id: string
@@ -59,32 +60,39 @@ interface PcmsoRule {
   examIds: string[]
 }
 
-const initialPcmsoRules: PcmsoRule[] = [
-  {
-    id: 'RULE-01',
-    riskId: 'RF-001', // Ruído Contínuo ou Intermitente
-    examIds: ['EXM-01', 'EXM-02'], // Avaliação Clínica, Audiometria
-  },
-  {
-    id: 'RULE-02',
-    riskId: 'RE-001', // Levantamento de peso
-    examIds: ['EXM-01'], // Avaliação Clínica
-  },
-]
-
 export default function PcmsoPage() {
-  const [rules, setRules] = useState(initialPcmsoRules)
+  const params = useParams()
+  const contractId = params.contractId as string
+  const firestore = useFirestore()
+  const { toast } = useToast()
+
+  const medicalExamsRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'medical_exams') : null),
+    [firestore]
+  )
+  const { data: medicalExams, isLoading: isLoadingExams } =
+    useCollection<Exam>(medicalExamsRef)
+
+  const pcmsoRulesRef = useMemoFirebase(
+    () =>
+      firestore
+        ? collection(firestore, `clients/${contractId}/pcmso_rules`)
+        : null,
+    [firestore, contractId]
+  )
+  const { data: rules, isLoading: isLoadingRules } =
+    useCollection<PcmsoRule>(pcmsoRulesRef)
+
   const [isRuleDialogOpen, setIsRuleDialogOpen] = useState(false)
   const [selectedRisk, setSelectedRisk] = useState<string>('')
   const [selectedExams, setSelectedExams] = useState<string[]>([])
-  const { toast } = useToast()
 
   const getRiskName = (riskId: string) => {
     return initialHazardData.find((h) => h.id === riskId)?.name || 'N/A'
   }
 
   const getExamName = (examId: string) => {
-    return initialMedicalExams.find((e) => e.id === examId)?.name || 'N/A'
+    return medicalExams?.find((e) => e.code === examId)?.name || 'N/A'
   }
 
   const openRuleDialog = () => {
@@ -96,7 +104,7 @@ export default function PcmsoPage() {
   const handleRuleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
-    if (!selectedRisk || selectedExams.length === 0) {
+    if (!selectedRisk || selectedExams.length === 0 || !pcmsoRulesRef) {
       toast({
         variant: 'destructive',
         title: 'Seleção Incompleta',
@@ -105,19 +113,21 @@ export default function PcmsoPage() {
       return
     }
 
-    const newRule: PcmsoRule = {
-      id: `RULE-${Date.now()}`,
+    const newRule: Omit<PcmsoRule, 'id'> = {
       riskId: selectedRisk,
       examIds: selectedExams,
     }
 
-    setRules((prev) => [...prev, newRule])
+    addDocumentNonBlocking(pcmsoRulesRef, newRule)
+
     setIsRuleDialogOpen(false)
     toast({
       title: 'Regra Adicionada!',
       description: 'A nova regra do PCMSO foi salva.',
     })
   }
+  
+  const isLoading = isLoadingExams || isLoadingRules;
 
   return (
     <>
@@ -136,32 +146,38 @@ export default function PcmsoPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Risco Ocupacional</TableHead>
-                <TableHead>Exames Vinculados</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {rules.map((rule) => (
-                <TableRow key={rule.id}>
-                  <TableCell className='font-medium'>
-                    {getRiskName(rule.riskId)}
-                  </TableCell>
-                  <TableCell>
-                    <div className='flex flex-wrap gap-2'>
-                      {rule.examIds.map((examId) => (
-                        <Badge key={examId} variant='secondary'>
-                          {getExamName(examId)}
-                        </Badge>
-                      ))}
-                    </div>
-                  </TableCell>
+          {isLoading ? (
+            <div className='flex justify-center items-center h-64'>
+              <Loader2 className='h-8 w-8 animate-spin' />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Risco Ocupacional</TableHead>
+                  <TableHead>Exames Vinculados</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {rules?.map((rule) => (
+                  <TableRow key={rule.id}>
+                    <TableCell className='font-medium'>
+                      {getRiskName(rule.riskId)}
+                    </TableCell>
+                    <TableCell>
+                      <div className='flex flex-wrap gap-2'>
+                        {rule.examIds.map((examId) => (
+                          <Badge key={examId} variant='secondary'>
+                            {getExamName(examId)}
+                          </Badge>
+                        ))}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
@@ -181,7 +197,11 @@ export default function PcmsoPage() {
                 <Label className='font-semibold text-center block'>
                   SE houver este Risco...
                 </Label>
-                <Select value={selectedRisk} onValueChange={setSelectedRisk} required>
+                <Select
+                  value={selectedRisk}
+                  onValueChange={setSelectedRisk}
+                  required
+                >
                   <SelectTrigger>
                     <SelectValue placeholder='Selecione um risco' />
                   </SelectTrigger>
@@ -204,29 +224,35 @@ export default function PcmsoPage() {
                   ENTÃO realize estes Exames
                 </Label>
                 <ScrollArea className='h-64 rounded-md border p-4'>
-                  <div className='space-y-2'>
-                    {initialMedicalExams.map((exam) => (
-                      <div key={exam.id} className='flex items-center gap-2'>
-                        <Checkbox
-                          id={`exam-${exam.id}`}
-                          checked={selectedExams.includes(exam.id)}
-                          onCheckedChange={(checked) => {
-                            setSelectedExams((prev) =>
-                              checked
-                                ? [...prev, exam.id]
-                                : prev.filter((id) => id !== exam.id)
-                            )
-                          }}
-                        />
-                        <Label
-                          htmlFor={`exam-${exam.id}`}
-                          className='font-normal'
-                        >
-                          {exam.name}
-                        </Label>
-                      </div>
-                    ))}
-                  </div>
+                  {isLoadingExams ? (
+                     <div className='flex justify-center items-center h-full'>
+                        <Loader2 className='h-6 w-6 animate-spin' />
+                     </div>
+                  ) : (
+                    <div className='space-y-2'>
+                      {medicalExams?.map((exam) => (
+                        <div key={exam.code} className='flex items-center gap-2'>
+                          <Checkbox
+                            id={`exam-${exam.code}`}
+                            checked={selectedExams.includes(exam.code)}
+                            onCheckedChange={(checked) => {
+                              setSelectedExams((prev) =>
+                                checked
+                                  ? [...prev, exam.code]
+                                  : prev.filter((id) => id !== exam.code)
+                              )
+                            }}
+                          />
+                          <Label
+                            htmlFor={`exam-${exam.code}`}
+                            className='font-normal'
+                          >
+                            {exam.name}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </ScrollArea>
               </div>
             </div>
