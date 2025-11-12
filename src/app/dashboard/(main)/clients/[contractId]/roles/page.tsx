@@ -82,7 +82,8 @@ export default function RolesPage() {
 
   // Data fetching from Firestore
   const rolesRef = useMemoFirebase(
-    () => (firestore ? collection(firestore, `clients/${contractId}/roles`) : null),
+    () =>
+      firestore ? collection(firestore, `clients/${contractId}/roles`) : null,
     [firestore, contractId]
   )
   const unitsRef = useMemoFirebase(
@@ -90,41 +91,61 @@ export default function RolesPage() {
       firestore ? collection(firestore, `clients/${contractId}/units`) : null,
     [firestore, contractId]
   )
-  const { data: roles, isLoading: areRolesLoading } = useCollection<Role>(rolesRef)
-  const { data: units, isLoading: areUnitsLoading } = useCollection<Unit>(unitsRef)
+  const { data: roles, isLoading: areRolesLoading } = useCollection<Role>(
+    rolesRef
+  )
+  const { data: units, isLoading: areUnitsLoading } = useCollection<Unit>(
+    unitsRef
+  )
 
   const [allSectors, setAllSectors] = useState<Sector[]>([])
   const [areSectorsLoading, setAreSectorsLoading] = useState(true)
   const [allEnvironments, setAllEnvironments] = useState<Environment[]>([])
   const [areEnvironmentsLoading, setAreEnvironmentsLoading] = useState(true)
 
-  // Fetch all sectors from all units
+  // Fetch all sectors and environments from all units
   useEffect(() => {
     if (units && firestore) {
       setAreSectorsLoading(true)
       const fetchAllData = async () => {
-        const sectorsPromises = units.map((unit) =>
-          getDocs(collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`))
-        )
-        const sectorsSnapshots = await Promise.all(sectorsPromises)
-        const sectorsData = sectorsSnapshots.flatMap((snapshot) =>
-          snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Sector))
-        )
-        setAllSectors(sectorsData)
-        setAreSectorsLoading(false)
+        try {
+          const sectorsPromises = units.map((unit) =>
+            getDocs(
+              collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`)
+            )
+          )
+          const sectorsSnapshots = await Promise.all(sectorsPromises)
+          const sectorsData = sectorsSnapshots.flatMap((snapshot) =>
+            snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Sector))
+          )
+          setAllSectors(sectorsData)
+          setAreSectorsLoading(false)
 
-        setAreEnvironmentsLoading(true)
-        const environmentsPromises = sectorsData.flatMap(sector =>
-          units.map(unit => getDocs(collection(firestore, `clients/${contractId}/units/${unit.id}/sectors/${sector.id}/environments`)))
-        );
+          setAreEnvironmentsLoading(true)
+          if (sectorsData.length > 0) {
+            const environmentsPromises = sectorsData.flatMap(sector => 
+               getDocs(collection(firestore, `clients/${contractId}/units/${sector.unitId}/sectors/${sector.id}/environments`))
+            );
 
-        const environmentsSnapshots = await Promise.all(environmentsPromises.flat());
-        const environmentsData = environmentsSnapshots.flatMap(snapshot =>
-          snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Environment))
-        );
-        setAllEnvironments(environmentsData);
-        setAreEnvironmentsLoading(false)
-
+            const environmentsSnapshots = await Promise.all(
+              environmentsPromises
+            )
+            const environmentsData = environmentsSnapshots.flatMap((snapshot) =>
+              snapshot.docs.map(
+                (doc) => ({ id: doc.id, ...doc.data() } as Environment)
+              )
+            )
+            setAllEnvironments(environmentsData)
+          } else {
+            setAllEnvironments([])
+          }
+        } catch (error) {
+          console.error("Failed to fetch sub-collections", error);
+          setAllSectors([]);
+          setAllEnvironments([]);
+        } finally {
+          setAreEnvironmentsLoading(false)
+        }
       }
       fetchAllData()
     } else if (!areUnitsLoading) {
@@ -132,7 +153,6 @@ export default function RolesPage() {
       setAreEnvironmentsLoading(false)
     }
   }, [units, firestore, contractId, areUnitsLoading])
-
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
@@ -158,7 +178,9 @@ export default function RolesPage() {
     if (!roles) return []
     let filtered = roles
     if (sectorFilter.length > 0) {
-      filtered = filtered.filter((role) => sectorFilter.includes(role.sectorId))
+      filtered = filtered.filter((role) =>
+        sectorFilter.includes(role.sectorId)
+      )
     }
     if (searchTerm) {
       filtered = filtered.filter(
@@ -217,7 +239,11 @@ export default function RolesPage() {
     setFormActivities([])
   }
 
-  const isLoading = areRolesLoading || areUnitsLoading || areSectorsLoading || areEnvironmentsLoading;
+  const isLoading =
+    areRolesLoading ||
+    areUnitsLoading ||
+    areSectorsLoading ||
+    areEnvironmentsLoading
 
   return (
     <Card>

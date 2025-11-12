@@ -32,11 +32,17 @@ import {
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useToast } from '@/hooks/use-toast'
-import { useDoc, useFirestore, useMemoFirebase, useCollection } from '@/firebase'
-import { doc, collection } from 'firebase/firestore'
+import {
+  useDoc,
+  useFirestore,
+  useMemoFirebase,
+  useCollection,
+  updateDocumentNonBlocking,
+} from '@/firebase'
+import { doc, collection, getDocs } from 'firebase/firestore'
 import type { Unit } from '../data'
 import type { Sector } from '../../sectors/data'
 import type { Role } from '../../roles/data'
@@ -62,6 +68,7 @@ export default function UnitDetailsPage() {
       firestore ? collection(firestore, `clients/${contractId}/units`) : null,
     [firestore, contractId]
   )
+  
   const sectorsRef = useMemoFirebase(
     () =>
       firestore
@@ -69,6 +76,7 @@ export default function UnitDetailsPage() {
         : null,
     [firestore, contractId, unitId]
   )
+  
   const allRolesRef = useMemoFirebase(
     () =>
       firestore ? collection(firestore, `clients/${contractId}/roles`) : null,
@@ -128,8 +136,30 @@ export default function UnitDetailsPage() {
 
   const handleEditUnit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    // Here you would typically handle form submission to your backend
-    // For now, we'll just show a success toast and close the dialog
+    if (!unitRef) return
+
+    const formData = new FormData(e.currentTarget);
+    const updatedData = {
+        name: formData.get('name') as string,
+        description: formData.get('description') as string,
+        cnpj: formData.get('cnpj') as string,
+        cnae: formData.get('cnae') as string,
+        riskLevel: formData.get('riskLevel') as string,
+        propertyInfo: {
+            address: formData.get('address') as string,
+            zipCode: formData.get('zipCode') as string,
+            neighborhood: formData.get('neighborhood') as string,
+            city: formData.get('city') as string,
+            state: formData.get('state') as string,
+        },
+        legalResponsible: formData.get('legalResponsible') as string,
+        pgrResponsible: formData.get('pgrResponsible') as string,
+        ltcatResponsible: formData.get('ltcatResponsible') as string,
+        pcmsoResponsible: formData.get('pcmsoResponsible') as string,
+    };
+    
+    updateDocumentNonBlocking(unitRef, updatedData);
+    
     toast({
       title: 'Sucesso!',
       description: 'As informações da unidade foram atualizadas.',
@@ -607,3 +637,5 @@ export default function UnitDetailsPage() {
     </>
   )
 }
+
+    

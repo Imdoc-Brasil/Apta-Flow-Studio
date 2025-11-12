@@ -142,20 +142,26 @@ export default function EmployeesPage() {
     if (allUnits && firestore) {
       setAreSectorsLoading(true)
       const fetchSectors = async () => {
-        const sectorsPromises = allUnits.map((unit) =>
-          getDocs(
-            collection(
-              firestore,
-              `clients/${contractId}/units/${unit.id}/sectors`
+        try {
+          const sectorsPromises = allUnits.map((unit) =>
+            getDocs(
+              collection(
+                firestore,
+                `clients/${contractId}/units/${unit.id}/sectors`
+              )
             )
           )
-        )
-        const sectorsSnapshots = await Promise.all(sectorsPromises)
-        const sectors = sectorsSnapshots.flatMap((snapshot) =>
-          snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Sector))
-        )
-        setAllSectors(sectors)
-        setAreSectorsLoading(false)
+          const sectorsSnapshots = await Promise.all(sectorsPromises)
+          const sectors = sectorsSnapshots.flatMap((snapshot) =>
+            snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Sector))
+          )
+          setAllSectors(sectors)
+        } catch (error) {
+          console.error("Failed to fetch sectors:", error);
+          setAllSectors([]);
+        } finally {
+          setAreSectorsLoading(false)
+        }
       }
       fetchSectors()
     } else if (!areUnitsLoading) {
@@ -756,3 +762,5 @@ export default function EmployeesPage() {
     </>
   )
 }
+
+    
