@@ -1,3 +1,4 @@
+
 'use client'
 
 import {
@@ -16,7 +17,13 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { MoreHorizontal, FileDown, PlusCircle, History } from 'lucide-react'
+import {
+  MoreHorizontal,
+  FileDown,
+  PlusCircle,
+  History,
+  Loader2,
+} from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,38 +52,36 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
-import { initialUnitsData, Unit } from '../../units/data'
-import { initialSectorsData, Sector } from '../../sectors/data'
+import type { Unit } from '../../units/data'
+import type { Sector } from '../../sectors/data'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
-  initialInventory,
   getHazardById,
+  type PgrInventoryItem,
 } from '@/app/dashboard/(main)/clients/[contractId]/pgr/page'
 import type { RiskEvaluation } from '@/app/dashboard/(main)/clients/[contractId]/pgr/page'
 import { cn } from '@/lib/utils'
+import { useParams } from 'next/navigation'
+import {
+  useFirestore,
+  useCollection,
+  useMemoFirebase,
+  addDocumentNonBlocking,
+} from '@/firebase'
+import { collection, query, getDocs } from 'firebase/firestore'
 
-const initialPgrHistoryData = [
-  {
-    version: '2.0',
-    issueDate: '2024-01-15',
-    validity: '24 meses',
-    responsible: 'Eng. Ana Beatriz',
-    status: 'Vigente',
-    unit: 'Matriz São Paulo',
-  },
-  {
-    version: '1.0',
-    issueDate: '2022-01-15',
-    validity: '24 meses',
-    responsible: 'Eng. Carlos Silva',
-    status: 'Expirado',
-    unit: 'Filial Rio de Janeiro',
-  },
-]
+interface PgrEntry {
+  id?: string
+  version: string
+  issueDate: string
+  validity: string
+  responsible: string
+  status: 'Vigente' | 'Expirado'
+  unit: string
+}
 
-type PgrEntry = (typeof initialPgrHistoryData)[0]
 interface PgrUpdate {
   date: string
   description: string
@@ -103,13 +108,45 @@ function ClientSideDateFormatter({ dateString }: { dateString: string }) {
 }
 
 export default function PgrHistoryPage() {
-  const [pgrHistory, setPgrHistory] = useState(initialPgrHistoryData)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const params = useParams()
+  const contractId = params.contractId as string
+  const firestore = useFirestore()
   const { toast } = useToast()
+
+  const pgrHistoryRef = useMemoFirebase(
+    () =>
+      firestore
+        ? collection(firestore, `clients/${contractId}/pgr_history`)
+        : null,
+    [firestore, contractId]
+  )
+  const { data: pgrHistory, isLoading: isLoadingHistory } =
+    useCollection<PgrEntry>(pgrHistoryRef)
+  
+  const unitsRef = useMemoFirebase(
+    () =>
+      firestore
+        ? collection(firestore, 'clients', contractId, 'units')
+        : null,
+    [firestore, contractId]
+  )
+  const { data: unitsData, isLoading: isLoadingUnits } = useCollection<Unit>(unitsRef)
+
+  const inventoryRef = useMemoFirebase(
+    () =>
+      firestore
+        ? collection(firestore, `clients/${contractId}/pgr_inventory`)
+        : null,
+    [firestore, contractId]
+  )
+  const { data: allInventory, isLoading: isLoadingInventory } =
+    useCollection<PgrInventoryItem>(inventoryRef)
+    
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null)
   const [selectedUnit, setSelectedUnit] = useState<Unit | null>(null)
   const [unitSectors, setUnitSectors] = useState<Sector[]>([])
-  const [unitInventory, setUnitInventory] = useState<typeof initialInventory>(
+  const [unitInventory, setUnitInventory] = useState<PgrInventoryItem[]>(
     []
   )
 
@@ -118,28 +155,32 @@ export default function PgrHistoryPage() {
   const [newUpdateDate, setNewUpdateDate] = useState(
     new Date().toISOString().split('T')[0]
   )
-
+  
   useEffect(() => {
-    if (selectedUnitId) {
-      const unit = initialUnitsData.find((u) => u.id === selectedUnitId)
-      setSelectedUnit(unit || null)
-      const sectors = initialSectorsData.filter(
-        (s) => s.unitId === selectedUnitId
-      )
-      setUnitSectors(sectors)
-      const inventory = initialInventory.filter(
-        (i) => i.unitId === selectedUnitId
-      )
-      setUnitInventory(inventory)
-    } else {
-      setSelectedUnit(null)
-      setUnitSectors([])
-      setUnitInventory([])
+    const fetchSectors = async () => {
+       if (selectedUnitId && firestore) {
+          const unit = unitsData?.find((u) => u.id === selectedUnitId)
+          setSelectedUnit(unit || null)
+          
+          const sectorsQuery = query(collection(firestore, `clients/${contractId}/units/${selectedUnitId}/sectors`));
+          const sectorsSnapshot = await getDocs(sectorsQuery);
+          const sectors = sectorsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sector));
+          setUnitSectors(sectors);
+          
+          const inventory = allInventory?.filter((i) => i.unitId === selectedUnitId) || []
+          setUnitInventory(inventory)
+       } else {
+          setSelectedUnit(null)
+          setUnitSectors([])
+          setUnitInventory([])
+       }
     }
-  }, [selectedUnitId])
+    fetchSectors()
+  }, [selectedUnitId, firestore, unitsData, contractId, allInventory])
+
 
   const getNextVersion = () => {
-    if (pgrHistory.length === 0) return '1.0'
+    if (!pgrHistory || pgrHistory.length === 0) return '1.0'
     const latestVersion = Math.max(
       ...pgrHistory.map((p) => parseFloat(p.version))
     )
@@ -148,7 +189,7 @@ export default function PgrHistoryPage() {
 
   const handleEmitPgr = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!selectedUnit) {
+    if (!selectedUnit || !pgrHistoryRef) {
       toast({
         variant: 'destructive',
         title: 'Unidade não selecionada',
@@ -158,7 +199,7 @@ export default function PgrHistoryPage() {
     }
 
     const formData = new FormData(event.currentTarget)
-    const newPgr: PgrEntry = {
+    const newPgr: Omit<PgrEntry, 'id'> = {
       version: getNextVersion(),
       issueDate: formData.get('issueDate') as string,
       validity: '24 meses',
@@ -166,7 +207,9 @@ export default function PgrHistoryPage() {
       status: 'Vigente',
       unit: selectedUnit.name,
     }
-    setPgrHistory((prev) => [newPgr, ...prev])
+    
+    addDocumentNonBlocking(pgrHistoryRef, newPgr)
+    
     setIsDialogOpen(false)
     setSelectedUnitId(null)
     setUpdates([])
@@ -236,8 +279,8 @@ export default function PgrHistoryPage() {
                             <SelectValue placeholder='Selecione uma unidade' />
                           </SelectTrigger>
                           <SelectContent>
-                            {initialUnitsData.map((unit) => (
-                              <SelectItem key={unit.id} value={unit.id}>
+                           {isLoadingUnits ? <Loader2 className='m-auto h-4 w-4 animate-spin'/> : unitsData?.map((unit) => (
+                              <SelectItem key={unit.id} value={unit.id!}>
                                 {unit.name}
                               </SelectItem>
                             ))}
@@ -256,7 +299,7 @@ export default function PgrHistoryPage() {
                             <span className='font-semibold text-foreground'>
                               Endereço:
                             </span>{' '}
-                            {selectedUnit.address}
+                            {selectedUnit.propertyInfo.address}
                           </p>
                           <p>
                             <span className='font-semibold text-foreground'>
@@ -388,7 +431,9 @@ export default function PgrHistoryPage() {
                         <legend className='-ml-1 px-1 text-sm font-medium'>
                           Seção: Inventário de Riscos da Unidade
                         </legend>
-                        {unitInventory.length > 0 ? (
+                        {isLoadingInventory ? (
+                            <Loader2 className='m-auto h-6 w-6 animate-spin' />
+                        ) : unitInventory.length > 0 ? (
                           <Table>
                             <TableHeader>
                               <TableRow>
@@ -402,7 +447,7 @@ export default function PgrHistoryPage() {
                               {unitInventory.map((item) => {
                                 const hazard = getHazardById(item.hazardId)
                                 return (
-                                  <TableRow key={item.inventoryId}>
+                                  <TableRow key={item.id}>
                                     <TableCell>
                                       {hazard?.name || 'Desconhecido'}
                                     </TableCell>
@@ -523,67 +568,71 @@ export default function PgrHistoryPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Versão</TableHead>
-                <TableHead>Unidade</TableHead>
-                <TableHead>Data de Emissão</TableHead>
-                <TableHead>Vigência</TableHead>
-                <TableHead>Responsável Técnico</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>
-                  <span className='sr-only'>Ações</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pgrHistory.map((item) => (
-                <TableRow key={item.version}>
-                  <TableCell className='font-medium'>{item.version}</TableCell>
-                  <TableCell>{item.unit}</TableCell>
-                  <TableCell>
-                    <ClientSideDateFormatter dateString={item.issueDate} />
-                  </TableCell>
-                  <TableCell>{item.validity}</TableCell>
-                  <TableCell>{item.responsible}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        item.status === 'Vigente' ? 'secondary' : 'outline'
-                      }
-                    >
-                      {item.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          aria-haspopup='true'
-                          size='icon'
-                          variant='ghost'
-                        >
-                          <MoreHorizontal className='h-4 w-4' />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align='end'>
-                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                        <DropdownMenuItem>
-                          <FileDown className='mr-2 h-4 w-4' />
-                          Baixar Documento
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+          {isLoadingHistory ? (
+            <div className='flex justify-center items-center h-48'>
+              <Loader2 className='h-8 w-8 animate-spin' />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Versão</TableHead>
+                  <TableHead>Unidade</TableHead>
+                  <TableHead>Data de Emissão</TableHead>
+                  <TableHead>Vigência</TableHead>
+                  <TableHead>Responsável Técnico</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>
+                    <span className='sr-only'>Ações</span>
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {pgrHistory?.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className='font-medium'>{item.version}</TableCell>
+                    <TableCell>{item.unit}</TableCell>
+                    <TableCell>
+                      <ClientSideDateFormatter dateString={item.issueDate} />
+                    </TableCell>
+                    <TableCell>{item.validity}</TableCell>
+                    <TableCell>{item.responsible}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          item.status === 'Vigente' ? 'secondary' : 'outline'
+                        }
+                      >
+                        {item.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            aria-haspopup='true'
+                            size='icon'
+                            variant='ghost'
+                          >
+                            <MoreHorizontal className='h-4 w-4' />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end'>
+                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                          <DropdownMenuItem>
+                            <FileDown className='mr-2 h-4 w-4' />
+                            Baixar Documento
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>
   )
 }
-
-    
