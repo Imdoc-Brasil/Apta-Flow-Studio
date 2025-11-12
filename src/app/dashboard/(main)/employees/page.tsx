@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
@@ -125,7 +124,7 @@ export interface Staff {
   avatar: string
   fallback: string
   email: string
-  phone: string
+  phone?: string
   status: StaffStatus
   situacao: StaffSituation
   contractId?: string
@@ -418,280 +417,262 @@ export default function StaffsPage() {
                   <form
                     id='add-staff-form'
                     onSubmit={form.handleSubmit(onSubmit)}
+                    className='space-y-4 py-4'
                   >
-                    <div className='space-y-4 py-4'>
-                      <div className='flex items-center gap-4'>
-                        <Avatar className='h-16 w-16'>
-                          <AvatarFallback>AV</AvatarFallback>
-                        </Avatar>
-                        <div className='flex-1 space-y-2'>
-                          <Label htmlFor='avatar-upload'>Avatar</Label>
-                          <Input
-                            id='avatar-upload'
-                            name='avatar-upload'
-                            type='file'
-                            className='text-sm'
-                          />
-                        </div>
+                    <div className='flex items-center gap-4'>
+                      <Avatar className='h-16 w-16'>
+                        <AvatarFallback>AV</AvatarFallback>
+                      </Avatar>
+                      <div className='flex-1 space-y-2'>
+                        <Label htmlFor='avatar-upload'>Avatar</Label>
+                        <Input
+                          id='avatar-upload'
+                          name='avatar-upload'
+                          type='file'
+                          className='text-sm'
+                        />
                       </div>
+                    </div>
 
-                      <div className='grid grid-cols-3 gap-4'>
-                        <div className='col-span-2 space-y-2'>
-                          <FormField
-                            control={form.control}
-                            name='name'
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Nome</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        <div className='col-span-1 space-y-2'>
-                          <Label htmlFor='code'>Código</Label>
-                          <Input
-                            id='code'
-                            name='code'
-                            value={`STF-${'####'}`}
-                            disabled
-                          />
-                        </div>
-                      </div>
-
-                      <div className='grid grid-cols-2 gap-4'>
-                        <div className='space-y-2'>
-                          <FormField
-                            control={form.control}
-                            name='email'
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Email</FormLabel>
-                                <FormControl>
-                                  <Input type='email' {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        <div className='space-y-2'>
-                          <FormField
-                            control={form.control}
-                            name='phone'
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Telefone</FormLabel>
-                                <FormControl>
-                                  <Input {...field} />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </div>
-
-                      <div className='grid grid-cols-2 gap-4'>
-                        <div className='space-y-2'>
-                          <FormField
-                            control={form.control}
-                            name='perfilId'
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Perfil</FormLabel>
-                                <Select
-                                  onValueChange={field.onChange}
-                                  defaultValue={field.value}
-                                >
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder='Selecione um perfil' />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    {profiles?.map((profile) => (
-                                      <SelectItem
-                                        key={profile.id}
-                                        value={profile.id}
-                                      >
-                                        {profile.name}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        <div className='space-y-2'>
-                          <FormField
-                            control={form.control}
-                            name='assinatura'
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Assinatura (Credencial)</FormLabel>
-                                <FormControl>
-                                  <Input
-                                    placeholder='Ex: Eng. Civil'
-                                    {...field}
-                                  />
-                                </FormControl>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className={cn(form.watch('perfilId') !== 'cliente' && 'hidden')}>
+                    <div className='grid grid-cols-3 gap-4'>
+                      <div className='col-span-2 space-y-2'>
                         <FormField
                           control={form.control}
-                          name="contractId"
+                          name='name'
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>Empresa Cliente</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value || ''}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Selecione a empresa do cliente" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {clientsData?.map(client => (
-                                    <SelectItem key={client.id} value={client.id!}>
-                                      {client.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                              <FormLabel>Nome</FormLabel>
+                              <FormControl>
+                                <Input {...field} />
+                              </FormControl>
                               <FormMessage />
                             </FormItem>
                           )}
                         />
                       </div>
-                      
-                      <div className={cn(form.watch('perfilId') === 'cliente' && 'hidden')}>
-                          <FormField
-                            control={form.control}
-                            name='clientIds'
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Acesso a Clientes</FormLabel>
-                                <Popover>
-                                  <PopoverTrigger asChild>
-                                    <FormControl>
-                                      <Button
-                                        variant='outline'
-                                        role='combobox'
-                                        className={cn(
-                                          'w-full justify-between font-normal',
-                                          !field.value?.length &&
-                                            'text-muted-foreground'
-                                        )}
-                                      >
-                                        Selecionar clientes...
-                                        <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
-                                      </Button>
-                                    </FormControl>
-                                  </PopoverTrigger>
-                                  <PopoverContent className='w-[--radix-popover-trigger-width] p-0'>
-                                    <Command>
-                                      <CommandInput placeholder='Buscar cliente...' />
-                                      <CommandEmpty>
-                                        Nenhum cliente encontrado.
-                                      </CommandEmpty>
-                                      <CommandList>
-                                        <CommandGroup>
-                                          {areClientsLoading ? (
-                                            <Loader2 className='mx-auto h-4 w-4 animate-spin' />
-                                          ) : (
-                                            clientsData?.map((client) => (
-                                              <CommandItem
-                                                key={client.id}
-                                                onSelect={() => {
-                                                  const selected =
-                                                    field.value || []
-                                                  const newSelection =
-                                                    selected.includes(
-                                                      client.id!
-                                                    )
-                                                      ? selected.filter(
-                                                          (id) =>
-                                                            id !== client.id
-                                                        )
-                                                      : [
-                                                          ...selected,
-                                                          client.id!,
-                                                        ]
-                                                  field.onChange(
-                                                    newSelection
-                                                  )
-                                                }}
-                                              >
-                                                <Check
-                                                  className={cn(
-                                                    'mr-2 h-4 w-4',
-                                                    field.value?.includes(
-                                                      client.id!
-                                                    )
-                                                      ? 'opacity-100'
-                                                      : 'opacity-0'
-                                                  )}
-                                                />
-                                                {client.name}
-                                              </CommandItem>
-                                            ))
-                                          )}
-                                        </CommandList>
-                                      </CommandGroup>
-                                    </Command>
-                                  </PopoverContent>
-                                </Popover>
-                                <FormDescription>
-                                  Deixe em branco para acesso a todos os
-                                  clientes.
-                                </FormDescription>
-                                <div className='mt-2 flex flex-wrap gap-1'>
-                                  {(form.watch('clientIds') || []).map(
-                                    (clientId: string) => (
-                                      <Badge
-                                        key={clientId}
-                                        variant='secondary'
-                                      >
-                                        {getClientName(clientId)}
-                                        <button
-                                          type='button'
-                                          className='ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2'
-                                          onClick={() =>
-                                            field.onChange(
-                                              (
-                                                form.watch(
-                                                  'clientIds'
-                                                ) || []
-                                              ).filter(
-                                                (id: string) =>
-                                                  id !== clientId
-                                              )
-                                            )
-                                          }
-                                        >
-                                          <X className='h-3 w-3 text-muted-foreground hover:text-foreground' />
-                                        </button>
-                                      </Badge>
-                                    )
-                                  )}
-                                </div>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                      <div className='col-span-1 space-y-2'>
+                        <Label htmlFor='code'>Código</Label>
+                        <Input
+                          id='code'
+                          name='code'
+                          value={`STF-${'####'}`}
+                          disabled
+                        />
                       </div>
                     </div>
+
+                    <div className='grid grid-cols-2 gap-4'>
+                      <FormField
+                        control={form.control}
+                        name='email'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input type='email' {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name='phone'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Telefone</FormLabel>
+                            <FormControl>
+                              <Input {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className='grid grid-cols-2 gap-4'>
+                      <FormField
+                        control={form.control}
+                        name='perfilId'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Perfil</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder='Selecione um perfil' />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {profiles?.map((profile) => (
+                                  <SelectItem
+                                    key={profile.id}
+                                    value={profile.id}
+                                  >
+                                    {profile.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name='assinatura'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Assinatura (Credencial)</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder='Ex: Eng. Civil'
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
+                    {form.watch('perfilId') === 'cliente' && (
+                      <FormField
+                        control={form.control}
+                        name='contractId'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Empresa Cliente</FormLabel>
+                            <Select
+                              onValueChange={field.onChange}
+                              value={field.value || ''}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder='Selecione a empresa do cliente' />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {clientsData?.map((client) => (
+                                  <SelectItem
+                                    key={client.id}
+                                    value={client.id!}
+                                  >
+                                    {client.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+
+                    {form.watch('perfilId') !== 'cliente' && (
+                      <FormField
+                        control={form.control}
+                        name='clientIds'
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Acesso a Clientes</FormLabel>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant='outline'
+                                    role='combobox'
+                                    className={cn(
+                                      'w-full justify-between font-normal',
+                                      !field.value?.length &&
+                                        'text-muted-foreground'
+                                    )}
+                                  >
+                                    Selecionar clientes...
+                                    <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent className='w-[--radix-popover-trigger-width] p-0'>
+                                <Command>
+                                  <CommandInput placeholder='Buscar cliente...' />
+                                  <CommandEmpty>
+                                    Nenhum cliente encontrado.
+                                  </CommandEmpty>
+                                  <CommandList>
+                                    <CommandGroup>
+                                      {areClientsLoading ? (
+                                        <Loader2 className='mx-auto h-4 w-4 animate-spin' />
+                                      ) : (
+                                        clientsData?.map((client) => (
+                                          <CommandItem
+                                            key={client.id}
+                                            onSelect={() => {
+                                              const selected =
+                                                field.value || []
+                                              const newSelection =
+                                                selected.includes(client.id!)
+                                                  ? selected.filter(
+                                                      (id) => id !== client.id
+                                                    )
+                                                  : [...selected, client.id!]
+                                              field.onChange(newSelection)
+                                            }}
+                                          >
+                                            <Check
+                                              className={cn(
+                                                'mr-2 h-4 w-4',
+                                                field.value?.includes(
+                                                  client.id!
+                                                )
+                                                  ? 'opacity-100'
+                                                  : 'opacity-0'
+                                              )}
+                                            />
+                                            {client.name}
+                                          </CommandItem>
+                                        ))
+                                      )}
+                                    </CommandGroup>
+                                  </CommandList>
+                                </Command>
+                              </PopoverContent>
+                            </Popover>
+                            <FormDescription>
+                              Deixe em branco para acesso a todos os clientes.
+                            </FormDescription>
+                            <div className='mt-2 flex flex-wrap gap-1'>
+                              {(form.watch('clientIds') || []).map(
+                                (clientId: string) => (
+                                  <Badge key={clientId} variant='secondary'>
+                                    {getClientName(clientId)}
+                                    <button
+                                      type='button'
+                                      className='ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2'
+                                      onClick={() =>
+                                        field.onChange(
+                                          (
+                                            form.watch('clientIds') || []
+                                          ).filter(
+                                            (id: string) => id !== clientId
+                                          )
+                                        )
+                                      }
+                                    >
+                                      <X className='h-3 w-3 text-muted-foreground hover:text-foreground' />
+                                    </button>
+                                  </Badge>
+                                )
+                              )}
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
                   </form>
                 </Form>
                 <DialogFooter>
@@ -869,269 +850,249 @@ export default function StaffsPage() {
             <form
               id='edit-staff-form'
               onSubmit={editForm.handleSubmit(onEditSubmit)}
+              className='space-y-4 py-4'
             >
-              <div className='space-y-4 py-4'>
-                <div className='flex items-center gap-4'>
-                  <Avatar className='h-16 w-16'>
-                    <AvatarImage src={currentStaff?.avatar} />
-                    <AvatarFallback>
-                      {currentStaff?.fallback || 'AV'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className='flex-1 space-y-2'>
-                    <Label htmlFor='avatar-upload'>Avatar</Label>
-                    <Input
-                      id='avatar-upload'
-                      name='avatar-upload'
-                      type='file'
-                      className='text-sm'
-                    />
-                  </div>
-                </div>
-
-                <div className='grid grid-cols-3 gap-4'>
-                  <div className='col-span-2 space-y-2'>
-                    <FormField
-                      control={editForm.control}
-                      name='name'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Nome</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <div className='col-span-1 space-y-2'>
-                    <Label htmlFor='code'>Código</Label>
-                    <Input
-                      id='code'
-                      name='code'
-                      value={currentStaff?.code || `STF-${'####'}`}
-                      disabled
-                    />
-                  </div>
-                </div>
-
-                <div className='grid grid-cols-2 gap-4'>
-                  <div className='space-y-2'>
-                    <FormField
-                      control={editForm.control}
-                      name='email'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input type='email' {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <div className='space-y-2'>
-                    <FormField
-                      control={editForm.control}
-                      name='phone'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Telefone</FormLabel>
-                          <FormControl>
-                            <Input {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-
-                <div className='grid grid-cols-2 gap-4'>
-                  <div className='space-y-2'>
-                    <FormField
-                      control={editForm.control}
-                      name='perfilId'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Perfil</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder='Selecione um perfil' />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {profiles?.map((profile) => (
-                                <SelectItem
-                                  key={profile.id}
-                                  value={profile.id}
-                                >
-                                  {profile.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <div className='space-y-2'>
-                    <FormField
-                      control={editForm.control}
-                      name='assinatura'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Assinatura (Credencial)</FormLabel>
-                          <FormControl>
-                            <Input placeholder='Ex: Eng. Civil' {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                </div>
-                 <div className={cn(editForm.watch('perfilId') !== 'cliente' && 'hidden')}>
-                   <FormField
-                      control={editForm.control}
-                      name='contractId'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Empresa Cliente</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value || ''}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder='Selecione a empresa do cliente' />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {clientsData?.map((client) => (
-                                <SelectItem
-                                  key={client.id}
-                                  value={client.id!}
-                                >
-                                  {client.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                 </div>
-                <div className={cn(editForm.watch('perfilId') === 'cliente' && 'hidden')}>
-                   <FormField
-                      control={editForm.control}
-                      name='clientIds'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Acesso a Clientes</FormLabel>
-                          <Popover>
-                            <PopoverTrigger asChild>
-                              <FormControl>
-                                <Button
-                                  variant='outline'
-                                  role='combobox'
-                                  className={cn(
-                                    'w-full justify-between font-normal',
-                                    !field.value?.length &&
-                                      'text-muted-foreground'
-                                  )}
-                                >
-                                  Selecionar clientes...
-                                  <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
-                                </Button>
-                              </FormControl>
-                            </PopoverTrigger>
-                            <PopoverContent className='w-[--radix-popover-trigger-width] p-0'>
-                              <Command>
-                                <CommandInput placeholder='Buscar cliente...' />
-                                <CommandEmpty>
-                                  Nenhum cliente encontrado.
-                                </CommandEmpty>
-                                <CommandList>
-                                  <CommandGroup>
-                                    {areClientsLoading ? (
-                                      <Loader2 className='mx-auto h-4 w-4 animate-spin' />
-                                    ) : (
-                                      clientsData?.map((client) => (
-                                        <CommandItem
-                                          key={client.id}
-                                          onSelect={() => {
-                                            const selected =
-                                              field.value || []
-                                            const newSelection =
-                                              selected.includes(client.id!)
-                                                ? selected.filter(
-                                                    (id) => id !== client.id
-                                                  )
-                                                : [...selected, client.id!]
-                                            field.onChange(newSelection)
-                                          }}
-                                        >
-                                          <Check
-                                            className={cn(
-                                              'mr-2 h-4 w-4',
-                                              field.value?.includes(
-                                                client.id!
-                                              )
-                                                ? 'opacity-100'
-                                                : 'opacity-0'
-                                            )}
-                                          />
-                                          {client.name}
-                                        </CommandItem>
-                                      ))
-                                    )}
-                                  </CommandList>
-                                </CommandGroup>
-                              </Command>
-                            </PopoverContent>
-                          </Popover>
-                          <FormDescription>
-                            Deixe em branco para acesso a todos os clientes.
-                          </FormDescription>
-                          <div className='mt-2 flex flex-wrap gap-1'>
-                            {(editForm.watch('clientIds') || []).map(
-                              (clientId: string) => (
-                                <Badge key={clientId} variant='secondary'>
-                                  {getClientName(clientId)}
-                                  <button
-                                    type='button'
-                                    className='ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2'
-                                    onClick={() =>
-                                      field.onChange(
-                                        (
-                                          editForm.watch('clientIds') || []
-                                        ).filter(
-                                          (id: string) => id !== clientId
-                                        )
-                                      )
-                                    }
-                                  >
-                                    <X className='h-3 w-3 text-muted-foreground hover:text-foreground' />
-                                  </button>
-                                </Badge>
-                              )
-                            )}
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+              <div className='flex items-center gap-4'>
+                <Avatar className='h-16 w-16'>
+                  <AvatarImage src={currentStaff?.avatar} />
+                  <AvatarFallback>
+                    {currentStaff?.fallback || 'AV'}
+                  </AvatarFallback>
+                </Avatar>
+                <div className='flex-1 space-y-2'>
+                  <Label htmlFor='avatar-upload'>Avatar</Label>
+                  <Input
+                    id='avatar-upload'
+                    name='avatar-upload'
+                    type='file'
+                    className='text-sm'
+                  />
                 </div>
               </div>
+
+              <div className='grid grid-cols-3 gap-4'>
+                <div className='col-span-2 space-y-2'>
+                  <FormField
+                    control={editForm.control}
+                    name='name'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nome</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className='col-span-1 space-y-2'>
+                  <Label htmlFor='code'>Código</Label>
+                  <Input
+                    id='code'
+                    name='code'
+                    value={currentStaff?.code || `STF-${'####'}`}
+                    disabled
+                  />
+                </div>
+              </div>
+
+              <div className='grid grid-cols-2 gap-4'>
+                <FormField
+                  control={editForm.control}
+                  name='email'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input type='email' {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name='phone'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Telefone</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className='grid grid-cols-2 gap-4'>
+                <FormField
+                  control={editForm.control}
+                  name='perfilId'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Perfil</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Selecione um perfil' />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {profiles?.map((profile) => (
+                            <SelectItem key={profile.id} value={profile.id}>
+                              {profile.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name='assinatura'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Assinatura (Credencial)</FormLabel>
+                      <FormControl>
+                        <Input placeholder='Ex: Eng. Civil' {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              {editForm.watch('perfilId') === 'cliente' ? (
+                <FormField
+                  control={editForm.control}
+                  name='contractId'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Empresa Cliente</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value || ''}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Selecione a empresa do cliente' />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {clientsData?.map((client) => (
+                            <SelectItem key={client.id} value={client.id!}>
+                              {client.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ) : (
+                <FormField
+                  control={editForm.control}
+                  name='clientIds'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Acesso a Clientes</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant='outline'
+                              role='combobox'
+                              className={cn(
+                                'w-full justify-between font-normal',
+                                !field.value?.length &&
+                                  'text-muted-foreground'
+                              )}
+                            >
+                              Selecionar clientes...
+                              <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className='w-[--radix-popover-trigger-width] p-0'>
+                          <Command>
+                            <CommandInput placeholder='Buscar cliente...' />
+                            <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
+                            <CommandList>
+                              <CommandGroup>
+                                {areClientsLoading ? (
+                                  <Loader2 className='mx-auto h-4 w-4 animate-spin' />
+                                ) : (
+                                  clientsData?.map((client) => (
+                                    <CommandItem
+                                      key={client.id}
+                                      onSelect={() => {
+                                        const selected = field.value || []
+                                        const newSelection = selected.includes(
+                                          client.id!
+                                        )
+                                          ? selected.filter(
+                                              (id) => id !== client.id
+                                            )
+                                          : [...selected, client.id!]
+                                        field.onChange(newSelection)
+                                      }}
+                                    >
+                                      <Check
+                                        className={cn(
+                                          'mr-2 h-4 w-4',
+                                          field.value?.includes(client.id!)
+                                            ? 'opacity-100'
+                                            : 'opacity-0'
+                                        )}
+                                      />
+                                      {client.name}
+                                    </CommandItem>
+                                  ))
+                                )}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <FormDescription>
+                        Deixe em branco para acesso a todos os clientes.
+                      </FormDescription>
+                      <div className='mt-2 flex flex-wrap gap-1'>
+                        {(editForm.watch('clientIds') || []).map(
+                          (clientId: string) => (
+                            <Badge key={clientId} variant='secondary'>
+                              {getClientName(clientId)}
+                              <button
+                                type='button'
+                                className='ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2'
+                                onClick={() =>
+                                  field.onChange(
+                                    (
+                                      editForm.watch('clientIds') || []
+                                    ).filter(
+                                      (id: string) => id !== clientId
+                                    )
+                                  )
+                                }
+                              >
+                                <X className='h-3 w-3 text-muted-foreground hover:text-foreground' />
+                              </button>
+                            </Badge>
+                          )
+                        )}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </form>
           </Form>
           <DialogFooter>
