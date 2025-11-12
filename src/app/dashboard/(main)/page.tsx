@@ -123,34 +123,40 @@ export default function Dashboard() {
 
   useEffect(() => {
     const promoteToSuperAdmin = async () => {
-      if (!user || !firestore) return
-
-      const adminRoleRef = doc(firestore, 'roles_admin', user.uid)
+      if (!user || !firestore) return;
+  
+      // Use the new, simpler 'admins' collection
+      const adminRoleRef = doc(firestore, 'admins', user.uid);
       try {
-        const docSnap = await getDoc(adminRoleRef)
+        const docSnap = await getDoc(adminRoleRef);
         if (!docSnap.exists()) {
-          const creationData = { createdAt: serverTimestamp() }
-          setDocumentNonBlocking(adminRoleRef, creationData, { merge: true })
-
+          // The data written can be simple, its existence is what matters.
+          await setDocumentNonBlocking(adminRoleRef, {
+            email: user.email,
+            promotedAt: serverTimestamp(),
+          }, {});
           toast({
             title: 'Bem-vindo, Superadministrador!',
-            description:
-              'Sua conta foi elevada para o nível de superadministrador.',
-          })
+            description: 'Sua conta foi elevada para o nível de superadministrador.',
+          });
         }
       } catch (error) {
-        const permissionError = new FirestorePermissionError({
-          path: adminRoleRef.path,
-          operation: 'get',
-        })
-        errorEmitter.emit('permission-error', permissionError)
+         // The error handling for permission denied on this check itself.
+         console.error("Failed to check/promote admin status:", error);
+         // You might still want to emit a specific error if this fails,
+         // but it's a different problem than the 'list' denial.
+         const permissionError = new FirestorePermissionError({
+           path: adminRoleRef.path,
+           operation: 'write', 
+         });
+         errorEmitter.emit('permission-error', permissionError);
       }
-    }
-
+    };
+  
     if (!isUserLoading && user) {
-      promoteToSuperAdmin()
+      promoteToSuperAdmin();
     }
-  }, [user, isUserLoading, firestore, toast])
+  }, [user, isUserLoading, firestore, toast]);
 
   const activeClientsCount = clients?.filter(
     (c) => c.status === 'Ativo'

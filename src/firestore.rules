@@ -1,0 +1,109 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function isAnyAdminCreated() {
+      // This is now less critical but can be kept for initial setup logic if needed.
+      return exists(/databases/$(database)/documents/admins);
+    }
+
+    function isAdmin() {
+      return request.auth != null && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    
+    function isClientUser() {
+        return request.auth != null && get(/databases/$(database)/documents/staffs/$(request.auth.uid)).data.perfilId == 'cliente';
+    }
+    
+    function getClientContractId() {
+        return get(/databases/$(database)/documents/staffs/$(request.auth.uid)).data.contractId;
+    }
+
+    // --- Global Collections ---
+    
+    match /clients/{clientId} {
+      allow read: if isAdmin() || (isClientUser() && getClientContractId() == clientId);
+      allow write: if isAdmin();
+    }
+    
+    match /staffs/{staffId} {
+        // Allow any authenticated user to read staff profiles (e.g., for dropdowns)
+        // but restrict writes to admins or the user themselves.
+        allow read: if request.auth != null;
+        allow write: if isAdmin() || isOwner(staffId);
+    }
+    
+    match /profiles/{profileId} {
+        allow read: if request.auth != null;
+        allow write: if isAdmin();
+    }
+
+    match /tickets/{ticketId} {
+      allow read, create: if request.auth != null;
+      allow update: if isAdmin() || (isClientUser() && get(/databases/$(database)/documents/clients/$(resource.data.client)).id == getClientContractId());
+      allow delete: if isAdmin();
+    }
+    
+    match /hazards/{hazardId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+    
+    match /epis/{epiId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+    
+    match /epcs/{epcId} {
+      allow read: if request.auth != null;
+      allow write: if isAdmin();
+    }
+
+    match /trainings/{trainingId} {
+       allow read: if request.auth != null;
+       allow write: if isAdmin();
+    }
+    
+    match /medical_exams/{examId} {
+       allow read: if request.auth != null;
+       allow write: if isAdmin();
+    }
+
+    // --- Client Subcollections ---
+    
+    match /clients/{clientId}/{collection}/{docId} {
+      allow read: if isAdmin() || (isClientUser() && getClientContractId() == clientId);
+      allow write: if isAdmin() || (isClientUser() && getClientContractId() == clientId);
+    }
+    
+    match /clients/{clientId}/units/{unitId}/{subCollection}/{subDocId} {
+       allow read: if isAdmin() || (isClientUser() && getClientContractId() == clientId);
+       allow write: if isAdmin() || (isClientUser() && getClientContractId() == clientId);
+    }
+    
+    match /clients/{clientId}/units/{unitId}/sectors/{sectorId}/{subCollection}/{subDocId} {
+       allow read: if isAdmin() || (isClientUser() && getClientContractId() == clientId);
+       allow write: if isAdmin() || (isClientUser() && getClientContractId() == clientId);
+    }
+    
+    // --- Admin and System Collections ---
+
+     match /admins/{userId} {
+       // Only admins can see who else is an admin.
+       allow list: if isAdmin();
+       // Anyone authenticated can check if a specific user is an admin (for isAdmin() to work).
+       allow get: if request.auth != null;
+       // Creating the first admin, or any admin if you are already one.
+       allow create: if isAdmin() || !isAnyAdminCreated();
+       // Only admins can modify other admin roles.
+       allow update, delete: if isAdmin();
+     }
+  }
+}
