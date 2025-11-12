@@ -283,6 +283,53 @@
         "url",
         "type"
       ]
+    },
+    "Machine": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Machine",
+      "type": "object",
+      "description": "Represents a machine or equipment in the inventory (NR-12).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Machine entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the machine or equipment."
+        },
+        "manufacturer": {
+          "type": "string",
+          "description": "The manufacturer of the machine."
+        },
+        "model": {
+          "type": "string",
+          "description": "The model of the machine."
+        },
+        "function": {
+          "type": "string",
+          "description": "The primary function or purpose of the machine."
+        },
+        "isRiskSource": {
+          "type": "boolean",
+          "description": "Indicates if the machine is a source of occupational risk."
+        },
+        "riskDescription": {
+          "type": "string",
+          "description": "Description of the risks if it is a risk source."
+        },
+        "maintenanceInfo": {
+          "type": "string",
+          "description": "Information about maintenance and conservation."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "function",
+        "isRiskSource",
+        "maintenanceInfo"
+      ]
     }
   },
   "auth": {
@@ -417,6 +464,26 @@
             {
               "name": "documentId",
               "description": "Unique identifier for the document."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/clients/{clientId}/machines/{machineId}",
+        "definition": {
+          "entityName": "Machine",
+          "schema": {
+            "$ref": "#/backend/entities/Machine"
+          },
+          "description": "Stores the inventory of machines and equipment for a client, compliant with NR-12. Includes denormalized `clientId` for authorization independence.",
+          "params": [
+            {
+              "name": "clientId",
+              "description": "Unique identifier for the client."
+            },
+            {
+              "name": "machineId",
+              "description": "Unique identifier for the machine."
             }
           ]
         }
