@@ -106,13 +106,39 @@ export default function ClientsPage() {
   )
   const { data: allClients, isLoading: areClientsLoading } =
     useCollection<Client>(clientsRef)
+    
+  // Effect to add initial data if collection is empty
+  useEffect(() => {
+    if (firestore && !areClientsLoading && allClients && allClients.length === 0) {
+      const initialClientId = 'CTR-2024-001'
+      const initialClientData: Client = {
+        id: initialClientId,
+        name: 'Innovate Inc.',
+        tradeName: 'Innovate Soluções',
+        cnpj: '12.345.678/0001-99',
+        address: 'Rua da Inovação, 123, São Paulo, SP',
+        cnae: '6201501',
+        riskLevel: '1',
+        secondaryCnaes: ['6204000', '6209100'],
+        status: 'Ativo',
+        adminResponsibleName: 'Ana Silva',
+        adminResponsibleCPF: '111.222.333-44',
+        contractResponsibleName: 'Carlos Pereira',
+        contractResponsiblePhone: '(11) 98765-4321',
+        contractResponsibleEmail: 'carlos.pereira@innovate.com',
+      };
+      const clientDocRef = doc(firestore, 'clients', initialClientId);
+      setDocumentNonBlocking(clientDocRef, initialClientData, { merge: false });
+    }
+  }, [firestore, areClientsLoading, allClients]);
+
 
   const clients = useMemo(() => {
     if (!allClients || !staffProfile) {
       return []
     }
     if (staffProfile.perfilId === 'cliente') {
-      return []
+       return allClients.filter((client) => client.id === staffProfile.contractId);
     }
     if (staffProfile.clientIds && staffProfile.clientIds.length > 0) {
       return allClients.filter((client) =>
