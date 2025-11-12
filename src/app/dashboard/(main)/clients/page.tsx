@@ -217,13 +217,14 @@ export default function ClientsPage() {
   const handleRemoveSecondaryCnae = (cnaeCode: string) => {
     setSecondaryCnaes((prev) => prev.filter((c) => c.code !== cnaeCode))
   }
-
-  const clients = useMemo(() => {
-    // Wait until both user profile and clients are loaded
-    if (isStaffLoading || areClientsLoading || !allClients || !staffProfile) {
-      return null; // Return null to indicate loading
-    }
   
+  const isLoading = isStaffLoading || areClientsLoading;
+
+  const getVisibleClients = () => {
+    if (isLoading || !allClients || !staffProfile) {
+      return [];
+    }
+
     if (staffProfile.perfilId === 'super_admin') {
       return allClients;
     }
@@ -241,9 +242,10 @@ export default function ClientsPage() {
     }
   
     return [];
-  }, [allClients, staffProfile, isStaffLoading, areClientsLoading]);
-  
-  const isLoading = clients === null;
+  };
+
+  const clients = getVisibleClients();
+
 
   return (
     <Card>
@@ -372,7 +374,7 @@ export default function ClientsPage() {
                                       {cnaeList.map((item) => (
                                         <CommandItem
                                           key={item.code}
-                                          value={`${''}${item.code} ${''}${item.description}`}
+                                          value={`${item.code} ${item.description}`}
                                           onSelect={() =>
                                             handleCnaeSelect(item)
                                           }
@@ -458,7 +460,7 @@ export default function ClientsPage() {
                                       .map((item) => (
                                         <CommandItem
                                           key={item.code}
-                                          value={`${''}${item.code} ${''}${item.description}`}
+                                          value={`${item.code} ${item.description}`}
                                           onSelect={() => {
                                             handleSecondaryCnaeSelect(item)
                                           }}
@@ -649,7 +651,7 @@ export default function ClientsPage() {
                   <TableCell className='font-medium'>{client.id}</TableCell>
                   <TableCell>
                     <Link
-                      href={`/dashboard/clients/${''}${client.id}`}
+                      href={`/dashboard/clients/${client.id}`}
                       className='hover:underline'
                     >
                       {client.name}
@@ -682,7 +684,7 @@ export default function ClientsPage() {
                       <DropdownMenuContent align='end'>
                         <DropdownMenuLabel>Ações</DropdownMenuLabel>
                         <DropdownMenuItem asChild>
-                          <Link href={`/dashboard/clients/${''}${client.id}`}>
+                          <Link href={`/dashboard/clients/${client.id}`}>
                             Ver Detalhes
                           </Link>
                         </DropdownMenuItem>
@@ -700,5 +702,3 @@ export default function ClientsPage() {
     </Card>
   )
 }
-
-    
