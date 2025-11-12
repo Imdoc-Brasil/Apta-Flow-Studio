@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   MoreHorizontal,
   PlusCircle,
@@ -79,6 +79,8 @@ import {
   addDocumentNonBlocking,
   updateDocumentNonBlocking,
   deleteDocumentNonBlocking,
+  useUser,
+  useDoc,
 } from '@/firebase'
 import { collection, doc } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
@@ -585,6 +587,8 @@ export default function StaffsPage() {
     )
   }
 
+  const isLoading = isLoading || areProfilesLoading || areClientsLoading;
+
   return (
     <>
       <Card>
@@ -936,6 +940,3 @@ export default function StaffsPage() {
     </>
   )
 }
-    
-
-      
