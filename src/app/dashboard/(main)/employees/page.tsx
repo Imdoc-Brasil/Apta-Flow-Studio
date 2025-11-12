@@ -148,6 +148,7 @@ const staffFormSchema = z.object({
   phone: z.string().optional(),
   contractId: z.string().optional(),
   clientIds: z.array(z.string()).optional(),
+  avatar: z.string().optional(),
 })
 
 type StaffFormValues = z.infer<typeof staffFormSchema>
@@ -262,11 +263,15 @@ export default function StaffsPage() {
       .toUpperCase()
 
     const newStaff: Omit<Staff, 'id'> = {
-      ...data,
+      name: data.name,
+      email: data.email,
+      perfilId: data.perfilId,
+      assinatura: data.assinatura,
+      phone: data.phone || '',
       code: `STF-${Math.floor(100 + Math.random() * 900)}`,
       status: 'Ativo',
       situacao: 'Offline',
-      avatar: `https://i.pravatar.cc/150?u=${Math.random()}`,
+      avatar: data.avatar || `https://i.pravatar.cc/150?u=${Math.random()}`,
       fallback,
       ...(data.perfilId === 'cliente' && { contractId: data.contractId }),
       ...(data.perfilId !== 'cliente' && { clientIds: data.clientIds }),
@@ -293,12 +298,16 @@ export default function StaffsPage() {
       .substring(0, 2)
       .toUpperCase()
 
-    const updatedData = {
-      ...data,
-      fallback,
-      ...(data.perfilId === 'cliente' && { contractId: data.contractId }),
-      ...(data.perfilId !== 'cliente' && { clientIds: data.clientIds }),
-    }
+    const updatedData: Partial<Staff> = {
+        name: data.name,
+        email: data.email,
+        perfilId: data.perfilId,
+        assinatura: data.assinatura,
+        phone: data.phone || '',
+        fallback,
+        ...(data.avatar && { avatar: data.avatar }),
+        ...(data.perfilId === 'cliente' ? { contractId: data.contractId, clientIds: [] } : { clientIds: data.clientIds, contractId: '' }),
+    };
 
     updateDocumentNonBlocking(staffDocRef, updatedData)
     toast({
@@ -337,6 +346,7 @@ export default function StaffsPage() {
       phone: staff.phone,
       contractId: staff.contractId || '',
       clientIds: staff.clientIds || [],
+      avatar: staff.avatar,
     })
     setIsEditDialogOpen(true)
   }
@@ -899,6 +909,16 @@ export default function StaffsPage() {
                     name='avatar-upload'
                     type='file'
                     className='text-sm'
+                    onChange={(e) => {
+                      if (e.target.files?.[0]) {
+                        const file = e.target.files[0];
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          editForm.setValue('avatar', reader.result as string);
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
                   />
                 </div>
               </div>

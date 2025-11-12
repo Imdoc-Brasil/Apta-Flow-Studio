@@ -18,6 +18,7 @@ import { signOut } from 'firebase/auth'
 import { useRouter } from 'next/navigation'
 import { doc } from 'firebase/firestore'
 import type { Staff } from '@/app/dashboard/(main)/employees/page'
+import { Skeleton } from './ui/skeleton'
 
 export function UserNav() {
   const auth = useAuth()
@@ -29,7 +30,7 @@ export function UserNav() {
     () => (firestore && user ? doc(firestore, 'staffs', user.uid) : null),
     [firestore, user]
   )
-  const { data: staffProfile } = useDoc<Staff>(staffDocRef)
+  const { data: staffProfile, isLoading: isStaffLoading } = useDoc<Staff>(staffDocRef)
 
   const handleLogout = async () => {
     try {
@@ -38,6 +39,10 @@ export function UserNav() {
     } catch (error) {
       console.error('Erro ao fazer logout:', error)
     }
+  }
+  
+  if (isStaffLoading) {
+      return <Skeleton className="h-8 w-8 rounded-full" />
   }
 
   const displayName = staffProfile?.name || user?.displayName || 'Usuário'
