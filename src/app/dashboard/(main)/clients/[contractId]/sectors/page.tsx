@@ -52,7 +52,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { initialUnitsData, type Unit } from '../units/data'
+import { type Unit } from '../units/data'
 import { Badge } from '@/components/ui/badge'
 import { type Sector } from './data'
 import { cn } from '@/lib/utils'
@@ -71,7 +71,7 @@ import {
   useMemoFirebase,
   addDocumentNonBlocking,
 } from '@/firebase'
-import { collection, query, where } from 'firebase/firestore'
+import { collection, query, where, getDocs } from 'firebase/firestore'
 
 export default function SectorsPage() {
   const params = useParams()
@@ -99,51 +99,33 @@ export default function SectorsPage() {
   )
   const { data: units, isLoading: isLoadingUnits } = useCollection<Unit>(unitsRef)
 
-  const sectorsQuery = useMemoFirebase(() => {
-    if (!firestore || !unitsRef) return null
-    if (unitFilter.length === 0) {
-      return collection(firestore, `clients/${contractId}/sectors_placeholder_for_empty_query`)
-    }
-    // This is a simplification. For a real app, you'd query each unit's subcollection
-    // or denormalize the unitId into the sector document for easier querying.
-    // For this prototype, we'll just show all sectors if multiple units are selected.
-    // A more complex query (which Firestore doesn't support directly on subcollections) would be needed otherwise.
-    // A single subcollection query is simple:
-    if (unitFilter.length === 1) {
-        return collection(firestore, `clients/${contractId}/units/${unitFilter[0]}/sectors`)
-    }
-    // To query across all units, we'd ideally have a root `sectors` collection
-    // with `clientId` and `unitId` fields. Let's assume that for now for multi-filter.
-    // This part is a placeholder for a more complex data model.
-    return collection(firestore, `clients/${contractId}/sectors_placeholder_for_all`)
-
-  }, [firestore, contractId, unitFilter, unitsRef])
-
-  // This is a workaround for the prototype. We will fetch all sectors from all units
-  // and then filter on the client side. This is NOT recommended for production.
   const [allSectors, setAllSectors] = useState<Sector[]>([])
   const [isLoadingSectors, setIsLoadingSectors] = useState(true)
 
   useEffect(() => {
-    if (units) {
-      setIsLoadingSectors(true)
+    if (units && firestore) {
+      setIsLoadingSectors(true);
       const fetchAllSectors = async () => {
-        if (!firestore) return []
-        const allSectorsPromises = units.map(unit => {
+        const sectorsData: Sector[] = [];
+        for (const unit of units) {
           const sectorsColRef = collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`);
-          return getDocs(sectorsColRef);
-        });
-
-        const sectorsSnapshots = await Promise.all(fetchAllSectorsPromises);
-        const sectorsData = sectorsSnapshots.flatMap(snapshot =>
-          snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sector))
-        );
+          try {
+            const sectorsSnap = await getDocs(sectorsColRef);
+            sectorsSnap.forEach(doc => {
+              sectorsData.push({ id: doc.id, ...doc.data() } as Sector);
+            });
+          } catch (error) {
+            console.error(`Error fetching sectors for unit ${unit.id}:`, error);
+          }
+        }
         setAllSectors(sectorsData);
         setIsLoadingSectors(false);
-      }
-      fetchAllSectors()
+      };
+      fetchAllSectors();
+    } else if (!isLoadingUnits) {
+       setIsLoadingSectors(false);
     }
-  }, [units, firestore, contractId])
+  }, [units, firestore, contractId, isLoadingUnits]);
 
 
   const filteredSectors = useMemo(() => {
@@ -354,7 +336,7 @@ export default function SectorsPage() {
                   key={sector.id}
                   onClick={() =>
                     router.push(
-                      `/dashboard/clients/${contractId}/sectors/${sector.id}`
+                      `/dashboard/clients/${contractId}/sectors/${sector.id}?unitId=${sector.unitId}`
                     )
                   }
                   className='flex flex-col h-full hover:shadow-md transition-shadow cursor-pointer'
@@ -426,7 +408,7 @@ export default function SectorsPage() {
                     key={sector.id}
                     onClick={() =>
                       router.push(
-                        `/dashboard/clients/${contractId}/sectors/${sector.id}`
+                        `/dashboard/clients/${contractId}/sectors/${sector.id}?unitId=${sector.unitId}`
                       )
                     }
                     className='cursor-pointer'

@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
@@ -21,6 +22,7 @@ import {
   CalendarClock,
   FileText,
   Stethoscope,
+  Loader2,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -29,17 +31,21 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
-import { initialEmployeesData, type Employee } from '../data'
-import { initialRolesData } from '../../roles/data'
-import { initialSectorsData } from '../../sectors/data'
-import { initialUnitsData } from '../../units/data'
-import { initialEnvironmentsData } from '../../environments/data'
-import { initialProcessesData } from '../../processes/data'
-import { initialEpiDeliveries } from '../../epis/data'
+import {
+  useDoc,
+  useCollection,
+  useFirestore,
+  useMemoFirebase,
+} from '@/firebase'
+import { doc, collection } from 'firebase/firestore'
 
-function getEmployeeById(employeeId: string) {
-  return initialEmployeesData.find((e) => e.id === employeeId)
-}
+import type { Employee, EmployeeStatus } from '../employees/data'
+import type { Role } from '../roles/data'
+import type { Sector } from '../sectors/data'
+import type { Unit } from '../units/data'
+import type { Environment } from '../../environments/data'
+import type { Process } from '../../processes/data'
+import type { EpiDelivery } from '../../epis/data'
 
 function ClientSideDateFormatter({ dateString }: { dateString: string }) {
   const [formattedDate, setFormattedDate] = useState('')
@@ -75,12 +81,92 @@ export default function EmployeeDetailsPage() {
   const contractId = params.contractId as string
   const employeeId = params.employeeId as string
 
-  const employeeData = useMemo(() => getEmployeeById(employeeId), [employeeId])
+  const firestore = useFirestore()
+
+  const employeeRef = useMemoFirebase(
+    () =>
+      firestore
+        ? doc(firestore, `clients/${contractId}/staffs`, employeeId)
+        : null,
+    [firestore, contractId, employeeId]
+  )
+  const allRolesRef = useMemoFirebase(
+    () =>
+      firestore ? collection(firestore, `clients/${contractId}/roles`) : null,
+    [firestore, contractId]
+  )
+  const allUnitsRef = useMemoFirebase(
+    () =>
+      firestore ? collection(firestore, `clients/${contractId}/units`) : null,
+    [firestore, contractId]
+  )
+  const allEnvironmentsRef = useMemoFirebase(
+    () =>
+      firestore
+        ? collection(firestore, `clients/${contractId}/environments`)
+        : null,
+    [firestore, contractId]
+  )
+  const allProcessesRef = useMemoFirebase(
+    () =>
+      firestore
+        ? collection(firestore, `clients/${contractId}/processes`)
+        : null,
+    [firestore, contractId]
+  )
+  const epiDeliveriesRef = useMemoFirebase(
+    () =>
+      firestore
+        ? collection(firestore, `clients/${contractId}/epi_deliveries`)
+        : null,
+    [firestore, contractId]
+  )
+
+  const { data: employee, isLoading: isEmployeeLoading } =
+    useDoc<Employee>(employeeRef)
+  const { data: allRoles, isLoading: areRolesLoading } =
+    useCollection<Role>(allRolesRef)
+  const { data: allUnits, isLoading: areUnitsLoading } =
+    useCollection<Unit>(allUnitsRef)
+  const { data: allEnvironments, isLoading: areEnvironmentsLoading } =
+    useCollection<Environment>(allEnvironmentsRef)
+  const { data: allProcesses, isLoading: areProcessesLoading } =
+    useCollection<Process>(allProcessesRef)
+  const { data: epiDeliveries, isLoading: areEpiDeliveriesLoading } =
+    useCollection<EpiDelivery>(epiDeliveriesRef)
+
+  const [allSectors, setAllSectors] = useState<Sector[]>([])
+  const [areSectorsLoading, setAreSectorsLoading] = useState(true)
+
+  useEffect(() => {
+    if (allUnits && firestore) {
+      setAreSectorsLoading(true)
+      const fetchAllSectors = async () => {
+        const sectorsPromises = allUnits.map(unit => {
+          const sectorsColRef = collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`);
+          return getDocs(sectorsColRef);
+        });
+
+        try {
+          const sectorsSnapshots = await Promise.all(sectorsPromises);
+          const sectorsData = sectorsSnapshots.flatMap(snapshot =>
+            snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sector))
+          );
+          setAllSectors(sectorsData);
+        } catch (error) {
+          console.error("Error fetching sectors: ", error);
+        } finally {
+          setAreSectorsLoading(false);
+        }
+      }
+      fetchAllSectors()
+    }
+  }, [allUnits, firestore, contractId])
 
   const episDeliveredCount = useMemo(() => {
-    return initialEpiDeliveries.filter((d) => d.employeeId === employeeId)
-      .length
-  }, [employeeId])
+    if (!epiDeliveries) return 0
+    return epiDeliveries.filter((d) => d.employeeId === employeeId).length
+  }, [epiDeliveries, employeeId])
 
   const summaryIndicators = [
     {
@@ -113,53 +199,40 @@ export default function EmployeeDetailsPage() {
   ]
 
   const employeeDetails = useMemo(() => {
-    if (!employeeData) return null
+    if (!employee || !allRoles || !allSectors || !allUnits || !allEnvironments || !allProcesses) return null
 
-    const role = initialRolesData.find((r) => r.id === employeeData.roleId)
-    if (!role)
-      return {
-        employee: employeeData,
-        role: null,
-        sector: null,
-        unit: null,
-        mainWorkstation: null,
-        processes: [],
-      }
+    const role = allRoles.find((r) => r.id === employee.roleId)
+    if (!role) return { employee, role: null, sector: null, unit: null, mainWorkstation: null, processes: [] }
 
-    const sector = initialSectorsData.find((s) => s.id === role.sectorId)
-    if (!sector)
-      return {
-        employee: employeeData,
-        role,
-        sector: null,
-        unit: null,
-        mainWorkstation: null,
-        processes: [],
-      }
+    const sector = allSectors.find((s) => s.id === role.sectorId)
+    if (!sector) return { employee, role, sector: null, unit: null, mainWorkstation: null, processes: [] }
 
-    const unit = initialUnitsData.find((u) => u.id === sector.unitId)
+    const unit = allUnits.find((u) => u.id === sector.unitId)
     const mainWorkstation = role.mainWorkstationId
-      ? initialEnvironmentsData.find((e) => e.id === role.mainWorkstationId)
+      ? allEnvironments.find((e) => e.id === role.mainWorkstationId)
       : null
 
-    // Simplified logic: find processes where the primary sector matches the employee's sector
-    const processes = initialProcessesData.filter((p) => {
-      const firstStep = p.steps[0]
-      if (firstStep && firstStep.sectorId) {
-        return firstStep.sectorId === sector.id
-      }
-      return false
-    })
+    const processes = allProcesses.filter((p) => p.steps.some(step => step.sectorId === sector.id))
 
-    return { employee: employeeData, role, sector, unit, mainWorkstation, processes }
-  }, [employeeData])
+    return { employee, role, sector, unit, mainWorkstation, processes }
+  }, [employee, allRoles, allSectors, allUnits, allEnvironments, allProcesses])
+  
+  const isLoading = isEmployeeLoading || areRolesLoading || areSectorsLoading || areUnitsLoading || areEnvironmentsLoading || areProcessesLoading || areEpiDeliveriesLoading
 
-  if (!employeeDetails) {
+  if (isLoading) {
+    return (
+      <div className='flex items-center justify-center h-full'>
+        <Loader2 className='h-8 w-8 animate-spin text-primary' />
+      </div>
+    )
+  }
+
+  if (!employeeDetails || !employee) {
     return (
       <div className='flex flex-col items-center justify-center h-full text-center'>
         <h2 className='text-2xl font-bold'>Colaborador não encontrado</h2>
         <p className='text-muted-foreground'>
-          O colaborador que você está procurando não existe.
+          O colaborador que você está procurando não existe ou os dados estão incompletos.
         </p>
         <Button asChild className='mt-4'>
           <Link href={`/dashboard/clients/${contractId}/employees`}>
@@ -171,8 +244,7 @@ export default function EmployeeDetailsPage() {
     )
   }
 
-  const { employee, role, sector, unit, mainWorkstation, processes } =
-    employeeDetails
+  const { role, sector, unit, mainWorkstation, processes } = employeeDetails
 
   return (
     <div className='grid flex-1 auto-rows-max gap-4'>
@@ -294,7 +366,7 @@ export default function EmployeeDetailsPage() {
                   Atividades Desenvolvidas
                 </p>
                 <div className='flex flex-wrap gap-1'>
-                  {role?.activities.map((activity) => (
+                  {role?.activities.map((activity: string) => (
                     <Badge key={activity} variant='outline'>
                       {activity}
                     </Badge>
@@ -307,8 +379,8 @@ export default function EmployeeDetailsPage() {
                   Etapas/Processos Envolvidos
                 </p>
                 <div className='flex flex-wrap gap-1'>
-                  {processes.length > 0 ? (
-                    processes.map((process) => (
+                  {processes && processes.length > 0 ? (
+                    processes.map((process: Process) => (
                       <Badge key={process.id} variant='secondary'>
                         {process.name}
                       </Badge>

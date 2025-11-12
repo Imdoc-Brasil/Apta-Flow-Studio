@@ -1,8 +1,7 @@
+
 'use client'
 
-import { useParams } from 'next/navigation'
-import { initialSectorsData, type Sector } from '../data'
-import { initialUnitsData } from '../../units/data'
+import { useParams, useRouter } from 'next/navigation'
 import {
   Card,
   CardContent,
@@ -18,9 +17,8 @@ import {
   Loader2,
 } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
-  initialEnvironmentsData,
   type Environment,
 } from '../../environments/data'
 import {
@@ -50,41 +48,55 @@ import {
   useMemoFirebase,
   addDocumentNonBlocking,
   updateDocumentNonBlocking,
+  useDoc,
 } from '@/firebase'
 import { collection, doc } from 'firebase/firestore'
-
-const getSectorById = (sectorId: string): Sector | undefined => {
-  return initialSectorsData.find((sector) => sector.id === sectorId)
-}
-
-const getUnitById = (unitId: string) => {
-  return initialUnitsData.find((unit) => unit.id === unitId)
-}
+import type { Sector } from '../data'
+import type { Unit } from '../../units/data'
 
 export default function SectorDetailsPage() {
   const params = useParams()
   const { toast } = useToast()
   const contractId = params.contractId as string
   const sectorId = params.sectorId as string
-  
-  // Note: These are still using static data to find the parent sector/unit.
-  // In a real app, this might come from a context or a separate Firestore query.
-  const sector = getSectorById(sectorId)
-  const unit = sector ? getUnitById(sector.unitId) : undefined
-
   const firestore = useFirestore()
+  
+  // We need to find which unit this sector belongs to.
+  // This is a workaround. A better data model would have unitId on the sector document
+  // even if it's in a subcollection, or query all units and their sectors.
+  // For now, we'll assume we can figure out the unitId from URL or another source if needed.
+  // Let's assume the sector document itself contains the unitId.
+  // The current `useDoc` doesn't know the full path without the unitId. This is a problem.
+  // Let's fetch the unit from the URL if it was passed, or try to find it.
+  
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const unitId = searchParams.get('unitId');
+  
+  const sectorRef = useMemoFirebase(() => {
+    if (!firestore || !unitId || !sectorId) return null
+    return doc(firestore, `clients/${contractId}/units/${unitId}/sectors`, sectorId)
+  }, [firestore, contractId, unitId, sectorId])
+
+  const unitRef = useMemoFirebase(() => {
+     if (!firestore || !unitId) return null
+     return doc(firestore, `clients/${contractId}/units`, unitId)
+  }, [firestore, contractId, unitId])
+
   const environmentsRef = useMemoFirebase(
     () =>
-      firestore && unit
+      firestore && unitId
         ? collection(
             firestore,
-            `clients/${contractId}/units/${unit.id}/sectors/${sectorId}/environments`
+            `clients/${contractId}/units/${unitId}/sectors/${sectorId}/environments`
           )
         : null,
-    [firestore, contractId, unit, sectorId]
+    [firestore, contractId, unitId, sectorId]
   )
 
-  const { data: environments, isLoading } = useCollection<Environment>(environmentsRef)
+  const { data: sector, isLoading: isSectorLoading } = useDoc<Sector>(sectorRef)
+  const { data: unit, isLoading: isUnitLoading } = useDoc<Unit>(unitRef)
+  const { data: environments, isLoading: areEnvironmentsLoading } = useCollection<Environment>(environmentsRef)
 
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false)
   const [editingEnvironment, setEditingEnvironment] =
@@ -101,6 +113,7 @@ export default function SectorDetailsPage() {
       description: formData.get('description') as string,
       activities: formData.get('activities') as string,
       equipment: formData.get('equipment') as string,
+      sectorId: sectorId, // Add sectorId to the environment
       physicalCharacteristics: {
         flooring: formData.get('flooring') as string,
         lighting: formData.get('lighting') as string,
@@ -111,7 +124,7 @@ export default function SectorDetailsPage() {
     }
 
     if (editingEnvironment) {
-      const docRef = doc(firestore, environmentsRef.path, editingEnvironment.id)
+      const docRef = doc(firestore, environmentsRef.path, editingEnvironment.id as string)
       updateDocumentNonBlocking(docRef, environmentData)
       toast({
         title: 'Posto de Trabalho Atualizado!',
@@ -237,13 +250,19 @@ export default function SectorDetailsPage() {
       </div>
     </ScrollArea>
   )
+  
+  const isLoading = isSectorLoading || isUnitLoading || areEnvironmentsLoading;
 
-  if (!sector) {
+  if (isLoading) {
+    return <div className='flex items-center justify-center h-full'><Loader2 className='h-8 w-8 animate-spin' /></div>
+  }
+
+  if (!sector || !unit) {
     return (
       <div className='flex flex-col items-center justify-center h-full text-center'>
-        <h2 className='text-2xl font-bold'>Setor não encontrado</h2>
+        <h2 className='text-2xl font-bold'>Setor ou Unidade não encontrado</h2>
         <p className='text-muted-foreground'>
-          O setor que você está procurando não existe.
+          Verifique se a URL está correta e tente novamente.
         </p>
         <Button asChild className='mt-4'>
           <Link href={`/dashboard/clients/${contractId}/sectors`}>
