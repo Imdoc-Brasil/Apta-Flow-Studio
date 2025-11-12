@@ -20,7 +20,7 @@ import {
   Building2,
 } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { type Environment } from '../../environments/data'
 import {
   Table,
@@ -60,6 +60,7 @@ import { Badge } from '@/components/ui/badge'
 
 export default function SectorDetailsPage() {
   const params = useParams()
+  const router = useRouter()
   const { toast } = useToast()
   const contractId = params.contractId as string
   const sectorId = params.sectorId as string
