@@ -57,7 +57,6 @@ import {
 } from '@/components/ui/dropdown-menu'
 import Link from 'next/link'
 import { type PsychosocialSurvey, type SurveyStatus } from './data'
-import { initialEmployeesData } from '../employees/data'
 import {
   Popover,
   PopoverContent,
@@ -207,7 +206,7 @@ export default function PsychosocialPage() {
     return `${selectedUnits.length} unidades selecionadas`
   }
 
-  const totalEmployees = initialEmployeesData.length // Placeholder
+  const totalEmployees = 0 // This needs to be calculated based on selected units
 
   return (
     <Card>
@@ -502,4 +501,3 @@ export default function PsychosocialPage() {
   )
 }
 
-    

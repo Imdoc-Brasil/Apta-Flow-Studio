@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   Card,
   CardContent,
@@ -26,8 +26,8 @@ import { Logo } from '@/components/logo'
 import { Separator } from '@/components/ui/separator'
 import { useSurveyStore } from '../dashboard/(main)/clients/[contractId]/psychosocial/psychosocial-store'
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase'
-import { collection, query, where } from 'firebase/firestore'
-import { useParams } from 'next/navigation'
+import { collection, query, where, getDocs } from 'firebase/firestore'
+import { useSearchParams } from 'next/navigation'
 import type { Unit } from '../dashboard/(main)/clients/[contractId]/units/data'
 import type { Sector } from '../dashboard/(main)/clients/[contractId]/sectors/data'
 import type { Role } from '../dashboard/(main)/clients/[contractId]/roles/data'
@@ -38,25 +38,39 @@ export default function SurveyPage() {
   const { addResponse } = useSurveyStore()
   const [step, setStep] = useState(1)
   const firestore = useFirestore()
-  const params = useParams()
+  const searchParams = useSearchParams()
+  const surveyId = searchParams.get('id'); // This is a placeholder, a real app would use this
+  
+  // A real implementation would extract the clientId from the survey document
+  // For now, we'll hardcode a known client for demo purposes if no surveyId is found
+  const contractId = 'CTR-2024-001'
 
-  // Assuming a survey might be tied to a client, but for now we fetch all
-  // In a real app, you'd likely get client/contractId from URL
-  const { data: units, isLoading: unitsLoading } = useCollection<Unit>(
-    useMemoFirebase(() => (firestore ? collection(firestore, 'units') : null), [
-      firestore,
-    ])
-  )
-  const { data: sectors, isLoading: sectorsLoading } = useCollection<Sector>(
-    useMemoFirebase(() => (firestore ? collection(firestore, 'sectors') : null), [
-      firestore,
-    ])
-  )
-  const { data: roles, isLoading: rolesLoading } = useCollection<Role>(
-    useMemoFirebase(() => (firestore ? collection(firestore, 'roles') : null), [
-      firestore,
-    ])
-  )
+  const unitsRef = useMemoFirebase(() => (firestore ? collection(firestore, `clients/${contractId}/units`) : null), [firestore, contractId]);
+  const rolesRef = useMemoFirebase(() => (firestore ? collection(firestore, `clients/${contractId}/roles`) : null), [firestore, contractId]);
+
+  const { data: units, isLoading: unitsLoading } = useCollection<Unit>(unitsRef);
+  const { data: roles, isLoading: rolesLoading } = useCollection<Role>(rolesRef);
+
+  const [allSectors, setAllSectors] = useState<Sector[]>([]);
+  const [sectorsLoading, setSectorsLoading] = useState(true);
+
+  useMemo(async () => {
+    if (units && firestore) {
+      setSectorsLoading(true);
+      const sectorsPromises = units.map(unit =>
+        getDocs(collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`))
+      );
+      const sectorsSnapshots = await Promise.all(sectorsPromises);
+      const sectorsData = sectorsSnapshots.flatMap(snapshot =>
+        snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sector))
+      );
+      setAllSectors(sectorsData);
+      setSectorsLoading(false);
+    } else if (!unitsLoading) {
+      setSectorsLoading(false);
+    }
+  }, [units, firestore, contractId, unitsLoading]);
+
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -199,7 +213,7 @@ export default function SurveyPage() {
                           <SelectValue placeholder='Selecione seu setor' />
                         </SelectTrigger>
                         <SelectContent>
-                          {sectors?.map((sector) => (
+                          {allSectors?.map((sector) => (
                             <SelectItem key={sector.id} value={sector.id!}>
                               {sector.name}
                             </SelectItem>
