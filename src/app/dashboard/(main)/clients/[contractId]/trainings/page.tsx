@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { MoreHorizontal, PlusCircle, Search, X } from 'lucide-react'
+import { MoreHorizontal, PlusCircle, Search, X, Loader2 } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -39,14 +39,19 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
-import {
-  initialTrainingsData as catalogTrainings,
-  Training,
-} from '@/app/dashboard/(main)/trainings/page'
+import { Training } from '@/app/dashboard/(main)/trainings/page'
 import { initialEmployeesData } from '../employees/data'
 import { initialStaffsData } from '@/app/dashboard/(main)/employees/page'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
+import {
+  useFirestore,
+  useCollection,
+  useMemoFirebase,
+  addDocumentNonBlocking,
+} from '@/firebase'
+import { collection } from 'firebase/firestore'
+import { useParams } from 'next/navigation'
 
 type TrainingModality = 'Online' | 'Presencial' | 'Híbrido'
 type ScheduledStatus = 'Agendado' | 'Em Andamento' | 'Concluído' | 'Cancelado'
@@ -62,35 +67,30 @@ interface ScheduledTraining {
   enrolledEmployees: string[]
 }
 
-const initialScheduledTrainings: ScheduledTraining[] = [
-  {
-    id: 'SCH-001',
-    trainingId: 'TRN-NR-35',
-    title: 'NR-35 - Trabalho em Altura',
-    modality: 'Híbrido',
-    scheduledDate: '2024-08-15',
-    status: 'Agendado',
-    instructorId: 'sarah.chen@aptaflow.com',
-    enrolledEmployees: ['EMP-001', 'EMP-002'],
-  },
-  {
-    id: 'SCH-002',
-    trainingId: 'TRN-NR-06',
-    title: 'Uso Correto de Protetores Auriculares',
-    modality: 'Online',
-    scheduledDate: '2024-07-20',
-    status: 'Concluído',
-    instructorId: 'emily.w@aptaflow.com',
-    enrolledEmployees: ['EMP-003'],
-  },
-]
-
 export default function ClientTrainingsPage() {
-  const [scheduledTrainings, setScheduledTrainings] = useState(
-    initialScheduledTrainings
-  )
-  const [isSchedulingDialogOpen, setIsSchedulingDialogOpen] = useState(false)
+  const params = useParams()
+  const contractId = params.contractId as string
+  const firestore = useFirestore()
   const { toast } = useToast()
+
+  const trainingsCatalogRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'trainings') : null),
+    [firestore]
+  )
+  const { data: catalogTrainings, isLoading: isLoadingCatalog } =
+    useCollection<Training>(trainingsCatalogRef)
+
+  const scheduledTrainingsRef = useMemoFirebase(
+    () =>
+      firestore
+        ? collection(firestore, `clients/${contractId}/scheduled_trainings`)
+        : null,
+    [firestore, contractId]
+  )
+  const { data: scheduledTrainings, isLoading: isLoadingScheduled } =
+    useCollection<ScheduledTraining>(scheduledTrainingsRef)
+
+  const [isSchedulingDialogOpen, setIsSchedulingDialogOpen] = useState(false)
 
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([])
   const [searchTerm, setSearchTerm] = useState('')
@@ -124,6 +124,8 @@ export default function ClientTrainingsPage() {
 
   const handleScheduleTraining = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!scheduledTrainingsRef || !catalogTrainings) return
+
     const formData = new FormData(event.currentTarget)
     const trainingId = formData.get('trainingId') as string
     const training = catalogTrainings.find((t) => t.id === trainingId)
@@ -137,8 +139,7 @@ export default function ClientTrainingsPage() {
       return
     }
 
-    const newScheduledTraining: ScheduledTraining = {
-      id: `SCH-${Date.now().toString().slice(-4)}`,
+    const newScheduledTrainingData: Omit<ScheduledTraining, 'id'> = {
       trainingId,
       title: training.title,
       modality: training.modality,
@@ -148,18 +149,21 @@ export default function ClientTrainingsPage() {
       enrolledEmployees: selectedEmployees,
     }
 
-    setScheduledTrainings((prev) => [newScheduledTraining, ...prev])
+    addDocumentNonBlocking(scheduledTrainingsRef, newScheduledTrainingData)
+
     setIsSchedulingDialogOpen(false)
     resetSelection()
     toast({
       title: 'Treinamento Agendado!',
-      description: `O treinamento "${newScheduledTraining.title}" foi agendado.`,
+      description: `O treinamento "${newScheduledTrainingData.title}" foi agendado.`,
     })
   }
 
   const getInstructorName = (staffId: string) => {
     return initialStaffsData.find((s) => s.email === staffId)?.name || 'N/A'
   }
+  
+  const isLoading = isLoadingCatalog || isLoadingScheduled;
 
   return (
     <>
@@ -201,7 +205,7 @@ export default function ClientTrainingsPage() {
                             <SelectValue placeholder='Selecione um treinamento do catálogo' />
                           </SelectTrigger>
                           <SelectContent>
-                            {catalogTrainings.map((t) => (
+                            {catalogTrainings?.map((t) => (
                               <SelectItem key={t.id} value={t.id}>
                                 {t.title} ({t.modality})
                               </SelectItem>
@@ -342,49 +346,55 @@ export default function ClientTrainingsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Treinamento</TableHead>
-                <TableHead>Data Agendada</TableHead>
-                <TableHead>Instrutor</TableHead>
-                <TableHead>Matriculados</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>
-                  <span className='sr-only'>Ações</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {scheduledTrainings.map((st) => (
-                <TableRow key={st.id}>
-                  <TableCell className='font-medium'>{st.title}</TableCell>
-                  <TableCell>
-                    {new Date(st.scheduledDate).toLocaleDateString('pt-BR', {
-                      timeZone: 'UTC',
-                    })}
-                  </TableCell>
-                  <TableCell>{getInstructorName(st.instructorId)}</TableCell>
-                  <TableCell>{st.enrolledEmployees.length}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        st.status === 'Concluído' ? 'secondary' : 'default'
-                      }
-                    >
-                      {st.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Button aria-haspopup='true' size='icon' variant='ghost'>
-                      <MoreHorizontal className='h-4 w-4' />
-                      <span className='sr-only'>Alternar menu</span>
-                    </Button>
-                  </TableCell>
+          {isLoading ? (
+            <div className='flex justify-center items-center h-64'>
+              <Loader2 className='h-8 w-8 animate-spin text-muted-foreground' />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Treinamento</TableHead>
+                  <TableHead>Data Agendada</TableHead>
+                  <TableHead>Instrutor</TableHead>
+                  <TableHead>Matriculados</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>
+                    <span className='sr-only'>Ações</span>
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {scheduledTrainings?.map((st) => (
+                  <TableRow key={st.id}>
+                    <TableCell className='font-medium'>{st.title}</TableCell>
+                    <TableCell>
+                      {new Date(st.scheduledDate).toLocaleDateString('pt-BR', {
+                        timeZone: 'UTC',
+                      })}
+                    </TableCell>
+                    <TableCell>{getInstructorName(st.instructorId)}</TableCell>
+                    <TableCell>{st.enrolledEmployees.length}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          st.status === 'Concluído' ? 'secondary' : 'default'
+                        }
+                      >
+                        {st.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Button aria-haspopup='true' size='icon' variant='ghost'>
+                        <MoreHorizontal className='h-4 w-4' />
+                        <span className='sr-only'>Alternar menu</span>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </>
