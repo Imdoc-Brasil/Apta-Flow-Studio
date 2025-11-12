@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState, useMemo } from 'react'
@@ -10,6 +11,7 @@ import {
   List,
   Users,
   X,
+  Loader2,
 } from 'lucide-react'
 import {
   Card,
@@ -48,7 +50,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { initialGheData, type GHE } from './data'
+import { type GHE } from './data'
 import { initialUnitsData } from '../units/data'
 import { initialRolesData } from '../roles/data'
 import { initialSectorsData } from '../sectors/data'
@@ -65,36 +67,52 @@ import { useRouter, useParams } from 'next/navigation'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
+import {
+  useFirestore,
+  addDocumentNonBlocking,
+  useCollection,
+  useMemoFirebase,
+} from '@/firebase'
+import { collection } from 'firebase/firestore'
 
 export default function GhePage() {
-  const [ghes, setGhes] = useState(initialGheData)
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
-  const [selectedGhe, setSelectedGhe] = useState<GHE | null>(null)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [unitFilter, setUnitFilter] = useState<string[]>([])
-  const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
-  const { toast } = useToast()
-  const router = useRouter()
   const params = useParams()
   const contractId = params.contractId as string
 
+  const firestore = useFirestore()
+  const ghesRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, `clients/${contractId}/ghes`) : null),
+    [firestore, contractId]
+  )
+  const { data: ghes, isLoading } = useCollection<GHE>(ghesRef)
+
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
+  const [selectedGhe, setSelectedGhe = useState<GHE | null>(null)
+  const [searchTerm, setSearchTerm = useState('')
+  const [unitFilter, setUnitFilter = useState<string[]>([])
+  const [viewMode, setViewMode = useState<'card' | 'list'>('card')
+  const { toast } = useToast()
+  const router = useRouter()
+
   // States for the list builder
-  const [selectedRoles, setSelectedRoles] = useState<string[]>([])
-  const [roleSearchTerm, setRoleSearchTerm] = useState('')
+  const [selectedRoles, setSelectedRoles = useState<string[]>([])
+  const [roleSearchTerm, setRoleSearchTerm = useState('')
 
   const getRoleName = (roleId: string) => {
     return initialRolesData.find((role) => role.id === roleId)?.name || 'N/A'
   }
 
   const getSectorName = (sectorId: string) => {
-    return initialSectorsData.find((sector) => sector.id === sectorId)?.name || 'N/A'
+    return (
+      initialSectorsData.find((sector) => sector.id === sectorId)?.name || 'N/A'
+    )
   }
-  
+
   const rolesWithSectors = useMemo(() => {
-    return initialRolesData.map(role => ({
+    return initialRolesData.map((role) => ({
       ...role,
-      sectorName: getSectorName(role.sectorId)
+      sectorName: getSectorName(role.sectorId),
     }))
   }, [])
 
@@ -103,7 +121,7 @@ export default function GhePage() {
       (role) =>
         !selectedRoles.includes(role.id) &&
         (role.name.toLowerCase().includes(roleSearchTerm.toLowerCase()) ||
-         role.sectorName.toLowerCase().includes(roleSearchTerm.toLowerCase()))
+          role.sectorName.toLowerCase().includes(roleSearchTerm.toLowerCase()))
     )
   }, [selectedRoles, roleSearchTerm, rolesWithSectors])
 
@@ -124,8 +142,8 @@ export default function GhePage() {
     setRoleSearchTerm('')
   }
 
-
   const filteredGhes = useMemo(() => {
+    if (!ghes) return []
     let filtered = ghes
     if (unitFilter.length > 0) {
       filtered = filtered.filter((ghe) => unitFilter.includes(ghe.unitId))
@@ -142,30 +160,33 @@ export default function GhePage() {
 
   const handleAddGhe = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!ghesRef) return
+
     const formData = new FormData(event.currentTarget)
-   
+
     if (selectedRoles.length === 0) {
-        toast({
-            variant: "destructive",
-            title: "Nenhum cargo selecionado",
-            description: "Por favor, inclua pelo menos um cargo no GHE."
-        })
-        return
+      toast({
+        variant: 'destructive',
+        title: 'Nenhum cargo selecionado',
+        description: 'Por favor, inclua pelo menos um cargo no GHE.',
+      })
+      return
     }
 
-    const newGhe: GHE = {
-      id: `GHE-${Date.now().toString().slice(-3)}`,
+    const newGheData: Omit<GHE, 'id'> = {
       name: formData.get('name') as string,
       description: formData.get('description') as string,
       unitId: formData.get('unitId') as string,
       roleIds: selectedRoles,
     }
-    setGhes((prev) => [...prev, newGhe])
+    
+    addDocumentNonBlocking(ghesRef, newGheData)
+    
     setIsAddDialogOpen(false)
     resetRoleSelection()
     toast({
       title: 'GHE Adicionado!',
-      description: `O grupo "${newGhe.name}" foi adicionado.`,
+      description: `O grupo "${newGheData.name}" foi adicionado.`,
     })
   }
 
@@ -253,7 +274,11 @@ export default function GhePage() {
               </div>
               <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button size='sm' className='h-8 gap-1' onClick={openAddDialog}>
+                  <Button
+                    size='sm'
+                    className='h-8 gap-1'
+                    onClick={openAddDialog}
+                  >
                     <PlusCircle className='h-3.5 w-3.5' />
                     <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
                       Adicionar GHE
@@ -268,90 +293,132 @@ export default function GhePage() {
                     </DialogDescription>
                   </DialogHeader>
                   <form id='add-ghe-form' onSubmit={handleAddGhe}>
-                     <ScrollArea className="h-[70vh]">
-                    <div className='grid gap-6 p-4'>
-                      <div className='space-y-2'>
-                        <Label htmlFor='name'>Nome do GHE</Label>
-                        <Input
-                          id='name'
-                          name='name'
-                          placeholder='Ex: GHE Produção - Ruído'
-                          required
-                        />
-                      </div>
-                      <div className='space-y-2'>
-                        <Label htmlFor='unitId'>Unidade</Label>
-                        <Select name='unitId' required>
-                          <SelectTrigger>
-                            <SelectValue placeholder='Selecione a unidade' />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {initialUnitsData.map((unit) => (
-                              <SelectItem key={unit.id} value={unit.id}>
-                                {unit.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className='space-y-2'>
-                        <Label htmlFor='description'>Descrição</Label>
-                        <Textarea
-                          id='description'
-                          name='description'
-                          placeholder='Descreva as características deste grupo'
-                          required
-                        />
-                      </div>
-                     <div className='space-y-2'>
-                        <Label>Cargos Incluídos</Label>
-                        <div className='grid grid-cols-2 gap-4'>
-                          {/* Coluna da Esquerda: Disponíveis */}
-                          <div className='rounded-md border p-4 space-y-2'>
+                    <ScrollArea className='h-[70vh]'>
+                      <div className='grid gap-6 p-4'>
+                        <div className='space-y-2'>
+                          <Label htmlFor='name'>Nome do GHE</Label>
+                          <Input
+                            id='name'
+                            name='name'
+                            placeholder='Ex: GHE Produção - Ruído'
+                            required
+                          />
+                        </div>
+                        <div className='space-y-2'>
+                          <Label htmlFor='unitId'>Unidade</Label>
+                          <Select name='unitId' required>
+                            <SelectTrigger>
+                              <SelectValue placeholder='Selecione a unidade' />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {initialUnitsData.map((unit) => (
+                                <SelectItem key={unit.id} value={unit.id}>
+                                  {unit.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className='space-y-2'>
+                          <Label htmlFor='description'>Descrição</Label>
+                          <Textarea
+                            id='description'
+                            name='description'
+                            placeholder='Descreva as características deste grupo'
+                            required
+                          />
+                        </div>
+                        <div className='space-y-2'>
+                          <Label>Cargos Incluídos</Label>
+                          <div className='grid grid-cols-2 gap-4'>
+                            {/* Coluna da Esquerda: Disponíveis */}
+                            <div className='rounded-md border p-4 space-y-2'>
                               <div className='relative'>
-                                  <Search className='absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
-                                  <Input 
-                                      placeholder='Buscar cargo...'
-                                      className='pl-8'
-                                      value={roleSearchTerm}
-                                      onChange={(e) => setRoleSearchTerm(e.target.value)}
-                                  />
+                                <Search className='absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
+                                <Input
+                                  placeholder='Buscar cargo...'
+                                  className='pl-8'
+                                  value={roleSearchTerm}
+                                  onChange={(e) =>
+                                    setRoleSearchTerm(e.target.value)
+                                  }
+                                />
                               </div>
                               <ScrollArea className='h-48'>
-                                  <div className='space-y-2'>
-                                  {availableRoles.map(role => (
-                                      <div key={role.id} className='flex items-center justify-between text-sm p-2 rounded-md hover:bg-muted'>
-                                          <span>{role.name} / <span className='text-muted-foreground'>{role.sectorName}</span></span>
-                                          <Button type='button' size='sm' variant='outline' onClick={() => handleSelectRole(role.id)}>Incluir</Button>
-                                      </div>
+                                <div className='space-y-2'>
+                                  {availableRoles.map((role) => (
+                                    <div
+                                      key={role.id}
+                                      className='flex items-center justify-between text-sm p-2 rounded-md hover:bg-muted'
+                                    >
+                                      <span>
+                                        {role.name} /{' '}
+                                        <span className='text-muted-foreground'>
+                                          {role.sectorName}
+                                        </span>
+                                      </span>
+                                      <Button
+                                        type='button'
+                                        size='sm'
+                                        variant='outline'
+                                        onClick={() => handleSelectRole(role.id)}
+                                      >
+                                        Incluir
+                                      </Button>
+                                    </div>
                                   ))}
-                                  {availableRoles.length === 0 && <p className='text-center text-xs text-muted-foreground pt-4'>Nenhum cargo encontrado.</p>}
-                                  </div>
+                                  {availableRoles.length === 0 && (
+                                    <p className='text-center text-xs text-muted-foreground pt-4'>
+                                      Nenhum cargo encontrado.
+                                    </p>
+                                  )}
+                                </div>
                               </ScrollArea>
-                          </div>
-                          
-                          {/* Coluna da Direita: Selecionados */}
-                          <div className='rounded-md border p-4 space-y-2'>
-                               <h4 className='font-medium text-sm'>Selecionados ({currentSelectedRoles.length})</h4>
-                               <Separator />
-                               <ScrollArea className='h-48'>
-                                   <div className='space-y-2'>
-                                   {currentSelectedRoles.map(role => (
-                                       <div key={role.id} className='flex items-center justify-between text-sm p-2 rounded-md bg-secondary'>
-                                           <span>{role.name} / <span className='text-muted-foreground'>{role.sectorName}</span></span>
-                                           <Button type='button' size='icon' variant='ghost' className='h-6 w-6' onClick={() => handleRemoveRole(role.id)}>
-                                             <X className='h-4 w-4' />
-                                           </Button>
-                                       </div>
-                                   ))}
-                                    {currentSelectedRoles.length === 0 && <p className='text-center text-xs text-muted-foreground pt-4'>Nenhum cargo selecionado.</p>}
-                                   </div>
-                               </ScrollArea>
+                            </div>
+
+                            {/* Coluna da Direita: Selecionados */}
+                            <div className='rounded-md border p-4 space-y-2'>
+                              <h4 className='font-medium text-sm'>
+                                Selecionados ({currentSelectedRoles.length})
+                              </h4>
+                              <Separator />
+                              <ScrollArea className='h-48'>
+                                <div className='space-y-2'>
+                                  {currentSelectedRoles.map((role) => (
+                                    <div
+                                      key={role.id}
+                                      className='flex items-center justify-between text-sm p-2 rounded-md bg-secondary'
+                                    >
+                                      <span>
+                                        {role.name} /{' '}
+                                        <span className='text-muted-foreground'>
+                                          {role.sectorName}
+                                        </span>
+                                      </span>
+                                      <Button
+                                        type='button'
+                                        size='icon'
+                                        variant='ghost'
+                                        className='h-6 w-6'
+                                        onClick={() =>
+                                          handleRemoveRole(role.id)
+                                        }
+                                      >
+                                        <X className='h-4 w-4' />
+                                      </Button>
+                                    </div>
+                                  ))}
+                                  {currentSelectedRoles.length === 0 && (
+                                    <p className='text-center text-xs text-muted-foreground pt-4'>
+                                      Nenhum cargo selecionado.
+                                    </p>
+                                  )}
+                                </div>
+                              </ScrollArea>
+                            </div>
                           </div>
                         </div>
                       </div>
-
-                    </div>
                     </ScrollArea>
                   </form>
                   <DialogFooter>
@@ -371,7 +438,11 @@ export default function GhePage() {
           </div>
         </CardHeader>
         <CardContent>
-          {filteredGhes.length > 0 ? (
+          {isLoading ? (
+            <div className='flex items-center justify-center h-64'>
+              <Loader2 className='h-8 w-8 animate-spin' />
+            </div>
+          ) : filteredGhes && filteredGhes.length > 0 ? (
             <>
               {viewMode === 'list' ? (
                 <Table>
@@ -444,8 +515,8 @@ export default function GhePage() {
                       </CardContent>
                       <CardFooter>
                         <div className='flex items-center text-sm text-muted-foreground'>
-                           <Users className='h-4 w-4 mr-2' />
-                           {ghe.roleIds.length} cargos incluídos
+                          <Users className='h-4 w-4 mr-2' />
+                          {ghe.roleIds.length} cargos incluídos
                         </div>
                       </CardFooter>
                     </Card>
@@ -478,7 +549,7 @@ export default function GhePage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{selectedGhe?.name}</DialogTitle>
-             <div className='pt-2'>
+            <div className='pt-2'>
               <Badge variant='outline'>
                 {getUnitName(selectedGhe?.unitId || '')}
               </Badge>
@@ -491,18 +562,18 @@ export default function GhePage() {
                 {selectedGhe?.description}
               </p>
             </div>
-             {selectedGhe && selectedGhe.roleIds.length > 0 && (
+            {selectedGhe && selectedGhe.roleIds.length > 0 && (
               <div>
                 <h4 className='font-semibold text-sm'>Cargos Incluídos</h4>
                 <div className='flex flex-wrap gap-2 mt-2'>
-                  {selectedGhe.roleIds.map(roleId => {
-                     const role = rolesWithSectors.find(r => r.id === roleId);
-                     if (!role) return null;
-                     return (
-                        <Badge key={roleId} variant="secondary">
-                            {role.name} / {role.sectorName}
-                        </Badge>
-                     )
+                  {selectedGhe.roleIds.map((roleId) => {
+                    const role = rolesWithSectors.find((r) => r.id === roleId)
+                    if (!role) return null
+                    return (
+                      <Badge key={roleId} variant='secondary'>
+                        {role.name} / {role.sectorName}
+                      </Badge>
+                    )
                   })}
                 </div>
               </div>

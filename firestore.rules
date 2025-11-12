@@ -1,3 +1,4 @@
+
 /**
  * @file Firestore Security Rules for AptaFlow
  * @version Prototyping Mode - Data shape is not strictly validated.
@@ -43,7 +44,7 @@ service cloud.firestore {
      * @principle Enforces role-based access control for role management.
      */
     match /clients/{clientId}/roles/{roleId} {
-        allow read, write: if isAdmin();
+        allow read, write: if request.auth != null;
     }
 
     /**
@@ -173,6 +174,17 @@ service cloud.firestore {
       allow update: if isAdmin() && resource != null;
       allow delete: if isAdmin() && resource != null;
     }
+    
+    /**
+     * @description Allows authenticated users to manage GHEs for a client.
+     * @path /clients/{clientId}/ghes/{gheId}
+     * @allow (read, write): Any authenticated user can manage GHEs.
+     * @principle Simplifies GHE management.
+     */
+    match /clients/{clientId}/ghes/{gheId} {
+        allow read, write: if request.auth != null;
+    }
+    
      /**
       * @description Restricts access to admin role documents. A user can read their own role document. Only admins can create/delete/update other admins.
       * @path /roles_admin/{userId}
@@ -205,5 +217,3 @@ service cloud.firestore {
     return request.auth != null && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
   }
 }
-
-    

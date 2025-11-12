@@ -1,6 +1,6 @@
 
 export interface GHE {
-  id: string;
+  id?: string;
   name: string;
   description: string;
   unitId: string;
