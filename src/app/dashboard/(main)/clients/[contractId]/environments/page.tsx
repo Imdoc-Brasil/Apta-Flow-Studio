@@ -39,7 +39,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { initialEnvironmentsData, type Environment } from './data'
+import { type Environment } from './data'
 import { initialSectorsData } from '../sectors/data'
 import {
   Select,
@@ -50,35 +50,61 @@ import {
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 import { Badge } from '@/components/ui/badge'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useParams } from 'next/navigation'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import {
+  useFirestore,
+  useCollection,
+  useMemoFirebase,
+  addDocumentNonBlocking,
+  updateDocumentNonBlocking,
+  deleteDocumentNonBlocking,
+} from '@/firebase'
+import { collection, doc } from 'firebase/firestore'
+import { Loader2 } from 'lucide-react'
 
 export default function EnvironmentsPage() {
+  const params = useParams()
+  const contractId = params.contractId as string
   const searchParams = useSearchParams()
   const urlSectorId = searchParams.get('sectorId')
 
-  const [environments, setEnvironments] = useState(initialEnvironmentsData)
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false)
   const [editingEnvironment, setEditingEnvironment] =
     useState<Environment | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [sectorFilter, setSectorFilter] = useState<string[]>(
-    urlSectorId ? [urlSectorId] : []
-  )
+  const [sectorFilter, setSectorFilter] = useState<string>(urlSectorId || '')
   const { toast } = useToast()
 
+  const firestore = useFirestore()
+
+  // This is a simplified approach for the prototype.
+  // In a real-world app, you might query a root 'environments' collection
+  // or fetch them dynamically based on the selected sector.
+  // For now, we assume a single subcollection path if a filter is active.
+  const environmentsRef = useMemoFirebase(
+    () =>
+      firestore && sectorFilter
+        ? collection(
+            firestore,
+            `clients/${contractId}/sectors/${sectorFilter}/environments`
+          )
+        : null,
+    [firestore, contractId, sectorFilter]
+  )
+
+  const { data: environments, isLoading } =
+    useCollection<Environment>(environmentsRef)
+
   const filteredEnvironments = useMemo(() => {
-    let filtered = environments
-    if (sectorFilter.length > 0) {
-      filtered = filtered.filter((env) => sectorFilter.includes(env.sectorId))
-    }
+    if (!environments) return []
     if (searchTerm) {
-      filtered = filtered.filter((env) =>
+      return environments.filter((env) =>
         env.name.toLowerCase().includes(searchTerm.toLowerCase())
       )
     }
-    return filtered
-  }, [environments, sectorFilter, searchTerm])
+    return environments
+  }, [environments, searchTerm])
 
   const getSectorName = (sectorId: string) => {
     return initialSectorsData.find((s) => s.id === sectorId)?.name || 'N/A'
@@ -86,11 +112,19 @@ export default function EnvironmentsPage() {
 
   const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const formData = new FormData(event.currentTarget)
+    if (!sectorFilter || !firestore) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro',
+        description:
+          'Selecione um setor antes de adicionar um posto de trabalho.',
+      })
+      return
+    }
 
-    const environmentData: Omit<Environment, 'id'> = {
+    const formData = new FormData(event.currentTarget)
+    const environmentData = {
       name: formData.get('name') as string,
-      sectorId: formData.get('sectorId') as string,
       description: formData.get('description') as string,
       activities: formData.get('activities') as string,
       equipment: formData.get('equipment') as string,
@@ -105,26 +139,26 @@ export default function EnvironmentsPage() {
 
     if (editingEnvironment) {
       // Update
-      const updatedEnvironment = { ...editingEnvironment, ...environmentData }
-      setEnvironments((prev) =>
-        prev.map((env) =>
-          env.id === editingEnvironment.id ? updatedEnvironment : env
-        )
+      const docRef = doc(
+        firestore,
+        `clients/${contractId}/sectors/${sectorFilter}/environments`,
+        editingEnvironment.id as string
       )
+      updateDocumentNonBlocking(docRef, environmentData)
       toast({
         title: 'Posto de Trabalho Atualizado!',
-        description: `O posto de trabalho "${updatedEnvironment.name}" foi atualizado.`,
+        description: `O posto de trabalho "${environmentData.name}" foi atualizado.`,
       })
     } else {
       // Create
-      const newEnvironment: Environment = {
-        id: `ENV-${Date.now().toString().slice(-4)}`,
-        ...environmentData,
-      }
-      setEnvironments((prev) => [...prev, newEnvironment])
+      const colRef = collection(
+        firestore,
+        `clients/${contractId}/sectors/${sectorFilter}/environments`
+      )
+      addDocumentNonBlocking(colRef, environmentData)
       toast({
         title: 'Posto de Trabalho Adicionado!',
-        description: `O posto de trabalho "${newEnvironment.name}" foi criado.`,
+        description: `O posto de trabalho "${environmentData.name}" foi criado.`,
       })
     }
 
@@ -133,6 +167,15 @@ export default function EnvironmentsPage() {
   }
 
   const openFormDialog = (environment: Environment | null) => {
+    if (!sectorFilter) {
+      toast({
+        title: 'Selecione um Setor',
+        description:
+          'Por favor, filtre por um setor antes de adicionar ou editar um posto de trabalho.',
+        variant: 'destructive',
+      })
+      return
+    }
     setEditingEnvironment(environment)
     setIsFormDialogOpen(true)
   }
@@ -151,23 +194,8 @@ export default function EnvironmentsPage() {
             />
           </div>
           <div className='space-y-2'>
-            <Label htmlFor='sectorId'>Setor</Label>
-            <Select
-              name='sectorId'
-              defaultValue={environment?.sectorId || urlSectorId || ''}
-              required
-            >
-              <SelectTrigger>
-                <SelectValue placeholder='Selecione o setor' />
-              </SelectTrigger>
-              <SelectContent>
-                {initialSectorsData.map((sector) => (
-                  <SelectItem key={sector.id} value={sector.id}>
-                    {sector.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Setor</Label>
+            <Input value={getSectorName(sectorFilter)} disabled />
           </div>
         </div>
 
@@ -267,54 +295,35 @@ export default function EnvironmentsPage() {
           </CardDescription>
           <div className='flex items-center justify-between pt-4'>
             <div className='flex items-center gap-2'>
-              <div className='relative w-full max-w-sm'>
+              <div className='relative w-full max-w-xs'>
                 <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
                 <Input
                   type='search'
-                  placeholder='Buscar por nome do posto de trabalho...'
+                  placeholder='Buscar por nome...'
                   className='pl-8'
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    className='h-10 gap-1 text-sm'
-                  >
-                    <Filter className='h-3.5 w-3.5' />
-                    <span className='sr-only sm:not-sr-only'>
-                      Filtrar por Setor
-                    </span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align='end'>
-                  <DropdownMenuLabel>Filtrar por Setor</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
+              <Select value={sectorFilter} onValueChange={setSectorFilter}>
+                <SelectTrigger className='w-[280px]'>
+                  <SelectValue placeholder='Filtrar por Setor...' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value=''>Todos os Setores</SelectItem>
                   {initialSectorsData.map((sector) => (
-                    <DropdownMenuCheckboxItem
-                      key={sector.id}
-                      checked={sectorFilter.includes(sector.id)}
-                      onCheckedChange={(checked) => {
-                        setSectorFilter((prev) =>
-                          checked
-                            ? [...prev, sector.id]
-                            : prev.filter((id) => id !== sector.id)
-                        )
-                      }}
-                    >
+                    <SelectItem key={sector.id} value={sector.id}>
                       {sector.name}
-                    </DropdownMenuCheckboxItem>
+                    </SelectItem>
                   ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+                </SelectContent>
+              </Select>
             </div>
             <Button
               size='sm'
               className='h-8 gap-1'
               onClick={() => openFormDialog(null)}
+              disabled={!sectorFilter}
             >
               <PlusCircle className='h-3.5 w-3.5' />
               <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
@@ -324,45 +333,56 @@ export default function EnvironmentsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Posto de Trabalho</TableHead>
-                <TableHead className='hidden sm:table-cell'>Setor</TableHead>
-                <TableHead>Atividades</TableHead>
-                <TableHead>
-                  <span className='sr-only'>Ações</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredEnvironments.map((env) => (
-                <TableRow
-                  key={env.id}
-                  onClick={() => openFormDialog(env)}
-                  className='cursor-pointer'
-                >
-                  <TableCell className='font-medium'>{env.name}</TableCell>
-                  <TableCell className='hidden sm:table-cell'>
-                    <Badge variant='outline'>
-                      {getSectorName(env.sectorId)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <p className='line-clamp-1 text-sm text-muted-foreground'>
-                      {env.activities}
-                    </p>
-                  </TableCell>
-                  <TableCell>
-                    <Button aria-haspopup='true' size='icon' variant='ghost'>
-                      <MoreHorizontal className='h-4 w-4' />
-                      <span className='sr-only'>Alternar menu</span>
-                    </Button>
-                  </TableCell>
+          {isLoading ? (
+            <div className='flex justify-center items-center h-48'>
+              <Loader2 className='h-8 w-8 animate-spin' />
+            </div>
+          ) : !sectorFilter ? (
+            <div className='text-center py-10 text-muted-foreground'>
+              <p>Por favor, selecione um setor para ver os postos de trabalho.</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Posto de Trabalho</TableHead>
+                  <TableHead>Atividades</TableHead>
+                  <TableHead>
+                    <span className='sr-only'>Ações</span>
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredEnvironments.map((env) => (
+                  <TableRow
+                    key={env.id}
+                    onClick={() => openFormDialog(env)}
+                    className='cursor-pointer'
+                  >
+                    <TableCell className='font-medium'>{env.name}</TableCell>
+                    <TableCell>
+                      <p className='line-clamp-1 text-sm text-muted-foreground'>
+                        {env.activities}
+                      </p>
+                    </TableCell>
+                    <TableCell>
+                      <Button aria-haspopup='true' size='icon' variant='ghost'>
+                        <MoreHorizontal className='h-4 w-4' />
+                        <span className='sr-only'>Alternar menu</span>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                 {filteredEnvironments.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={3} className="h-24 text-center">
+                      Nenhum posto de trabalho encontrado para este setor.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
@@ -376,7 +396,8 @@ export default function EnvironmentsPage() {
               {editingEnvironment
                 ? 'Atualize os detalhes'
                 : 'Preencha os detalhes'}{' '}
-              para este posto de trabalho.
+              para este posto de trabalho no setor{' '}
+              <strong>{getSectorName(sectorFilter)}</strong>.
             </DialogDescription>
           </DialogHeader>
           <form id='environment-form' onSubmit={handleFormSubmit}>
@@ -393,7 +414,9 @@ export default function EnvironmentsPage() {
               Cancelar
             </Button>
             <Button type='submit' form='environment-form'>
-              {editingEnvironment ? 'Salvar Alterações' : 'Salvar Posto de Trabalho'}
+              {editingEnvironment
+                ? 'Salvar Alterações'
+                : 'Salvar Posto de Trabalho'}
             </Button>
           </DialogFooter>
         </DialogContent>
