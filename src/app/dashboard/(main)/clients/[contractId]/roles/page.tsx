@@ -38,9 +38,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { type Role } from './data'
-import { initialSectorsData, type Sector } from '../sectors/data'
-import { initialUnitsData, type Unit } from '../units/data'
-import { initialEnvironmentsData } from '../environments/data'
+import { type Sector } from '../sectors/data'
+import { type Unit } from '../units/data'
+import { type Environment } from '../environments/data'
 import {
   Select,
   SelectContent,
@@ -67,37 +67,87 @@ import {
   useCollection,
   useMemoFirebase,
   addDocumentNonBlocking,
+  updateDocumentNonBlocking,
 } from '@/firebase'
-import { collection, doc } from 'firebase/firestore'
+import { collection, doc, getDocs } from 'firebase/firestore'
 
 export default function RolesPage() {
   const params = useParams()
   const contractId = params.contractId as string
   const firestore = useFirestore()
+  const { toast } = useToast()
+  const searchParams = useSearchParams()
+  const urlSectorId = searchParams.get('sectorId')
+
+  // Data fetching from Firestore
   const rolesRef = useMemoFirebase(
     () => (firestore ? collection(firestore, `clients/${contractId}/roles`) : null),
     [firestore, contractId]
   )
-  const { data: roles, isLoading } = useCollection<Role>(rolesRef)
+  const unitsRef = useMemoFirebase(
+    () =>
+      firestore ? collection(firestore, `clients/${contractId}/units`) : null,
+    [firestore, contractId]
+  )
+  const { data: roles, isLoading: areRolesLoading } = useCollection<Role>(rolesRef)
+  const { data: units, isLoading: areUnitsLoading } = useCollection<Unit>(unitsRef)
+
+  const [allSectors, setAllSectors] = useState<Sector[]>([])
+  const [areSectorsLoading, setAreSectorsLoading] = useState(true)
+  const [allEnvironments, setAllEnvironments] = useState<Environment[]>([])
+  const [areEnvironmentsLoading, setAreEnvironmentsLoading] = useState(true)
+
+  // Fetch all sectors from all units
+  useEffect(() => {
+    if (units && firestore) {
+      setAreSectorsLoading(true)
+      const fetchAllData = async () => {
+        const sectorsPromises = units.map((unit) =>
+          getDocs(collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`))
+        )
+        const sectorsSnapshots = await Promise.all(sectorsPromises)
+        const sectorsData = sectorsSnapshots.flatMap((snapshot) =>
+          snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Sector))
+        )
+        setAllSectors(sectorsData)
+        setAreSectorsLoading(false)
+
+        setAreEnvironmentsLoading(true)
+        const environmentsPromises = sectorsData.flatMap(sector =>
+          units.map(unit => getDocs(collection(firestore, `clients/${contractId}/units/${unit.id}/sectors/${sector.id}/environments`)))
+        );
+
+        const environmentsSnapshots = await Promise.all(environmentsPromises.flat());
+        const environmentsData = environmentsSnapshots.flatMap(snapshot =>
+          snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Environment))
+        );
+        setAllEnvironments(environmentsData);
+        setAreEnvironmentsLoading(false)
+
+      }
+      fetchAllData()
+    } else if (!areUnitsLoading) {
+      setAreSectorsLoading(false)
+      setAreEnvironmentsLoading(false)
+    }
+  }, [units, firestore, contractId, areUnitsLoading])
+
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [formActivities, setFormActivities] = useState<string[]>([])
   const [activityInput, setActivityInput] = useState('')
-  const { toast } = useToast()
-  const searchParams = useSearchParams()
-  const urlSectorId = searchParams.get('sectorId')
 
   const [sectorFilter, setSectorFilter] = useState<string[]>(
     urlSectorId ? [urlSectorId] : []
   )
 
   const sectorsWithUnit = useMemo(() => {
-    return initialSectorsData.map((sector) => {
-      const unit = initialUnitsData.find((u) => u.id === sector.unitId)
+    return allSectors.map((sector) => {
+      const unit = units?.find((u) => u.id === sector.unitId)
       return { ...sector, unitName: unit?.name || 'N/A' }
     })
-  }, [])
+  }, [allSectors, units])
 
   const getSectorInfo = (sectorId: string) => {
     return sectorsWithUnit.find((s) => s.id === sectorId)
@@ -140,7 +190,7 @@ export default function RolesPage() {
     if (!rolesRef) return
 
     const formData = new FormData(event.currentTarget)
-    const additionalWorkstationIds = initialEnvironmentsData
+    const additionalWorkstationIds = allEnvironments
       .map((env) => env.id)
       .filter((id) => formData.get(`additional-${id}`) === 'on')
 
@@ -155,8 +205,8 @@ export default function RolesPage() {
       additionalWorkstationIds,
       requiredExams: formData.get('requiredExams') as string,
     }
-    
-    addDocumentNonBlocking(rolesRef, newRoleData);
+
+    addDocumentNonBlocking(rolesRef, newRoleData)
 
     toast({
       title: 'Cargo Adicionado!',
@@ -165,6 +215,8 @@ export default function RolesPage() {
     setIsAddDialogOpen(false)
     setFormActivities([])
   }
+
+  const isLoading = areRolesLoading || areUnitsLoading || areSectorsLoading || areEnvironmentsLoading;
 
   return (
     <Card>
@@ -270,7 +322,7 @@ export default function RolesPage() {
                           <SelectValue placeholder='Selecione o posto de trabalho principal (opcional)' />
                         </SelectTrigger>
                         <SelectContent>
-                          {initialEnvironmentsData.map((env) => (
+                          {allEnvironments.map((env) => (
                             <SelectItem key={env.id} value={env.id}>
                               {env.name}
                             </SelectItem>
@@ -286,7 +338,7 @@ export default function RolesPage() {
                       </Label>
                       <ScrollArea className='h-40 rounded-md border p-4'>
                         <div className='space-y-2'>
-                          {initialEnvironmentsData.map((env) => (
+                          {allEnvironments.map((env) => (
                             <div
                               key={`additional-${env.id}`}
                               className='flex items-center gap-2'
@@ -395,44 +447,44 @@ export default function RolesPage() {
             <Loader2 className='h-8 w-8 animate-spin' />
           </div>
         ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Cargo</TableHead>
-              <TableHead>Setor</TableHead>
-              <TableHead className='hidden md:table-cell'>Unidade</TableHead>
-              <TableHead className='hidden sm:table-cell'>CBO</TableHead>
-              <TableHead>
-                <span className='sr-only'>Ações</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredRoles.map((role) => {
-              const sectorInfo = getSectorInfo(role.sectorId)
-              return (
-                <TableRow key={role.id}>
-                  <TableCell className='font-medium'>{role.name}</TableCell>
-                  <TableCell>{sectorInfo?.name || 'N/A'}</TableCell>
-                  <TableCell className='hidden md:table-cell'>
-                    <Badge variant='outline'>
-                      {sectorInfo?.unitName || 'N/A'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className='hidden sm:table-cell'>
-                    {role.cbo}
-                  </TableCell>
-                  <TableCell>
-                    <Button aria-haspopup='true' size='icon' variant='ghost'>
-                      <MoreHorizontal className='h-4 w-4' />
-                      <span className='sr-only'>Alternar menu</span>
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              )
-            })}
-          </TableBody>
-        </Table>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Cargo</TableHead>
+                <TableHead>Setor</TableHead>
+                <TableHead className='hidden md:table-cell'>Unidade</TableHead>
+                <TableHead className='hidden sm:table-cell'>CBO</TableHead>
+                <TableHead>
+                  <span className='sr-only'>Ações</span>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredRoles.map((role) => {
+                const sectorInfo = getSectorInfo(role.sectorId)
+                return (
+                  <TableRow key={role.id}>
+                    <TableCell className='font-medium'>{role.name}</TableCell>
+                    <TableCell>{sectorInfo?.name || 'N/A'}</TableCell>
+                    <TableCell className='hidden md:table-cell'>
+                      <Badge variant='outline'>
+                        {sectorInfo?.unitName || 'N/A'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className='hidden sm:table-cell'>
+                      {role.cbo}
+                    </TableCell>
+                    <TableCell>
+                      <Button aria-haspopup='true' size='icon' variant='ghost'>
+                        <MoreHorizontal className='h-4 w-4' />
+                        <span className='sr-only'>Alternar menu</span>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
         )}
       </CardContent>
     </Card>
