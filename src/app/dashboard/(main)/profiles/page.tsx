@@ -83,6 +83,8 @@ type Module =
   | 'health.exams'
   | 'health.reports'
   | 'performance'
+  | 'processes'
+  | 'analytics'
 
 export type Permission = `${Action}:${Module}`
 
@@ -122,6 +124,8 @@ export const permissionModules: PermissionModule[] = [
     ],
   },
   { id: 'performance', name: 'Desempenho' },
+  { id: 'processes', name: 'Processos' },
+  { id: 'analytics', name: 'Analytics' },
 ]
 
 export const permissionActions: { id: Action; name: string }[] = [
@@ -141,23 +145,6 @@ interface Profile {
   createdAt?: string
   permissions?: Permission[]
 }
-
-export const initialProfiles: Profile[] = [
-  {
-    id: 'cliente',
-    name: 'Cliente',
-    code: 'CLIENT',
-    createdBy: 'sistema',
-    createdAt: new Date().toISOString(),
-    permissions: [
-      'view:clients.info',
-      'view:clients.tickets',
-      'create:clients.tickets',
-      'view:clients.structure',
-      'view:clients.sst',
-    ],
-  },
-]
 
 function ClientSideDate({ dateString }: { dateString?: string }) {
   const [formattedDate, setFormattedDate] = useState('')
@@ -197,25 +184,13 @@ export default function ProfilesPage() {
     () => (firestore ? collection(firestore, 'profiles') : null),
     [firestore]
   )
-  const { data: firestoreProfiles, isLoading: areProfilesLoading } = useCollection<Profile>(profilesRef)
+  const { data: profiles, isLoading: areProfilesLoading } = useCollection<Profile>(profilesRef)
 
   const staffsRef = useMemoFirebase(
     () => (firestore ? collection(firestore, 'staffs') : null),
     [firestore]
   )
   const { data: staffs } = useCollection<Staff>(staffsRef)
-
-  const profiles = useMemo(() => {
-    const combined = [...initialProfiles]
-    if (firestoreProfiles) {
-      firestoreProfiles.forEach(fp => {
-        if (!combined.some(p => p.id === fp.id)) {
-          combined.push(fp)
-        }
-      })
-    }
-    return combined
-  }, [firestoreProfiles])
 
   const staffCountByProfile = useMemo(() => {
     const counts: { [key: string]: number } = {}
@@ -464,7 +439,7 @@ export default function ProfilesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {profiles.map((profile) => (
+                {profiles?.map((profile) => (
                   <TableRow key={profile.id}>
                     <TableCell className='font-medium'>{profile.name}</TableCell>
                     <TableCell>{profile.code}</TableCell>
@@ -664,4 +639,4 @@ export default function ProfilesPage() {
   )
 }
 
-    
+      

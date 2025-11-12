@@ -72,7 +72,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { initialProfiles } from '@/app/dashboard/(main)/profiles/page'
 import {
   useCollection,
   useFirestore,
@@ -130,6 +129,11 @@ export interface Staff {
   clientIds?: string[]
 }
 
+interface Profile {
+  id: string
+  name: string
+}
+
 const staffFormSchema = z.object({
   name: z.string().min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),
   email: z.string().email({ message: 'Por favor, insira um email válido.' }),
@@ -157,12 +161,7 @@ export default function StaffsPage() {
   const { data: clientsData, isLoading: areClientsLoading } = useCollection<Client>(clientsRef)
   
   const profilesRef = useMemoFirebase(() => (firestore ? collection(firestore, 'profiles') : null), [firestore]);
-  const { data: profilesData, isLoading: areProfilesLoading } = useCollection(profilesRef);
-
-  const profiles = useMemo(() => {
-    return [...initialProfiles, ...(profilesData || [])];
-  }, [profilesData]);
-
+  const { data: profiles, isLoading: areProfilesLoading } = useCollection<Profile>(profilesRef);
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
@@ -314,7 +313,7 @@ export default function StaffsPage() {
   }
 
   const getProfileName = (perfilId: string) => {
-    return profiles.find((p) => p.id === perfilId)?.name || 'N/A'
+    return profiles?.find((p) => p.id === perfilId)?.name || 'N/A'
   }
   
   const getClientName = (contractId: string) => {
@@ -443,7 +442,7 @@ export default function StaffsPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {profiles.map((profile) => (
+                        {profiles?.map((profile) => (
                           <SelectItem key={profile.id} value={profile.id}>
                             {profile.name}
                           </SelectItem>
@@ -939,4 +938,4 @@ export default function StaffsPage() {
 }
     
 
-    
+      

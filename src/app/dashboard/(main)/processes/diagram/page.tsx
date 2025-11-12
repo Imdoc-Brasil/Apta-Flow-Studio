@@ -1,3 +1,4 @@
+
 'use client'
 
 import React, { useCallback, useState, useEffect } from 'react'
@@ -208,12 +209,6 @@ function DiagramCanvas() {
   const { toast } = useToast()
   const { project } = useReactFlow()
 
-  const onConnect = useCallback(
-    (params: Edge | Connection) =>
-      setEdges((eds) => addEdge({ ...params, type: 'smoothstep' }, eds)),
-    [setEdges]
-  )
-  
   const addNodeFromSource = useCallback((sourceNodeId: string) => {
     const sourceNode = nodes.find((n) => n.id === sourceNodeId);
     if (!sourceNode) return;
@@ -241,6 +236,12 @@ function DiagramCanvas() {
     }
     setEdges((eds) => addEdge(newEdge, eds));
   }, [nodes, setNodes, setEdges]);
+
+  const onConnect = useCallback(
+    (params: Edge | Connection) =>
+      setEdges((eds) => addEdge({ ...params, type: 'smoothstep', markerEnd: { type: 'arrowclosed' } }, eds)),
+    [setEdges]
+  )
   
   const createNode = useCallback(
     (type: 'custom' | 'decision', x?: number, y?: number) => {
@@ -438,3 +439,5 @@ export default function ProcessDiagramPage() {
     </ReactFlowProvider>
   )
 }
+
+      
