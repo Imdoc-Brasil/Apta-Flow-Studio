@@ -24,6 +24,7 @@ import {
   HeartPulse,
   Ticket,
   ArrowLeft,
+  LayoutDashboard
 } from 'lucide-react'
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader } from '@/components/ui/sidebar'
 import {
@@ -43,7 +44,7 @@ export function ClientSidebar() {
   const basePath = `/dashboard/clients/${contractId}`
 
   const mainNavItems = [
-    { href: `${basePath}/info`, label: 'Informações', icon: Info },
+    { href: `${basePath}`, label: 'Painel do Cliente', icon: LayoutDashboard },
     { href: `${basePath}/tickets`, label: 'Meus Chamados', icon: Ticket },
   ]
 
@@ -98,17 +99,12 @@ export function ClientSidebar() {
   ]
 
   const getIsActive = (href: string) => {
-    // Exact match for info page, or if we are at the base client path
-    if (href.endsWith('/info')) {
-      return pathname === href || pathname === basePath
+    // Exact match for the base client path (dashboard)
+    if (href === basePath) {
+      return pathname === href
     }
     // For other items, check if the path starts with the href.
-    // This handles nested routes like /pgr/inventory correctly.
-    if (href !== basePath && href !== `${basePath}/info`) {
-      return pathname.startsWith(href)
-    }
-
-    return pathname === href
+    return pathname.startsWith(href)
   }
 
   const isSstActive = sstNavItems.some((item) => getIsActive(item.href))

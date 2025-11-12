@@ -1,33 +1,18 @@
-
 'use client'
 
-import {
-  ArrowLeft,
-  FileText,
-  Mail,
-  MapPin,
-  Phone,
-  User,
-  Building,
-  ArrowRight,
-} from 'lucide-react'
+import { Mail, MapPin, Phone, User, Building } from 'lucide-react'
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
   CardDescription,
-  CardFooter,
 } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import Link from 'next/link'
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase'
-import { doc, collection } from 'firebase/firestore'
+import { doc } from 'firebase/firestore'
 import { useParams } from 'next/navigation'
 import type { Client } from '../../data'
-import type { Unit } from '../units/data'
 import { Loader2 } from 'lucide-react'
-import { useCollection } from '@/firebase/firestore/use-collection'
 
 export default function InfoDashboard() {
   const params = useParams()
@@ -39,18 +24,9 @@ export default function InfoDashboard() {
     [firestore, contractId]
   )
 
-  const unitsRef = useMemoFirebase(
-    () =>
-      firestore
-        ? collection(firestore, 'clients', contractId, 'units')
-        : null,
-    [firestore, contractId]
-  )
-
   const { data: client, isLoading: isClientLoading } = useDoc<Client>(clientRef)
-  const { data: units, isLoading: areUnitsLoading } = useCollection<Unit>(unitsRef)
 
-  if (isClientLoading || areUnitsLoading) {
+  if (isClientLoading) {
     return (
       <div className='flex items-center justify-center h-64'>
         <Loader2 className='h-8 w-8 animate-spin' />
@@ -59,22 +35,9 @@ export default function InfoDashboard() {
   }
 
   if (!client) {
-    return (
-      <div className='flex flex-col items-center justify-center h-full text-center'>
-        <h2 className='text-2xl font-bold'>Cliente não encontrado</h2>
-        <p className='text-muted-foreground'>
-          O cliente que você está procurando não existe.
-        </p>
-        <Button asChild className='mt-4'>
-          <Link href='/dashboard/clients'>
-            <ArrowLeft className='mr-2 h-4 w-4' />
-            Voltar para Clientes
-          </Link>
-        </Button>
-      </div>
-    )
+    return <p>Cliente não encontrado.</p>
   }
-
+  
   const riskLevelMap = {
     '1': { label: 'Muito Baixo', color: 'bg-green-500' },
     '2': { label: 'Baixo', color: 'bg-blue-500' },
@@ -83,7 +46,7 @@ export default function InfoDashboard() {
   } as const
 
   const riskInfo =
-    riskLevelMap[client.riskLevel as keyof typeof riskLevelMap] || {
+    riskLevelMap[(client.riskLevel || '1') as keyof typeof riskLevelMap] || {
       label: 'N/A',
       color: 'bg-gray-400',
     }
@@ -92,9 +55,9 @@ export default function InfoDashboard() {
     <div className='grid flex-1 auto-rows-max gap-8'>
       <Card>
         <CardHeader>
-          <CardTitle>Painel do Cliente</CardTitle>
+          <CardTitle>Informações Gerais</CardTitle>
           <CardDescription>
-            Informações detalhadas sobre o cliente, contrato e responsável.
+            Detalhes cadastrais, fiscais e de contato do cliente.
           </CardDescription>
         </CardHeader>
         <CardContent className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
@@ -102,13 +65,17 @@ export default function InfoDashboard() {
             <p className='text-sm font-medium text-muted-foreground'>CNPJ</p>
             <p className='text-sm font-semibold'>{client.cnpj}</p>
           </div>
+           <div className='space-y-1'>
+            <p className='text-sm font-medium text-muted-foreground'>Nome Fantasia</p>
+            <p className='text-sm font-semibold'>{client.tradeName || client.name}</p>
+          </div>
           <div className='space-y-1'>
-            <p className='text-sm font-medium text-muted-foreground'>CNAE</p>
+            <p className='text-sm font-medium text-muted-foreground'>CNAE Principal</p>
             <p className='text-sm font-semibold'>{client.cnae}</p>
           </div>
           <div className='space-y-1'>
             <p className='text-sm font-medium text-muted-foreground'>
-              Grau de Risco
+              Grau de Risco (NR-4)
             </p>
             <div className='flex items-center gap-2'>
               <span className={`h-3 w-3 rounded-full ${riskInfo.color}`} />
@@ -117,13 +84,7 @@ export default function InfoDashboard() {
               </p>
             </div>
           </div>
-          <div className='space-y-1'>
-            <p className='text-sm font-medium text-muted-foreground'>Email</p>
-            <div className='flex items-center gap-2 text-sm font-semibold'>
-              <Mail className='h-4 w-4 text-muted-foreground' /> {client.contractResponsibleEmail}
-            </div>
-          </div>
-          <div className='space-y-1 col-span-full'>
+            <div className='space-y-1 col-span-full'>
             <p className='text-sm font-medium text-muted-foreground'>
               Endereço
             </p>
@@ -132,9 +93,17 @@ export default function InfoDashboard() {
               {client.address}
             </div>
           </div>
-          <div className='space-y-4'>
+        </CardContent>
+      </Card>
+      
+       <Card>
+        <CardHeader>
+          <CardTitle>Responsáveis</CardTitle>
+        </CardHeader>
+        <CardContent className='grid gap-6 md:grid-cols-2'>
+            <div className='space-y-4'>
             <p className='text-sm font-medium text-muted-foreground'>
-              Responsável
+              Responsável pelo Contrato
             </p>
             <div className='flex items-center gap-4'>
               <User className='h-8 w-8 text-muted-foreground' />
@@ -149,51 +118,24 @@ export default function InfoDashboard() {
               <Phone className='h-4 w-4 text-muted-foreground' />
               <span>{client.contractResponsiblePhone}</span>
             </div>
+             <div className='flex items-center gap-2 text-sm'>
+              <Mail className='h-4 w-4 text-muted-foreground' />
+              <span>{client.contractResponsibleEmail}</span>
+            </div>
           </div>
-          <div className='space-y-4'>
+            <div className='space-y-4'>
             <p className='text-sm font-medium text-muted-foreground'>
-              Contrato
+              Responsável Administrativo
             </p>
-            <div className='flex items-center gap-2'>
-              <FileText className='h-5 w-5 text-muted-foreground' />
-              <h4 className='font-semibold'>Detalhes</h4>
+            <div className='flex items-center gap-4'>
+              <User className='h-8 w-8 text-muted-foreground' />
+              <div>
+                <p className='font-semibold'>{client.adminResponsibleName}</p>
+                 <p className='text-sm text-muted-foreground'>
+                  CPF: {client.adminResponsibleCPF}
+                </p>
+              </div>
             </div>
-            <div className='pl-7 space-y-1'>
-              <p className='text-sm'>
-                <span className='font-medium text-muted-foreground'>ID:</span>{' '}
-                {client.id}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Unidades</CardTitle>
-          <CardDescription>
-            Gerencie o PGR para cada unidade da empresa.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className='grid gap-4 md:grid-cols-2'>
-            {units?.map((unit) => (
-              <Card key={unit.id}>
-                <CardHeader>
-                  <CardTitle className='text-lg'>{unit.name}</CardTitle>
-                  <CardDescription>{unit.propertyInfo.address}</CardDescription>
-                </CardHeader>
-                <CardFooter>
-                  <Button asChild variant='outline'>
-                    <Link href={`/dashboard/clients/${contractId}/pgr`}>
-                      Gerenciar PGR <ArrowRight className='ml-2 h-4 w-4' />
-                    </Link>
-                  </Button>
-                </CardFooter>
-              </Card>
-            ))}
-            {units?.length === 0 && (
-              <p className='text-sm text-muted-foreground'>Nenhuma unidade cadastrada.</p>
-            )}
           </div>
         </CardContent>
       </Card>
