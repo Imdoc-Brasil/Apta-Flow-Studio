@@ -220,29 +220,22 @@ export default function ClientsPage() {
 
   const isLoading = isStaffLoading || areClientsLoading
 
-  const clientsToDisplay = useMemo(() => {
-    if (isLoading || !allClients || !staffProfile) {
-      return null // Return null while loading to show spinner
-    }
-
+  let clientsToDisplay: Client[] | null = null
+  if (!isLoading && allClients && staffProfile) {
     if (staffProfile.perfilId === 'super_admin') {
-      return allClients
-    }
-
-    if (staffProfile.perfilId === 'cliente' && staffProfile.contractId) {
-      return allClients.filter(
+      clientsToDisplay = allClients
+    } else if (staffProfile.perfilId === 'cliente' && staffProfile.contractId) {
+      clientsToDisplay = allClients.filter(
         (client) => client.id === staffProfile?.contractId
       )
-    }
-
-    if (staffProfile.clientIds && staffProfile.clientIds.length > 0) {
-      return allClients.filter((client) =>
+    } else if (staffProfile.clientIds && staffProfile.clientIds.length > 0) {
+      clientsToDisplay = allClients.filter((client) =>
         staffProfile.clientIds?.includes(client.id)
       )
+    } else {
+      clientsToDisplay = []
     }
-
-    return [] // Default to empty list if no conditions are met
-  }, [isLoading, allClients, staffProfile])
+  }
 
   return (
     <Card>
@@ -699,3 +692,5 @@ export default function ClientsPage() {
     </Card>
   )
 }
+
+    
