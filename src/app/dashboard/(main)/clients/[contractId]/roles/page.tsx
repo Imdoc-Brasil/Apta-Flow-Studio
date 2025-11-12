@@ -7,6 +7,7 @@ import {
   Search,
   Trash2,
   Filter,
+  Loader2,
 } from 'lucide-react'
 import {
   Card,
@@ -36,7 +37,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { initialRolesData, type Role } from './data'
+import { type Role } from './data'
 import { initialSectorsData, type Sector } from '../sectors/data'
 import { initialUnitsData, type Unit } from '../units/data'
 import { initialEnvironmentsData } from '../environments/data'
@@ -52,8 +53,7 @@ import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Separator } from '@/components/ui/separator'
-import { initialActivitiesData } from '../activities/data'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useParams } from 'next/navigation'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,9 +62,24 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  useFirestore,
+  useCollection,
+  useMemoFirebase,
+  addDocumentNonBlocking,
+} from '@/firebase'
+import { collection, doc } from 'firebase/firestore'
 
 export default function RolesPage() {
-  const [roles, setRoles] = useState(initialRolesData)
+  const params = useParams()
+  const contractId = params.contractId as string
+  const firestore = useFirestore()
+  const rolesRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, `clients/${contractId}/roles`) : null),
+    [firestore, contractId]
+  )
+  const { data: roles, isLoading } = useCollection<Role>(rolesRef)
+
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [formActivities, setFormActivities] = useState<string[]>([])
@@ -89,6 +104,7 @@ export default function RolesPage() {
   }
 
   const filteredRoles = useMemo(() => {
+    if (!roles) return []
     let filtered = roles
     if (sectorFilter.length > 0) {
       filtered = filtered.filter((role) => sectorFilter.includes(role.sectorId))
@@ -121,13 +137,14 @@ export default function RolesPage() {
 
   const handleAddRole = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!rolesRef) return
+
     const formData = new FormData(event.currentTarget)
     const additionalWorkstationIds = initialEnvironmentsData
       .map((env) => env.id)
       .filter((id) => formData.get(`additional-${id}`) === 'on')
 
-    const newRole: Role = {
-      id: `ROLE-${Date.now().toString().slice(-4)}`,
+    const newRoleData: Omit<Role, 'id'> = {
       name: formData.get('name') as string,
       cbo: formData.get('cbo') as string,
       sectorId: formData.get('sectorId') as string,
@@ -138,13 +155,15 @@ export default function RolesPage() {
       additionalWorkstationIds,
       requiredExams: formData.get('requiredExams') as string,
     }
-    setRoles((prev) => [...prev, newRole])
-    setIsAddDialogOpen(false)
-    setFormActivities([])
+    
+    addDocumentNonBlocking(rolesRef, newRoleData);
+
     toast({
       title: 'Cargo Adicionado!',
-      description: `O cargo "${newRole.name}" foi adicionado.`,
+      description: `O cargo "${newRoleData.name}" foi adicionado.`,
     })
+    setIsAddDialogOpen(false)
+    setFormActivities([])
   }
 
   return (
@@ -371,6 +390,11 @@ export default function RolesPage() {
         </div>
       </CardHeader>
       <CardContent>
+        {isLoading ? (
+          <div className='flex items-center justify-center h-64'>
+            <Loader2 className='h-8 w-8 animate-spin' />
+          </div>
+        ) : (
         <Table>
           <TableHeader>
             <TableRow>
@@ -409,6 +433,7 @@ export default function RolesPage() {
             })}
           </TableBody>
         </Table>
+        )}
       </CardContent>
     </Card>
   )

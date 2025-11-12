@@ -35,6 +35,16 @@ service cloud.firestore {
       allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
+    
+    /**
+     * @description Allows access to roles within a client.
+     * @path /clients/{clientId}/roles/{roleId}
+     * @allow (read, write): Only admins can manage roles.
+     * @principle Enforces role-based access control for role management.
+     */
+    match /clients/{clientId}/roles/{roleId} {
+        allow read, write: if isAdmin();
+    }
 
     /**
      * @description Allows access to employee data based on role.
