@@ -112,7 +112,7 @@ export default function SectorsPage() {
           try {
             const sectorsSnap = await getDocs(sectorsColRef);
             sectorsSnap.forEach(doc => {
-              sectorsData.push({ id: doc.id, ...doc.data() } as Sector);
+              sectorsData.push({ id: doc.id, ...doc.data(), unitId: unit.id } as Sector);
             });
           } catch (error) {
             console.error(`Error fetching sectors for unit ${unit.id}:`, error);
@@ -256,7 +256,7 @@ export default function SectorsPage() {
                 onOpenChange={setIsAddSectorDialogOpen}
               >
                 <DialogTrigger asChild>
-                  <Button size='sm' className='h-8 gap-1'>
+                  <Button size='sm' className='h-10 gap-1'>
                     <PlusCircle className='h-3.5 w-3.5' />
                     <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
                       Adicionar Setor
@@ -329,118 +329,117 @@ export default function SectorsPage() {
              <div className='flex items-center justify-center h-64'>
                 <Loader2 className='h-8 w-8 animate-spin' />
               </div>
-          ) : viewMode === 'card' ? (
-            <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
-              {filteredSectors.map((sector) => (
-                <Card
-                  key={sector.id}
-                  onClick={() =>
-                    router.push(
-                      `/dashboard/clients/${contractId}/sectors/${sector.id}?unitId=${sector.unitId}`
-                    )
-                  }
-                  className='flex flex-col h-full hover:shadow-md transition-shadow cursor-pointer'
-                >
-                  <CardHeader>
-                    <CardTitle>{sector.name}</CardTitle>
-                    <CardDescription>
-                      <Badge variant='outline'>
-                        {getUnitName(sector.unitId)}
-                      </Badge>
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className='flex-grow'>
-                    <p className='text-sm text-muted-foreground line-clamp-2'>
-                      {sector.description}
-                    </p>
-                  </CardContent>
-                  <CardFooter className='flex-col lg:flex-row items-center gap-2'>
-                    <Button
-                      asChild
-                      className='w-full'
-                      variant='outline'
-                      size='sm'
+          ) : filteredSectors.length > 0 ? (
+            <>
+              {viewMode === 'card' ? (
+                <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
+                  {filteredSectors.map((sector) => (
+                    <Card
+                      key={sector.id}
+                      onClick={() =>
+                        router.push(
+                          `/dashboard/clients/${contractId}/sectors/${sector.id}?unitId=${sector.unitId}`
+                        )
+                      }
+                      className='flex flex-col h-full hover:shadow-md transition-shadow cursor-pointer'
                     >
-                      <Link
-                        href={`/dashboard/clients/${contractId}/roles?sectorId=${sector.id}`}
-                        onClick={(e) => e.stopPropagation()}
+                      <CardHeader>
+                        <CardTitle>{sector.name}</CardTitle>
+                        <CardDescription>
+                          <Badge variant='outline'>
+                            {getUnitName(sector.unitId)}
+                          </Badge>
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className='flex-grow'>
+                        <p className='text-sm text-muted-foreground line-clamp-2'>
+                          {sector.description}
+                        </p>
+                      </CardContent>
+                      <CardFooter className='flex-col lg:flex-row items-center gap-2'>
+                        <Button
+                          asChild
+                          className='w-full'
+                          variant='outline'
+                          size='sm'
+                        >
+                          <Link
+                            href={`/dashboard/clients/${contractId}/roles?sectorId=${sector.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            Ver Cargos <ArrowRight className='ml-2 h-4 w-4' />
+                          </Link>
+                        </Button>
+                        <Button
+                          asChild
+                          className='w-full'
+                          variant='outline'
+                          size='sm'
+                        >
+                          <Link
+                            href={`/dashboard/clients/${contractId}/environments?unitId=${sector.unitId}&sectorId=${sector.id}`}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            Ver Postos de Trabalho{' '}
+                            <ArrowRight className='ml-2 h-4 w-4' />
+                          </Link>
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Setor</TableHead>
+                      <TableHead className='hidden md:table-cell'>
+                        Unidade
+                      </TableHead>
+                      <TableHead>
+                        <span className='sr-only'>Ações</span>
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredSectors.map((sector) => (
+                      <TableRow
+                        key={sector.id}
+                        onClick={() =>
+                          router.push(
+                            `/dashboard/clients/${contractId}/sectors/${sector.id}?unitId=${sector.unitId}`
+                          )
+                        }
+                        className='cursor-pointer'
                       >
-                        Ver Cargos <ArrowRight className='ml-2 h-4 w-4' />
-                      </Link>
-                    </Button>
-                    <Button
-                      asChild
-                      className='w-full'
-                      variant='outline'
-                      size='sm'
-                    >
-                      <Link
-                        href={`/dashboard/clients/${contractId}/environments?unitId=${sector.unitId}&sectorId=${sector.id}`}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        Ver Postos de Trabalho{' '}
-                        <ArrowRight className='ml-2 h-4 w-4' />
-                      </Link>
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
+                        <TableCell>
+                          <div className='font-medium'>{sector.name}</div>
+                          <div className='hidden text-sm text-muted-foreground md:inline'>
+                            {sector.description}
+                          </div>
+                        </TableCell>
+                        <TableCell className='hidden md:table-cell'>
+                          <Badge variant='outline'>
+                            {getUnitName(sector.unitId)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            aria-haspopup='true'
+                            size='icon'
+                            variant='ghost'
+                          >
+                            <MoreHorizontal className='h-4 w-4' />
+                            <span className='sr-only'>Alternar menu</span>
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Setor</TableHead>
-                  <TableHead className='hidden md:table-cell'>
-                    Unidade
-                  </TableHead>
-                  <TableHead className='hidden sm:table-cell'>
-                    Colaboradores
-                  </TableHead>
-                  <TableHead>
-                    <span className='sr-only'>Ações</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredSectors.map((sector) => (
-                  <TableRow
-                    key={sector.id}
-                    onClick={() =>
-                      router.push(
-                        `/dashboard/clients/${contractId}/sectors/${sector.id}?unitId=${sector.unitId}`
-                      )
-                    }
-                    className='cursor-pointer'
-                  >
-                    <TableCell>
-                      <div className='font-medium'>{sector.name}</div>
-                      <div className='hidden text-sm text-muted-foreground md:inline'>
-                        {sector.description}
-                      </div>
-                    </TableCell>
-                    <TableCell className='hidden md:table-cell'>
-                      <Badge variant='outline'>
-                        {getUnitName(sector.unitId)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className='hidden sm:table-cell'>-</TableCell>
-                    <TableCell>
-                      <Button
-                        aria-haspopup='true'
-                        size='icon'
-                        variant='ghost'
-                      >
-                        <MoreHorizontal className='h-4 w-4' />
-                        <span className='sr-only'>Alternar menu</span>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-          {!isLoading && filteredSectors.length === 0 && (
             <div className='flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm h-96'>
               <div className='flex flex-col items-center gap-1 text-center'>
                 <h3 className='text-2xl font-bold tracking-tight'>

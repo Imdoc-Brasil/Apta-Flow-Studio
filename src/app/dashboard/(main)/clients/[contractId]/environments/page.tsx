@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import { MoreHorizontal, PlusCircle, Search, Filter } from 'lucide-react'
+import { MoreHorizontal, PlusCircle, Search } from 'lucide-react'
 import {
   Card,
   CardContent,
@@ -24,8 +24,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-  DialogFooter,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -52,28 +50,32 @@ import {
 import { collection, doc, getDocs } from 'firebase/firestore'
 import { Loader2 } from 'lucide-react'
 import type { Unit } from '../units/data'
+import { DialogFooter } from '@/components/ui/dialog'
 
 export default function EnvironmentsPage() {
   const params = useParams()
   const contractId = params.contractId as string
   const searchParams = useSearchParams()
   const urlSectorId = searchParams.get('sectorId')
+  const urlUnitId = searchParams.get('unitId')
 
   const [isFormDialogOpen, setIsFormDialogOpen] = useState(false)
   const [editingEnvironment, setEditingEnvironment] =
     useState<Environment | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedUnit, setSelectedUnit] = useState<string>('')
+  const [selectedUnit, setSelectedUnit] = useState<string>(urlUnitId || '')
   const [sectorFilter, setSectorFilter] = useState<string>(urlSectorId || '')
   const { toast } = useToast()
 
   const firestore = useFirestore()
 
   const unitsRef = useMemoFirebase(
-    () => (firestore ? collection(firestore, `clients/${contractId}/units`) : null),
+    () =>
+      firestore ? collection(firestore, `clients/${contractId}/units`) : null,
     [firestore, contractId]
   )
-  const { data: unitsData, isLoading: areUnitsLoading } = useCollection<Unit>(unitsRef)
+  const { data: unitsData, isLoading: areUnitsLoading } =
+    useCollection<Unit>(unitsRef)
 
   const [allSectors, setAllSectors] = useState<Sector[]>([])
   const [areSectorsLoading, setAreSectorsLoading] = useState(true)
@@ -83,7 +85,9 @@ export default function EnvironmentsPage() {
       setAreSectorsLoading(true)
       const fetchSectors = async () => {
         const sectorsPromises = unitsData.map((unit) =>
-          getDocs(collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`))
+          getDocs(
+            collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`)
+          )
         )
         const sectorsSnapshots = await Promise.all(sectorsPromises)
         const sectorsData = sectorsSnapshots.flatMap((snapshot) =>
@@ -97,11 +101,18 @@ export default function EnvironmentsPage() {
       setAreSectorsLoading(false)
     }
   }, [unitsData, firestore, contractId, areUnitsLoading])
-  
+
   const unitSectors = useMemo(() => {
     if (!selectedUnit) return []
-    return allSectors.filter(s => s.unitId === selectedUnit);
+    return allSectors.filter((s) => s.unitId === selectedUnit)
   }, [allSectors, selectedUnit])
+
+  useEffect(() => {
+    // Reset sector filter if the selected unit doesn't contain it anymore
+    if (sectorFilter && unitSectors.length > 0 && !unitSectors.find(s => s.id === sectorFilter)) {
+      setSectorFilter('');
+    }
+  }, [unitSectors, sectorFilter]);
 
   const environmentsRef = useMemoFirebase(() => {
     if (!firestore || !selectedUnit || !sectorFilter) return null
@@ -145,11 +156,12 @@ export default function EnvironmentsPage() {
       `clients/${contractId}/units/${selectedUnit}/sectors/${sectorFilter}/environments`
     )
     const formData = new FormData(event.currentTarget)
-    const environmentData = {
+    const environmentData: Omit<Environment, 'id'> = {
       name: formData.get('name') as string,
       description: formData.get('description') as string,
       activities: formData.get('activities') as string,
       equipment: formData.get('equipment') as string,
+      sectorId: sectorFilter,
       physicalCharacteristics: {
         flooring: formData.get('flooring') as string,
         lighting: formData.get('lighting') as string,
@@ -161,7 +173,11 @@ export default function EnvironmentsPage() {
 
     if (editingEnvironment) {
       // Update
-      const docRef = doc(firestore, colRef.path, editingEnvironment.id as string)
+      const docRef = doc(
+        firestore,
+        colRef.path,
+        editingEnvironment.id as string
+      )
       updateDocumentNonBlocking(docRef, environmentData)
       toast({
         title: 'Posto de Trabalho Atualizado!',
@@ -193,8 +209,9 @@ export default function EnvironmentsPage() {
     setEditingEnvironment(environment)
     setIsFormDialogOpen(true)
   }
-  
-  const isLoading = areUnitsLoading || areSectorsLoading || areEnvironmentsLoading;
+
+  const isLoading =
+    areUnitsLoading || areSectorsLoading || areEnvironmentsLoading
 
   const renderEnvironmentForm = (environment?: Environment | null) => (
     <ScrollArea className='h-[70vh]'>
@@ -310,7 +327,7 @@ export default function EnvironmentsPage() {
             setor.
           </CardDescription>
           <div className='flex items-center justify-between pt-4'>
-            <div className='flex items-center gap-2'>
+            <div className='flex items-center gap-2 flex-wrap'>
               <div className='relative w-full max-w-xs'>
                 <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
                 <Input
@@ -321,7 +338,14 @@ export default function EnvironmentsPage() {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <Select value={selectedUnit} onValueChange={setSelectedUnit}>
+              <Select
+                value={selectedUnit}
+                onValueChange={(value) => {
+                  setSelectedUnit(value)
+                  setSectorFilter('') // Reset sector filter when unit changes
+                }}
+                disabled={areUnitsLoading}
+              >
                 <SelectTrigger className='w-[220px]'>
                   <SelectValue placeholder='Filtrar por Unidade...' />
                 </SelectTrigger>
@@ -334,7 +358,11 @@ export default function EnvironmentsPage() {
                   ))}
                 </SelectContent>
               </Select>
-               <Select value={sectorFilter} onValueChange={setSectorFilter} disabled={!selectedUnit}>
+              <Select
+                value={sectorFilter}
+                onValueChange={setSectorFilter}
+                disabled={!selectedUnit || areSectorsLoading}
+              >
                 <SelectTrigger className='w-[220px]'>
                   <SelectValue placeholder='Filtrar por Setor...' />
                 </SelectTrigger>
@@ -350,7 +378,7 @@ export default function EnvironmentsPage() {
             </div>
             <Button
               size='sm'
-              className='h-8 gap-1'
+              className='h-10 gap-1'
               onClick={() => openFormDialog(null)}
               disabled={!selectedUnit || !sectorFilter}
             >
@@ -368,7 +396,10 @@ export default function EnvironmentsPage() {
             </div>
           ) : !selectedUnit || !sectorFilter ? (
             <div className='text-center py-10 text-muted-foreground'>
-              <p>Por favor, selecione uma unidade e um setor para ver os postos de trabalho.</p>
+              <p>
+                Por favor, selecione uma unidade e um setor para ver os postos
+                de trabalho.
+              </p>
             </div>
           ) : (
             <Table>
@@ -402,9 +433,9 @@ export default function EnvironmentsPage() {
                     </TableCell>
                   </TableRow>
                 ))}
-                 {filteredEnvironments.length === 0 && (
+                {filteredEnvironments.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={3} className="h-24 text-center">
+                    <TableCell colSpan={3} className='h-24 text-center'>
                       Nenhum posto de trabalho encontrado para este setor.
                     </TableCell>
                   </TableRow>
