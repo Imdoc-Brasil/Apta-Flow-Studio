@@ -17,12 +17,12 @@ const sstDocuments = [
   {
     name: 'PGR (Programa de Gerenciamento de Riscos)',
     description: 'Documento base que identifica e avalia os riscos ocupacionais.',
-    link: '/dashboard/clients/[contractId]/pgr/history',
+    link: '/dashboard/clients/[contractId]/pgr',
   },
   {
     name: 'PCMSO (Programa de Controle Médico de Saúde Ocupacional)',
     description: 'Relatório anual com o planejamento das ações de saúde.',
-    link: '#',
+    link: '/dashboard/clients/[contractId]/pcmso',
   },
   {
     name: 'Relatório Analítico do PCMSO',
@@ -93,4 +93,3 @@ export default function SstDocsPage() {
     </div>
   )
 }
-
