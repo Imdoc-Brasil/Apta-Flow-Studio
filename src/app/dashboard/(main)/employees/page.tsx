@@ -148,6 +148,7 @@ const staffFormSchema = z.object({
   phone: z.string().optional(),
   contractId: z.string().optional(),
   clientIds: z.array(z.string()).optional(),
+  allClients: z.boolean().optional(),
   avatar: z.string().optional(),
 })
 
@@ -228,6 +229,7 @@ export default function StaffsPage() {
       phone: '',
       contractId: '',
       clientIds: [],
+      allClients: false,
     },
   })
 
@@ -274,7 +276,7 @@ export default function StaffsPage() {
       avatar: data.avatar || `https://i.pravatar.cc/150?u=${Math.random()}`,
       fallback,
       ...(data.perfilId === 'cliente' && { contractId: data.contractId }),
-      ...(data.perfilId !== 'cliente' && { clientIds: data.clientIds }),
+      ...(data.perfilId !== 'cliente' && { clientIds: data.allClients ? [] : data.clientIds }),
     }
 
     addDocumentNonBlocking(staffsRef, newStaff)
@@ -306,8 +308,15 @@ export default function StaffsPage() {
         phone: data.phone || '',
         fallback,
         ...(data.avatar && { avatar: data.avatar }),
-        ...(data.perfilId === 'cliente' ? { contractId: data.contractId, clientIds: [] } : { clientIds: data.clientIds, contractId: '' }),
     };
+
+    if (data.perfilId === 'cliente') {
+      updatedData.contractId = data.contractId;
+      updatedData.clientIds = [];
+    } else {
+      updatedData.clientIds = data.allClients ? [] : data.clientIds;
+      updatedData.contractId = '';
+    }
 
     updateDocumentNonBlocking(staffDocRef, updatedData)
     toast({
@@ -346,6 +355,7 @@ export default function StaffsPage() {
       phone: staff.phone,
       contractId: staff.contractId || '',
       clientIds: staff.clientIds || [],
+      allClients: !staff.clientIds || staff.clientIds.length === 0,
       avatar: staff.avatar,
     })
     setIsEditDialogOpen(true)
@@ -615,13 +625,37 @@ export default function StaffsPage() {
                       />
                     )}
 
-                    {form.watch('perfilId') !== 'cliente' && (
+                    {form.watch('perfilId') !== 'cliente' && form.watch('perfilId') && (
                       <FormField
                         control={form.control}
                         name='clientIds'
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Acesso a Clientes</FormLabel>
+                            <FormField
+                              control={form.control}
+                              name="allClients"
+                              render={({ field: allClientsField }) => (
+                                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 mb-4">
+                                  <FormControl>
+                                    <Checkbox
+                                      checked={allClientsField.value}
+                                      onCheckedChange={allClientsField.onChange}
+                                    />
+                                  </FormControl>
+                                  <div className="space-y-1 leading-none">
+                                    <FormLabel>
+                                      Conceder acesso a todas as empresas
+                                    </FormLabel>
+                                    <FormDescription>
+                                      O membro terá acesso a todos os clientes atuais e futuros.
+                                    </FormDescription>
+                                  </div>
+                                </FormItem>
+                              )}
+                            />
+
+                            {!form.watch('allClients') && (
                             <Popover>
                               <PopoverTrigger asChild>
                                 <FormControl>
@@ -684,9 +718,7 @@ export default function StaffsPage() {
                                 </Command>
                               </PopoverContent>
                             </Popover>
-                            <FormDescription>
-                              Deixe em branco para acesso a todos os clientes.
-                            </FormDescription>
+                            )}
                             <div className='mt-2 flex flex-wrap gap-1'>
                               {(form.watch('clientIds') || []).map(
                                 (clientId: string) => (
@@ -776,7 +808,7 @@ export default function StaffsPage() {
                         <Badge variant='secondary'>
                           {getClientName(staff.contractId)}
                         </Badge>
-                      ) : !staff.clientIds || staff.clientIds.length === 0 ? (
+                      ) : (staff.clientIds === undefined || staff.clientIds.length === 0) ? (
                         <Badge>Todos</Badge>
                       ) : (
                         <div className='flex flex-wrap gap-1'>
@@ -1050,101 +1082,122 @@ export default function StaffsPage() {
                   )}
                 />
               ) : (
-                <FormField
-                  control={editForm.control}
-                  name='clientIds'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Acesso a Clientes</FormLabel>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant='outline'
-                              role='combobox'
-                              className={cn(
-                                'w-full justify-between font-normal',
-                                !field.value?.length &&
-                                  'text-muted-foreground'
-                              )}
-                            >
-                              Selecionar clientes...
-                              <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className='w-[--radix-popover-trigger-width] p-0'>
-                          <Command>
-                            <CommandInput placeholder='Buscar cliente...' />
-                            <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
-                            <CommandList>
-                              <CommandGroup>
-                                {areClientsLoading ? (
-                                  <Loader2 className='mx-auto h-4 w-4 animate-spin' />
-                                ) : (
-                                  clientsData?.map((client) => (
-                                    <CommandItem
-                                      key={client.id}
-                                      onSelect={() => {
-                                        const selected = field.value || []
-                                        const newSelection = selected.includes(
-                                          client.id!
-                                        )
-                                          ? selected.filter(
-                                              (id) => id !== client.id
-                                            )
-                                          : [...selected, client.id!]
-                                        field.onChange(newSelection)
-                                      }}
-                                    >
-                                      <Check
-                                        className={cn(
-                                          'mr-2 h-4 w-4',
-                                          field.value?.includes(client.id!)
-                                            ? 'opacity-100'
-                                            : 'opacity-0'
-                                        )}
-                                      />
-                                      {client.name}
-                                    </CommandItem>
-                                  ))
+                editForm.watch('perfilId') && (
+                  <FormField
+                    control={editForm.control}
+                    name='clientIds'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Acesso a Clientes</FormLabel>
+                        <FormField
+                            control={editForm.control}
+                            name="allClients"
+                            render={({ field: allClientsField }) => (
+                              <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 mb-4">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={allClientsField.value}
+                                    onCheckedChange={allClientsField.onChange}
+                                  />
+                                </FormControl>
+                                <div className="space-y-1 leading-none">
+                                  <FormLabel>
+                                    Conceder acesso a todas as empresas
+                                  </FormLabel>
+                                </div>
+                              </FormItem>
+                            )}
+                          />
+                        
+                        {!editForm.watch('allClients') && (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant='outline'
+                                role='combobox'
+                                className={cn(
+                                  'w-full justify-between font-normal',
+                                  !field.value?.length &&
+                                    'text-muted-foreground'
                                 )}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                      <FormDescription>
-                        Deixe em branco para acesso a todos os clientes.
-                      </FormDescription>
-                      <div className='mt-2 flex flex-wrap gap-1'>
-                        {(editForm.watch('clientIds') || []).map(
-                          (clientId: string) => (
-                            <Badge key={clientId} variant='secondary'>
-                              {getClientName(clientId)}
-                              <button
-                                type='button'
-                                className='ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2'
-                                onClick={() =>
-                                  field.onChange(
-                                    (
-                                      editForm.watch('clientIds') || []
-                                    ).filter(
-                                      (id: string) => id !== clientId
-                                    )
-                                  )
-                                }
                               >
-                                <X className='h-3 w-3 text-muted-foreground hover:text-foreground' />
-                              </button>
-                            </Badge>
-                          )
+                                Selecionar clientes...
+                                <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className='w-[--radix-popover-trigger-width] p-0'>
+                            <Command>
+                              <CommandInput placeholder='Buscar cliente...' />
+                              <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
+                              <CommandList>
+                                <CommandGroup>
+                                  {areClientsLoading ? (
+                                    <Loader2 className='mx-auto h-4 w-4 animate-spin' />
+                                  ) : (
+                                    clientsData?.map((client) => (
+                                      <CommandItem
+                                        key={client.id}
+                                        onSelect={() => {
+                                          const selected = field.value || []
+                                          const newSelection = selected.includes(
+                                            client.id!
+                                          )
+                                            ? selected.filter(
+                                                (id) => id !== client.id
+                                              )
+                                            : [...selected, client.id!]
+                                          field.onChange(newSelection)
+                                        }}
+                                      >
+                                        <Check
+                                          className={cn(
+                                            'mr-2 h-4 w-4',
+                                            field.value?.includes(client.id!)
+                                              ? 'opacity-100'
+                                              : 'opacity-0'
+                                          )}
+                                        />
+                                        {client.name}
+                                      </CommandItem>
+                                    ))
+                                  )}
+                                </CommandGroup>
+                              </CommandList>
+                            </Command>
+                          </PopoverContent>
+                        </Popover>
                         )}
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                        <div className='mt-2 flex flex-wrap gap-1'>
+                          {(editForm.watch('clientIds') || []).map(
+                            (clientId: string) => (
+                              <Badge key={clientId} variant='secondary'>
+                                {getClientName(clientId)}
+                                <button
+                                  type='button'
+                                  className='ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2'
+                                  onClick={() =>
+                                    field.onChange(
+                                      (
+                                        editForm.watch('clientIds') || []
+                                      ).filter(
+                                        (id: string) => id !== clientId
+                                      )
+                                    )
+                                  }
+                                >
+                                  <X className='h-3 w-3 text-muted-foreground hover:text-foreground' />
+                                </button>
+                              </Badge>
+                            )
+                          )}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )
               )}
             </form>
           </Form>

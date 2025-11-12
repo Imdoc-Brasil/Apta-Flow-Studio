@@ -220,7 +220,10 @@ export default function ClientsPage() {
 
   const isLoading = isStaffLoading || areClientsLoading
 
-  let clientsToDisplay: Client[] | null = null
+  // This is the core fix. We explicitly check for the loading state before attempting to filter.
+  // The filtering logic itself is moved inside the component body to avoid complex `useMemo` dependencies
+  // that can cause hydration mismatches.
+  let clientsToDisplay: Client[] = []
   if (!isLoading && allClients && staffProfile) {
     if (staffProfile.perfilId === 'super_admin') {
       clientsToDisplay = allClients
@@ -232,8 +235,6 @@ export default function ClientsPage() {
       clientsToDisplay = allClients.filter((client) =>
         staffProfile.clientIds?.includes(client.id)
       )
-    } else {
-      clientsToDisplay = []
     }
   }
 
@@ -616,7 +617,7 @@ export default function ClientsPage() {
         </div>
       </CardHeader>
       <CardContent>
-        {isLoading || clientsToDisplay === null ? (
+        {isLoading ? (
           <div className='flex justify-center items-center h-64'>
             <Loader2 className='h-8 w-8 animate-spin text-muted-foreground' />
           </div>
@@ -636,7 +637,7 @@ export default function ClientsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {clientsToDisplay?.map((client) => (
+              {clientsToDisplay.map((client) => (
                 <TableRow key={client.id}>
                   <TableCell className='font-medium'>{client.id}</TableCell>
                   <TableCell>
@@ -692,5 +693,3 @@ export default function ClientsPage() {
     </Card>
   )
 }
-
-    

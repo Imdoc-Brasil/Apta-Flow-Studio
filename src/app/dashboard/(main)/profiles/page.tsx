@@ -1,3 +1,4 @@
+
 'use client'
 
 import React, { useState, useMemo, useEffect } from 'react'
@@ -366,11 +367,12 @@ export default function ProfilesPage() {
   }
 
   const openPermissionsDialog = (profile: Profile) => {
-    if (profile.createdBy === 'sistema') {
+    // Allow editing Super Admin permissions
+    if (profile.id === 'cliente' && profile.createdBy === 'sistema') {
       toast({
         variant: 'destructive',
         title: 'Não permitido',
-        description: 'Não é possível editar as permissões de perfis do sistema.',
+        description: 'Não é possível editar as permissões do perfil de Cliente.',
       })
       return
     }
@@ -505,7 +507,7 @@ export default function ProfilesPage() {
                             aria-haspopup='true'
                             size='icon'
                             variant='ghost'
-                            disabled={profile.createdBy === 'sistema'}
+                            disabled={profile.id === 'cliente' && profile.createdBy === 'sistema'}
                           >
                             <MoreHorizontal className='h-4 w-4' />
                             <span className='sr-only'>Alternar menu</span>
@@ -521,7 +523,6 @@ export default function ProfilesPage() {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => openPermissionsDialog(profile)}
-                            disabled={profile.createdBy === 'sistema'}
                           >
                             Editar Permissões
                           </DropdownMenuItem>
