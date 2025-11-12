@@ -1,3 +1,4 @@
+
 'use client'
 
 import {
@@ -17,7 +18,7 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { MoreHorizontal, PlusCircle, Users } from 'lucide-react'
+import { MoreHorizontal, PlusCircle, Users, Loader2 } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -48,41 +49,51 @@ import { useParams } from 'next/navigation'
 import { Separator } from '@/components/ui/separator'
 import { aptaServiceUnits } from '@/app/dashboard/(main)/health/queue/data'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import {
+  useFirestore,
+  addDocumentNonBlocking,
+  useCollection,
+  useMemoFirebase,
+} from '@/firebase'
+import { collection } from 'firebase/firestore'
+import type { Ticket } from '@/app/dashboard/(main)/tickets/tickets-store'
 
-const initialAsoData = [
-  {
-    id: 'ASO-001',
-    employee: 'Carlos Pereira',
-    type: 'Periódico',
-    issueDate: '2024-07-01',
-    validity: '12 meses',
-    status: 'Apto',
-  },
-  {
-    id: 'ASO-002',
-    employee: 'João da Silva',
-    type: 'Admissional',
-    issueDate: '2022-01-15',
-    validity: '12 meses',
-    status: 'Apto',
-  },
-]
-
-type Aso = (typeof initialAsoData)[0]
+interface Aso {
+  id: string
+  employee: string
+  type: string
+  issueDate: string
+  validity: string
+  status: string
+}
 
 export default function AsosPage() {
   const { toast } = useToast()
   const params = useParams()
   const contractId = params.contractId as string
-  const client = initialClientsData.find((c) => c.contractId === contractId)
+  const client = initialClientsData.find((c) => c.id === contractId)
 
-  const [asos, setAsos] = useState(initialAsoData)
+  const firestore = useFirestore()
+  const asosRef = useMemoFirebase(
+    () =>
+      firestore
+        ? collection(firestore, `clients/${contractId}/asos`)
+        : null,
+    [firestore, contractId]
+  )
+  const ticketsRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'tickets') : null),
+    [firestore]
+  )
+  const { data: asos, isLoading } = useCollection<Aso>(asosRef)
+
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const { addAttendee } = useAttendeeStore()
-  const { addTicket } = useTicketStore()
 
   const handleNewRequest = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    if (!asosRef || !ticketsRef) return
+
     const formData = new FormData(e.currentTarget)
     const employeeId = formData.get('employeeId') as string
     const solicitationType = formData.get('solicitationType') as string
@@ -105,8 +116,6 @@ export default function AsosPage() {
       clientName: client.name,
       patientName: employee.name,
       solicitationType: solicitationType,
-      // This is a simplified logic. In a real scenario, this would query the PCMSO
-      // based on the solicitationType and employee's role/risks.
       exams: [
         {
           id: `EXM-${Date.now()}-A`,
@@ -122,28 +131,28 @@ export default function AsosPage() {
     })
 
     // 2. Add a corresponding ticket for tracking
-    addTicket({
+    const newTicketData: Omit<Ticket, 'id' | 'status' | 'updated'> = {
       subject: ticketSubject,
       client: client.name,
       priority: 'Média',
       description: `Pedido de atendimento para ${solicitationType} do colaborador ${employee.name}.`,
       relatedEmployee: employee.name,
-    })
+    }
+    addDocumentNonBlocking(ticketsRef, newTicketData)
 
-    // 3. Add to the local ASO list for immediate feedback
-    const newAso: Aso = {
-      id: `ASO-${Date.now().toString().slice(-4)}`,
+    // 3. Add to the ASO collection for persistence
+    const newAsoData: Omit<Aso, 'id'> = {
       employee: employee.name,
       type: solicitationType,
-      issueDate: new Date().toISOString().split('T')[0],
+      issueDate: new Date().toISOString(),
       validity: '-',
       status: 'Solicitado',
     }
-    setAsos((prev) => [newAso, ...prev])
+    addDocumentNonBlocking(asosRef, newAsoData)
 
     toast({
       title: 'Pedido de Atendimento Criado!',
-      description: `A solicitação para ${employee.name} foi enviada para a fila de atendimento da Apta.`,
+      description: `A solicitação para ${employee.name} foi enviada para a fila de atendimento da Apta e um ticket foi aberto.`,
     })
 
     setIsDialogOpen(false)
@@ -356,45 +365,58 @@ export default function AsosPage() {
         </div>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Colaborador</TableHead>
-              <TableHead>Tipo</TableHead>
-              <TableHead>Data Emissão/Solicitação</TableHead>
-              <TableHead>Validade</TableHead>
-              <TableHead>Resultado</TableHead>
-              <TableHead>
-                <span className='sr-only'>Ações</span>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {asos.map((aso) => (
-              <TableRow key={aso.id}>
-                <TableCell className='font-medium'>{aso.employee}</TableCell>
-                <TableCell>{aso.type}</TableCell>
-                <TableCell>
-                  {new Date(aso.issueDate).toLocaleDateString('pt-BR', {
-                    timeZone: 'UTC',
-                  })}
-                </TableCell>
-                <TableCell>{aso.validity}</TableCell>
-                <TableCell>
-                  <Badge variant={getStatusVariant(aso.status)}>
-                    {aso.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Button aria-haspopup='true' size='icon' variant='ghost'>
-                    <MoreHorizontal className='h-4 w-4' />
-                    <span className='sr-only'>Alternar menu</span>
-                  </Button>
-                </TableCell>
+        {isLoading ? (
+          <div className='flex justify-center items-center h-48'>
+            <Loader2 className='h-8 w-8 animate-spin text-muted-foreground' />
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Colaborador</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Data Emissão/Solicitação</TableHead>
+                <TableHead>Validade</TableHead>
+                <TableHead>Resultado</TableHead>
+                <TableHead>
+                  <span className='sr-only'>Ações</span>
+                </TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {asos?.map((aso) => (
+                <TableRow key={aso.id}>
+                  <TableCell className='font-medium'>{aso.employee}</TableCell>
+                  <TableCell>{aso.type}</TableCell>
+                  <TableCell>
+                    {new Date(aso.issueDate).toLocaleDateString('pt-BR', {
+                      timeZone: 'UTC',
+                    })}
+                  </TableCell>
+                  <TableCell>{aso.validity}</TableCell>
+                  <TableCell>
+                    <Badge variant={getStatusVariant(aso.status)}>
+                      {aso.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Button aria-haspopup='true' size='icon' variant='ghost'>
+                      <MoreHorizontal className='h-4 w-4' />
+                      <span className='sr-only'>Alternar menu</span>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {asos?.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} className='h-24 text-center'>
+                    Nenhum ASO encontrado.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        )}
       </CardContent>
     </Card>
   )
