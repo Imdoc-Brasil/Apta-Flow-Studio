@@ -461,6 +461,124 @@
         "unitId",
         "roleIds"
       ]
+    },
+    "Hazard": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Hazard",
+      "type": "object",
+      "description": "Represents a hazard or risk factor in the occupational risk catalog.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Hazard."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the hazard."
+        },
+        "esocialCode": {
+          "type": "string",
+          "description": "The corresponding code from eSocial's Table 24."
+        },
+        "category": {
+          "type": "string",
+          "enum": [
+            "Físico",
+            "Químico",
+            "Biológico",
+            "Ergonômico",
+            "Acidente"
+          ],
+          "description": "The category of the hazard."
+        },
+        "method": {
+          "type": "string",
+          "enum": [
+            "Quantitativo",
+            "Qualitativo"
+          ],
+          "description": "The evaluation method for the hazard."
+        },
+        "legalBasis": {
+          "type": "string",
+          "description": "Legal basis or norm that defines the hazard."
+        },
+        "potentialEffects": {
+          "type": "string",
+          "description": "Potential health effects from exposure to this hazard."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "esocialCode",
+        "category",
+        "method"
+      ]
+    },
+    "PgrInventoryItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "PgrInventoryItem",
+      "type": "object",
+      "description": "Represents a single item in the PGR risk inventory for a client.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the inventory item."
+        },
+        "clientId": {
+          "type": "string",
+          "description": "Reference to the Client."
+        },
+        "hazardId": {
+          "type": "string",
+          "description": "Reference to the Hazard in the catalog."
+        },
+        "unitId": {
+          "type": "string",
+          "description": "The specific unit where the risk is present."
+        },
+        "sector": {
+          "type": "string",
+          "description": "The sector within the unit where the risk is present."
+        },
+        "source": {
+          "type": "string",
+          "description": "The source or circumstance generating the risk."
+        },
+        "evaluation": {
+          "type": "object",
+          "description": "Details of the risk evaluation.",
+          "properties": {
+            "frequency": {
+              "type": "number"
+            },
+            "severity": {
+              "type": "number"
+            },
+            "riskLevel": {
+              "type": "number"
+            },
+            "riskLabel": {
+              "type": "string"
+            },
+            "riskColor": {
+              "type": "string"
+            },
+            "riskDescription": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "required": [
+        "id",
+        "clientId",
+        "hazardId",
+        "unitId",
+        "sector",
+        "source"
+      ]
     }
   },
   "auth": {
@@ -675,6 +793,42 @@
             {
               "name": "gheId",
               "description": "Unique identifier for the GHE."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/hazards/{hazardId}",
+        "definition": {
+          "entityName": "Hazard",
+          "schema": {
+            "$ref": "#/backend/entities/Hazard"
+          },
+          "description": "Catalog of all possible occupational hazards.",
+          "params": [
+            {
+              "name": "hazardId",
+              "description": "Unique identifier for the hazard."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/clients/{clientId}/pgr_inventory/{inventoryId}",
+        "definition": {
+          "entityName": "PgrInventoryItem",
+          "schema": {
+            "$ref": "#/backend/entities/PgrInventoryItem"
+          },
+          "description": "Stores the risk inventory items for a specific client's PGR.",
+          "params": [
+            {
+              "name": "clientId",
+              "description": "Unique identifier for the client."
+            },
+            {
+              "name": "inventoryId",
+              "description": "Unique identifier for the inventory item."
             }
           ]
         }
