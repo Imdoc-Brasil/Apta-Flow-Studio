@@ -66,6 +66,7 @@ import {
   useMemoFirebase,
   addDocumentNonBlocking,
   updateDocumentNonBlocking,
+  deleteDocumentNonBlocking
 } from '@/firebase'
 import { collection, doc, getDocs } from 'firebase/firestore'
 import type { Sector } from '../sectors/data'
@@ -173,7 +174,7 @@ export default function ProcessesPage() {
 
       return matchesSearch && matchesSector
     })
-  }, [processes, searchTerm, sectorFilter])
+  }, [processes, searchTerm, sectorFilter, getSectorNameForProcess])
 
   const handleStepChange = (
     index: number,
@@ -218,13 +219,7 @@ export default function ProcessesPage() {
       type: formData.get('type') as ProcessType,
       isCritical: formData.get('isCritical') === 'on',
       obligations: formObligations,
-      steps: formSteps.map((step, index) => ({
-        ...step,
-        name: formData.get(`step-name-${index}`) as string,
-        description: formData.get(`step-description-${index}`) as string,
-        isControlPoint: formData.get(`control-point-${index}`) === 'on',
-        isRiskSource: formData.get(`risk-source-${index}`) === 'on',
-      })),
+      steps: formSteps,
     }
 
     if (editingProcess) {
@@ -243,6 +238,14 @@ export default function ProcessesPage() {
     setIsProcessDialogOpen(false)
     setEditingProcess(null)
   }
+  
+  const handleDeleteProcess = (processId: string) => {
+    if (!firestore) return;
+    const docRef = doc(firestore, `clients/${contractId}/processes`, processId);
+    deleteDocumentNonBlocking(docRef);
+    toast({ title: "Processo Excluído", variant: "destructive" });
+  }
+
 
   const openProcessDialog = (process: Process | null) => {
     setEditingProcess(process)
@@ -584,15 +587,6 @@ export default function ProcessesPage() {
                       qualidade ou operação)
                     </Label>
                   </div>
-                  <div className='flex items-center space-x-2 md:col-span-2'>
-                    <Checkbox id='isRiskSource' name='isRiskSource' />
-                    <Label
-                      htmlFor='isRiskSource'
-                      className='text-sm font-medium leading-none'
-                    >
-                      Este processo é uma fonte geradora de risco?
-                    </Label>
-                  </div>
                 </fieldset>
 
                 <Separator />
@@ -624,6 +618,7 @@ export default function ProcessesPage() {
                                   id={`step-name-${index}`}
                                   name={`step-name-${index}`}
                                   defaultValue={step.name}
+                                  onChange={(e) => handleStepChange(index, 'name', e.target.value)}
                                   required
                                 />
                               </div>
@@ -693,6 +688,7 @@ export default function ProcessesPage() {
                                 id={`step-description-${index}`}
                                 name={`step-description-${index}`}
                                 defaultValue={step.description}
+                                onChange={(e) => handleStepChange(index, 'description', e.target.value)}
                                 placeholder='Descreva o que deve ser feito nesta etapa.'
                                 rows={2}
                               />
@@ -701,7 +697,7 @@ export default function ProcessesPage() {
                               <Checkbox
                                 id={`control-point-${index}`}
                                 name={`control-point-${index}`}
-                                defaultChecked={step.isControlPoint}
+                                checked={step.isControlPoint}
                                 onCheckedChange={(checked) =>
                                   handleStepChange(
                                     index,
@@ -721,7 +717,7 @@ export default function ProcessesPage() {
                               <Checkbox
                                 id={`risk-source-${index}`}
                                 name={`risk-source-${index}`}
-                                defaultChecked={step.isRiskSource}
+                                checked={step.isRiskSource}
                                 onCheckedChange={(checked) =>
                                   handleStepChange(
                                     index,
