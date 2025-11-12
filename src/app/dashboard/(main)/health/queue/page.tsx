@@ -55,8 +55,8 @@ import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase'
 import { collection } from 'firebase/firestore'
-import type { Client } from '../../../clients/data'
-import type { Employee } from '../../../clients/[contractId]/employees/data'
+import type { Client } from '../../clients/data'
+import type { Employee } from '../../clients/[contractId]/employees/data'
 
 
 const statusLabels: Record<Status, string> = {
