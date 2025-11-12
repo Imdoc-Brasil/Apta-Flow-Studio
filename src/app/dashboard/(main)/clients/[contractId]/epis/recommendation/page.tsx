@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   Card,
   CardContent,
@@ -21,8 +21,8 @@ import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { initialEpiData } from '../data'
 import {
-  initialInventory,
   getHazardById,
+  type PgrInventoryItem,
 } from '@/app/dashboard/(main)/clients/[contractId]/pgr/page'
 import { initialEmployeesData } from '../../employees/data'
 import { initialRolesData } from '../../roles/data'
@@ -30,7 +30,16 @@ import { initialSectorsData } from '../../sectors/data'
 import { initialUnitsData } from '../../units/data'
 import { initialGheData } from '../../ghe/data'
 import { initialEnvironmentsData } from '../../environments/data'
-import { ChevronsRight } from 'lucide-react'
+import { ChevronsRight, Loader2 } from 'lucide-react'
+import {
+  useFirestore,
+  addDocumentNonBlocking,
+  useCollection,
+  useMemoFirebase,
+} from '@/firebase'
+import { collection } from 'firebase/firestore'
+import { useParams } from 'next/navigation'
+import type { Epi } from '../data'
 
 type AssociationType =
   | 'risk'
@@ -43,6 +52,35 @@ type AssociationType =
 
 export default function RecommendationMatrixPage() {
   const { toast } = useToast()
+  const params = useParams()
+  const contractId = params.contractId as string
+
+  const firestore = useFirestore()
+
+  const pgrInventoryRef = useMemoFirebase(
+    () =>
+      firestore
+        ? collection(firestore, `clients/${contractId}/pgr_inventory`)
+        : null,
+    [firestore, contractId]
+  )
+  const epiCatalogRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'epis') : null),
+    [firestore]
+  )
+  const recommendationsRef = useMemoFirebase(
+    () =>
+      firestore
+        ? collection(firestore, `clients/${contractId}/epi_recommendations`)
+        : null,
+    [firestore, contractId]
+  )
+
+  const { data: inventory, isLoading: isLoadingInventory } =
+    useCollection<PgrInventoryItem>(pgrInventoryRef)
+  const { data: epiData, isLoading: isLoadingEpis } =
+    useCollection<Epi>(epiCatalogRef)
+
   const [selectedUnit, setSelectedUnit] = useState('')
   const [selectedEpi, setSelectedEpi] = useState('')
   const [associationType, setAssociationType] =
@@ -55,12 +93,17 @@ export default function RecommendationMatrixPage() {
     .map((roleId) => initialRolesData.find((r) => r.id === roleId))
     .filter(Boolean)
 
-  const inventoryRisks = initialInventory
-    .filter((inv) => inv.unitId === selectedUnit)
-    .map((inv) => getHazardById(inv.hazardId))
-    .filter((h) => h !== undefined)
+  const inventoryRisks = useMemo(() => {
+    if (!inventory) return []
+    return inventory
+      .filter((inv) => inv.unitId === selectedUnit)
+      .map((inv) => getHazardById(inv.hazardId))
+      .filter((h) => h !== undefined)
+  }, [inventory, selectedUnit])
 
-  const unitSectors = initialSectorsData.filter((s) => s.unitId === selectedUnit)
+  const unitSectors = initialSectorsData.filter(
+    (s) => s.unitId === selectedUnit
+  )
   const unitSectorIds = unitSectors.map((s) => s.id)
   const unitEnvironments = initialEnvironmentsData.filter((env) =>
     unitSectorIds.includes(env.sectorId)
@@ -68,7 +111,12 @@ export default function RecommendationMatrixPage() {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!selectedUnit || !selectedEpi || !selectedAssociationValue) {
+    if (
+      !selectedUnit ||
+      !selectedEpi ||
+      !selectedAssociationValue ||
+      !recommendationsRef
+    ) {
       toast({
         variant: 'destructive',
         title: 'Seleção Incompleta',
@@ -77,6 +125,17 @@ export default function RecommendationMatrixPage() {
       })
       return
     }
+
+    const newRecommendation = {
+      unitId: selectedUnit,
+      epiId: selectedEpi,
+      associationType: associationType,
+      associationValue: selectedAssociationValue,
+      createdAt: new Date().toISOString(),
+    }
+
+    addDocumentNonBlocking(recommendationsRef, newRecommendation)
+
     toast({
       title: 'Vínculo Criado com Sucesso!',
       description: `Regra de recomendação para o EPI foi salva.`,
@@ -94,6 +153,7 @@ export default function RecommendationMatrixPage() {
             onValueChange={setSelectedAssociationValue}
             value={selectedAssociationValue}
             required
+            disabled={isLoadingInventory}
           >
             <SelectTrigger>
               <SelectValue placeholder='Selecione um risco do inventário da unidade' />
@@ -283,7 +343,11 @@ export default function RecommendationMatrixPage() {
               </div>
 
               <div className='flex items-center justify-center px-4'>
-                <ChevronsRight className='h-8 w-8 text-muted-foreground' />
+                {isLoadingInventory || isLoadingEpis ? (
+                  <Loader2 className='h-8 w-8 animate-spin' />
+                ) : (
+                  <ChevronsRight className='h-8 w-8 text-muted-foreground' />
+                )}
               </div>
 
               <div className='flex-1 space-y-2'>
@@ -292,12 +356,13 @@ export default function RecommendationMatrixPage() {
                   onValueChange={setSelectedEpi}
                   value={selectedEpi}
                   required
+                  disabled={isLoadingEpis}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder='Selecione o EPI a ser recomendado' />
                   </SelectTrigger>
                   <SelectContent>
-                    {initialEpiData.map((epi) => (
+                    {epiData?.map((epi) => (
                       <SelectItem key={epi.id} value={epi.id}>
                         {epi.name} (CA: {epi.ca})
                       </SelectItem>
@@ -308,7 +373,7 @@ export default function RecommendationMatrixPage() {
             </div>
 
             <div className='flex justify-end pt-4'>
-              <Button type='submit' disabled={!selectedUnit}>
+              <Button type='submit' disabled={!selectedUnit || isLoadingEpis || isLoadingInventory}>
                 Criar Vínculo / Regra
               </Button>
             </div>

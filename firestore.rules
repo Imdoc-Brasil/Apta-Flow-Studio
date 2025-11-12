@@ -220,6 +220,10 @@ service cloud.firestore {
     match /clients/{clientId}/epi_deliveries/{deliveryId} {
         allow read, write: if request.auth != null;
     }
+    
+     match /clients/{clientId}/epi_recommendations/{recommendationId} {
+        allow read, write: if request.auth != null;
+    }
 
     match /trainings/{trainingId} {
         allow read, write: if request.auth != null;
@@ -269,5 +273,3 @@ service cloud.firestore {
     return request.auth != null && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
   }
 }
-
-    
