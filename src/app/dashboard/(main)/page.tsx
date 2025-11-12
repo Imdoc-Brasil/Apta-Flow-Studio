@@ -125,31 +125,39 @@ export default function Dashboard() {
     const promoteToSuperAdmin = async () => {
       if (!user || !firestore) return;
   
-      // Use the new, simpler 'admins' collection
       const adminRoleRef = doc(firestore, 'admins', user.uid);
       try {
         const docSnap = await getDoc(adminRoleRef);
         if (!docSnap.exists()) {
-          // The data written can be simple, its existence is what matters.
-          await setDocumentNonBlocking(adminRoleRef, {
+          const adminData = {
             email: user.email,
             promotedAt: serverTimestamp(),
-          }, {});
+          };
+          // Using setDoc directly with .catch for our new pattern
+          setDoc(adminRoleRef, adminData, { merge: true }).catch((error) => {
+             errorEmitter.emit(
+                'permission-error',
+                new FirestorePermissionError({
+                  path: adminRoleRef.path,
+                  operation: 'create',
+                  requestResourceData: adminData,
+                })
+             );
+          });
           toast({
             title: 'Bem-vindo, Superadministrador!',
             description: 'Sua conta foi elevada para o nível de superadministrador.',
           });
         }
       } catch (error) {
-         // The error handling for permission denied on this check itself.
-         console.error("Failed to check/promote admin status:", error);
-         // You might still want to emit a specific error if this fails,
-         // but it's a different problem than the 'list' denial.
-         const permissionError = new FirestorePermissionError({
-           path: adminRoleRef.path,
-           operation: 'write', 
-         });
-         errorEmitter.emit('permission-error', permissionError);
+         // This catch block handles errors from getDoc
+         errorEmitter.emit(
+            'permission-error',
+            new FirestorePermissionError({
+              path: adminRoleRef.path,
+              operation: 'get',
+            })
+         );
       }
     };
   
