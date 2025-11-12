@@ -268,8 +268,8 @@ export default function StaffsPage() {
       situacao: 'Offline',
       avatar: `https://i.pravatar.cc/150?u=${Math.random()}`,
       fallback,
-      contractId: data.perfilId === 'cliente' ? data.contractId : undefined,
-      clientIds: data.perfilId !== 'cliente' ? data.clientIds : undefined,
+      ...(data.perfilId === 'cliente' && { contractId: data.contractId }),
+      ...(data.perfilId !== 'cliente' && { clientIds: data.clientIds }),
     }
 
     addDocumentNonBlocking(staffsRef, newStaff)
@@ -296,8 +296,8 @@ export default function StaffsPage() {
     const updatedData = {
       ...data,
       fallback,
-      contractId: data.perfilId === 'cliente' ? data.contractId : undefined,
-      clientIds: data.perfilId !== 'cliente' ? data.clientIds : undefined,
+      ...(data.perfilId === 'cliente' && { contractId: data.contractId }),
+      ...(data.perfilId !== 'cliente' && { clientIds: data.clientIds }),
     }
 
     updateDocumentNonBlocking(staffDocRef, updatedData)
