@@ -301,5 +301,3 @@ export const useTicketStore = create<TicketStore>()(
     }
   )
 )
-
-    

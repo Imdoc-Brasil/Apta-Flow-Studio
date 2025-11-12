@@ -675,8 +675,6 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
   const { toggleChecklistItem } = useTicketStore()
   const firestore = useFirestore()
   const { data: staffs } = useCollection<Staff>(useMemoFirebase(() => firestore ? collection(firestore, 'staffs') : null, [firestore]));
-  const { data: employees } = useCollection<Employee>(useMemoFirebase(() => ticket.client && firestore ? collection(firestore, `clients/${ticket.client}/staffs`) : null, [ticket.client, firestore]));
-
 
   const handleAssignMember = (ticketId: string, memberEmail: string) => {
     if (!firestore) return
@@ -1040,11 +1038,11 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
               <AddTextElementDialog
                 ticketId={ticket.id}
                 elementType='question'
-                dialogTitle='Abrir o Chat'
+                dialogTitle='Fazer Pergunta'
                 dialogDescription='Faça uma pergunta clara para a equipe ou cliente.'
               >
                 <Button variant='secondary' className='justify-start'>
-                  <HelpCircle className='mr-2 h-4 w-4' /> Abrir o Chat
+                  <HelpCircle className='mr-2 h-4 w-4' /> Fazer Pergunta
                 </Button>
               </AddTextElementDialog>
               <AddTextElementDialog
@@ -1796,5 +1794,3 @@ export default function TicketsPage() {
     </div>
   )
 }
-
-    
