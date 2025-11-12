@@ -66,7 +66,7 @@ import { collection, doc } from 'firebase/firestore'
 import { Loader2 } from 'lucide-react'
 
 const getClientById = (contractId: string) => {
-  return initialClientsData.find((client) => client.contractId === contractId)
+  return initialClientsData.find((client) => client.id === contractId)
 }
 
 export default function UnitsPage() {
