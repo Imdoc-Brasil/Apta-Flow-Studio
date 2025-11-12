@@ -447,7 +447,7 @@ export default function SectorsPage() {
                   Nenhum setor encontrado
                 </h3>
                 <p className='text-sm text-muted-foreground'>
-                  Ajuste seus filtros ou adicione um novo setor.
+                  Ajuste os filtros ou adicione um novo setor.
                 </p>
                 <Button
                   className='mt-4'
