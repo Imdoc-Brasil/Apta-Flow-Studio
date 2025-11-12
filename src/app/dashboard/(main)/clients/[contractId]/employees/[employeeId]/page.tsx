@@ -39,7 +39,7 @@ import {
 } from '@/firebase'
 import { doc, collection, getDocs, query, where } from 'firebase/firestore'
 
-import type { Employee } from '../employees/data'
+import type { Employee } from '../data'
 import type { Role } from '../roles/data'
 import type { Sector } from '../sectors/data'
 import type { Unit } from '../units/data'
@@ -120,56 +120,46 @@ export default function EmployeeDetailsPage() {
   const [isSubdataLoading, setIsSubdataLoading] = useState(true)
 
   useEffect(() => {
-    if (allUnits && firestore) {
-      setIsSubdataLoading(true)
-      const fetchSubCollections = async () => {
-        try {
-          // Fetch all sectors from all units
-          const sectorsPromises = allUnits.map((unit) =>
-            getDocs(
-              collection(
-                firestore,
-                `clients/${contractId}/units/${unit.id}/sectors`
-              )
-            )
-          )
-          const sectorsSnapshots = await Promise.all(sectorsPromises)
-          const sectorsData = sectorsSnapshots.flatMap((snapshot) =>
-            snapshot.docs.map(
-              (doc) => ({ id: doc.id, ...doc.data() } as Sector)
-            )
-          )
-          setAllSectors(sectorsData)
+    if (!allUnits || areUnitsLoading || !firestore) return;
 
-          // Fetch all environments from all sectors of all units
-          if (sectorsData.length > 0) {
-             const environmentsPromises = allUnits.flatMap(unit =>
-              sectorsData
-                .filter(sector => sector.unitId === unit.id)
-                .map(sector => getDocs(collection(firestore, `clients/${contractId}/units/${unit.id}/sectors/${sector.id}/environments`)))
-            );
-            const environmentsSnapshots = await Promise.all(environmentsPromises.flat());
-            const environmentsData = environmentsSnapshots.flatMap(snapshot =>
-              snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Environment))
-            );
-            setAllEnvironments(environmentsData);
-          } else {
-            setAllEnvironments([])
-          }
-        } catch (error) {
-          console.error('Error fetching sub-collections: ', error)
-          setAllSectors([]);
+    const fetchSubCollections = async () => {
+      setIsSubdataLoading(true)
+      try {
+        const sectorsPromises = allUnits.map(unit =>
+          getDocs(collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`))
+        );
+        const sectorsSnapshots = await Promise.all(sectorsPromises);
+        const sectorsData = sectorsSnapshots.flatMap(snapshot =>
+          snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sector))
+        );
+        setAllSectors(sectorsData);
+
+        if (sectorsData.length > 0) {
+          const environmentsPromises = allUnits.flatMap(unit =>
+            sectorsData
+              .filter(sector => sector.unitId === unit.id)
+              .map(sector => getDocs(collection(firestore, `clients/${contractId}/units/${unit.id}/sectors/${sector.id}/environments`)))
+          );
+          const environmentsSnapshots = await Promise.all(environmentsPromises);
+          const environmentsData = environmentsSnapshots.flatMap(snapshot =>
+            snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Environment))
+          );
+          setAllEnvironments(environmentsData);
+        } else {
           setAllEnvironments([]);
-        } finally {
-          setIsSubdataLoading(false)
         }
+      } catch (error) {
+        console.error('Error fetching sub-collections:', error);
+        setAllSectors([]);
+        setAllEnvironments([]);
+      } finally {
+        setIsSubdataLoading(false);
       }
-      fetchSubCollections()
-    } else if (!areUnitsLoading) {
-      // Handle case where there are no units
-      setIsSubdataLoading(false)
-    }
-  }, [allUnits, firestore, contractId, areUnitsLoading])
+    };
+
+    fetchSubCollections();
+  }, [allUnits, firestore, contractId, areUnitsLoading]);
+
 
   const episDeliveredCount = epiDeliveries?.length || 0
 
@@ -305,7 +295,7 @@ export default function EmployeeDetailsPage() {
         <div className='hidden items-center gap-2 md:ml-auto md:flex'>
           <Button asChild variant='default'>
             <Link
-              href={`/dashboard/clients/${contractId}/tickets?employee=${employee.id}`}
+              href={`/dashboard/clients/${contractId}/asos`}
             >
               <Stethoscope className='mr-2 h-4 w-4' /> Solicitar Exame / ASO
             </Link>

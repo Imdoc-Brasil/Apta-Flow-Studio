@@ -139,36 +139,31 @@ export default function EmployeesPage() {
   const [areSectorsLoading, setAreSectorsLoading] = useState(true)
 
   useEffect(() => {
-    if (allUnits && firestore) {
-      setAreSectorsLoading(true)
+    if (allUnits && firestore && !areUnitsLoading) {
+      setAreSectorsLoading(true);
       const fetchSectors = async () => {
         try {
-          const sectorsPromises = allUnits.map((unit) =>
-            getDocs(
-              collection(
-                firestore,
-                `clients/${contractId}/units/${unit.id}/sectors`
-              )
-            )
-          )
-          const sectorsSnapshots = await Promise.all(sectorsPromises)
-          const sectors = sectorsSnapshots.flatMap((snapshot) =>
-            snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Sector))
-          )
-          setAllSectors(sectors)
+          const sectorsPromises = allUnits.map(unit =>
+            getDocs(collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`))
+          );
+          const sectorsSnapshots = await Promise.all(sectorsPromises);
+          const sectorsData = sectorsSnapshots.flatMap(snapshot =>
+            snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sector))
+          );
+          setAllSectors(sectorsData);
         } catch (error) {
           console.error("Failed to fetch sectors:", error);
           setAllSectors([]);
         } finally {
-          setAreSectorsLoading(false)
+          setAreSectorsLoading(false);
         }
-      }
-      fetchSectors()
+      };
+      fetchSectors();
     } else if (!areUnitsLoading) {
-      setAreSectorsLoading(false)
+      setAreSectorsLoading(false);
     }
-  }, [allUnits, firestore, contractId, areUnitsLoading])
-
+  }, [allUnits, firestore, contractId, areUnitsLoading]);
+  
   const staffsRef = useMemoFirebase(
     () => (firestore ? collection(firestore, 'staffs') : null),
     [firestore]
@@ -176,14 +171,14 @@ export default function EmployeesPage() {
 
   const [selectedAddRole, setSelectedAddRole] = useState('')
   const roleDetails = useMemo(() => {
-    if (!selectedAddRole || !rolesData || !allSectors || !allUnits) return null
+    if (!selectedAddRole || !rolesData || areSectorsLoading || !allUnits) return null
     const role = rolesData.find((r) => r.id === selectedAddRole)
     if (!role) return null
     const sector = allSectors.find((s) => s.id === role.sectorId)
     if (!sector) return null
     const unit = allUnits.find((u) => u.id === sector.unitId)
     return { role, sector, unit }
-  }, [selectedAddRole, rolesData, allSectors, allUnits])
+  }, [selectedAddRole, rolesData, allSectors, allUnits, areSectorsLoading])
 
   const getRoleById = (roleId: string) =>
     rolesData?.find((r) => r.id === roleId)
