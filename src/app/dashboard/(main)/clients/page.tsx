@@ -108,26 +108,32 @@ export default function ClientsPage() {
     useCollection<Client>(clientsRef)
     
   const clients = useMemo(() => {
-    if (!allClients || !staffProfile) {
-      return []
+    // Wait until both data sources are loaded before filtering
+    if (areClientsLoading || isStaffLoading || !allClients || !staffProfile) {
+      return [];
     }
+  
     // Super admin sees all clients
     if (staffProfile.perfilId === 'super_admin') {
       return allClients;
     }
+    
     // Client users see only their own company
     if (staffProfile.perfilId === 'cliente') {
        return allClients.filter((client) => client.id === staffProfile.contractId);
     }
+    
     // Other staff see their assigned clients
     if (staffProfile.clientIds && staffProfile.clientIds.length > 0) {
       return allClients.filter((client) =>
         staffProfile.clientIds?.includes(client.id)
-      )
+      );
     }
-    // Default to no clients if no specific rule matches
-    return allClients
-  }, [allClients, staffProfile])
+    
+    // Default to an empty array if no specific rule matches and it's not a super_admin
+    // This prevents showing all clients to users with misconfigured profiles
+    return [];
+  }, [allClients, staffProfile, areClientsLoading, isStaffLoading]);
 
   const [cnpj, setCnpj] = useState('')
   const [isCnpjLoading, setIsCnpjLoading] = useState(false)
