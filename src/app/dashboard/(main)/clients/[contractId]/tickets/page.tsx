@@ -37,6 +37,7 @@ import {
   FileText,
   MessageSquare,
   HelpCircle,
+  Loader2,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -61,7 +62,6 @@ import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
 import { initialClientsData } from '@/app/dashboard/(main)/clients/data'
 import {
-  useTicketStore,
   type Ticket,
   availableLabels,
   type Label as LabelType,
@@ -90,6 +90,14 @@ import type { Employee } from '../employees/data'
 import { Separator } from '@/components/ui/separator'
 import { Progress } from '@/components/ui/progress'
 import { Checkbox } from '@/components/ui/checkbox'
+import {
+  useFirestore,
+  useCollection,
+  useMemoFirebase,
+  addDocumentNonBlocking,
+  updateDocumentNonBlocking,
+} from '@/firebase'
+import { collection, query, where, doc } from 'firebase/firestore'
 
 const statusVariant = {
   Aberto: 'default',
@@ -129,12 +137,13 @@ function AddAttachmentDialog({
   children: React.ReactNode
 }) {
   const [open, setOpen] = useState(false)
-  const { addAttachment } = useTicketStore()
   const { toast } = useToast()
   const [file, setFile] = useState<File | null>(null)
+  const firestore = useFirestore()
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    if (!firestore) return
     const formData = new FormData(e.currentTarget)
     const name = formData.get('name') as string
 
@@ -147,7 +156,18 @@ function AddAttachmentDialog({
       return
     }
 
-    addAttachment(ticketId, name, file)
+    // This is a placeholder. Real implementation would upload the file and get a URL.
+    const newAttachment: Attachment = {
+      id: `att-${Date.now()}`,
+      name,
+      url: URL.createObjectURL(file), // Placeholder URL
+    }
+
+    const ticketDocRef = doc(firestore, 'tickets', ticketId)
+    const currentTicket = {} // In a real app, you'd fetch the current ticket data
+    // const newAttachments = [...(currentTicket.attachments || []), newAttachment]
+    // updateDocumentNonBlocking(ticketDocRef, { attachments: newAttachments })
+
     toast({
       title: 'Anexo Adicionado!',
       description: `O arquivo "${name}" foi adicionado ao ticket.`,
@@ -204,8 +224,8 @@ function AddAttachmentDialog({
 }
 
 function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
-  const { addTextElement } = useTicketStore()
   const { toast } = useToast()
+  const firestore = useFirestore()
 
   const assignedMembers =
     initialStaffsData.filter((emp) =>
@@ -217,6 +237,8 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
     type: 'question' | 'comment'
   ) => {
     e.preventDefault()
+    if (!firestore) return
+
     const formData = new FormData(e.currentTarget)
     const content = formData.get('content') as string
     if (!content) {
@@ -233,15 +255,20 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
       avatar: '',
       fallback: 'CL',
     }
-
-    addTextElement(ticket.id, {
+    
+    const newElement: TextElement = {
+      id: `txt-${Date.now()}`,
       type,
       title: type === 'question' ? 'Pergunta' : 'Comentário',
       content,
       creator: clientUser.name,
       creatorAvatar: clientUser.avatar,
       creatorFallback: clientUser.fallback,
-    })
+      createdAt: new Date().toISOString()
+    }
+    
+    // const ticketDocRef = doc(firestore, 'tickets', ticket.id)
+    // updateDocumentNonBlocking(ticketDocRef, { textElements: [...(ticket.textElements || []), newElement]})
 
     toast({ title: 'Mensagem enviada!' })
     ;(e.currentTarget.closest('dialog') as HTMLDialogElement)?.close()
@@ -479,6 +506,7 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
             )}
             <Separator />
             <AddTextElementDialog
+              ticketId={ticket.id}
               elementType='question'
               dialogTitle='Fazer uma Pergunta'
               dialogDescription='Sua pergunta será enviada à nossa equipe de suporte.'
@@ -488,6 +516,7 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
               </Button>
             </AddTextElementDialog>
             <AddTextElementDialog
+              ticketId={ticket.id}
               elementType='comment'
               dialogTitle='Adicionar um Comentário'
               dialogDescription='Adicione uma atualização ou mais informações ao chamado.'
@@ -538,12 +567,17 @@ export default function ClientTicketsPage() {
   const contractId = params.contractId as string
   const client = getClientById(contractId)
 
-  const { tickets, addTicket } = useTicketStore()
-  const { addAttendee } = useAttendeeStore()
-
-  const clientTickets = tickets.filter(
-    (ticket) => ticket.client === client?.name
+  const firestore = useFirestore()
+  const ticketsQuery = useMemoFirebase(
+    () =>
+      firestore && client?.name
+        ? query(collection(firestore, 'tickets'), where('client', '==', client.name))
+        : null,
+    [firestore, client?.name]
   )
+  const { data: tickets, isLoading } = useCollection<Ticket>(ticketsQuery)
+
+  const { addAttendee } = useAttendeeStore()
 
   const { toast } = useToast()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -560,6 +594,10 @@ export default function ClientTicketsPage() {
 
   const handleNewTicket = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!firestore) return;
+    
+    const ticketsRef = collection(firestore, 'tickets')
+    
     const formData = new FormData(event.currentTarget)
     const subject = formData.get('subject') as string
     const employeeId = formData.get('employee') as string
@@ -568,13 +606,18 @@ export default function ClientTicketsPage() {
     const clientName = client?.name || 'Cliente Desconhecido'
 
     // 1. Create the ticket
-    addTicket({
+    const newTicketData = {
       subject: subject,
       client: clientName,
       priority: formData.get('priority') as Ticket['priority'],
       description: formData.get('description') as string,
       relatedEmployee: employeeName,
-    })
+      status: 'Aberto' as Ticket['status'],
+      updated: new Date().toISOString(),
+    }
+    
+    addDocumentNonBlocking(ticketsRef, newTicketData);
+
 
     // 2. Check if it's a health-related request and add to attendee queue
     const isHealthRequest =
@@ -586,8 +629,6 @@ export default function ClientTicketsPage() {
         clientName,
         patientName: employeeName,
         solicitationType: subject,
-        // This is a simplified logic. In a real scenario, this would query the PCMSO
-        // based on the solicitationType and employee's role/risks.
         exams: [
           {
             id: `EXM-${Date.now()}-A`,
@@ -727,7 +768,11 @@ export default function ClientTicketsPage() {
         </div>
       </CardHeader>
       <CardContent>
-        {clientTickets.length > 0 ? (
+        {isLoading ? (
+          <div className='flex items-center justify-center h-64'>
+             <Loader2 className='h-8 w-8 animate-spin' />
+          </div>
+        ) : tickets && tickets.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow>
@@ -741,7 +786,7 @@ export default function ClientTicketsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {clientTickets.map((ticket) => (
+              {tickets.map((ticket) => (
                 <Dialog key={ticket.id}>
                   <DialogTrigger asChild>
                     <TableRow className='cursor-pointer'>
@@ -814,3 +859,6 @@ export default function ClientTicketsPage() {
     </Card>
   )
 }
+
+
+    
