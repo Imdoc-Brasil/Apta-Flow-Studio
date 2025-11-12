@@ -60,7 +60,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
-import { initialClientsData } from '@/app/dashboard/(main)/clients/data'
+import type { Client } from '../../data'
 import {
   type Ticket,
   availableLabels,
@@ -72,7 +72,6 @@ import {
 } from '@/app/dashboard/(main)/tickets/tickets-store'
 import {
   useAttendeeStore,
-  type Attendee,
 } from '@/app/dashboard/(main)/health/queue/attendee-store'
 import {
   Select,
@@ -84,8 +83,7 @@ import {
 import { format, formatDistanceToNow, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { initialStaffsData } from '@/app/dashboard/(main)/employees/page'
-import { initialEmployeesData } from '../employees/data'
+import type { Staff } from '../../../employees/page'
 import type { Employee } from '../employees/data'
 import { Separator } from '@/components/ui/separator'
 import { Progress } from '@/components/ui/progress'
@@ -96,6 +94,7 @@ import {
   useMemoFirebase,
   addDocumentNonBlocking,
   updateDocumentNonBlocking,
+  useDoc
 } from '@/firebase'
 import { collection, query, where, doc } from 'firebase/firestore'
 
@@ -111,10 +110,6 @@ const priorityVariant = {
   Média: 'default',
   Baixa: 'secondary',
 } as const
-
-const getClientById = (id: string) => {
-  return initialClientsData.find((client) => client.id === id)
-}
 
 function TimeAgo({ dateString }: { dateString: string }) {
   const [timeAgo, setTimeAgo] = useState('')
@@ -223,12 +218,12 @@ function AddAttachmentDialog({
   )
 }
 
-function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
+function TicketDetailsDialog({ ticket, staffs }: { ticket: Ticket; staffs: Staff[] }) {
   const { toast } = useToast()
   const firestore = useFirestore()
 
   const assignedMembers =
-    initialStaffsData.filter((emp) =>
+    staffs.filter((emp) =>
       ticket.assignedTo?.includes(emp.email)
     ) ?? []
 
@@ -408,7 +403,7 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                       <Progress value={progress} className='h-2' />
                       {checklist.items.map((item) => {
                         const itemAssignedMembers =
-                          initialStaffsData.filter((staff) =>
+                          staffs.filter((staff) =>
                             item.assignedTo?.includes(staff.email)
                           ) ?? []
                         return (
@@ -565,9 +560,15 @@ export default function ClientTicketsPage() {
   const employeeId = searchParams.get('employee')
 
   const contractId = params.contractId as string
-  const client = getClientById(contractId)
-
   const firestore = useFirestore()
+  const { toast } = useToast()
+
+  const clientRef = useMemoFirebase(
+    () => (firestore ? doc(firestore, 'clients', contractId) : null),
+    [firestore, contractId]
+  );
+  const { data: client, isLoading: isClientLoading } = useDoc<Client>(clientRef)
+
   const ticketsQuery = useMemoFirebase(
     () =>
       firestore && client?.name
@@ -575,11 +576,22 @@ export default function ClientTicketsPage() {
         : null,
     [firestore, client?.name]
   )
-  const { data: tickets, isLoading } = useCollection<Ticket>(ticketsQuery)
+  const { data: tickets, isLoading: areTicketsLoading } = useCollection<Ticket>(ticketsQuery)
+
+  const employeesRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, `clients/${contractId}/staffs`) : null),
+    [firestore, contractId]
+  )
+  const { data: employees, isLoading: areEmployeesLoading } = useCollection<Employee>(employeesRef)
+  
+  const staffsRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'staffs') : null),
+    [firestore]
+  )
+  const { data: staffs, isLoading: areStaffsLoading } = useCollection<Staff>(staffsRef)
 
   const { addAttendee } = useAttendeeStore()
 
-  const { toast } = useToast()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   
   const [defaultEmployee, setDefaultEmployee] = useState<string | undefined>(employeeId || undefined);
@@ -602,7 +614,7 @@ export default function ClientTicketsPage() {
     const subject = formData.get('subject') as string
     const employeeId = formData.get('employee') as string
     const employeeName =
-      initialEmployeesData.find((e) => e.id === employeeId)?.name || undefined
+      employees?.find((e) => e.id === employeeId)?.name || undefined
     const clientName = client?.name || 'Cliente Desconhecido'
 
     // 1. Create the ticket
@@ -657,6 +669,8 @@ export default function ClientTicketsPage() {
     setIsDialogOpen(false)
     setDefaultEmployee(undefined)
   }
+  
+  const isLoading = isClientLoading || areTicketsLoading || areEmployeesLoading || areStaffsLoading
 
   return (
     <Card>
@@ -691,7 +705,7 @@ export default function ClientTicketsPage() {
                       id='subject'
                       name='subject'
                       placeholder='Ex: Dúvida sobre o ASO Admissional'
-                      defaultValue={defaultEmployee ? `Solicitação de Exame para ${initialEmployeesData.find(e => e.id === defaultEmployee)?.name}` : ''}
+                      defaultValue={defaultEmployee ? `Solicitação de Exame para ${employees?.find(e => e.id === defaultEmployee)?.name}` : ''}
                       required
                     />
                   </div>
@@ -703,7 +717,7 @@ export default function ClientTicketsPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value='none'>Nenhum</SelectItem>
-                        {initialEmployeesData.map((emp) => (
+                        {employees?.map((emp) => (
                           <SelectItem key={emp.id} value={emp.id}>
                             {emp.name}
                           </SelectItem>
@@ -835,7 +849,7 @@ export default function ClientTicketsPage() {
                       </TableCell>
                     </TableRow>
                   </DialogTrigger>
-                  <TicketDetailsDialog ticket={ticket} />
+                  <TicketDetailsDialog ticket={ticket} staffs={staffs || []} />
                 </Dialog>
               ))}
             </TableBody>
@@ -859,3 +873,5 @@ export default function ClientTicketsPage() {
     </Card>
   )
 }
+
+    

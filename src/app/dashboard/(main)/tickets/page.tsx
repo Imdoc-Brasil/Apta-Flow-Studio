@@ -86,7 +86,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { initialClientsData } from '@/app/dashboard/(main)/clients/data'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   useTicketStore,
@@ -107,23 +106,21 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import {
-  initialStaffsData,
-  type Staff,
-} from '@/app/dashboard/(main)/employees/page'
+import type { Staff } from '@/app/dashboard/(main)/employees/page'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Progress } from '@/components/ui/progress'
 import { useToast } from '@/hooks/use-toast'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { initialEmployeesData } from '../clients/[contractId]/employees/data'
+import type { Client } from '../clients/data'
 import {
   addDocumentNonBlocking,
   updateDocumentNonBlocking,
   useCollection,
   useFirestore,
   useMemoFirebase,
+  useUser,
 } from '@/firebase'
 import { collection, doc } from 'firebase/firestore'
 
@@ -180,15 +177,17 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
     isDragging,
   } = useSortable({ id: ticket.id, data: { type: 'Ticket', ticket } })
   const firestore = useFirestore();
-  const currentUserEmail = 'sarah.chen@aptaflow.com'
+  const { user } = useUser()
+  const currentUserEmail = user?.email || ''
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
   }
+  const { data: staffs } = useCollection<Staff>(useMemoFirebase(() => firestore ? collection(firestore, 'staffs') : null, [firestore]));
   const assignedMembers =
-    initialStaffsData.filter((emp: Staff) =>
+    staffs?.filter((emp: Staff) =>
       ticket.assignedTo?.includes(emp.email)
     ) ?? []
 
@@ -385,6 +384,8 @@ function AddChecklistDialog({
   const [open, setOpen] = useState(false)
   const { addChecklist } = useTicketStore()
   const { toast } = useToast()
+  const firestore = useFirestore();
+  const { data: staffs } = useCollection<Staff>(useMemoFirebase(() => firestore ? collection(firestore, 'staffs') : null, [firestore]));
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -462,7 +463,7 @@ function AddChecklistDialog({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value='unassigned'>Ninguém</SelectItem>
-                  {initialStaffsData.map((staff) => (
+                  {staffs?.map((staff) => (
                     <SelectItem key={staff.email} value={staff.email}>
                       {staff.name}
                     </SelectItem>
@@ -495,6 +496,8 @@ function AddChecklistItemForm({
   const { addChecklistItem } = useTicketStore()
   const { toast } = useToast()
   const [showForm, setShowForm] = useState(false)
+  const firestore = useFirestore();
+  const { data: staffs } = useCollection<Staff>(useMemoFirebase(() => firestore ? collection(firestore, 'staffs') : null, [firestore]));
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -559,7 +562,7 @@ function AddChecklistItemForm({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value='unassigned'>Ninguém</SelectItem>
-              {initialStaffsData.map((staff) => (
+              {staffs?.map((staff) => (
                 <SelectItem key={staff.email} value={staff.email}>
                   {staff.fallback}
                 </SelectItem>
@@ -596,6 +599,8 @@ function AddTextElementDialog({
   const [open, setOpen] = useState(false)
   const { addTextElement } = useTicketStore()
   const { toast } = useToast()
+  const firestore = useFirestore();
+  const { data: staffs } = useCollection<Staff>(useMemoFirebase(() => firestore ? collection(firestore, 'staffs') : null, [firestore]));
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -612,22 +617,24 @@ function AddTextElementDialog({
     }
 
     // Mocking the creator for now
-    const creator = initialStaffsData[0]
+    const creator = staffs?.[0]
 
-    addTextElement(ticketId, {
-      type: elementType,
-      title: elementType === 'question' ? 'Pergunta' : 'Comentário', // Simplified title
-      content,
-      creator: creator.name,
-      creatorAvatar: creator.avatar,
-      creatorFallback: creator.fallback,
-    })
+    if (creator) {
+      addTextElement(ticketId, {
+        type: elementType,
+        title: elementType === 'question' ? 'Pergunta' : 'Comentário', // Simplified title
+        content,
+        creator: creator.name,
+        creatorAvatar: creator.avatar,
+        creatorFallback: creator.fallback,
+      })
 
-    toast({
-      title: `${dialogTitle} adicionado!`,
-      description: `Sua contribuição foi adicionada ao ticket.`,
-    })
-    setOpen(false)
+      toast({
+        title: `${dialogTitle} adicionado!`,
+        description: `Sua contribuição foi adicionada ao ticket.`,
+      })
+      setOpen(false)
+    }
   }
 
   return (
@@ -667,6 +674,9 @@ function AddTextElementDialog({
 function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
   const { toggleChecklistItem } = useTicketStore()
   const firestore = useFirestore()
+  const { data: staffs } = useCollection<Staff>(useMemoFirebase(() => firestore ? collection(firestore, 'staffs') : null, [firestore]));
+  const { data: employees } = useCollection<Employee>(useMemoFirebase(() => ticket.client && firestore ? collection(firestore, `clients/${ticket.client}/staffs`) : null, [ticket.client, firestore]));
+
 
   const handleAssignMember = (ticketId: string, memberEmail: string) => {
     if (!firestore) return
@@ -698,7 +708,7 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
   }
 
   const assignedMembers =
-    initialStaffsData.filter((emp: Staff) =>
+    staffs?.filter((emp: Staff) =>
       ticket.assignedTo?.includes(emp.email)
     ) ?? []
 
@@ -798,7 +808,7 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                       <Progress value={progress} className='h-2' />
                       {checklist.items.map((item) => {
                         const itemAssignedMembers =
-                          initialStaffsData.filter((staff) =>
+                          staffs?.filter((staff) =>
                             item.assignedTo?.includes(staff.email)
                           ) ?? []
                         return (
@@ -949,7 +959,7 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                     </div>
                     <Separator />
                     <div className='flex flex-col gap-2'>
-                      {initialStaffsData.map((staff: Staff) => {
+                      {staffs?.map((staff: Staff) => {
                         const isAssigned = ticket.assignedTo?.includes(
                           staff.email
                         )
@@ -1142,9 +1152,22 @@ export default function TicketsPage() {
     () => (firestore ? collection(firestore, 'tickets') : null),
     [firestore]
   )
-  const { data: ticketsData, isLoading } = useCollection<Ticket>(ticketsRef)
+  const clientsRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'clients') : null),
+    [firestore]
+  )
+  const staffsRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'staffs') : null),
+    [firestore]
+  )
+
+  const { data: ticketsData, isLoading: areTicketsLoading } = useCollection<Ticket>(ticketsRef)
+  const { data: clientsData, isLoading: areClientsLoading } = useCollection<Client>(clientsRef)
+  const { data: staffsData, isLoading: areStaffsLoading } = useCollection<Staff>(staffsRef)
+
   const { tickets, setTickets } = useTicketStore()
-  
+  const { user } = useUser()
+
   useEffect(() => {
     if (ticketsData) {
       setTickets(ticketsData);
@@ -1160,7 +1183,7 @@ export default function TicketsPage() {
   const [clientFilter, setClientFilter] = useState<string[]>([])
   const [selectedLabels, setSelectedLabels] = useState<LabelType[]>([])
   const [assignedTo, setAssignedTo] = useState<string[]>([])
-  const currentUserEmail = 'sarah.chen@aptaflow.com'
+  const currentUserEmail = user?.email || ''
 
   const filteredTickets = useMemo(() => {
     return tickets.filter((ticket) => {
@@ -1194,7 +1217,9 @@ export default function TicketsPage() {
     const subject = formData.get('subject') as string
     const clientName = formData.get('client') as string
     const relatedEmployeeId = formData.get('relatedEmployee') as string
-
+    
+    // We need to fetch the employees for the selected client to find the name
+    // This is a simplification; in a real app, you'd probably have this data more readily available
     const newTicketData = {
       subject,
       client: clientName,
@@ -1202,9 +1227,7 @@ export default function TicketsPage() {
       description: (formData.get('description') as string) || '',
       labels: selectedLabels,
       assignedTo: assignedTo,
-      relatedEmployee:
-        initialEmployeesData.find((e) => e.id === relatedEmployeeId)?.name ||
-        undefined,
+      relatedEmployee: relatedEmployeeId, // For now, we save the ID
       status: 'Aberto' as TicketStatus,
       updated: new Date().toISOString(),
     }
@@ -1256,6 +1279,8 @@ export default function TicketsPage() {
       })
     }
   }
+  
+  const isLoading = areTicketsLoading || areClientsLoading || areStaffsLoading
 
   return (
     <div className='flex h-full flex-col gap-4'>
@@ -1301,7 +1326,7 @@ export default function TicketsPage() {
 
                   <DropdownMenuLabel>Filtrar por Cliente</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {initialClientsData.map((client) => (
+                  {clientsData?.map((client) => (
                     <DropdownMenuCheckboxItem
                       key={client.id}
                       checked={clientFilter.includes(client.name)}
@@ -1321,7 +1346,7 @@ export default function TicketsPage() {
 
                   <DropdownMenuLabel>Filtrar por Membro</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  {initialStaffsData.map((staff) => (
+                  {staffsData?.map((staff) => (
                     <DropdownMenuCheckboxItem
                       key={staff.email}
                       checked={staffFilter.includes(staff.email)}
@@ -1398,7 +1423,7 @@ export default function TicketsPage() {
                           <SelectValue placeholder='Selecione o cliente' />
                         </SelectTrigger>
                         <SelectContent>
-                          {initialClientsData.map((client) => (
+                          {clientsData?.map((client) => (
                             <SelectItem
                               key={client.id}
                               value={client.name}
@@ -1413,22 +1438,7 @@ export default function TicketsPage() {
                       <Label htmlFor='relatedEmployee'>
                         Colaborador Relacionado (Opcional)
                       </Label>
-                      <Select name='relatedEmployee'>
-                        <SelectTrigger>
-                          <SelectValue placeholder='Selecione um colaborador' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value=''>Nenhum</SelectItem>
-                          {initialEmployeesData.map((employee) => (
-                            <SelectItem
-                              key={employee.id}
-                              value={employee.id}
-                            >
-                              {employee.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Input name='relatedEmployee' placeholder="Nome do colaborador do cliente" />
                     </div>
                     <div className='space-y-2'>
                       <Label htmlFor='subject'>Assunto</Label>
@@ -1468,7 +1478,7 @@ export default function TicketsPage() {
                             </h4>
                             <ScrollArea className='h-48'>
                               <div className='flex flex-col gap-2 p-1'>
-                                {initialStaffsData.map((staff: Staff) => (
+                                {staffsData?.map((staff: Staff) => (
                                   <Label
                                     key={staff.email}
                                     className='flex items-center gap-2 font-normal'
@@ -1786,3 +1796,5 @@ export default function TicketsPage() {
     </div>
   )
 }
+
+    
