@@ -21,17 +21,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { initialHazardData } from '@/app/dashboard/(main)/risks/page'
 import { useToast } from '@/hooks/use-toast'
-import { Save, Printer, Pencil } from 'lucide-react'
+import { Save, Printer, Pencil, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Separator } from '@/components/ui/separator'
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase'
+import { collection } from 'firebase/firestore'
+import type { Hazard } from '../../../risks/page'
 
 export default function ClinicalEvaluationSettingsPage() {
   const { toast } = useToast()
   const [isPeriodic, setIsPeriodic] = useState('nao')
   const [isEditing, setIsEditing] = useState(false)
+
+  const firestore = useFirestore()
+  const hazardsRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'hazards') : null),
+    [firestore]
+  )
+  const { data: hazardData, isLoading: isLoadingHazards } =
+    useCollection<Hazard>(hazardsRef)
 
   const handleSaveSettings = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -258,17 +268,23 @@ export default function ClinicalEvaluationSettingsPage() {
                   <Label htmlFor='linkedRisk'>
                     Risco Vinculado (Opcional)
                   </Label>
-                  <Select name='linkedRisk' disabled={!isEditing}>
+                  <Select name='linkedRisk' disabled={!isEditing || isLoadingHazards}>
                     <SelectTrigger>
                       <SelectValue placeholder='Selecione um risco do catálogo para vincular' />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value='none'>Nenhum</SelectItem>
-                      {initialHazardData.map((hazard) => (
-                        <SelectItem key={hazard.id} value={hazard.id}>
-                          {hazard.name} ({hazard.category})
-                        </SelectItem>
-                      ))}
+                      {isLoadingHazards ? (
+                        <div className='flex justify-center p-4'><Loader2 className='h-4 w-4 animate-spin' /></div>
+                      ) : (
+                        <>
+                          <SelectItem value='none'>Nenhum</SelectItem>
+                          {hazardData?.map((hazard) => (
+                            <SelectItem key={hazard.id} value={hazard.id}>
+                              {hazard.name} ({hazard.category})
+                            </SelectItem>
+                          ))}
+                        </>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>

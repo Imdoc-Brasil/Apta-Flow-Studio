@@ -21,18 +21,42 @@ import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { useToast } from '@/hooks/use-toast'
-import { initialUnitsData } from '../dashboard/(main)/clients/[contractId]/units/data'
-import { initialSectorsData } from '../dashboard/(main)/clients/[contractId]/sectors/data'
-import { initialRolesData } from '../dashboard/(main)/clients/[contractId]/roles/data'
 import { psychosocialSurveyData } from '../dashboard/(main)/clients/[contractId]/psychosocial/data'
 import { Logo } from '@/components/logo'
 import { Separator } from '@/components/ui/separator'
 import { useSurveyStore } from '../dashboard/(main)/clients/[contractId]/psychosocial/psychosocial-store'
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase'
+import { collection, query, where } from 'firebase/firestore'
+import { useParams } from 'next/navigation'
+import type { Unit } from '../dashboard/(main)/clients/[contractId]/units/data'
+import type { Sector } from '../dashboard/(main)/clients/[contractId]/sectors/data'
+import type { Role } from '../dashboard/(main)/clients/[contractId]/roles/data'
+import { Loader2 } from 'lucide-react'
 
 export default function SurveyPage() {
   const { toast } = useToast()
   const { addResponse } = useSurveyStore()
   const [step, setStep] = useState(1)
+  const firestore = useFirestore()
+  const params = useParams()
+
+  // Assuming a survey might be tied to a client, but for now we fetch all
+  // In a real app, you'd likely get client/contractId from URL
+  const { data: units, isLoading: unitsLoading } = useCollection<Unit>(
+    useMemoFirebase(() => (firestore ? collection(firestore, 'units') : null), [
+      firestore,
+    ])
+  )
+  const { data: sectors, isLoading: sectorsLoading } = useCollection<Sector>(
+    useMemoFirebase(() => (firestore ? collection(firestore, 'sectors') : null), [
+      firestore,
+    ])
+  )
+  const { data: roles, isLoading: rolesLoading } = useCollection<Role>(
+    useMemoFirebase(() => (firestore ? collection(firestore, 'roles') : null), [
+      firestore,
+    ])
+  )
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -50,14 +74,14 @@ export default function SurveyPage() {
         }
       })
     })
-    
+
     if (hasMissingAnswers) {
-        toast({
-            variant: "destructive",
-            title: "Perguntas não respondidas",
-            description: "Por favor, responda todas as perguntas antes de enviar.",
-        })
-        return;
+      toast({
+        variant: 'destructive',
+        title: 'Perguntas não respondidas',
+        description: 'Por favor, responda todas as perguntas antes de enviar.',
+      })
+      return
     }
 
     toast({
@@ -67,6 +91,8 @@ export default function SurveyPage() {
     })
     setStep(3) // Go to thank you page
   }
+
+  const isLoadingDemographics = unitsLoading || sectorsLoading || rolesLoading
 
   if (step === 3) {
     return (
@@ -145,99 +171,115 @@ export default function SurveyPage() {
                   setStep(2)
                 }}
               >
-                <div className='space-y-2'>
-                  <Label htmlFor='unit'>Unidade</Label>
-                  <Select name='unit' required>
-                    <SelectTrigger>
-                      <SelectValue placeholder='Selecione sua unidade' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {initialUnitsData.map((unit) => (
-                        <SelectItem key={unit.id} value={unit.id}>
-                          {unit.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='sector'>Setor</Label>
-                  <Select name='sector' required>
-                    <SelectTrigger>
-                      <SelectValue placeholder='Selecione seu setor' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {initialSectorsData.map((sector) => (
-                        <SelectItem key={sector.id} value={sector.id}>
-                          {sector.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='role'>Cargo (Opcional)</Label>
-                  <Select name='role'>
-                    <SelectTrigger>
-                      <SelectValue placeholder='Selecione seu cargo' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='na'>Prefiro não informar</SelectItem>
-                      {initialRolesData.map((role) => (
-                        <SelectItem key={role.id} value={role.id}>
-                          {role.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='gender'>Gênero</Label>
-                  <Select name='gender' required>
-                    <SelectTrigger>
-                      <SelectValue placeholder='Selecione seu gênero' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='masculino'>Masculino</SelectItem>
-                      <SelectItem value='feminino'>Feminino</SelectItem>
-                      <SelectItem value='outro'>Outro</SelectItem>
-                      <SelectItem value='na'>Prefiro não informar</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='age'>Faixa Etária</Label>
-                  <Select name='age' required>
-                    <SelectTrigger>
-                      <SelectValue placeholder='Selecione sua idade' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='-25'>Até 25 anos</SelectItem>
-                      <SelectItem value='26-35'>26 a 35 anos</SelectItem>
-                      <SelectItem value='36-45'>36 a 45 anos</SelectItem>
-                      <SelectItem value='46-55'>46 a 55 anos</SelectItem>
-                      <SelectItem value='56+'>Mais de 56 anos</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='service-time'>Tempo de Serviço</Label>
-                  <Select name='service-time' required>
-                    <SelectTrigger>
-                      <SelectValue placeholder='Selecione seu tempo na empresa' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='-1'>Menos de 1 ano</SelectItem>
-                      <SelectItem value='1-5'>1 a 5 anos</SelectItem>
-                      <SelectItem value='6-10'>6 a 10 anos</SelectItem>
-                      <SelectItem value='11-15'>11 a 15 anos</SelectItem>
-                      <SelectItem value='15+'>Mais de 15 anos</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                {isLoadingDemographics ? (
+                  <div className='sm:col-span-2 flex justify-center items-center h-48'>
+                    <Loader2 className='h-8 w-8 animate-spin' />
+                  </div>
+                ) : (
+                  <>
+                    <div className='space-y-2'>
+                      <Label htmlFor='unit'>Unidade</Label>
+                      <Select name='unit' required>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Selecione sua unidade' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {units?.map((unit) => (
+                            <SelectItem key={unit.id} value={unit.id!}>
+                              {unit.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='sector'>Setor</Label>
+                      <Select name='sector' required>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Selecione seu setor' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {sectors?.map((sector) => (
+                            <SelectItem key={sector.id} value={sector.id!}>
+                              {sector.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='role'>Cargo (Opcional)</Label>
+                      <Select name='role'>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Selecione seu cargo' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value='na'>
+                            Prefiro não informar
+                          </SelectItem>
+                          {roles?.map((role) => (
+                            <SelectItem key={role.id} value={role.id!}>
+                              {role.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='gender'>Gênero</Label>
+                      <Select name='gender' required>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Selecione seu gênero' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value='masculino'>Masculino</SelectItem>
+                          <SelectItem value='feminino'>Feminino</SelectItem>
+                          <SelectItem value='outro'>Outro</SelectItem>
+                          <SelectItem value='na'>
+                            Prefiro não informar
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='age'>Faixa Etária</Label>
+                      <Select name='age' required>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Selecione sua idade' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value='-25'>Até 25 anos</SelectItem>
+                          <SelectItem value='26-35'>26 a 35 anos</SelectItem>
+                          <SelectItem value='36-45'>36 a 45 anos</SelectItem>
+                          <SelectItem value='46-55'>46 a 55 anos</SelectItem>
+                          <SelectItem value='56+'>Mais de 56 anos</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className='space-y-2'>
+                      <Label htmlFor='service-time'>Tempo de Serviço</Label>
+                      <Select name='service-time' required>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Selecione seu tempo na empresa' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value='-1'>Menos de 1 ano</SelectItem>
+                          <SelectItem value='1-5'>1 a 5 anos</SelectItem>
+                          <SelectItem value='6-10'>6 a 10 anos</SelectItem>
+                          <SelectItem value='11-15'>11 a 15 anos</SelectItem>
+                          <SelectItem value='15+'>Mais de 15 anos</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </>
+                )}
               </form>
               <div className='flex justify-end pt-4'>
-                <Button type='submit' form='demographics-form'>
+                <Button
+                  type='submit'
+                  form='demographics-form'
+                  disabled={isLoadingDemographics}
+                >
                   Iniciar Questionário
                 </Button>
               </div>

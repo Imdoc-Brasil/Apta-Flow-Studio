@@ -20,7 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { initialHazardData } from '@/app/dashboard/(main)/risks/page'
 import { useToast } from '@/hooks/use-toast'
 import {
   Save,
@@ -52,56 +51,88 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Badge } from '@/components/ui/badge'
 import { useAttendeeStore } from '../../queue/attendee-store'
-import { initialEmployeesData } from '../../../clients/[contractId]/employees/data'
-import { initialRolesData } from '../../../clients/[contractId]/roles/data'
-import { initialSectorsData } from '../../../clients/[contractId]/sectors/data'
-import { initialClientsData } from '../../../clients/data'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import {
+  useCollection,
+  useDoc,
+  useFirestore,
+  useMemoFirebase,
+} from '@/firebase'
+import { collection, doc } from 'firebase/firestore'
+import type { Client } from '../../../clients/data'
+import type { Employee } from '../../../clients/[contractId]/employees/data'
+import type { Role } from '../../../clients/[contractId]/roles/data'
+import type { Sector } from '../../../clients/[contractId]/sectors/data'
 
-const getDetailedAttendeeInfo = (attendeeId: string) => {
+const getDetailedAttendeeInfo = (
+  attendeeId: string,
+  employees?: Employee[],
+  roles?: Role[],
+  sectors?: Sector[],
+  clients?: Client[]
+) => {
   const attendee = useAttendeeStore
     .getState()
     .attendees.find((a) => a.id === attendeeId)
   if (!attendee) return null
 
-  const employee = initialEmployeesData.find(
-    (e) => e.name === attendee.patientName
-  )
-  if (!employee) return { attendee, employee: null, role: null, sector: null, client: null }
+  if (!employees || !roles || !sectors || !clients) {
+    return { attendee, employee: null, role: null, sector: null, client: null }
+  }
 
-  const role = initialRolesData.find((r) => r.id === employee.roleId)
-  const sector = role
-    ? initialSectorsData.find((s) => s.id === role.sectorId)
-    : undefined
-  const client = initialClientsData.find((c) => c.name === attendee.clientName)
+  const employee = employees.find((e) => e.name === attendee.patientName)
+  if (!employee)
+    return { attendee, employee: null, role: null, sector: null, client: null }
+
+  const role = roles.find((r) => r.id === employee.roleId)
+  const sector = role ? sectors.find((s) => s.id === role.sectorId) : undefined
+  const client = clients.find((c) => c.name === attendee.clientName)
 
   return { attendee, employee, role, sector, client }
 }
-
 
 export default function AttendeeEvaluationPage() {
   const params = useParams()
   const router = useRouter()
   const { toast } = useToast()
+  const firestore = useFirestore()
+  const contractId = params.contractId as string
 
   const attendeeId = params.attendeeId as string
   const [attendeeInfo, setAttendeeInfo] = useState<any | null>(null)
   const [isClient, setIsClient] = useState(false)
-  
+
   const [weight, setWeight] = useState('')
   const [height, setHeight] = useState('')
   const [imc, setImc] = useState(0)
   const [imcStatus, setImcStatus] = useState('')
 
+  const employeesRef = useMemoFirebase(() => (firestore && contractId ? collection(firestore, `clients/${contractId}/staffs`) : null), [firestore, contractId]);
+  const rolesRef = useMemoFirebase(() => (firestore && contractId ? collection(firestore, `clients/${contractId}/roles`) : null), [firestore, contractId]);
+  const sectorsRef = useMemoFirebase(() => (firestore && contractId ? collection(firestore, `clients/${contractId}/sectors`) : null), [firestore, contractId]);
+  const clientsRef = useMemoFirebase(() => (firestore ? collection(firestore, `clients`) : null), [firestore]);
+
+  const { data: employeesData } = useCollection<Employee>(employeesRef)
+  const { data: rolesData } = useCollection<Role>(rolesRef)
+  const { data: sectorsData } = useCollection<Sector>(sectorsRef)
+  const { data: clientsData } = useCollection<Client>(clientsRef)
 
   useEffect(() => {
     setIsClient(true)
-    if (attendeeId) {
-      setAttendeeInfo(getDetailedAttendeeInfo(attendeeId))
+    if (attendeeId && employeesData && rolesData && sectorsData && clientsData) {
+      setAttendeeInfo(
+        getDetailedAttendeeInfo(
+          attendeeId,
+          employeesData,
+          rolesData,
+          sectorsData,
+          clientsData
+        )
+      )
     }
-  }, [attendeeId])
-  
+  }, [attendeeId, employeesData, rolesData, sectorsData, clientsData])
+
   const calculateImc = useCallback(() => {
     const w = parseFloat(weight)
     const h = parseFloat(height)
@@ -125,9 +156,13 @@ export default function AttendeeEvaluationPage() {
   }, [calculateImc])
 
   if (!isClient) {
-     return <div className='flex items-center justify-center h-full'><Loader2 className='h-8 w-8 animate-spin' /></div>;
+    return (
+      <div className='flex items-center justify-center h-full'>
+        <Loader2 className='h-8 w-8 animate-spin' />
+      </div>
+    )
   }
-  
+
   if (!attendeeInfo) {
     return (
       <div className='flex flex-col items-center justify-center h-full text-center'>
@@ -146,10 +181,11 @@ export default function AttendeeEvaluationPage() {
   }
 
   const { attendee, employee, role, sector, client } = attendeeInfo
-  
-  const isMultiExam = attendee.exams.length > 1;
-  const examType = isMultiExam ? attendee.solicitationType : attendee.exams[0]?.name || attendee.solicitationType;
 
+  const isMultiExam = attendee.exams.length > 1
+  const examType = isMultiExam
+    ? attendee.solicitationType
+    : attendee.exams[0]?.name || attendee.solicitationType
 
   const FieldsetGroup = ({
     children,
@@ -163,8 +199,14 @@ export default function AttendeeEvaluationPage() {
       {children}
     </fieldset>
   )
-  
-  const InfoField = ({ label, value }: { label: string; value?: string | null }) => (
+
+  const InfoField = ({
+    label,
+    value,
+  }: {
+    label: string
+    value?: string | null
+  }) => (
     <div className='space-y-1'>
       <p className='text-xs font-medium text-muted-foreground'>{label}</p>
       <p className='text-sm font-semibold'>{value || 'N/A'}</p>
@@ -203,10 +245,9 @@ export default function AttendeeEvaluationPage() {
     </div>
   )
 
-
   return (
     <div className='grid flex-1 auto-rows-max gap-4'>
-       <div className='flex items-center gap-4'>
+      <div className='flex items-center gap-4'>
         <Button asChild variant='outline' size='icon' className='h-7 w-7'>
           <Link href={`/dashboard/health/queue`}>
             <ArrowLeft className='h-4 w-4' />
@@ -221,151 +262,189 @@ export default function AttendeeEvaluationPage() {
         </Badge>
       </div>
 
-       <div className='grid md:grid-cols-3 gap-8'>
-            <div className='md:col-span-2 space-y-6'>
-                 <ScrollArea className="h-[calc(100vh-12rem)] p-1">
-                    <div className="space-y-8 pr-4">
-                        <FieldsetGroup title="Seção 01: Dados do Colaborador">
-                            <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm'>
-                            <InfoField label='Nome' value={employee?.name} />
-                            <InfoField label='Matrícula' value={employee?.id} />
-                            <InfoField label='Idade' value={'N/A'} />
-                            <InfoField label='Sexo' value={'N/A'} />
-                            <InfoField label='CPF' value={'N/A'} />
-                            <InfoField label='Empresa' value={client?.name} />
-                            <InfoField label='Setor' value={sector?.name} />
-                            <InfoField label='Cargo' value={role?.name} />
-                            <InfoField
-                                label='Posto de Trabalho'
-                                value={'N/A'}
-                            />
-                            <InfoField label='GHE' value={'N/A'} />
-                            <div className='col-span-full'>
-                                <InfoField
-                                label='Atividades'
-                                value={role?.activities.join(', ')}
-                                />
-                            </div>
-                            <div className='col-span-full'>
-                                <InfoField label='Endereço' value={employee?.phone} />
-                            </div>
-                            </div>
-                        </FieldsetGroup>
+      <div className='grid md:grid-cols-3 gap-8'>
+        <div className='md:col-span-2 space-y-6'>
+          <ScrollArea className='h-[calc(100vh-12rem)] p-1'>
+            <div className='space-y-8 pr-4'>
+              <FieldsetGroup title='Seção 01: Dados do Colaborador'>
+                <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-sm'>
+                  <InfoField label='Nome' value={employee?.name} />
+                  <InfoField label='Matrícula' value={employee?.id} />
+                  <InfoField label='Idade' value={'N/A'} />
+                  <InfoField label='Sexo' value={'N/A'} />
+                  <InfoField label='CPF' value={'N/A'} />
+                  <InfoField label='Empresa' value={client?.name} />
+                  <InfoField label='Setor' value={sector?.name} />
+                  <InfoField label='Cargo' value={role?.name} />
+                  <InfoField label='Posto de Trabalho' value={'N/A'} />
+                  <InfoField label='GHE' value={'N/A'} />
+                  <div className='col-span-full'>
+                    <InfoField
+                      label='Atividades'
+                      value={role?.activities.join(', ')}
+                    />
+                  </div>
+                  <div className='col-span-full'>
+                    <InfoField label='Endereço' value={employee?.phone} />
+                  </div>
+                </div>
+              </FieldsetGroup>
 
-                        <FieldsetGroup title="Seção 02: Contexto do Exame">
-                            <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-                            <div className='space-y-2'>
-                                <Label>Tipo de Exame</Label>
-                                <Input disabled value={examType} />
-                            </div>
-                            </div>
-                            <div className='space-y-2'>
-                            <Label>Exposto aos Riscos</Label>
-                            <Textarea
-                                disabled
-                                value='Ruído Contínuo ou Intermitente, Levantamento de peso'
-                                rows={2}
-                            />
-                            </div>
-                            <div className='space-y-2'>
-                            <Label>Exames a Serem Realizados (Conforme PCMSO)</Label>
-                            <Textarea
-                                disabled
-                                value={attendee.exams.map((e: any) => e.name).join(', ')}
-                                rows={2}
-                            />
-                            </div>
-                        </FieldsetGroup>
-                         <FieldsetGroup title="Seção 03: Anamnese">
-                         <div className="space-y-4 rounded-md border p-4">
-                            <h4 className="font-medium">Dados Vitais</h4>
-                             <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                    <TableHead>Parâmetro</TableHead>
-                                    <TableHead>Avaliação Atual</TableHead>
-                                    <TableHead>Resultado</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    <TableRow>
-                                        <TableCell>PAS / PAD</TableCell>
-                                        <TableCell><Input placeholder='0/0' className='w-24' /></TableCell>
-                                        <TableCell><Input readOnly placeholder='Normal' className='w-24 bg-muted' /></TableCell>
-                                    </TableRow>
-                                     <TableRow>
-                                        <TableCell>Peso (kg) / Altura (m)</TableCell>
-                                        <TableCell className='flex gap-2'>
-                                            <Input placeholder='0' className='w-20' value={weight} onChange={(e) => setWeight(e.target.value)} /> / 
-                                            <Input placeholder='0.00' className='w-20' value={height} onChange={(e) => setHeight(e.target.value)} />
-                                        </TableCell>
-                                        <TableCell><Input readOnly value={imc > 0 ? `${imc.toFixed(2)} (${imcStatus})` : '...'} className='w-48 bg-muted' /></TableCell>
-                                    </TableRow>
-                                </TableBody>
-                            </Table>
-                         </div>
-                    </FieldsetGroup>
-                    </div>
-                </ScrollArea>
+              <FieldsetGroup title='Seção 02: Contexto do Exame'>
+                <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+                  <div className='space-y-2'>
+                    <Label>Tipo de Exame</Label>
+                    <Input disabled value={examType} />
+                  </div>
+                </div>
+                <div className='space-y-2'>
+                  <Label>Exposto aos Riscos</Label>
+                  <Textarea
+                    disabled
+                    value='Ruído Contínuo ou Intermitente, Levantamento de peso'
+                    rows={2}
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <Label>Exames a Serem Realizados (Conforme PCMSO)</Label>
+                  <Textarea
+                    disabled
+                    value={attendee.exams.map((e: any) => e.name).join(', ')}
+                    rows={2}
+                  />
+                </div>
+              </FieldsetGroup>
+              <FieldsetGroup title='Seção 03: Anamnese'>
+                <div className='space-y-4 rounded-md border p-4'>
+                  <h4 className='font-medium'>Dados Vitais</h4>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Parâmetro</TableHead>
+                        <TableHead>Avaliação Atual</TableHead>
+                        <TableHead>Resultado</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell>PAS / PAD</TableCell>
+                        <TableCell>
+                          <Input placeholder='0/0' className='w-24' />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            readOnly
+                            placeholder='Normal'
+                            className='w-24 bg-muted'
+                          />
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell>Peso (kg) / Altura (m)</TableCell>
+                        <TableCell className='flex gap-2'>
+                          <Input
+                            placeholder='0'
+                            className='w-20'
+                            value={weight}
+                            onChange={(e) => setWeight(e.target.value)}
+                          />{' '}
+                          /{' '}
+                          <Input
+                            placeholder='0.00'
+                            className='w-20'
+                            value={height}
+                            onChange={(e) => setHeight(e.target.value)}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            readOnly
+                            value={
+                              imc > 0 ? `${imc.toFixed(2)} (${imcStatus})` : '...'
+                            }
+                            className='w-48 bg-muted'
+                          />
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+              </FieldsetGroup>
             </div>
+          </ScrollArea>
+        </div>
 
-            <aside className='md:col-span-1 space-y-6'>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Exames Solicitados</CardTitle>
-                </CardHeader>
-                <CardContent className='space-y-4 text-sm'>
-                   {attendee.exams.map((exam: any) => {
-                      const isClinical = exam.name === 'Avaliação Clínica'
-                      const href = isClinical
-                        ? `/dashboard/health/evaluation/${attendeeId}` // Should be current page, maybe disable?
-                        : `/dashboard/health/evaluation/${attendeeId}/exam/${exam.id}`
-                      return (
-                        <div key={exam.id} className='flex justify-between items-center p-2 rounded-md hover:bg-muted'>
-                            <div>
-                                <p className='font-medium'>{exam.name}</p>
-                                <Badge variant={exam.status === 'Realizado' ? 'secondary' : 'outline'}>{exam.status}</Badge>
-                            </div>
-                            <Button asChild size="sm" variant="ghost" disabled={isClinical && attendee.status === 'Em Atendimento'}>
-                                <Link href={href}>Realizar Exame <ChevronRight className='ml-2 h-4 w-4' /></Link>
-                            </Button>
-                        </div>
-                      )
-                   })}
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle className='text-base'>
-                    Histórico Relevante
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className='space-y-2'>
-                  <Button
-                    variant='ghost'
-                    className='w-full justify-start p-2 h-auto text-left'
+        <aside className='md:col-span-1 space-y-6'>
+          <Card>
+            <CardHeader>
+              <CardTitle>Exames Solicitados</CardTitle>
+            </CardHeader>
+            <CardContent className='space-y-4 text-sm'>
+              {attendee.exams.map((exam: any) => {
+                const isClinical = exam.name === 'Avaliação Clínica'
+                const href = isClinical
+                  ? `/dashboard/health/evaluation/${attendeeId}` // Should be current page, maybe disable?
+                  : `/dashboard/health/evaluation/${attendeeId}/exam/${exam.id}`
+                return (
+                  <div
+                    key={exam.id}
+                    className='flex justify-between items-center p-2 rounded-md hover:bg-muted'
                   >
-                    <Syringe className='mr-2 h-4 w-4 shrink-0' /> Cartão de
-                    Vacinas <ChevronRight className='ml-auto h-4 w-4' />
-                  </Button>
-                  <Button
-                    variant='ghost'
-                    className='w-full justify-start p-2 h-auto text-left'
-                  >
-                    <AlertCircle className='mr-2 h-4 w-4 shrink-0' /> Acidentes
-                    de Trabalho <ChevronRight className='ml-auto h-4 w-4' />
-                  </Button>
-                  <Button
-                    variant='ghost'
-                    className='w-full justify-start p-2 h-auto text-left'
-                  >
-                    <Briefcase className='mr-2 h-4 w-4 shrink-0' />{' '}
-                    Afastamentos INSS <ChevronRight className='ml-auto h-4 w-4' />
-                  </Button>
-                </CardContent>
-              </Card>
-            </aside>
-          </div>
+                    <div>
+                      <p className='font-medium'>{exam.name}</p>
+                      <Badge
+                        variant={
+                          exam.status === 'Realizado' ? 'secondary' : 'outline'
+                        }
+                      >
+                        {exam.status}
+                      </Badge>
+                    </div>
+                    <Button
+                      asChild
+                      size='sm'
+                      variant='ghost'
+                      disabled={isClinical && attendee.status === 'Em Atendimento'}
+                    >
+                      <Link href={href}>
+                        Realizar Exame <ChevronRight className='ml-2 h-4 w-4' />
+                      </Link>
+                    </Button>
+                  </div>
+                )
+              })}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className='text-base'>Histórico Relevante</CardTitle>
+            </CardHeader>
+            <CardContent className='space-y-2'>
+              <Button
+                variant='ghost'
+                className='w-full justify-start p-2 h-auto text-left'
+              >
+                <Syringe className='mr-2 h-4 w-4 shrink-0' /> Cartão de Vacinas{' '}
+                <ChevronRight className='ml-auto h-4 w-4' />
+              </Button>
+              <Button
+                variant='ghost'
+                className='w-full justify-start p-2 h-auto text-left'
+              >
+                <AlertCircle className='mr-2 h-4 w-4 shrink-0' /> Acidentes de
+                Trabalho <ChevronRight className='ml-auto h-4 w-4' />
+              </Button>
+              <Button
+                variant='ghost'
+                className='w-full justify-start p-2 h-auto text-left'
+              >
+                <Briefcase className='mr-2 h-4 w-4 shrink-0' /> Afastamentos
+                INSS <ChevronRight className='ml-auto h-4 w-4' />
+              </Button>
+            </CardContent>
+          </Card>
+        </aside>
+      </div>
     </div>
   )
 }
