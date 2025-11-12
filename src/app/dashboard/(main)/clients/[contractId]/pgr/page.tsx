@@ -1,4 +1,3 @@
-
 'use client'
 
 import React, { useState, useMemo } from 'react'
@@ -47,10 +46,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  initialHazardData,
-  type Hazard,
-} from '@/app/dashboard/(main)/risks/page'
 import { useToast } from '@/hooks/use-toast'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -66,6 +61,7 @@ import {
   addDocumentNonBlocking,
 } from '@/firebase'
 import { collection } from 'firebase/firestore'
+import type { Hazard } from '../../../risks/page'
 
 type RiskLevelLabel =
   | 'Irrelevante'
@@ -217,9 +213,6 @@ export const getRiskLevel = (
   }
 }
 
-export const getHazardById = (id: string) =>
-  initialHazardData.find((h) => h.id === id)
-
 export default function PgrPage() {
   const params = useParams()
   const contractId = params.contractId as string
@@ -236,6 +229,13 @@ export default function PgrPage() {
   const { data: inventory, isLoading } =
     useCollection<PgrInventoryItem>(inventoryRef)
 
+  const hazardsRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'hazards') : null),
+    [firestore]
+  )
+  const { data: hazardData, isLoading: isLoadingHazards } =
+    useCollection<Hazard>(hazardsRef)
+
   const [isAddRiskDialogOpen, setIsAddRiskDialogOpen] = useState(false)
   const [selectedHazard, setSelectedHazard] = useState<Hazard | null>(null)
   const [showStcwInput, setShowStcwInput] = useState(false)
@@ -244,6 +244,8 @@ export default function PgrPage() {
   const [frequency, setFrequency] = useState(0)
   const [severity, setSeverity] = useState(0)
   const [derivedRisk, setDerivedRisk] = useState<RiskEvaluation | null>(null)
+
+  const getHazardById = (id: string) => hazardData?.find((h) => h.id === id)
 
   const handleAddRisk = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -419,7 +421,7 @@ export default function PgrPage() {
                               <SelectValue placeholder='Selecione o perigo no catálogo' />
                             </SelectTrigger>
                             <SelectContent>
-                              {initialHazardData.map((hazard) => (
+                              {hazardData?.map((hazard) => (
                                 <SelectItem key={hazard.id} value={hazard.id}>
                                   {hazard.name} ({hazard.category})
                                 </SelectItem>
@@ -753,7 +755,7 @@ export default function PgrPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
+              {isLoading || isLoadingHazards ? (
                 <div className='flex justify-center items-center h-64'>
                   <Loader2 className='h-8 w-8 animate-spin' />
                 </div>
