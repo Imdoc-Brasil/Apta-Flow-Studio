@@ -252,15 +252,19 @@
           "type": "string",
           "description": "Unique identifier for the Document entity."
         },
-        "clientId": {
-          "type": "string",
-          "description": "Reference to Client the document belongs to. (Relationship: Client 1:N Document)"
-        },
         "name": {
           "type": "string",
           "description": "The name of the document."
         },
-        "uploadDate": {
+        "type": {
+          "type": "string",
+          "description": "The type or format of the document (e.g., PDF, DOCX)."
+        },
+        "size": {
+          "type": "string",
+          "description": "The size of the document."
+        },
+        "modified": {
           "type": "string",
           "description": "The date the document was uploaded.",
           "format": "date-time"
@@ -270,16 +274,15 @@
           "description": "The URL where the document is stored.",
           "format": "uri"
         },
-        "type": {
+        "relatedTo": {
           "type": "string",
-          "description": "The type or format of the document (e.g., PDF, DOCX)."
+          "description": "The entity or client the document is related to."
         }
       },
       "required": [
         "id",
-        "clientId",
         "name",
-        "uploadDate",
+        "modified",
         "url",
         "type"
       ]
@@ -951,18 +954,14 @@
         }
       },
       {
-        "path": "/clients/{clientId}/documents/{documentId}",
+        "path": "/documents/{documentId}",
         "definition": {
           "entityName": "Document",
           "schema": {
             "$ref": "#/backend/entities/Document"
           },
-          "description": "Stores documents associated with clients. Includes denormalized `clientId` for authorization independence.",
+          "description": "Stores documents in a global repository.",
           "params": [
-            {
-              "name": "clientId",
-              "description": "Unique identifier for the client."
-            },
             {
               "name": "documentId",
               "description": "Unique identifier for the document."

@@ -12,7 +12,7 @@
  *   - /clients/{clientId}/serviceRequests/{serviceRequestId}: Stores service requests submitted by clients.
  *   - /clients/{clientId}/slas/{slaId}: Stores SLAs associated with a client.
  *   - /okrs/{okrId}: Stores OKRs (Objectives and Key Results).
- *   - /clients/{clientId}/documents/{documentId}: Stores documents associated with clients.
+ *   - /documents/{documentId}: Stores documents in a global repository.
  *   - /roles_admin/{userId}: Documents in this collection represent users with admin privileges.
  *
  * @keySecurityDecisions
@@ -160,17 +160,13 @@ service cloud.firestore {
     }
 
     /**
-     * @description Allows access to documents associated with clients.
-     * @path /clients/{clientId}/documents/{documentId}
-     * @allow (read, write): Any authenticated user can read document data.
-     * @allow (create): Only admins can create new documents, ensuring the clientId matches the path.
-     * @allow (update, delete): Only admins can update or delete existing documents.
-     * @deny (create): Non-admin users cannot create documents.
-     * @deny (update, delete): Non-admin users cannot update or delete documents.
-     * @principle Enforces role-based access control and validates data integrity.
+     * @description Allows authenticated users to manage the global document repository.
+     * @path /documents/{documentId}
+     * @allow (read, write): Any authenticated user can manage documents.
+     * @principle Simplifies document management.
      */
-    match /clients/{clientId}/documents/{documentId} {
-      allow read, write: if request.auth != null;
+    match /documents/{documentId} {
+        allow read, write: if request.auth != null;
     }
     
     /**

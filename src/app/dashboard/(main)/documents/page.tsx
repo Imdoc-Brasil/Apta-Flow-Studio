@@ -1,6 +1,7 @@
+
 'use client'
 
-import { MoreHorizontal, Upload } from 'lucide-react'
+import { MoreHorizontal, Upload, Loader2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
   Card,
@@ -48,68 +49,72 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import {
+  useFirestore,
+  useCollection,
+  useMemoFirebase,
+  addDocumentNonBlocking,
+  deleteDocumentNonBlocking,
+} from '@/firebase'
+import { collection, doc } from 'firebase/firestore'
+import { useToast } from '@/hooks/use-toast'
 
-const initialDocumentsData = [
-  {
-    name: 'InnovateInc_MSA_2024.pdf',
-    type: 'Contrato',
-    size: '2.5 MB',
-    modified: '2024-07-15',
-    relatedTo: 'Innovate Inc.',
-  },
-  {
-    name: 'Q1_2024_Relatorio_Desempenho.docx',
-    type: 'Relatório',
-    size: '800 KB',
-    modified: '2024-04-05',
-    relatedTo: 'Todos os Clientes',
-  },
-  {
-    name: 'Projeto_Phoenix_SOW.pdf',
-    type: 'SOW',
-    size: '1.2 MB',
-    modified: '2024-06-20',
-    relatedTo: 'Solutions Co.',
-  },
-  {
-    name: 'Checklist_Integracao_Quantum.xlsx',
-    type: 'Checklist',
-    size: '300 KB',
-    modified: '2023-11-10',
-    relatedTo: 'Quantum Dynamics',
-  },
-  {
-    name: 'StellarTech_SLA.pdf',
-    type: 'SLA',
-    size: '600 KB',
-    modified: '2024-02-01',
-    relatedTo: 'Stellar Tech',
-  },
-]
-
-type Document = (typeof initialDocumentsData)[0]
+interface Document {
+  id: string
+  name: string
+  type: string
+  size: string
+  modified: string
+  relatedTo: string
+  url?: string
+}
 
 export default function DocumentsPage() {
-  const [documentsData, setDocumentsData] = useState(initialDocumentsData)
+  const { toast } = useToast()
+  const firestore = useFirestore()
+  const documentsRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'documents') : null),
+    [firestore]
+  )
+
+  const { data: documents, isLoading } = useCollection<Document>(documentsRef)
+
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [documentToDelete, setDocumentToDelete] = useState<Document | null>(null)
 
   const handleUploadDocument = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!documentsRef) return
+
     const formData = new FormData(event.currentTarget)
     const file = formData.get('file') as File
 
-    if (!file) return
+    if (!file) {
+      toast({
+        variant: 'destructive',
+        title: 'Arquivo não selecionado',
+        description: 'Por favor, selecione um arquivo para carregar.',
+      })
+      return
+    }
 
-    const newDocument: Document = {
+    const newDocument: Omit<Document, 'id'> = {
       name: file.name,
       type: formData.get('type') as string,
       size: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
-      modified: new Date().toISOString().split('T')[0],
+      modified: new Date().toISOString(),
       relatedTo: formData.get('relatedTo') as string,
+      // In a real app, you'd upload the file to Firebase Storage and get the URL
+      url: '#',
     }
-    setDocumentsData((prev) => [newDocument, ...prev])
+
+    addDocumentNonBlocking(documentsRef, newDocument)
+
+    toast({
+      title: 'Sucesso!',
+      description: `O documento "${newDocument.name}" foi adicionado.`,
+    })
     setIsDialogOpen(false)
   }
 
@@ -119,10 +124,13 @@ export default function DocumentsPage() {
   }
 
   const handleDeleteDocument = () => {
-    if (documentToDelete) {
-      setDocumentsData((prev) =>
-        prev.filter((doc) => doc.name !== documentToDelete.name)
-      )
+    if (documentToDelete && documentsRef) {
+      const docRef = doc(firestore, 'documents', documentToDelete.id)
+      deleteDocumentNonBlocking(docRef)
+      toast({
+        title: 'Documento excluído!',
+        variant: 'destructive',
+      })
       setIsDeleteDialogOpen(false)
       setDocumentToDelete(null)
     }
@@ -210,67 +218,80 @@ export default function DocumentsPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead className='hidden sm:table-cell'>Tipo</TableHead>
-                <TableHead className='hidden sm:table-cell'>
-                  Relacionado a
-                </TableHead>
-                <TableHead className='hidden md:table-cell'>
-                  Última Modificação
-                </TableHead>
-                <TableHead className='text-right'>Tamanho</TableHead>
-                <TableHead>
-                  <span className='sr-only'>Ações</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {documentsData.map((doc) => (
-                <TableRow key={doc.name}>
-                  <TableCell className='font-medium'>{doc.name}</TableCell>
-                  <TableCell className='hidden sm:table-cell'>
-                    <Badge variant='outline'>{doc.type}</Badge>
-                  </TableCell>
-                  <TableCell className='hidden sm:table-cell'>
-                    {doc.relatedTo}
-                  </TableCell>
-                  <TableCell className='hidden md:table-cell'>
-                    {doc.modified}
-                  </TableCell>
-                  <TableCell className='text-right'>{doc.size}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          aria-haspopup='true'
-                          size='icon'
-                          variant='ghost'
-                        >
-                          <MoreHorizontal className='h-4 w-4' />
-                          <span className='sr-only'>Alternar menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align='end'>
-                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                        <DropdownMenuItem>Baixar</DropdownMenuItem>
-                        <DropdownMenuItem>Compartilhar</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className='text-destructive'
-                          onClick={() => openDeleteDialog(doc)}
-                        >
-                          Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+          {isLoading ? (
+             <div className='flex justify-center items-center h-64'>
+                <Loader2 className='h-8 w-8 animate-spin' />
+              </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead className='hidden sm:table-cell'>Tipo</TableHead>
+                  <TableHead className='hidden sm:table-cell'>
+                    Relacionado a
+                  </TableHead>
+                  <TableHead className='hidden md:table-cell'>
+                    Última Modificação
+                  </TableHead>
+                  <TableHead className='text-right'>Tamanho</TableHead>
+                  <TableHead>
+                    <span className='sr-only'>Ações</span>
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {documents?.map((doc) => (
+                  <TableRow key={doc.id}>
+                    <TableCell className='font-medium'>{doc.name}</TableCell>
+                    <TableCell className='hidden sm:table-cell'>
+                      <Badge variant='outline'>{doc.type}</Badge>
+                    </TableCell>
+                    <TableCell className='hidden sm:table-cell'>
+                      {doc.relatedTo}
+                    </TableCell>
+                    <TableCell className='hidden md:table-cell'>
+                      {new Date(doc.modified).toLocaleDateString('pt-BR')}
+                    </TableCell>
+                    <TableCell className='text-right'>{doc.size}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            aria-haspopup='true'
+                            size='icon'
+                            variant='ghost'
+                          >
+                            <MoreHorizontal className='h-4 w-4' />
+                            <span className='sr-only'>Alternar menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end'>
+                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                          <DropdownMenuItem>Baixar</DropdownMenuItem>
+                          <DropdownMenuItem>Compartilhar</DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className='text-destructive'
+                            onClick={() => openDeleteDialog(doc)}
+                          >
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                 {documents?.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-24 text-center">
+                      Nenhum documento encontrado.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
       <AlertDialog
