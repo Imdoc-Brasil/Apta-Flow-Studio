@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   MoreHorizontal,
   PlusCircle,
@@ -105,27 +105,31 @@ export default function GhePage() {
   const [allSectors, setAllSectors] = useState<Sector[]>([])
   const [areSectorsLoading, setAreSectorsLoading] = useState(true)
 
-  useMemo(async () => {
+  useEffect(() => {
     if (unitsData && firestore) {
       setAreSectorsLoading(true)
-      const sectorsPromises = unitsData.map((unit) =>
-        getDocs(
-          collection(
-            firestore,
-            `clients/${contractId}/units/${unit.id}/sectors`
-          )
-        )
-      )
-      const sectorsSnapshots = await Promise.all(sectorsPromises)
-      const sectorsData = sectorsSnapshots.flatMap((snapshot) =>
-        snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Sector))
-      )
-      setAllSectors(sectorsData)
-      setAreSectorsLoading(false)
+      const fetchSectors = async () => {
+        try {
+          const sectorsPromises = unitsData.map((unit) =>
+            getDocs(collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`))
+          );
+          const sectorsSnapshots = await Promise.all(sectorsPromises);
+          const sectorsData = sectorsSnapshots.flatMap((snapshot) =>
+            snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Sector))
+          );
+          setAllSectors(sectorsData);
+        } catch (error) {
+          console.error("Error fetching sectors: ", error);
+        } finally {
+          setAreSectorsLoading(false);
+        }
+      };
+      fetchSectors();
     } else if (!areUnitsLoading) {
-      setAreSectorsLoading(false)
+      setAreSectorsLoading(false);
     }
-  }, [unitsData, firestore, contractId, areUnitsLoading])
+  }, [unitsData, firestore, contractId, areUnitsLoading]);
+
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
@@ -149,12 +153,12 @@ export default function GhePage() {
   }
 
   const rolesWithSectors = useMemo(() => {
-    if (!rolesData) return []
+    if (!rolesData || areSectorsLoading) return []
     return rolesData.map((role) => ({
       ...role,
       sectorName: getSectorName(role.sectorId),
     }))
-  }, [rolesData, allSectors])
+  }, [rolesData, allSectors, areSectorsLoading])
 
   const availableRoles = useMemo(() => {
     return rolesWithSectors.filter(
