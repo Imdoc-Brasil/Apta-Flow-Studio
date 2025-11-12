@@ -70,6 +70,7 @@ export default function UnitsPage() {
   const params = useParams()
   const contractId = params.contractId as string
   const firestore = useFirestore()
+  const router = useRouter()
 
   const clientRef = useMemoFirebase(
     () => (firestore ? doc(firestore, 'clients', contractId) : null),
@@ -451,28 +452,43 @@ export default function UnitsPage() {
           ) : filteredUnits.length > 0 ? (
             <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
               {filteredUnits.map((unit) => (
-                <Link
+                <Card
                   key={unit.id}
-                  href={`/dashboard/clients/${contractId}/units/${unit.id}`}
-                  className='block'
+                  className='flex flex-col h-full hover:shadow-md transition-shadow'
                 >
-                  <Card className='flex flex-col h-full hover:shadow-md transition-shadow cursor-pointer'>
-                    <CardHeader>
-                      <div className='flex justify-between items-start'>
-                        <CardTitle>{unit.name}</CardTitle>
-                        <Badge variant='outline'>{unit.type}</Badge>
-                      </div>
-                      <CardDescription>
-                        {unit.propertyInfo.address}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className='flex-grow'>
-                      <p className='text-sm text-muted-foreground'>
-                        {unit.description}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </Link>
+                  <CardHeader>
+                    <div className='flex justify-between items-start'>
+                      <CardTitle className='text-lg'>{unit.name}</CardTitle>
+                      <Badge variant='outline'>{unit.type}</Badge>
+                    </div>
+                    <CardDescription>
+                      {unit.propertyInfo.address}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className='flex-grow'>
+                    <p className='text-sm text-muted-foreground'>
+                      {unit.description}
+                    </p>
+                  </CardContent>
+                  <CardFooter>
+                    <Button
+                      asChild
+                      variant='outline'
+                      className='w-full'
+                      onClick={() =>
+                        router.push(
+                          `/dashboard/clients/${contractId}/sectors?unitId=${unit.id}`
+                        )
+                      }
+                    >
+                      <Link
+                        href={`/dashboard/clients/${contractId}/sectors?unitId=${unit.id}`}
+                      >
+                        Ver Setores <ArrowRight className='ml-2 h-4 w-4' />
+                      </Link>
+                    </Button>
+                  </CardFooter>
+                </Card>
               ))}
             </div>
           ) : (
