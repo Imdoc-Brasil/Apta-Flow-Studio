@@ -1,13 +1,17 @@
 
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import {
   MoreHorizontal,
   PlusCircle,
   Search,
   Filter,
   Loader2,
+  FilePlus,
+  Check,
+  ChevronsUpDown,
+  X,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -97,7 +101,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import { Check, ChevronsUpDown, X } from 'lucide-react'
 import {
   Command,
   CommandEmpty,
@@ -107,6 +110,7 @@ import {
   CommandList,
 } from '@/components/ui/command'
 import { cn } from '@/lib/utils'
+import { Checkbox } from '@/components/ui/checkbox'
 
 type StaffStatus = 'Ativo' | 'Licença' | 'Suspenso'
 type StaffSituation = 'Online' | 'Offline'
@@ -146,6 +150,12 @@ export default function StaffsPage() {
     [firestore]
   )
   const { data: staffs, isLoading } = useCollection<Staff>(staffsRef)
+
+  const clientsRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'clients') : null),
+    [firestore]
+  )
+  const { data: clientsData, isLoading: areClientsLoading } = useCollection<Client>(clientsRef)
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
@@ -301,7 +311,7 @@ export default function StaffsPage() {
   }
   
   const getClientName = (contractId: string) => {
-    return initialClientsData.find((c) => c.id === contractId)?.name || 'N/A'
+    return clientsData?.find((c) => c.id === contractId)?.name || 'N/A'
   }
 
 
@@ -472,7 +482,7 @@ export default function StaffsPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {initialClientsData.map((client) => (
+                        {clientsData?.map((client) => (
                           <SelectItem key={client.id} value={client.id}>
                             {client.name}
                           </SelectItem>
@@ -514,7 +524,7 @@ export default function StaffsPage() {
                             <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
                             <CommandGroup>
                               <CommandList>
-                                {initialClientsData.map((client) => (
+                                {clientsData?.map((client) => (
                                   <CommandItem
                                     key={client.id}
                                     onSelect={() => {
