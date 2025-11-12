@@ -70,9 +70,7 @@ import {
   type Attachment,
   type TextElement,
 } from '@/app/dashboard/(main)/tickets/tickets-store'
-import {
-  useAttendeeStore,
-} from '@/app/dashboard/(main)/health/queue/attendee-store'
+import { useAttendeeStore } from '@/app/dashboard/(main)/health/queue/attendee-store'
 import {
   Select,
   SelectContent,
@@ -94,7 +92,7 @@ import {
   useMemoFirebase,
   addDocumentNonBlocking,
   updateDocumentNonBlocking,
-  useDoc
+  useDoc,
 } from '@/firebase'
 import { collection, query, where, doc } from 'firebase/firestore'
 
@@ -115,6 +113,7 @@ function TimeAgo({ dateString }: { dateString: string }) {
   const [timeAgo, setTimeAgo] = useState('')
 
   useEffect(() => {
+    if (!dateString) return
     const date = new Date(dateString)
     setTimeAgo(formatDistanceToNow(date, { addSuffix: true, locale: ptBR }))
   }, [dateString])
@@ -138,7 +137,7 @@ function AddAttachmentDialog({
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (!firestore) return
+    if (!firestore || !ticketId) return
     const formData = new FormData(e.currentTarget)
     const name = formData.get('name') as string
 
@@ -159,7 +158,8 @@ function AddAttachmentDialog({
     }
 
     const ticketDocRef = doc(firestore, 'tickets', ticketId)
-    const currentTicket = {} // In a real app, you'd fetch the current ticket data
+    // In a real app, you'd fetch the current ticket data and update the array
+    // This is a simplified approach for demonstration
     // const newAttachments = [...(currentTicket.attachments || []), newAttachment]
     // updateDocumentNonBlocking(ticketDocRef, { attachments: newAttachments })
 
@@ -218,21 +218,25 @@ function AddAttachmentDialog({
   )
 }
 
-function TicketDetailsDialog({ ticket, staffs }: { ticket: Ticket; staffs: Staff[] }) {
+function TicketDetailsDialog({
+  ticket,
+  staffs,
+}: {
+  ticket: Ticket
+  staffs: Staff[]
+}) {
   const { toast } = useToast()
   const firestore = useFirestore()
 
   const assignedMembers =
-    staffs.filter((emp) =>
-      ticket.assignedTo?.includes(emp.email)
-    ) ?? []
+    staffs.filter((emp) => ticket.assignedTo?.includes(emp.email)) ?? []
 
   const handleAddTextElement = (
     e: React.FormEvent<HTMLFormElement>,
     type: 'question' | 'comment'
   ) => {
     e.preventDefault()
-    if (!firestore) return
+    if (!firestore || !ticket.id) return
 
     const formData = new FormData(e.currentTarget)
     const content = formData.get('content') as string
@@ -250,7 +254,7 @@ function TicketDetailsDialog({ ticket, staffs }: { ticket: Ticket; staffs: Staff
       avatar: '',
       fallback: 'CL',
     }
-    
+
     const newElement: TextElement = {
       id: `txt-${Date.now()}`,
       type,
@@ -259,15 +263,17 @@ function TicketDetailsDialog({ ticket, staffs }: { ticket: Ticket; staffs: Staff
       creator: clientUser.name,
       creatorAvatar: clientUser.avatar,
       creatorFallback: clientUser.fallback,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     }
-    
-    // const ticketDocRef = doc(firestore, 'tickets', ticket.id)
-    // updateDocumentNonBlocking(ticketDocRef, { textElements: [...(ticket.textElements || []), newElement]})
+
+    const ticketDocRef = doc(firestore, 'tickets', ticket.id)
+    updateDocumentNonBlocking(ticketDocRef, {
+      textElements: [...(ticket.textElements || []), newElement],
+    })
 
     toast({ title: 'Mensagem enviada!' })
-    ;(e.currentTarget.closest('dialog') as HTMLDialogElement)?.close()
     ;(e.target as HTMLFormElement).reset()
+    // Closing the dialog should be handled by the Dialog component itself
   }
 
   function AddTextElementDialog({
@@ -292,7 +298,10 @@ function TicketDetailsDialog({ ticket, staffs }: { ticket: Ticket; staffs: Staff
           </DialogHeader>
           <form
             id={`add-text-${elementType}-form`}
-            onSubmit={(e) => handleAddTextElement(e, elementType)}
+            onSubmit={(e) => {
+              handleAddTextElement(e, elementType)
+              setOpen(false)
+            }}
           >
             <div className='grid gap-4 py-4'>
               <div className='space-y-2'>
@@ -306,7 +315,11 @@ function TicketDetailsDialog({ ticket, staffs }: { ticket: Ticket; staffs: Staff
               </div>
             </div>
             <DialogFooter>
-              <Button variant='outline' onClick={() => setOpen(false)}>
+              <Button
+                type='button'
+                variant='outline'
+                onClick={() => setOpen(false)}
+              >
                 Cancelar
               </Button>
               <Button type='submit'>Adicionar</Button>
@@ -501,7 +514,6 @@ function TicketDetailsDialog({ ticket, staffs }: { ticket: Ticket; staffs: Staff
             )}
             <Separator />
             <AddTextElementDialog
-              ticketId={ticket.id}
               elementType='question'
               dialogTitle='Fazer uma Pergunta'
               dialogDescription='Sua pergunta será enviada à nossa equipe de suporte.'
@@ -511,7 +523,6 @@ function TicketDetailsDialog({ ticket, staffs }: { ticket: Ticket; staffs: Staff
               </Button>
             </AddTextElementDialog>
             <AddTextElementDialog
-              ticketId={ticket.id}
               elementType='comment'
               dialogTitle='Adicionar um Comentário'
               dialogDescription='Adicione uma atualização ou mais informações ao chamado.'
@@ -520,11 +531,11 @@ function TicketDetailsDialog({ ticket, staffs }: { ticket: Ticket; staffs: Staff
                 <MessageSquare className='mr-2 h-4 w-4' /> Adicionar Comentário
               </Button>
             </AddTextElementDialog>
-             <AddAttachmentDialog ticketId={ticket.id}>
-                <Button variant='secondary' className='justify-start w-full'>
-                  <Paperclip className='mr-2 h-4 w-4' /> Anexar Arquivo
-                </Button>
-              </AddAttachmentDialog>
+            <AddAttachmentDialog ticketId={ticket.id}>
+              <Button variant='secondary' className='justify-start w-full'>
+                <Paperclip className='mr-2 h-4 w-4' /> Anexar Arquivo
+              </Button>
+            </AddAttachmentDialog>
             <Separator />
             {ticket.attachments && ticket.attachments.length > 0 && (
               <div className='mt-6 space-y-4'>
@@ -557,7 +568,7 @@ function TicketDetailsDialog({ ticket, staffs }: { ticket: Ticket; staffs: Staff
 export default function ClientTicketsPage() {
   const params = useParams()
   const searchParams = useSearchParams()
-  const employeeId = searchParams.get('employee')
+  const employeeIdFromUrl = searchParams.get('employee')
 
   const contractId = params.contractId as string
   const firestore = useFirestore()
@@ -566,59 +577,68 @@ export default function ClientTicketsPage() {
   const clientRef = useMemoFirebase(
     () => (firestore ? doc(firestore, 'clients', contractId) : null),
     [firestore, contractId]
-  );
+  )
   const { data: client, isLoading: isClientLoading } = useDoc<Client>(clientRef)
 
   const ticketsQuery = useMemoFirebase(
     () =>
       firestore && client?.name
-        ? query(collection(firestore, 'tickets'), where('client', '==', client.name))
+        ? query(
+            collection(firestore, 'tickets'),
+            where('client', '==', client.name)
+          )
         : null,
     [firestore, client?.name]
   )
-  const { data: tickets, isLoading: areTicketsLoading } = useCollection<Ticket>(ticketsQuery)
+  const { data: tickets, isLoading: areTicketsLoading } =
+    useCollection<Ticket>(ticketsQuery)
 
   const employeesRef = useMemoFirebase(
-    () => (firestore ? collection(firestore, `clients/${contractId}/staffs`) : null),
+    () =>
+      firestore
+        ? collection(firestore, `clients/${contractId}/staffs`)
+        : null,
     [firestore, contractId]
   )
-  const { data: employees, isLoading: areEmployeesLoading } = useCollection<Employee>(employeesRef)
-  
+  const { data: employees, isLoading: areEmployeesLoading } =
+    useCollection<Employee>(employeesRef)
+
   const staffsRef = useMemoFirebase(
     () => (firestore ? collection(firestore, 'staffs') : null),
     [firestore]
   )
-  const { data: staffs, isLoading: areStaffsLoading } = useCollection<Staff>(staffsRef)
+  const { data: staffs, isLoading: areStaffsLoading } =
+    useCollection<Staff>(staffsRef)
 
   const { addAttendee } = useAttendeeStore()
 
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  
-  const [defaultEmployee, setDefaultEmployee] = useState<string | undefined>(employeeId || undefined);
+
+  const [defaultEmployee, setDefaultEmployee] = useState<string | undefined>(
+    employeeIdFromUrl || undefined
+  )
 
   useEffect(() => {
-    const employeeIdFromUrl = searchParams.get('employee');
     if (employeeIdFromUrl) {
-      setDefaultEmployee(employeeIdFromUrl);
-      setIsDialogOpen(true);
+      setDefaultEmployee(employeeIdFromUrl)
+      setIsDialogOpen(true)
     }
-  }, [searchParams]);
+  }, [employeeIdFromUrl])
 
   const handleNewTicket = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!firestore) return;
-    
+    if (!firestore || !client) return
+
     const ticketsRef = collection(firestore, 'tickets')
-    
+
     const formData = new FormData(event.currentTarget)
     const subject = formData.get('subject') as string
     const employeeId = formData.get('employee') as string
     const employeeName =
       employees?.find((e) => e.id === employeeId)?.name || undefined
-    const clientName = client?.name || 'Cliente Desconhecido'
+    const clientName = client.name
 
-    // 1. Create the ticket
-    const newTicketData = {
+    const newTicketData: Omit<Ticket, 'id'> = {
       subject: subject,
       client: clientName,
       priority: formData.get('priority') as Ticket['priority'],
@@ -627,11 +647,9 @@ export default function ClientTicketsPage() {
       status: 'Aberto' as Ticket['status'],
       updated: new Date().toISOString(),
     }
-    
-    addDocumentNonBlocking(ticketsRef, newTicketData);
 
+    addDocumentNonBlocking(ticketsRef, newTicketData)
 
-    // 2. Check if it's a health-related request and add to attendee queue
     const isHealthRequest =
       subject.toLowerCase().includes('exame') ||
       subject.toLowerCase().includes('aso')
@@ -669,8 +687,12 @@ export default function ClientTicketsPage() {
     setIsDialogOpen(false)
     setDefaultEmployee(undefined)
   }
-  
-  const isLoading = isClientLoading || areTicketsLoading || areEmployeesLoading || areStaffsLoading
+
+  const isLoading =
+    isClientLoading ||
+    areTicketsLoading ||
+    areEmployeesLoading ||
+    areStaffsLoading
 
   return (
     <Card>
@@ -705,7 +727,14 @@ export default function ClientTicketsPage() {
                       id='subject'
                       name='subject'
                       placeholder='Ex: Dúvida sobre o ASO Admissional'
-                      defaultValue={defaultEmployee ? `Solicitação de Exame para ${employees?.find(e => e.id === defaultEmployee)?.name}` : ''}
+                      defaultValue={
+                        defaultEmployee
+                          ? `Solicitação de Exame para ${
+                              employees?.find((e) => e.id === defaultEmployee)
+                                ?.name
+                            }`
+                          : ''
+                      }
                       required
                     />
                   </div>
@@ -756,9 +785,6 @@ export default function ClientTicketsPage() {
                         type='file'
                         className='flex-1'
                       />
-                      <Button type='button' variant='ghost' size='icon'>
-                        <Upload className='h-4 w-4' />
-                      </Button>
                     </div>
                     <p className='text-xs text-muted-foreground'>
                       Você pode anexar uma imagem ou PDF.
@@ -784,7 +810,7 @@ export default function ClientTicketsPage() {
       <CardContent>
         {isLoading ? (
           <div className='flex items-center justify-center h-64'>
-             <Loader2 className='h-8 w-8 animate-spin' />
+            <Loader2 className='h-8 w-8 animate-spin' />
           </div>
         ) : tickets && tickets.length > 0 ? (
           <Table>
@@ -849,7 +875,7 @@ export default function ClientTicketsPage() {
                       </TableCell>
                     </TableRow>
                   </DialogTrigger>
-                  <TicketDetailsDialog ticket={ticket} staffs={staffs || []} />
+                  {staffs && <TicketDetailsDialog ticket={ticket} staffs={staffs} />}
                 </Dialog>
               ))}
             </TableBody>
