@@ -639,7 +639,7 @@ export default function ClientsPage() {
                   <TableCell className='font-medium'>{client.id}</TableCell>
                   <TableCell>
                     <Link
-                      href={`/dashboard/clients/${client.id}/info`}
+                      href={`/dashboard/clients/${client.id}`}
                       className='hover:underline'
                     >
                       {client.name}
@@ -672,7 +672,7 @@ export default function ClientsPage() {
                       <DropdownMenuContent align='end'>
                         <DropdownMenuLabel>Ações</DropdownMenuLabel>
                         <DropdownMenuItem asChild>
-                          <Link href={`/dashboard/clients/${client.id}/info`}>
+                          <Link href={`/dashboard/clients/${client.id}`}>
                             Ver Detalhes
                           </Link>
                         </DropdownMenuItem>
