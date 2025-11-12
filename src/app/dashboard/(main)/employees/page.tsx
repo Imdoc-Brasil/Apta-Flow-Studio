@@ -422,7 +422,7 @@ export default function StaffsPage() {
                     <div className='space-y-4 py-4'>
                       <div className='flex items-center gap-4'>
                         <Avatar className='h-16 w-16'>
-                           <AvatarFallback>AV</AvatarFallback>
+                          <AvatarFallback>AV</AvatarFallback>
                         </Avatar>
                         <div className='flex-1 space-y-2'>
                           <Label htmlFor='avatar-upload'>Avatar</Label>
@@ -547,41 +547,35 @@ export default function StaffsPage() {
                           />
                         </div>
                       </div>
-                      {form.watch('perfilId') === 'cliente' ? (
-                        <div className='space-y-2'>
-                          <FormField
-                            control={form.control}
-                            name='contractId'
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Empresa Cliente</FormLabel>
-                                <Select
-                                  onValueChange={field.onChange}
-                                  value={field.value || ''}
-                                >
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder='Selecione a empresa do cliente' />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    {clientsData?.map((client) => (
-                                      <SelectItem
-                                        key={client.id}
-                                        value={client.id!}
-                                      >
-                                        {client.name}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      ) : (
-                        <div className='space-y-2'>
+                      
+                      <div className={cn(form.watch('perfilId') !== 'cliente' && 'hidden')}>
+                        <FormField
+                          control={form.control}
+                          name="contractId"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Empresa Cliente</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value || ''}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Selecione a empresa do cliente" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {clientsData?.map(client => (
+                                    <SelectItem key={client.id} value={client.id!}>
+                                      {client.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <div className={cn(form.watch('perfilId') === 'cliente' && 'hidden')}>
                           <FormField
                             control={form.control}
                             name='clientIds'
@@ -623,12 +617,20 @@ export default function StaffsPage() {
                                                   const selected =
                                                     field.value || []
                                                   const newSelection =
-                                                    selected.includes(client.id!)
+                                                    selected.includes(
+                                                      client.id!
+                                                    )
                                                       ? selected.filter(
-                                                          (id) => id !== client.id
+                                                          (id) =>
+                                                            id !== client.id
                                                         )
-                                                      : [...selected, client.id!]
-                                                  field.onChange(newSelection)
+                                                      : [
+                                                          ...selected,
+                                                          client.id!,
+                                                        ]
+                                                  field.onChange(
+                                                    newSelection
+                                                  )
                                                 }}
                                               >
                                                 <Check
@@ -668,7 +670,9 @@ export default function StaffsPage() {
                                           onClick={() =>
                                             field.onChange(
                                               (
-                                                form.watch('clientIds') || []
+                                                form.watch(
+                                                  'clientIds'
+                                                ) || []
                                               ).filter(
                                                 (id: string) =>
                                                   id !== clientId
@@ -686,8 +690,7 @@ export default function StaffsPage() {
                               </FormItem>
                             )}
                           />
-                        </div>
-                      )}
+                      </div>
                     </div>
                   </form>
                 </Form>
@@ -871,7 +874,9 @@ export default function StaffsPage() {
                 <div className='flex items-center gap-4'>
                   <Avatar className='h-16 w-16'>
                     <AvatarImage src={currentStaff?.avatar} />
-                    <AvatarFallback>{currentStaff?.fallback || 'AV'}</AvatarFallback>
+                    <AvatarFallback>
+                      {currentStaff?.fallback || 'AV'}
+                    </AvatarFallback>
                   </Avatar>
                   <div className='flex-1 space-y-2'>
                     <Label htmlFor='avatar-upload'>Avatar</Label>
@@ -993,147 +998,139 @@ export default function StaffsPage() {
                     />
                   </div>
                 </div>
-                 {editForm.watch('perfilId') === 'cliente' ? (
-                        <div className='space-y-2'>
-                          <FormField
-                            control={editForm.control}
-                            name='contractId'
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Empresa Cliente</FormLabel>
-                                <Select
-                                  onValueChange={field.onChange}
-                                  value={field.value || ''}
+                 <div className={cn(editForm.watch('perfilId') !== 'cliente' && 'hidden')}>
+                   <FormField
+                      control={editForm.control}
+                      name='contractId'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Empresa Cliente</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value || ''}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder='Selecione a empresa do cliente' />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {clientsData?.map((client) => (
+                                <SelectItem
+                                  key={client.id}
+                                  value={client.id!}
                                 >
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder='Selecione a empresa do cliente' />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    {clientsData?.map((client) => (
-                                      <SelectItem
-                                        key={client.id}
-                                        value={client.id!}
-                                      >
-                                        {client.name}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                      ) : (
-                        <div className='space-y-2'>
-                          <FormField
-                            control={editForm.control}
-                            name='clientIds'
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Acesso a Clientes</FormLabel>
-                                <Popover>
-                                  <PopoverTrigger asChild>
-                                    <FormControl>
-                                      <Button
-                                        variant='outline'
-                                        role='combobox'
-                                        className={cn(
-                                          'w-full justify-between font-normal',
-                                          !field.value?.length &&
-                                            'text-muted-foreground'
-                                        )}
-                                      >
-                                        Selecionar clientes...
-                                        <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
-                                      </Button>
-                                    </FormControl>
-                                  </PopoverTrigger>
-                                  <PopoverContent className='w-[--radix-popover-trigger-width] p-0'>
-                                    <Command>
-                                      <CommandInput placeholder='Buscar cliente...' />
-                                      <CommandEmpty>
-                                        Nenhum cliente encontrado.
-                                      </CommandEmpty>
-                                      <CommandList>
-                                        <CommandGroup>
-                                          {areClientsLoading ? (
-                                            <Loader2 className='mx-auto h-4 w-4 animate-spin' />
-                                          ) : (
-                                            clientsData?.map((client) => (
-                                              <CommandItem
-                                                key={client.id}
-                                                onSelect={() => {
-                                                  const selected =
-                                                    field.value || []
-                                                  const newSelection =
-                                                    selected.includes(client.id!)
-                                                      ? selected.filter(
-                                                          (id) => id !== client.id
-                                                        )
-                                                      : [...selected, client.id!]
-                                                  field.onChange(newSelection)
-                                                }}
-                                              >
-                                                <Check
-                                                  className={cn(
-                                                    'mr-2 h-4 w-4',
-                                                    field.value?.includes(
-                                                      client.id!
-                                                    )
-                                                      ? 'opacity-100'
-                                                      : 'opacity-0'
-                                                  )}
-                                                />
-                                                {client.name}
-                                              </CommandItem>
-                                            ))
-                                          )}
-                                        </CommandList>
-                                      </CommandGroup>
-                                    </Command>
-                                  </PopoverContent>
-                                </Popover>
-                                <FormDescription>
-                                  Deixe em branco para acesso a todos os
-                                  clientes.
-                                </FormDescription>
-                                <div className='mt-2 flex flex-wrap gap-1'>
-                                  {(editForm.watch('clientIds') || []).map(
-                                    (clientId: string) => (
-                                      <Badge
-                                        key={clientId}
-                                        variant='secondary'
-                                      >
-                                        {getClientName(clientId)}
-                                        <button
-                                          type='button'
-                                          className='ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2'
-                                          onClick={() =>
-                                            field.onChange(
-                                              (
-                                                editForm.watch('clientIds') || []
-                                              ).filter(
-                                                (id: string) =>
-                                                  id !== clientId
-                                              )
-                                            )
-                                          }
-                                        >
-                                          <X className='h-3 w-3 text-muted-foreground hover:text-foreground' />
-                                        </button>
-                                      </Badge>
-                                    )
-                                  )}
-                                </div>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
+                                  {client.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
                       )}
+                    />
+                 </div>
+                <div className={cn(editForm.watch('perfilId') === 'cliente' && 'hidden')}>
+                   <FormField
+                      control={editForm.control}
+                      name='clientIds'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Acesso a Clientes</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant='outline'
+                                  role='combobox'
+                                  className={cn(
+                                    'w-full justify-between font-normal',
+                                    !field.value?.length &&
+                                      'text-muted-foreground'
+                                  )}
+                                >
+                                  Selecionar clientes...
+                                  <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className='w-[--radix-popover-trigger-width] p-0'>
+                              <Command>
+                                <CommandInput placeholder='Buscar cliente...' />
+                                <CommandEmpty>
+                                  Nenhum cliente encontrado.
+                                </CommandEmpty>
+                                <CommandList>
+                                  <CommandGroup>
+                                    {areClientsLoading ? (
+                                      <Loader2 className='mx-auto h-4 w-4 animate-spin' />
+                                    ) : (
+                                      clientsData?.map((client) => (
+                                        <CommandItem
+                                          key={client.id}
+                                          onSelect={() => {
+                                            const selected =
+                                              field.value || []
+                                            const newSelection =
+                                              selected.includes(client.id!)
+                                                ? selected.filter(
+                                                    (id) => id !== client.id
+                                                  )
+                                                : [...selected, client.id!]
+                                            field.onChange(newSelection)
+                                          }}
+                                        >
+                                          <Check
+                                            className={cn(
+                                              'mr-2 h-4 w-4',
+                                              field.value?.includes(
+                                                client.id!
+                                              )
+                                                ? 'opacity-100'
+                                                : 'opacity-0'
+                                            )}
+                                          />
+                                          {client.name}
+                                        </CommandItem>
+                                      ))
+                                    )}
+                                  </CommandList>
+                                </CommandGroup>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
+                          <FormDescription>
+                            Deixe em branco para acesso a todos os clientes.
+                          </FormDescription>
+                          <div className='mt-2 flex flex-wrap gap-1'>
+                            {(editForm.watch('clientIds') || []).map(
+                              (clientId: string) => (
+                                <Badge key={clientId} variant='secondary'>
+                                  {getClientName(clientId)}
+                                  <button
+                                    type='button'
+                                    className='ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2'
+                                    onClick={() =>
+                                      field.onChange(
+                                        (
+                                          editForm.watch('clientIds') || []
+                                        ).filter(
+                                          (id: string) => id !== clientId
+                                        )
+                                      )
+                                    }
+                                  >
+                                    <X className='h-3 w-3 text-muted-foreground hover:text-foreground' />
+                                  </button>
+                                </Badge>
+                              )
+                            )}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                </div>
               </div>
             </form>
           </Form>
