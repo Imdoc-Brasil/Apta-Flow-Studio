@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
@@ -196,7 +197,7 @@ export default function StaffsPage() {
         const staffDocRef = doc(
           firestore,
           'staffs',
-          superAdminData.id as string
+          superAdminData.email as string
         )
         setDocumentNonBlocking(staffDocRef, superAdminData, { merge: true })
       }

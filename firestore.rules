@@ -33,7 +33,8 @@ service cloud.firestore {
     }
     
     match /staffs/{staffId} {
-        allow read, write: if isAdmin();
+        allow read: if isAdmin() || isOwner(staffId);
+        allow write: if isAdmin();
     }
     
     match /profiles/{profileId} {
