@@ -590,7 +590,6 @@ export default function EmployeesPage() {
                   size='icon'
                   className='h-8 w-8'
                   onClick={() => setViewMode('card')}
-                  disabled
                 >
                   <LayoutGrid className='h-4 w-4' />
                 </Button>
@@ -713,8 +712,49 @@ export default function EmployeesPage() {
               </TableBody>
             </Table>
           ) : (
-            <div className='text-center p-8'>
-              Modo de visualização em cartão desabilitado.
+            <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'>
+              {filteredEmployees.map((employee) => {
+                const role = getRoleById(employee.roleId)
+                const sector = role
+                  ? allSectors.find((s) => s.id === role.sectorId)
+                  : undefined
+                return (
+                  <Card
+                    key={employee.id}
+                    className='cursor-pointer'
+                    onClick={() => handleRowClick(employee.id)}
+                  >
+                    <CardHeader>
+                      <div className='flex items-center justify-between'>
+                        <Avatar className='h-12 w-12'>
+                          <AvatarImage
+                            src={employee.avatar}
+                            alt={employee.name}
+                          />
+                          <AvatarFallback>
+                            {employee.name
+                              .split(' ')
+                              .map((n) => n[0])
+                              .join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <Badge variant={getStatusBadgeVariant(employee.status)}>
+                          {employee.status}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className='font-semibold'>{employee.name}</p>
+                      <p className='text-sm text-muted-foreground'>
+                        {role?.name || 'Cargo não definido'}
+                      </p>
+                      <p className='text-xs text-muted-foreground'>
+                        {sector?.name || 'Setor não definido'}
+                      </p>
+                    </CardContent>
+                  </Card>
+                )
+              })}
             </div>
           )}
         </CardContent>

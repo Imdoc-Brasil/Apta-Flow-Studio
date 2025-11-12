@@ -46,6 +46,7 @@ import type { Unit } from '../units/data'
 import type { Environment } from '../../environments/data'
 import type { Process } from '../../processes/data'
 import type { EpiDelivery } from '../../epis/data'
+import type { ASO } from '../../asos/page'
 import { ClientSideDateFormatter } from '@/components/client-side-date-formatter'
 
 const getStatusBadgeVariant = (status: Employee['status']) => {
@@ -60,6 +61,13 @@ const getStatusBadgeVariant = (status: Employee['status']) => {
       return 'default'
   }
 }
+
+interface ScheduledEvent {
+  type: string
+  date: string
+  description: string
+}
+
 
 export default function EmployeeDetailsPage() {
   const params = useParams()
@@ -82,10 +90,6 @@ export default function EmployeeDetailsPage() {
   const roleRef = useMemoFirebase(() => (firestore && employee?.roleId) ? doc(firestore, `clients/${contractId}/roles`, employee.roleId) : null, [firestore, contractId, employee]);
   const { data: role, isLoading: isRoleLoading } = useDoc<Role>(roleRef);
   
-  const sectorRef = useMemoFirebase(() => (firestore && role?.sectorId) ? doc(firestore, `clients/${contractId}/sectors`, role.sectorId) : null, [firestore, contractId, role]);
-  // We can't directly reference the sector document because it's in a subcollection. We need the unitId.
-  // This highlights a potential data modeling improvement (denormalizing unitId into role), but for now we fetch it separately.
-  
   const [unit, setUnit] = useState<Unit | null>(null);
   const [sector, setSector] = useState<Sector | null>(null);
   const [mainWorkstation, setMainWorkstation] = useState<Environment | null>(null);
@@ -103,9 +107,75 @@ export default function EmployeeDetailsPage() {
   )
   const { data: epiDeliveries, isLoading: areEpiDeliveriesLoading } =
     useCollection<EpiDelivery>(epiDeliveriesQuery)
+    
+    
+  const scheduledTrainingsQuery = useMemoFirebase(
+    () =>
+      firestore
+        ? query(
+            collection(firestore, `clients/${contractId}/scheduled_trainings`),
+            where('enrolledEmployees', 'array-contains', employeeId)
+          )
+        : null,
+    [firestore, contractId, employeeId]
+  )
+  const { data: scheduledTrainings, isLoading: areTrainingsLoading } =
+    useCollection(scheduledTrainingsQuery)
+
+  const asosQuery = useMemoFirebase(
+    () =>
+      firestore && employee?.name
+        ? query(
+            collection(firestore, `clients/${contractId}/asos`),
+            where('employee', '==', employee.name)
+          )
+        : null,
+    [firestore, contractId, employee]
+  )
+  const { data: asos, isLoading: areAsosLoading } = useCollection<ASO>(asosQuery)
+
+  const upcomingEvents = useMemo(() => {
+    const events: ScheduledEvent[] = []
+
+    if (scheduledTrainings) {
+      scheduledTrainings.forEach((training: any) => {
+        if (new Date(training.scheduledDate) >= new Date()) {
+          events.push({
+            type: 'Treinamento',
+            date: training.scheduledDate,
+            description: training.title,
+          })
+        }
+      })
+    }
+
+    if (asos) {
+        asos.forEach((aso: any) => {
+             // Assuming validity is a string like "12 meses" or an ISO date.
+             // This logic needs to be more robust in a real scenario.
+             const issueDate = new Date(aso.issueDate);
+             const nextExamDate = new Date(issueDate.setFullYear(issueDate.getFullYear() + 1));
+             if (nextExamDate >= new Date()) {
+                 events.push({
+                     type: 'Exame Periódico',
+                     date: nextExamDate.toISOString(),
+                     description: `Vencimento do ASO: ${aso.type}`,
+                 })
+             }
+        })
+    }
+    
+    // Sort events by date
+    return events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  }, [scheduledTrainings, asos]);
+
 
   useEffect(() => {
-    if (!role || !firestore || isRoleLoading) return;
+    if (!role || !firestore || isRoleLoading) {
+      if (!isRoleLoading) setIsHierarchyLoading(false);
+      return;
+    };
     
     setIsHierarchyLoading(true);
     const findHierarchy = async () => {
@@ -172,7 +242,9 @@ export default function EmployeeDetailsPage() {
     isEmployeeLoading ||
     isRoleLoading ||
     areEpiDeliveriesLoading ||
-    isHierarchyLoading
+    isHierarchyLoading ||
+    areTrainingsLoading ||
+    areAsosLoading
 
   if (isLoading) {
     return (
@@ -441,15 +513,25 @@ export default function EmployeeDetailsPage() {
 
               <div className='space-y-3'>
                 <h4 className='font-medium'>Próximos Agendamentos</h4>
-                <div className='flex items-start gap-3 text-sm'>
-                  <CalendarClock className='h-5 w-5 text-muted-foreground mt-0.5' />
-                  <div>
-                    <p className='font-medium'>Exame Periódico</p>
-                    <p className='text-muted-foreground'>
-                      Agendado para: 15/08/2024
-                    </p>
-                  </div>
-                </div>
+                {upcomingEvents.length > 0 ? (
+                  upcomingEvents.slice(0, 2).map((event, index) => (
+                    <div key={index} className='flex items-start gap-3 text-sm'>
+                      <CalendarClock className='h-5 w-5 text-muted-foreground mt-0.5' />
+                      <div>
+                        <p className='font-medium'>{event.type}</p>
+                        <p className='text-muted-foreground'>
+                          Agendado para:{' '}
+                          <ClientSideDateFormatter dateString={event.date} />
+                        </p>
+                         <p className='text-xs text-muted-foreground'>{event.description}</p>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className='text-sm text-muted-foreground text-center py-4'>
+                    Nenhum agendamento futuro encontrado.
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
