@@ -10,6 +10,7 @@ import {
   List,
   LayoutGrid,
   KeyRound,
+  Loader2,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -72,7 +73,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { initialProfiles } from '@/app/dashboard/(main)/profiles/page'
-import { initialEmployeesData } from './data'
 import type { Employee, EmployeeStatus } from './data'
 import { initialRolesData } from '../roles/data'
 import { initialSectorsData } from '../sectors/data'
@@ -84,6 +84,8 @@ import { useToast } from '@/hooks/use-toast'
 import {
   useFirestore,
   addDocumentNonBlocking,
+  updateDocumentNonBlocking,
+  deleteDocumentNonBlocking,
   useCollection,
   useMemoFirebase,
 } from '@/firebase'
@@ -109,7 +111,6 @@ function ClientSideDateFormatter({ dateString }: { dateString: string }) {
 }
 
 export default function EmployeesPage() {
-  const [employees, setEmployees] = useState(initialEmployeesData)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
@@ -128,6 +129,12 @@ export default function EmployeesPage() {
   const { toast } = useToast()
 
   const firestore = useFirestore()
+  const employeesRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, `clients/${contractId}/staffs`) : null),
+    [firestore, contractId]
+  )
+  const { data: employees, isLoading } = useCollection<Employee>(employeesRef)
+
   const staffsRef = useMemoFirebase(
     () => (firestore ? collection(firestore, 'staffs') : null),
     [firestore]
@@ -148,6 +155,7 @@ export default function EmployeesPage() {
     initialRolesData.find((r) => r.id === roleId)
 
   const filteredEmployees = useMemo(() => {
+    if (!employees) return []
     return employees
       .filter((employee) => {
         const term = searchTerm.toLowerCase()
@@ -167,11 +175,12 @@ export default function EmployeesPage() {
 
   const handleAddEmployee = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (!employeesRef) return
+
     const formData = new FormData(event.currentTarget)
     const name = formData.get('name') as string
 
-    const newEmployee: Employee = {
-      id: `EMP-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
+    const newEmployee: Omit<Employee, 'id'> = {
       name,
       roleId: formData.get('roleId') as string,
       email: formData.get('email') as string,
@@ -180,7 +189,9 @@ export default function EmployeesPage() {
       admissionDate: new Date().toISOString().split('T')[0],
       avatar: `https://i.pravatar.cc/150?u=${Math.random()}`,
     }
-    setEmployees((prev) => [newEmployee, ...prev])
+    
+    addDocumentNonBlocking(employeesRef, newEmployee)
+
     setIsAddDialogOpen(false)
     setSelectedAddRole('')
     toast({
@@ -191,43 +202,43 @@ export default function EmployeesPage() {
 
   const handleEditEmployee = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!currentEmployee) return
+    if (!currentEmployee?.id || !firestore) return
+    const employeeDocRef = doc(firestore, `clients/${contractId}/staffs`, currentEmployee.id)
+
     const formData = new FormData(event.currentTarget)
     const name = formData.get('name') as string
 
-    setEmployees((prev) =>
-      prev.map((employee) =>
-        employee.id === currentEmployee.id
-          ? {
-              ...employee,
-              name,
-              roleId: formData.get('roleId') as string,
-              email: formData.get('email') as string,
-              phone: formData.get('phone') as string,
-            }
-          : employee
-      )
-    )
+    const updatedData = {
+      name,
+      roleId: formData.get('roleId') as string,
+      email: formData.get('email') as string,
+      phone: formData.get('phone') as string,
+    }
+
+    updateDocumentNonBlocking(employeeDocRef, updatedData)
+    
     setIsEditDialogOpen(false)
     setCurrentEmployee(null)
+    toast({ title: "Colaborador atualizado!"})
   }
 
   const handleDeleteEmployee = () => {
-    if (!currentEmployee) return
-    setEmployees((prev) => prev.filter((emp) => emp.id !== currentEmployee.id))
+    if (!currentEmployee?.id || !firestore) return
+    const employeeDocRef = doc(firestore, `clients/${contractId}/staffs`, currentEmployee.id)
+    deleteDocumentNonBlocking(employeeDocRef)
+    
     setIsDeleteDialogOpen(false)
     setCurrentEmployee(null)
+    toast({ title: 'Colaborador excluído!', variant: 'destructive'})
   }
 
   const handleChangeStatus = (
     employeeId: string,
     newStatus: EmployeeStatus
   ) => {
-    setEmployees((prev) =>
-      prev.map((emp) =>
-        emp.id === employeeId ? { ...emp, status: newStatus } : emp
-      )
-    )
+    if (!firestore) return
+    const employeeDocRef = doc(firestore, `clients/${contractId}/staffs`, employeeId)
+    updateDocumentNonBlocking(employeeDocRef, { status: newStatus })
   }
 
   const handleCreatePortalAccess = (employee: Employee) => {
@@ -519,6 +530,7 @@ export default function EmployeesPage() {
                   size='icon'
                   className='h-8 w-8'
                   onClick={() => setViewMode('card')}
+                  disabled
                 >
                   <LayoutGrid className='h-4 w-4' />
                 </Button>
@@ -572,7 +584,11 @@ export default function EmployeesPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {viewMode === 'list' ? (
+          {isLoading ? (
+            <div className='flex justify-center items-center h-64'>
+              <Loader2 className='h-8 w-8 animate-spin' />
+            </div>
+          ) : viewMode === 'list' ? (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -637,42 +653,7 @@ export default function EmployeesPage() {
               </TableBody>
             </Table>
           ) : (
-            <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
-              {filteredEmployees.map((employee) => (
-                <Card
-                  key={employee.id}
-                  className='cursor-pointer'
-                  onClick={() => handleRowClick(employee.id)}
-                >
-                  <CardHeader>
-                    <div className='flex items-center justify-between'>
-                      <Avatar className='h-12 w-12'>
-                        <AvatarImage
-                          src={employee.avatar}
-                          alt={employee.name}
-                        />
-                        <AvatarFallback>
-                          {employee.name
-                            .split(' ')
-                            .map((n) => n[0])
-                            .join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      {renderEmployeeActions(employee)}
-                    </div>
-                    <CardTitle className='pt-2'>{employee.name}</CardTitle>
-                    <CardDescription>
-                      {getRoleById(employee.roleId)?.name || 'N/A'}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardFooter>
-                    <Badge variant={getStatusBadgeVariant(employee.status)}>
-                      {employee.status}
-                    </Badge>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
+             <div className='text-center p-8'>Modo de visualização em cartão desabilitado.</div>
           )}
         </CardContent>
       </Card>
@@ -731,3 +712,5 @@ export default function EmployeesPage() {
   )
 }
 export type { Employee, EmployeeStatus } from './data'
+
+    
