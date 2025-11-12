@@ -33,7 +33,7 @@ service cloud.firestore {
      * @principle Enforces role-based access control for client management.
      */
     match /clients/{clientId} {
-      allow get, list, write: if request.auth != null;
+      allow read, write: if request.auth != null;
     }
     
     /**
@@ -295,5 +295,3 @@ service cloud.firestore {
     return request.auth != null && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
   }
 }
-
-    

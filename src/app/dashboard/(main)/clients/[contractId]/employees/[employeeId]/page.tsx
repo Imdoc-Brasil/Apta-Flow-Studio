@@ -37,7 +37,7 @@ import {
   useFirestore,
   useMemoFirebase,
 } from '@/firebase'
-import { doc, collection } from 'firebase/firestore'
+import { doc, collection, getDocs } from 'firebase/firestore'
 
 import type { Employee, EmployeeStatus } from '../employees/data'
 import type { Role } from '../roles/data'
@@ -100,13 +100,6 @@ export default function EmployeeDetailsPage() {
       firestore ? collection(firestore, `clients/${contractId}/units`) : null,
     [firestore, contractId]
   )
-  const allEnvironmentsRef = useMemoFirebase(
-    () =>
-      firestore
-        ? collection(firestore, `clients/${contractId}/environments`)
-        : null,
-    [firestore, contractId]
-  )
   const allProcessesRef = useMemoFirebase(
     () =>
       firestore
@@ -128,8 +121,6 @@ export default function EmployeeDetailsPage() {
     useCollection<Role>(allRolesRef)
   const { data: allUnits, isLoading: areUnitsLoading } =
     useCollection<Unit>(allUnitsRef)
-  const { data: allEnvironments, isLoading: areEnvironmentsLoading } =
-    useCollection<Environment>(allEnvironmentsRef)
   const { data: allProcesses, isLoading: areProcessesLoading } =
     useCollection<Process>(allProcessesRef)
   const { data: epiDeliveries, isLoading: areEpiDeliveriesLoading } =
@@ -137,29 +128,54 @@ export default function EmployeeDetailsPage() {
 
   const [allSectors, setAllSectors] = useState<Sector[]>([])
   const [areSectorsLoading, setAreSectorsLoading] = useState(true)
+  const [allEnvironments, setAllEnvironments] = useState<Environment[]>([])
+  const [areEnvironmentsLoading, setAreEnvironmentsLoading] = useState(true)
 
   useEffect(() => {
     if (allUnits && firestore) {
       setAreSectorsLoading(true)
-      const fetchAllSectors = async () => {
-        const sectorsPromises = allUnits.map(unit => {
-          const sectorsColRef = collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`);
-          return getDocs(sectorsColRef);
-        });
-
+      setAreEnvironmentsLoading(true)
+      const fetchSubCollections = async () => {
         try {
-          const sectorsSnapshots = await Promise.all(sectorsPromises);
+          // Fetch Sectors
+          const sectorsPromises = allUnits.map(unit => 
+            getDocs(collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`))
+          )
+          const sectorsSnapshots = await Promise.all(sectorsPromises)
           const sectorsData = sectorsSnapshots.flatMap(snapshot =>
             snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sector))
-          );
-          setAllSectors(sectorsData);
+          )
+          setAllSectors(sectorsData)
+          
+          // Fetch Environments
+          if (sectorsData.length > 0) {
+            const environmentsPromises = allUnits.flatMap(unit => 
+              sectorsData
+                .filter(sector => sector.unitId === unit.id)
+                .map(sector => 
+                  getDocs(collection(firestore, `clients/${contractId}/units/${unit.id}/sectors/${sector.id}/environments`))
+                )
+            );
+            const environmentsSnapshots = await Promise.all(environmentsPromises.flat())
+            const environmentsData = environmentsSnapshots.flatMap(snapshot =>
+              snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Environment))
+            )
+            setAllEnvironments(environmentsData)
+          } else {
+             setAllEnvironments([])
+          }
+
         } catch (error) {
-          console.error("Error fetching sectors: ", error);
+          console.error("Error fetching sub-collections: ", error)
         } finally {
-          setAreSectorsLoading(false);
+          setAreSectorsLoading(false)
+          setAreEnvironmentsLoading(false)
         }
       }
-      fetchAllSectors()
+      fetchSubCollections()
+    } else {
+      setAreSectorsLoading(false)
+      setAreEnvironmentsLoading(false)
     }
   }, [allUnits, firestore, contractId])
 

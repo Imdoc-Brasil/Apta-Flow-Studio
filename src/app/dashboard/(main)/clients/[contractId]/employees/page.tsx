@@ -122,7 +122,7 @@ export default function EmployeesPage() {
     'Desligado',
     'Candidato',
   ])
-  const [viewMode, setViewMode] = useState<'list' | 'list'>('list')
+  const [viewMode, setViewMode] = useState<'list' | 'card'>('list')
   const router = useRouter()
   const params = useParams()
   const contractId = params.contractId as string
@@ -712,5 +712,3 @@ export default function EmployeesPage() {
   )
 }
 export type { Employee, EmployeeStatus } from './data'
-
-    
