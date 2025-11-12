@@ -140,45 +140,61 @@ export default function EmployeesPage() {
 
   useEffect(() => {
     if (allUnits && firestore && !areUnitsLoading) {
-      setAreSectorsLoading(true);
+      setAreSectorsLoading(true)
       const fetchSectors = async () => {
         try {
-          const sectorsPromises = allUnits.map(unit =>
-            getDocs(collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`))
-          );
-          const sectorsSnapshots = await Promise.all(sectorsPromises);
-          const sectorsData = sectorsSnapshots.flatMap(snapshot =>
-            snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sector))
-          );
-          setAllSectors(sectorsData);
+          const sectorsPromises = allUnits.map((unit) =>
+            getDocs(
+              collection(
+                firestore,
+                `clients/${contractId}/units/${unit.id}/sectors`
+              )
+            )
+          )
+          const sectorsSnapshots = await Promise.all(sectorsPromises)
+          const sectorsData = sectorsSnapshots.flatMap((snapshot) =>
+            snapshot.docs.map(
+              (doc) => ({ id: doc.id, ...doc.data() } as Sector)
+            )
+          )
+          setAllSectors(sectorsData)
         } catch (error) {
-          console.error("Failed to fetch sectors:", error);
-          setAllSectors([]);
+          console.error('Failed to fetch sectors:', error)
+          setAllSectors([])
         } finally {
-          setAreSectorsLoading(false);
+          setAreSectorsLoading(false)
         }
-      };
-      fetchSectors();
+      }
+      fetchSectors()
     } else if (!areUnitsLoading) {
-      setAreSectorsLoading(false);
+      setAreSectorsLoading(false)
     }
-  }, [allUnits, firestore, contractId, areUnitsLoading]);
-  
+  }, [allUnits, firestore, contractId, areUnitsLoading])
+
   const staffsRef = useMemoFirebase(
     () => (firestore ? collection(firestore, 'staffs') : null),
     [firestore]
   )
 
   const [selectedAddRole, setSelectedAddRole] = useState('')
+  
+  const rolesWithDetails = useMemo(() => {
+    if (!rolesData || !allSectors || !allUnits) return [];
+    return rolesData.map(role => {
+      const sector = allSectors.find(s => s.id === role.sectorId);
+      const unit = sector ? allUnits.find(u => u.id === sector.unitId) : undefined;
+      return {
+        ...role,
+        sectorName: sector?.name || 'N/A',
+        unitName: unit?.name || 'N/A'
+      }
+    })
+  }, [rolesData, allSectors, allUnits])
+
   const roleDetails = useMemo(() => {
-    if (!selectedAddRole || !rolesData || areSectorsLoading || !allUnits) return null
-    const role = rolesData.find((r) => r.id === selectedAddRole)
-    if (!role) return null
-    const sector = allSectors.find((s) => s.id === role.sectorId)
-    if (!sector) return null
-    const unit = allUnits.find((u) => u.id === sector.unitId)
-    return { role, sector, unit }
-  }, [selectedAddRole, rolesData, allSectors, allUnits, areSectorsLoading])
+    if (!selectedAddRole) return null
+    return rolesWithDetails.find((r) => r.id === selectedAddRole);
+  }, [selectedAddRole, rolesWithDetails])
 
   const getRoleById = (roleId: string) =>
     rolesData?.find((r) => r.id === roleId)
@@ -362,9 +378,9 @@ export default function EmployeesPage() {
             <SelectValue placeholder='Selecione o cargo para o novo colaborador' />
           </SelectTrigger>
           <SelectContent>
-            {rolesData?.map((role) => (
+            {rolesWithDetails?.map((role) => (
               <SelectItem key={role.id} value={role.id}>
-                {role.name}
+                {role.name} ({role.sectorName} / {role.unitName})
               </SelectItem>
             ))}
           </SelectContent>
@@ -375,11 +391,11 @@ export default function EmployeesPage() {
         <div className='grid grid-cols-2 gap-4 rounded-md border bg-muted/50 p-4'>
           <div className='space-y-1'>
             <p className='text-sm font-medium text-muted-foreground'>Unidade</p>
-            <p className='font-semibold'>{roleDetails.unit?.name}</p>
+            <p className='font-semibold'>{roleDetails.unitName}</p>
           </div>
           <div className='space-y-1'>
             <p className='text-sm font-medium text-muted-foreground'>Setor</p>
-            <p className='font-semibold'>{roleDetails.sector.name}</p>
+            <p className='font-semibold'>{roleDetails.sectorName}</p>
           </div>
         </div>
       )}
