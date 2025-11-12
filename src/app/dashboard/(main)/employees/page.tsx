@@ -155,6 +155,14 @@ export default function StaffsPage() {
     [firestore]
   )
   const { data: clientsData, isLoading: areClientsLoading } = useCollection<Client>(clientsRef)
+  
+  const profilesRef = useMemoFirebase(() => (firestore ? collection(firestore, 'profiles') : null), [firestore]);
+  const { data: profilesData, isLoading: areProfilesLoading } = useCollection(profilesRef);
+
+  const profiles = useMemo(() => {
+    return [...initialProfiles, ...(profilesData || [])];
+  }, [profilesData]);
+
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
@@ -306,7 +314,7 @@ export default function StaffsPage() {
   }
 
   const getProfileName = (perfilId: string) => {
-    return initialProfiles.find((p) => p.id === perfilId)?.name || 'N/A'
+    return profiles.find((p) => p.id === perfilId)?.name || 'N/A'
   }
   
   const getClientName = (contractId: string) => {
@@ -435,7 +443,7 @@ export default function StaffsPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {initialProfiles.map((profile) => (
+                        {profiles.map((profile) => (
                           <SelectItem key={profile.id} value={profile.id}>
                             {profile.name}
                           </SelectItem>
