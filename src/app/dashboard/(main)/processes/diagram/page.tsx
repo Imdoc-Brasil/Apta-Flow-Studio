@@ -16,6 +16,8 @@ import ReactFlow, {
   Handle,
   Position,
   ReactFlowProvider,
+  BackgroundVariant,
+  MarkerType,
 } from 'reactflow'
 import 'reactflow/dist/style.css'
 import { Button } from '@/components/ui/button'
@@ -239,7 +241,9 @@ function DiagramCanvas() {
 
   const onConnect = useCallback(
     (params: Edge | Connection) =>
-      setEdges((eds) => addEdge({ ...params, type: 'smoothstep', markerEnd: { type: 'arrowclosed' } }, eds)),
+      setEdges((eds) =>
+        addEdge({ ...params, markerEnd: { type: MarkerType.ArrowClosed } }, eds)
+      ),
     [setEdges]
   )
   
@@ -424,7 +428,7 @@ function DiagramCanvas() {
           >
             <Controls />
             <MiniMap />
-            <Background variant='dots' gap={12} size={1} />
+            <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
           </ReactFlow>
         </div>
       </div>
