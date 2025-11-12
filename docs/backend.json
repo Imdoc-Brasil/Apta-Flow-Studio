@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "Client": {
@@ -710,6 +709,50 @@
         "type",
         "steps"
       ]
+    },
+    "ASO": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "ASO",
+      "description": "Represents an Occupational Health Certificate (Atestado de Saúde Ocupacional).",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the ASO."
+        },
+        "employee": {
+          "type": "string",
+          "description": "Name of the employee."
+        },
+        "type": {
+          "type": "string",
+          "description": "Type of evaluation (e.g., Admissional, Periódico)."
+        },
+        "issueDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Date the ASO was issued or requested."
+        },
+        "validity": {
+          "type": "string",
+          "description": "Validity period or expiration date of the ASO."
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "Apto",
+            "Inapto",
+            "Solicitado"
+          ],
+          "description": "The result or current status of the ASO."
+        }
+      },
+      "required": [
+        "employee",
+        "type",
+        "issueDate",
+        "status"
+      ]
     }
   },
   "auth": {
@@ -732,6 +775,26 @@
             {
               "name": "clientId",
               "description": "Unique identifier for the client."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/clients/{clientId}/asos/{asoId}",
+        "definition": {
+          "entityName": "ASO",
+          "schema": {
+            "$ref": "#/backend/entities/ASO"
+          },
+          "description": "Stores Occupational Health Certificates (ASOs) for a client.",
+          "params": [
+            {
+              "name": "clientId",
+              "description": "Unique identifier for the client."
+            },
+            {
+              "name": "asoId",
+              "description": "Unique identifier for the ASO."
             }
           ]
         }

@@ -40,10 +40,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { initialEmployeesData } from '../employees/data'
 import { useAttendeeStore } from '../../../health/queue/attendee-store'
 import { useTicketStore } from '../../../tickets/tickets-store'
-import { initialClientsData } from '../../../clients/data'
 import { useState } from 'react'
 import { useParams } from 'next/navigation'
 import { Separator } from '@/components/ui/separator'
@@ -54,9 +52,12 @@ import {
   addDocumentNonBlocking,
   useCollection,
   useMemoFirebase,
+  useDoc,
 } from '@/firebase'
-import { collection } from 'firebase/firestore'
+import { collection, doc } from 'firebase/firestore'
 import type { Ticket } from '@/app/dashboard/(main)/tickets/tickets-store'
+import type { Employee } from '../employees/data'
+import type { Client } from '../../data'
 
 interface Aso {
   id: string
@@ -71,9 +72,21 @@ export default function AsosPage() {
   const { toast } = useToast()
   const params = useParams()
   const contractId = params.contractId as string
-  const client = initialClientsData.find((c) => c.id === contractId)
 
   const firestore = useFirestore()
+
+  const clientRef = useMemoFirebase(
+    () => (firestore ? doc(firestore, 'clients', contractId) : null),
+    [firestore, contractId]
+  )
+
+  const employeesRef = useMemoFirebase(
+    () =>
+      firestore
+        ? collection(firestore, `clients/${contractId}/staffs`)
+        : null,
+    [firestore, contractId]
+  )
   const asosRef = useMemoFirebase(
     () =>
       firestore
@@ -85,20 +98,23 @@ export default function AsosPage() {
     () => (firestore ? collection(firestore, 'tickets') : null),
     [firestore]
   )
-  const { data: asos, isLoading } = useCollection<Aso>(asosRef)
+  const { data: client, isLoading: isClientLoading } = useDoc<Client>(clientRef)
+  const { data: employees, isLoading: areEmployeesLoading } =
+    useCollection<Employee>(employeesRef)
+  const { data: asos, isLoading: areAsosLoading } = useCollection<Aso>(asosRef)
 
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const { addAttendee } = useAttendeeStore()
 
   const handleNewRequest = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (!asosRef || !ticketsRef) return
+    if (!asosRef || !ticketsRef || !employees) return
 
     const formData = new FormData(e.currentTarget)
     const employeeId = formData.get('employeeId') as string
     const solicitationType = formData.get('solicitationType') as string
 
-    const employee = initialEmployeesData.find((emp) => emp.id === employeeId)
+    const employee = employees.find((emp) => emp.id === employeeId)
 
     if (!employee || !solicitationType || !client) {
       toast({
@@ -173,6 +189,8 @@ export default function AsosPage() {
     }
   }
 
+  const isLoading = isClientLoading || areEmployeesLoading || areAsosLoading;
+
   return (
     <Card>
       <CardHeader>
@@ -231,7 +249,7 @@ export default function AsosPage() {
                             <SelectValue placeholder='Selecione o colaborador' />
                           </SelectTrigger>
                           <SelectContent>
-                            {initialEmployeesData.map((emp) => (
+                            {employees?.map((emp) => (
                               <SelectItem key={emp.id} value={emp.id}>
                                 {emp.name}
                               </SelectItem>
