@@ -52,155 +52,15 @@ export interface TextElement {
   assignedTo?: string[]
 }
 
-export const initialTicketsData = [
-  {
-    id: 'TKT-001',
-    subject: 'Não consigo fazer login no portal',
-    client: 'Innovate Inc.',
-    priority: 'Alta',
-    status: 'Aberto',
-    updated: new Date('2024-07-21T10:30:00').toISOString(),
-    description:
-      'Ao tentar acessar o portal do cliente, recebo uma mensagem de "usuário ou senha inválida", mas minhas credenciais estão corretas. Já tentei limpar o cache e usar outro navegador.',
-    assignedTo: [],
-    labels: [availableLabels[0], availableLabels[3]],
-    checklists: [],
-    attachments: [],
-    textElements: [],
-    relatedEmployee: 'João da Silva',
-  },
-  {
-    id: 'TKT-002',
-    subject: 'Pedido de recurso: Modo Escuro',
-    client: 'Solutions Co.',
-    priority: 'Média',
-    status: 'Em Progresso',
-    updated: new Date('2024-07-21T09:15:00').toISOString(),
-    description:
-      'Gostaríamos de solicitar a implementação de um tema escuro na plataforma para melhorar o conforto visual durante o uso noturno.',
-    assignedTo: ['sarah.chen@aptaflow.com'],
-    labels: [availableLabels[1]],
-    checklists: [
-      {
-        id: 'cl-1',
-        title: 'Desenvolvimento Frontend',
-        createdAt: new Date('2024-07-22T13:45:00Z').toISOString(),
-        creator: 'Sarah Chen',
-        creatorAvatar: 'https://i.pravatar.cc/150?u=a042581f4e29026701d',
-        creatorFallback: 'SC',
-        items: [
-          {
-            id: 'item-1-1',
-            text: 'Criar variáveis de cor para o tema escuro',
-            completed: true,
-            dueDate: '2024-07-25',
-            completedBy: 'David Rodriguez',
-            completedAt: new Date('2024-07-22T14:00:00Z').toISOString(),
-            assignedTo: ['david.r@aptaflow.com'],
-          },
-          {
-            id: 'item-1-2',
-            text: 'Aplicar tema aos componentes principais',
-            completed: false,
-            dueDate: '2024-07-28',
-            assignedTo: ['david.r@aptaflow.com'],
-          },
-          {
-            id: 'item-1-3',
-            text: 'Testar em todos os navegadores',
-            completed: false,
-            dueDate: '2024-07-30',
-          },
-        ],
-      },
-    ],
-    attachments: [
-      {
-        id: 'att-1',
-        name: 'mockup-dark-mode.png',
-        url: '#',
-      },
-    ],
-    textElements: [
-      {
-        id: 'txt-1',
-        type: 'question',
-        title: 'Pergunta',
-        content: 'Qual a previsão para início do desenvolvimento?',
-        creator: 'Cliente',
-        creatorAvatar: '',
-        creatorFallback: 'CL',
-        createdAt: new Date('2024-07-22T10:00:00Z').toISOString(),
-      },
-      {
-        id: 'txt-2',
-        type: 'comment',
-        title: 'Comentário',
-        content: 'Já estamos analisando a viabilidade técnica.',
-        creator: 'Sarah Chen',
-        creatorAvatar: 'https://i.pravatar.cc/150?u=a042581f4e29026701d',
-        creatorFallback: 'SC',
-        createdAt: new Date('2024-07-22T11:20:00Z').toISOString(),
-      },
-    ],
-  },
-  {
-    id: 'TKT-003',
-    subject: 'Consulta de faturamento',
-    client: 'Stellar Tech',
-    priority: 'Baixa',
-    status: 'Aberto',
-    updated: new Date('2024-07-20T16:00:00').toISOString(),
-    description:
-      'Tenho uma dúvida sobre um item que apareceu na nossa última fatura. Podemos agendar uma chamada para esclarecer?',
-    assignedTo: [],
-    labels: [],
-    checklists: [],
-    attachments: [],
-    textElements: [],
-  },
-  {
-    id: 'TKT-004',
-    subject: 'Endpoint da API retornando erro 500',
-    client: 'Quantum Dynamics',
-    priority: 'Alta',
-    status: 'Resolvido',
-    updated: new Date('2024-07-19T11:00:00').toISOString(),
-    description:
-      'O endpoint GET /api/v1/data está retornando um erro 500 Internal Server Error desde ontem. Isso está impactando nossa integração.',
-    assignedTo: ['david.r@aptaflow.com', 'michael.b@aptaflow.com'],
-    labels: [availableLabels[0]],
-    checklists: [],
-    attachments: [],
-    textElements: [],
-  },
-  {
-    id: 'TKT-005',
-    subject: 'Dúvida sobre integração',
-    client: 'Apex Innovations',
-    priority: 'Baixa',
-    status: 'Fechado',
-    updated: new Date('2024-07-18T14:45:00').toISOString(),
-    description:
-      'Estamos tentando integrar nosso sistema com a API de vocês e precisamos de ajuda para entender o fluxo de autenticação OAuth2.',
-    assignedTo: ['emily.w@aptaflow.com'],
-    labels: [availableLabels[2]],
-    checklists: [],
-    attachments: [],
-    textElements: [],
-  },
-] as const
-
 export type TicketStatus = 'Aberto' | 'Em Progresso' | 'Resolvido' | 'Fechado'
-export type Ticket = Omit<
-  (typeof initialTicketsData)[0],
-  | 'assignedTo'
-  | 'labels'
-  | 'checklists'
-  | 'attachments'
-  | 'textElements'
-  | 'relatedEmployee'
-> & {
+export type Ticket = {
+  id: string
+  subject: string
+  client: string
+  priority: 'Alta' | 'Média' | 'Baixa'
+  status: TicketStatus
+  updated: string
+  description?: string
   assignedTo?: string[]
   labels?: Label[]
   checklists?: Checklist[]
@@ -249,26 +109,7 @@ type TicketStore = {
 }
 
 export const useTicketStore = create<TicketStore>((set) => ({
-  tickets: [...initialTicketsData].map((ticket) => ({
-    ...ticket,
-    updated: new Date(ticket.updated).toISOString(),
-    assignedTo: ticket.assignedTo ? [...ticket.assignedTo] : [],
-    labels: ticket.labels ? [...ticket.labels] : [],
-    checklists: ticket.checklists
-      ? ticket.checklists.map((cl) => ({
-          ...cl,
-          items: cl.items.map((item) => ({
-            ...item,
-            assignedTo: item.assignedTo ? [...item.assignedTo] : [],
-          })),
-        }))
-      : [],
-    attachments: ticket.attachments ? [...ticket.attachments] : [],
-    textElements: ticket.textElements
-      ? ticket.textElements.map((te) => ({ ...te }))
-      : [],
-    relatedEmployee: ticket.relatedEmployee,
-  })),
+  tickets: [],
   addTicket: (newTicket) =>
     set((state) => ({
       tickets: [
@@ -443,5 +284,3 @@ export const useTicketStore = create<TicketStore>((set) => ({
       }),
     })),
 }))
-
-    

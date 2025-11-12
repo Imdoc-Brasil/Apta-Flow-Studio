@@ -179,7 +179,7 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
     transition,
     isDragging,
   } = useSortable({ id: ticket.id, data: { type: 'Ticket', ticket } })
-  const { startWorkOnTicket } = useTicketStore()
+  const firestore = useFirestore();
   const currentUserEmail = 'sarah.chen@aptaflow.com'
 
   const style = {
@@ -193,8 +193,13 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
     ) ?? []
 
   const handleCardClick = () => {
-    if (ticket.status === 'Aberto') {
-      startWorkOnTicket(ticket.id, currentUserEmail)
+    if (ticket.status === 'Aberto' && firestore) {
+      const ticketDocRef = doc(firestore, 'tickets', ticket.id);
+      updateDocumentNonBlocking(ticketDocRef, {
+        status: 'Em Progresso',
+        assignedTo: [...(ticket.assignedTo || []), currentUserEmail],
+        updated: new Date().toISOString(),
+      });
     }
   }
 
@@ -1137,7 +1142,16 @@ export default function TicketsPage() {
     () => (firestore ? collection(firestore, 'tickets') : null),
     [firestore]
   )
-  const { data: tickets = [], isLoading } = useCollection<Ticket>(ticketsRef)
+  const { data: ticketsData, isLoading } = useCollection<Ticket>(ticketsRef)
+  const { tickets, setTickets } = useTicketStore()
+  
+  useEffect(() => {
+    if (ticketsData) {
+      setTickets(ticketsData);
+    }
+  }, [ticketsData, setTickets]);
+
+
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null)
   const [priorityFilter, setPriorityFilter] = useState<string[]>([])
@@ -1772,5 +1786,3 @@ export default function TicketsPage() {
     </div>
   )
 }
-
-    

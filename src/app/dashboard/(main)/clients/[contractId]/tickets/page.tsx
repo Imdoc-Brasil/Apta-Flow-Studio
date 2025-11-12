@@ -112,8 +112,8 @@ const priorityVariant = {
   Baixa: 'secondary',
 } as const
 
-const getClientById = (contractId: string) => {
-  return initialClientsData.find((client) => client.contractId === contractId)
+const getClientById = (id: string) => {
+  return initialClientsData.find((client) => client.id === id)
 }
 
 function TimeAgo({ dateString }: { dateString: string }) {
@@ -859,6 +859,3 @@ export default function ClientTicketsPage() {
     </Card>
   )
 }
-
-
-    
