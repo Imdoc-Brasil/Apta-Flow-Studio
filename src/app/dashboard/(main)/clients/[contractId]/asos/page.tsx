@@ -60,7 +60,7 @@ import type { Employee } from '../employees/data'
 import type { Client } from '../../data'
 import { ClientSideDateFormatter } from '@/components/client-side-date-formatter'
 
-interface Aso {
+export interface Aso {
   id: string
   employee: string
   type: string
@@ -439,3 +439,5 @@ export default function AsosPage() {
     </Card>
   )
 }
+
+    

@@ -37,7 +37,7 @@ import {
   useFirestore,
   useMemoFirebase,
 } from '@/firebase'
-import { doc, collection, getDocs, query, where } from 'firebase/firestore'
+import { doc, collection, getDocs, query, where, getDoc } from 'firebase/firestore'
 
 import type { Employee } from '../data'
 import type { Role } from '../roles/data'
@@ -46,7 +46,7 @@ import type { Unit } from '../units/data'
 import type { Environment } from '../../environments/data'
 import type { Process } from '../../processes/data'
 import type { EpiDelivery } from '../../epis/data'
-import type { ASO } from '../../asos/page'
+import type { Aso } from '../../asos/page'
 import { ClientSideDateFormatter } from '@/components/client-side-date-formatter'
 
 const getStatusBadgeVariant = (status: Employee['status']) => {
@@ -132,7 +132,7 @@ export default function EmployeeDetailsPage() {
         : null,
     [firestore, contractId, employee]
   )
-  const { data: asos, isLoading: areAsosLoading } = useCollection<ASO>(asosQuery)
+  const { data: asos, isLoading: areAsosLoading } = useCollection<Aso>(asosQuery)
 
   const upcomingEvents = useMemo(() => {
     const events: ScheduledEvent[] = []
@@ -540,3 +540,5 @@ export default function EmployeeDetailsPage() {
     </div>
   )
 }
+
+    
