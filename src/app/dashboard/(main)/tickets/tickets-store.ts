@@ -54,6 +54,14 @@ export interface TextElement {
 }
 
 export type TicketStatus = 'Aberto' | 'Em Progresso' | 'Resolvido' | 'Fechado'
+
+export const kanbanColumns: TicketStatus[] = [
+  'Aberto',
+  'Em Progresso',
+  'Resolvido',
+  'Fechado',
+]
+
 export type Ticket = {
   id: string
   subject: string
@@ -304,4 +312,3 @@ export const useTicketStore = create<TicketStore>()(
   )
 )
 
-    

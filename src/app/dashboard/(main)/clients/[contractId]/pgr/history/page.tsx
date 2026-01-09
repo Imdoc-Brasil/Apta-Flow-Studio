@@ -57,10 +57,8 @@ import type { Sector } from '../../sectors/data'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import {
-  getHazardById,
-  type PgrInventoryItem,
-} from '@/app/dashboard/(main)/clients/[contractId]/pgr/page'
+import { getHazardById } from '../utils'
+import type { PgrInventoryItem } from '../page'
 import { cn } from '@/lib/utils'
 import { useParams } from 'next/navigation'
 import {
@@ -70,7 +68,7 @@ import {
   addDocumentNonBlocking,
 } from '@/firebase'
 import { collection, query, getDocs } from 'firebase/firestore'
-import type { Hazard } from '../../../risks/page'
+import type { Hazard } from '@/app/dashboard/(main)/risks/page'
 import type { Role } from '../../roles/data'
 import { ClientSideDateFormatter } from '@/components/client-side-date-formatter'
 

@@ -39,14 +39,14 @@ import {
 } from '@/firebase'
 import { doc, collection, getDocs, query, where, getDoc } from 'firebase/firestore'
 
-import type { Employee } from '../data'
-import type { Role } from '../roles/data'
-import type { Sector } from '../sectors/data'
-import type { Unit } from '../units/data'
-import type { Environment } from '../../environments/data'
-import type { Process } from '../../processes/data'
-import type { EpiDelivery } from '../../epis/data'
-import type { Aso } from '../../asos/page'
+import type { Employee } from '@/app/dashboard/(main)/clients/[contractId]/employees/data'
+import type { Role } from '@/app/dashboard/(main)/clients/[contractId]/roles/data'
+import type { Sector } from '@/app/dashboard/(main)/clients/[contractId]/sectors/data'
+import type { Unit } from '@/app/dashboard/(main)/clients/[contractId]/units/data'
+import type { Environment } from '@/app/dashboard/(main)/clients/[contractId]/environments/data'
+import type { Process } from '@/app/dashboard/(main)/clients/[contractId]/processes/data'
+import type { EpiDelivery } from '@/app/dashboard/(main)/risks/page'
+import type { Aso } from '@/app/dashboard/(main)/clients/[contractId]/asos/page'
 import { ClientSideDateFormatter } from '@/components/client-side-date-formatter'
 
 const getStatusBadgeVariant = (status: Employee['status']) => {
@@ -86,10 +86,10 @@ export default function EmployeeDetailsPage() {
   )
   const { data: employee, isLoading: isEmployeeLoading } =
     useDoc<Employee>(employeeRef)
-    
+
   const roleRef = useMemoFirebase(() => (firestore && employee?.roleId) ? doc(firestore, `clients/${contractId}/roles`, employee.roleId) : null, [firestore, contractId, employee]);
   const { data: role, isLoading: isRoleLoading } = useDoc<Role>(roleRef);
-  
+
   const [unit, setUnit] = useState<Unit | null>(null);
   const [sector, setSector] = useState<Sector | null>(null);
   const [mainWorkstation, setMainWorkstation] = useState<Environment | null>(null);
@@ -99,23 +99,23 @@ export default function EmployeeDetailsPage() {
     () =>
       firestore
         ? query(
-            collection(firestore, `clients/${contractId}/epi_deliveries`),
-            where('employeeId', '==', employeeId)
-          )
+          collection(firestore, `clients/${contractId}/epi_deliveries`),
+          where('employeeId', '==', employeeId)
+        )
         : null,
     [firestore, contractId, employeeId]
   )
   const { data: epiDeliveries, isLoading: areEpiDeliveriesLoading } =
     useCollection<EpiDelivery>(epiDeliveriesQuery)
-    
-    
+
+
   const scheduledTrainingsQuery = useMemoFirebase(
     () =>
       firestore
         ? query(
-            collection(firestore, `clients/${contractId}/scheduled_trainings`),
-            where('enrolledEmployees', 'array-contains', employeeId)
-          )
+          collection(firestore, `clients/${contractId}/scheduled_trainings`),
+          where('enrolledEmployees', 'array-contains', employeeId)
+        )
         : null,
     [firestore, contractId, employeeId]
   )
@@ -126,9 +126,9 @@ export default function EmployeeDetailsPage() {
     () =>
       firestore && employee?.name
         ? query(
-            collection(firestore, `clients/${contractId}/asos`),
-            where('employee', '==', employee.name)
-          )
+          collection(firestore, `clients/${contractId}/asos`),
+          where('employee', '==', employee.name)
+        )
         : null,
     [firestore, contractId, employee]
   )
@@ -150,21 +150,21 @@ export default function EmployeeDetailsPage() {
     }
 
     if (asos) {
-        asos.forEach((aso: any) => {
-             // Assuming validity is a string like "12 meses" or an ISO date.
-             // This logic needs to be more robust in a real scenario.
-             const issueDate = new Date(aso.issueDate);
-             const nextExamDate = new Date(issueDate.setFullYear(issueDate.getFullYear() + 1));
-             if (nextExamDate >= new Date()) {
-                 events.push({
-                     type: 'Exame Periódico',
-                     date: nextExamDate.toISOString(),
-                     description: `Vencimento do ASO: ${aso.type}`,
-                 })
-             }
-        })
+      asos.forEach((aso: any) => {
+        // Assuming validity is a string like "12 meses" or an ISO date.
+        // This logic needs to be more robust in a real scenario.
+        const issueDate = new Date(aso.issueDate);
+        const nextExamDate = new Date(issueDate.setFullYear(issueDate.getFullYear() + 1));
+        if (nextExamDate >= new Date()) {
+          events.push({
+            type: 'Exame Periódico',
+            date: nextExamDate.toISOString(),
+            description: `Vencimento do ASO: ${aso.type}`,
+          })
+        }
+      })
     }
-    
+
     // Sort events by date
     return events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
@@ -176,7 +176,7 @@ export default function EmployeeDetailsPage() {
       if (!isRoleLoading) setIsHierarchyLoading(false);
       return;
     };
-    
+
     setIsHierarchyLoading(true);
     const findHierarchy = async () => {
       // Because sectors are nested, we have to find which unit it belongs to.
@@ -405,9 +405,9 @@ export default function EmployeeDetailsPage() {
                 <p className='text-sm font-medium text-muted-foreground'>
                   Etapas/Processos Envolvidos
                 </p>
-                 <p className='text-xs text-muted-foreground'>
-                      Nenhum processo principal associado a este setor.
-                    </p>
+                <p className='text-xs text-muted-foreground'>
+                  Nenhum processo principal associado a este setor.
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -523,7 +523,7 @@ export default function EmployeeDetailsPage() {
                           Agendado para:{' '}
                           <ClientSideDateFormatter dateString={event.date} />
                         </p>
-                         <p className='text-xs text-muted-foreground'>{event.description}</p>
+                        <p className='text-xs text-muted-foreground'>{event.description}</p>
                       </div>
                     </div>
                   ))
@@ -541,4 +541,3 @@ export default function EmployeeDetailsPage() {
   )
 }
 
-    

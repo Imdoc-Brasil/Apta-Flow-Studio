@@ -65,76 +65,14 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
-
-// --- Estrutura de Permissões ---
-
-type Action = 'view' | 'create' | 'edit' | 'delete'
-type Module =
-  | 'clients'
-  | 'clients.info'
-  | 'clients.tickets'
-  | 'clients.structure'
-  | 'clients.sst'
-  | 'staffs'
-  | 'tickets'
-  | 'services'
-  | 'risks'
-  | 'health'
-  | 'health.queue'
-  | 'health.exams'
-  | 'health.reports'
-  | 'performance'
-  | 'processes'
-  | 'analytics'
-
-export type Permission = `${Action}:${Module}`
-
-interface SubModule {
-  id: Module
-  name: string
-}
-
-interface PermissionModule {
-  id: Module
-  name: string
-  subModules?: SubModule[]
-}
-
-export const permissionModules: PermissionModule[] = [
-  {
-    id: 'clients',
-    name: 'Clientes',
-    subModules: [
-      { id: 'clients.info', name: 'Informações Gerais' },
-      { id: 'clients.tickets', name: 'Chamados do Cliente' },
-      { id: 'clients.structure', name: 'Estrutura da Empresa' },
-      { id: 'clients.sst', name: 'Gestão de SST' },
-    ],
-  },
-  { id: 'staffs', name: 'Staffs' },
-  { id: 'tickets', name: 'Tickets (Geral)' },
-  { id: 'services', name: 'Serviços' },
-  { id: 'risks', name: 'Riscos' },
-  {
-    id: 'health',
-    name: 'Saúde',
-    subModules: [
-      { id: 'health.queue', name: 'Fila de Atendimento' },
-      { id: 'health.exams', name: 'Catálogo de Exames' },
-      { id: 'health.reports', name: 'Portal de Laudos' },
-    ],
-  },
-  { id: 'performance', name: 'Desempenho' },
-  { id: 'processes', name: 'Processos' },
-  { id: 'analytics', name: 'Analytics' },
-]
-
-export const permissionActions: { id: Action; name: string }[] = [
-  { id: 'view', name: 'Ver' },
-  { id: 'create', name: 'Criar' },
-  { id: 'edit', name: 'Editar' },
-  { id: 'delete', name: 'Excluir' },
-]
+import {
+  permissionModules,
+  permissionActions,
+  type Permission,
+  type Action,
+  type Module,
+  type PermissionModule,
+} from './data'
 
 // --- Fim da Estrutura de Permissões ---
 
@@ -187,7 +125,7 @@ export default function ProfilesPage() {
   )
   const { data: profiles, isLoading: areProfilesLoading } =
     useCollection<Profile>(profilesRef)
-    
+
   // Effect to add initial data if collection is empty
   useEffect(() => {
     if (firestore && !areProfilesLoading && profiles) {

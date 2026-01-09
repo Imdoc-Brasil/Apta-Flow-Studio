@@ -59,7 +59,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { sstPrograms } from '@/app/dashboard/(main)/services/page'
+import { sstPrograms } from '@/app/dashboard/(main)/services/data'
 import { useParams } from 'next/navigation'
 import {
   useFirestore,
@@ -204,11 +204,11 @@ export default function ProcessesPage() {
         typeof value === 'boolean' &&
         (field === 'isControlPoint' || field === 'isRiskSource')
       ) {
-        ;(step[field] as boolean | undefined) = value
+        ; (step[field] as boolean | undefined) = value
       } else if (typeof value === 'string') {
-        ;(
+        ; (
           step[
-            field as keyof Omit<ProcessStep, 'isControlPoint' | 'isRiskSource'>
+          field as keyof Omit<ProcessStep, 'isControlPoint' | 'isRiskSource'>
           ] as string | undefined
         ) = value
       }
@@ -253,7 +253,7 @@ export default function ProcessesPage() {
     setIsProcessDialogOpen(false)
     setEditingProcess(null)
   }
-  
+
   const handleDeleteProcess = (processId: string) => {
     if (!firestore) return;
     const docRef = doc(firestore, `clients/${contractId}/processes`, processId);
@@ -266,7 +266,7 @@ export default function ProcessesPage() {
     setEditingProcess(process)
     setFormSteps(process ? [...process.steps] : [])
     setFormObligations(process ? [...process.obligations] : [])
-    
+
     // Use timeout to set default values after dialog state is updated
     setTimeout(() => {
       const nameInput = document.querySelector('input[name="name"]') as HTMLInputElement;
@@ -409,7 +409,7 @@ export default function ProcessesPage() {
                   <LayoutGrid className='h-4 w-4' />
                 </Button>
               </div>
-                <Dialog open={isAssistantOpen} onOpenChange={setIsAssistantOpen}>
+              <Dialog open={isAssistantOpen} onOpenChange={setIsAssistantOpen}>
                 <DialogTrigger asChild>
                   <Button variant="outline">
                     <Sparkles className='mr-2 h-4 w-4' /> Assistente IA
@@ -447,7 +447,7 @@ export default function ProcessesPage() {
                       <Sparkles className="mr-2 h-4 w-4" />
                       Obter Sugestão
                     </Button>
-                     <Button onClick={useSuggestion} disabled={!assistantResult}>
+                    <Button onClick={useSuggestion} disabled={!assistantResult}>
                       Usar esta Sugestão
                     </Button>
                   </DialogFooter>

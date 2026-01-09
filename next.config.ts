@@ -2,12 +2,7 @@ import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   /* config options here */
-  typescript: {
-    ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // TypeScript e ESLint validation habilitados para garantir qualidade
   images: {
     remotePatterns: [
       {

@@ -89,6 +89,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   useTicketStore,
+  kanbanColumns,
   type Ticket,
   type TicketStatus,
   availableLabels,
@@ -136,13 +137,6 @@ const statusVariant = {
   Resolvido: 'outline',
   Fechado: 'outline',
 } as const
-
-export const kanbanColumns: TicketStatus[] = [
-  'Aberto',
-  'Em Progresso',
-  'Resolvido',
-  'Fechado',
-]
 
 function ClientSideDate({ dateString }: { dateString: string }) {
   const [formattedDate, setFormattedDate] = useState('')
@@ -241,7 +235,7 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
                   <Badge
                     variant={
                       priorityVariant[
-                        ticket.priority as keyof typeof priorityVariant
+                      ticket.priority as keyof typeof priorityVariant
                       ]
                     }
                   >
@@ -325,7 +319,7 @@ function AddAttachmentDialog({
     })
     setOpen(false)
     setFile(null)
-    ;(e.currentTarget as HTMLFormElement).reset()
+      ; (e.currentTarget as HTMLFormElement).reset()
   }
 
   return (
@@ -523,7 +517,7 @@ function AddChecklistItemForm({
       assignedTo && assignedTo !== 'unassigned' ? [assignedTo] : []
     )
     toast({ title: 'Tarefa adicionada!' })
-    ;(e.currentTarget as HTMLFormElement).reset()
+      ; (e.currentTarget as HTMLFormElement).reset()
     setShowForm(false)
   }
 
@@ -829,18 +823,17 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                             <div className='grid gap-1 text-sm flex-1'>
                               <label
                                 htmlFor={`item-${item.id}`}
-                                className={`font-medium ${
-                                  item.completed
+                                className={`font-medium ${item.completed
                                     ? 'line-through text-muted-foreground'
                                     : ''
-                                }`}
+                                  }`}
                               >
                                 {item.text}
                               </label>
                               <div className='text-xs text-muted-foreground flex items-center gap-2 flex-wrap'>
                                 {item.completed &&
-                                item.completedBy &&
-                                item.completedAt ? (
+                                  item.completedBy &&
+                                  item.completedAt ? (
                                   <span>
                                     Concluído por {item.completedBy}{' '}
                                     <TimeAgo dateString={item.completedAt} />
@@ -897,7 +890,7 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
               <Badge
                 variant={
                   priorityVariant[
-                    ticket.priority as keyof typeof priorityVariant
+                  ticket.priority as keyof typeof priorityVariant
                   ]
                 }
               >
@@ -1215,7 +1208,7 @@ export default function TicketsPage() {
     const subject = formData.get('subject') as string
     const clientName = formData.get('client') as string
     const relatedEmployeeId = formData.get('relatedEmployee') as string
-    
+
     // We need to fetch the employees for the selected client to find the name
     // This is a simplification; in a real app, you'd probably have this data more readily available
     const newTicketData: Omit<Ticket, 'id'> = {
@@ -1278,7 +1271,7 @@ export default function TicketsPage() {
       })
     }
   }
-  
+
   const isLoading = areTicketsLoading || areClientsLoading || areStaffsLoading
 
   return (
@@ -1433,7 +1426,7 @@ export default function TicketsPage() {
                         </SelectContent>
                       </Select>
                     </div>
-                     <div className='space-y-2'>
+                    <div className='space-y-2'>
                       <Label htmlFor='relatedEmployee'>
                         Colaborador Relacionado (Opcional)
                       </Label>
@@ -1491,8 +1484,8 @@ export default function TicketsPage() {
                                           checked
                                             ? [...prev, staff.email]
                                             : prev.filter(
-                                                (email) => email !== staff.email
-                                              )
+                                              (email) => email !== staff.email
+                                            )
                                         )
                                       }}
                                     />
@@ -1547,8 +1540,8 @@ export default function TicketsPage() {
                                           checked
                                             ? [...prev, label]
                                             : prev.filter(
-                                                (l) => l.id !== label.id
-                                              )
+                                              (l) => l.id !== label.id
+                                            )
                                         )
                                       }
                                     />
@@ -1659,7 +1652,7 @@ export default function TicketsPage() {
                                 <Badge
                                   variant={
                                     priorityVariant[
-                                      ticket.priority as keyof typeof priorityVariant
+                                    ticket.priority as keyof typeof priorityVariant
                                     ]
                                   }
                                 >
@@ -1670,7 +1663,7 @@ export default function TicketsPage() {
                                 <Badge
                                   variant={
                                     statusVariant[
-                                      ticket.status as keyof typeof statusVariant
+                                    ticket.status as keyof typeof statusVariant
                                     ]
                                   }
                                 >
@@ -1775,7 +1768,7 @@ export default function TicketsPage() {
                             <Badge
                               variant={
                                 priorityVariant[
-                                  activeTicket.priority as keyof typeof priorityVariant
+                                activeTicket.priority as keyof typeof priorityVariant
                                 ]
                               }
                             >
@@ -1796,4 +1789,3 @@ export default function TicketsPage() {
   )
 }
 
-    
