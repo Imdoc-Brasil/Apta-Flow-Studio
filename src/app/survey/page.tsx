@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, Suspense } from 'react'
 import {
   Card,
   CardContent,
@@ -33,14 +33,14 @@ import type { Sector } from '../dashboard/(main)/clients/[contractId]/sectors/da
 import type { Role } from '../dashboard/(main)/clients/[contractId]/roles/data'
 import { Loader2 } from 'lucide-react'
 
-export default function SurveyPage() {
+function SurveyContent() {
   const { toast } = useToast()
   const { addResponse } = useSurveyStore()
   const [step, setStep] = useState(1)
   const firestore = useFirestore()
   const searchParams = useSearchParams()
   const surveyId = searchParams.get('id'); // This is a placeholder, a real app would use this
-  
+
   // A real implementation would extract the clientId from the survey document
   // For now, we'll hardcode a known client for demo purposes if no surveyId is found
   const contractId = 'CTR-2024-001'
@@ -60,15 +60,15 @@ export default function SurveyPage() {
       const fetchAllSectors = async () => {
         const sectorsData: Sector[] = [];
         for (const unit of units) {
-            const sectorsColRef = collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`);
-            try {
-              const sectorsSnap = await getDocs(sectorsColRef);
-              sectorsSnap.forEach(doc => {
-                sectorsData.push({ id: doc.id, ...doc.data() } as Sector);
-              });
-            } catch(e) {
-              console.error(e);
-            }
+          const sectorsColRef = collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`);
+          try {
+            const sectorsSnap = await getDocs(sectorsColRef);
+            sectorsSnap.forEach(doc => {
+              sectorsData.push({ id: doc.id, ...doc.data() } as Sector);
+            });
+          } catch (e) {
+            console.error(e);
+          }
         }
         setAllSectors(sectorsData);
         setSectorsLoading(false);
@@ -367,5 +367,17 @@ export default function SurveyPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function SurveyPage() {
+  return (
+    <Suspense fallback={
+      <div className='flex min-h-screen flex-col items-center justify-center bg-muted/40 p-4'>
+        <Loader2 className='h-8 w-8 animate-spin' />
+      </div>
+    }>
+      <SurveyContent />
+    </Suspense>
   )
 }

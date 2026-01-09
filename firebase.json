@@ -1,33 +1,39 @@
 {
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "hosting": {
+    "public": "out",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
+  "emulators": {
+    "auth": {
+      "port": 9099
+    },
     "firestore": {
-        "rules": "firestore.rules",
-        "indexes": "firestore.indexes.json"
+      "port": 8080
     },
-    "hosting": {
-        "public": "out",
-        "ignore": [
-            "firebase.json",
-            "**/.*",
-            "**/node_modules/**"
-        ],
-        "rewrites": [
-            {
-                "source": "**",
-                "destination": "/index.html"
-            }
-        ]
+    "ui": {
+      "enabled": true,
+      "port": 4000
     },
-    "emulators": {
-        "auth": {
-            "port": 9099
-        },
-        "firestore": {
-            "port": 8080
-        },
-        "ui": {
-            "enabled": true,
-            "port": 4000
-        },
-        "singleProjectMode": true
+    "singleProjectMode": true,
+    "dataconnect": {
+      "dataDir": "dataconnect/.dataconnect/pgliteData"
     }
+  },
+  "dataconnect": {
+    "source": "dataconnect"
+  }
 }

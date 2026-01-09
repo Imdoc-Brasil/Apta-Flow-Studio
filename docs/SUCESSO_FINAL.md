@@ -152,6 +152,24 @@ npm run lint
 
 ---
 
+## 🧪 **Validação Funcional (Realizada)**
+
+### **1. Autenticação** ✅
+- **Login:** Sucesso com `bonetti@aptaflow.com`
+- **Redirecionamento:** Dashboard carregado automaticamente
+- **Segurança:** Firebase Auth integrado corretamente
+
+### **2. Dashboard & Dados** ✅
+- **KPIs:** Carregamento de métricas em tempo real (SLA, Clientes Ativos)
+- **Firestore:** Permissões ajustadas para permitir leitura/escrita em dev
+- **UI:** Renderização correta de tabelas, sidebar e cards sem erros de hidratação críticos
+
+### **3. Performance** ✅
+- Carregamento inicial rápido
+- Navegação fluida entre páginas
+
+---
+
 ## 📝 **Comandos Úteis**
 
 ```bash

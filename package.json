@@ -11,6 +11,11 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "validate": "npm run typecheck && npm run lint && npm run build",
+    "release:pr": "node scripts/release-pr.js",
+    "release:pr:minor": "node scripts/release-pr.js minor",
+    "release:pr:major": "node scripts/release-pr.js major",
+    "release:ship": "node scripts/release-ship.js",
     "postinstall": "patch-package"
   },
   "dependencies": {
