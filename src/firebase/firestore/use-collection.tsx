@@ -73,7 +73,14 @@ export function useCollection<T = any>(
     setIsLoading(true);
     setError(null);
 
-    // Directly use memoizedTargetRefOrQuery as it's assumed to be the final query
+    // This is the fix: check for null before calling onSnapshot
+    if (memoizedTargetRefOrQuery === null) {
+      setData(null);
+      setIsLoading(false);
+      return;
+    }
+
+
     const unsubscribe = onSnapshot(
       memoizedTargetRefOrQuery,
       (snapshot: QuerySnapshot<DocumentData>) => {

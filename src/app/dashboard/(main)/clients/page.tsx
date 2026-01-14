@@ -86,6 +86,7 @@ import {
 import { cn } from '@/lib/utils'
 import { Checkbox } from '@/components/ui/checkbox'
 import type { Staff } from '../employees/page'
+import axios from 'axios'
 
 export default function ClientsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -110,6 +111,10 @@ export default function ClientsPage() {
   const [cnpj, setCnpj] = useState('')
   const [isCnpjLoading, setIsCnpjLoading] = useState(false)
   const [cnpjError, setCnpjError] = useState<string | null>(null)
+  
+  const [name, setName] = useState('')
+  const [tradeName, setTradeName] = useState('')
+  const [address, setAddress] = useState('')
 
   const [cnae, setCnae] = useState('')
   const [riskLevel, setRiskLevel] = useState('')
@@ -176,11 +181,22 @@ export default function ClientsPage() {
     setSecondaryCnaes([])
     setCnpj('')
   }
+  
+  const clearCnpjData = () => {
+    setName('');
+    setTradeName('');
+    setAddress('');
+    setCnae('');
+    setRiskLevel('');
+    setSecondaryCnaes([]);
+  }
 
   const handleCnpjBlur = async () => {
     if (!cnpj || !firestore || !clientsRef) return
 
-    const cnpjRegex = /^(\d{2}\.?\d{3}\.?\d{3}\/\d{4}-?\d{2})$/
+    const cnpjRegex = /^\d{2}\.?\d{3}\.?\d{3}\/\d{4}-?\d{2}$/
+    const cleanCnpj = cnpj.replace(/[^\d]/g, '')
+    
     if (!cnpjRegex.test(cnpj)) {
       setCnpjError('Formato de CNPJ inválido.')
       return
@@ -189,14 +205,46 @@ export default function ClientsPage() {
     setIsCnpjLoading(true)
     setCnpjError(null)
 
-    const q = query(clientsRef, where('cnpj', '==', cnpj))
-    const querySnapshot = await getDocs(q)
+    try {
+        const q = query(clientsRef, where('cnpj', '==', cnpj))
+        const querySnapshot = await getDocs(q)
+        if (!querySnapshot.empty) {
+          throw new Error('Este CNPJ já está cadastrado.')
+        }
 
-    if (!querySnapshot.empty) {
-      setCnpjError('Este CNPJ já está cadastrado.')
+        const { data } = await axios.get(`https://brasilapi.com.br/api/cnpj/v1/${cleanCnpj}`);
+        
+        setName(data.razao_social || '');
+        setTradeName(data.nome_fantasia || '');
+        setAddress(`${data.logradouro}, ${data.numero} - ${data.bairro}, ${data.municipio} - ${data.uf}, CEP: ${data.cep}`);
+        
+        if (data.cnae_fiscal) {
+            const mainCnaeData = cnaeList.find(c => c.code === data.cnae_fiscal.toString());
+            if(mainCnaeData) {
+                handleCnaeSelect(mainCnaeData);
+            }
+        }
+
+        if (data.cnaes_secundarios && data.cnaes_secundarios.length > 0) {
+            const secondaryCnaesData = data.cnaes_secundarios
+                .map((c: any) => cnaeList.find(cnae => cnae.code === c.codigo.toString()))
+                .filter(Boolean);
+            setSecondaryCnaes(secondaryCnaesData);
+        }
+        
+    } catch(error: any) {
+        clearCnpjData();
+        if(error.message === 'Este CNPJ já está cadastrado.') {
+            setCnpjError(error.message);
+        } else if (axios.isAxiosError(error) && error.response?.status === 404) {
+            setCnpjError('CNPJ não encontrado na base de dados da Receita Federal.')
+        } else {
+            console.error(error);
+            setCnpjError('Erro ao buscar dados do CNPJ. Tente novamente.')
+        }
+    } finally {
+        setIsCnpjLoading(false)
     }
-
-    setIsCnpjLoading(false)
   }
 
   const handleCnaeSelect = (selectedCnae: CnaeData) => {
@@ -220,9 +268,6 @@ export default function ClientsPage() {
 
   const isLoading = isStaffLoading || areClientsLoading
 
-  // This is the core fix. We explicitly check for the loading state before attempting to filter.
-  // The filtering logic itself is moved inside the component body to avoid complex `useMemo` dependencies
-  // that can cause hydration mismatches.
   let clientsToDisplay: Client[] = []
   if (!isLoading && allClients && staffProfile) {
     if (staffProfile.perfilId === 'super_admin') {
@@ -280,7 +325,7 @@ export default function ClientsPage() {
                     <div className='grid gap-6 py-4'>
                       <div className='space-y-2'>
                         <Label htmlFor='cnpj'>CNPJ</Label>
-                        <div className='flex gap-2'>
+                        <div className='flex gap-2 items-center'>
                           <Input
                             id='cnpj'
                             name='cnpj'
@@ -290,6 +335,7 @@ export default function ClientsPage() {
                             onChange={(e) => {
                               setCnpj(e.target.value)
                               setCnpjError(null)
+                              clearCnpjData();
                             }}
                             onBlur={handleCnpjBlur}
                           />
@@ -297,6 +343,7 @@ export default function ClientsPage() {
                             type='button'
                             variant='secondary'
                             disabled={isCnpjLoading}
+                            onClick={handleCnpjBlur}
                           >
                             {isCnpjLoading ? (
                               <Loader2 className='h-4 w-4 animate-spin' />
@@ -314,21 +361,21 @@ export default function ClientsPage() {
 
                       <fieldset
                         className='grid gap-4'
-                        disabled={isCnpjLoading || !!cnpjError}
+                        disabled={isCnpjLoading}
                       >
                         <div className='grid grid-cols-2 gap-4'>
                           <div className='space-y-2'>
                             <Label htmlFor='name'>Nome Empresarial</Label>
-                            <Input id='name' name='name' required />
+                            <Input id='name' name='name' value={name} onChange={(e) => setName(e.target.value)} required />
                           </div>
                           <div className='space-y-2'>
                             <Label htmlFor='tradeName'>Nome Fantasia</Label>
-                            <Input id='tradeName' name='tradeName' />
+                            <Input id='tradeName' name='tradeName' value={tradeName} onChange={(e) => setTradeName(e.target.value)} />
                           </div>
                         </div>
                         <div className='space-y-2'>
                           <Label htmlFor='address'>Endereço</Label>
-                          <Textarea id='address' name='address' rows={2} />
+                          <Textarea id='address' name='address' rows={2} value={address} onChange={(e) => setAddress(e.target.value)} />
                         </div>
                         <div className='grid grid-cols-4 gap-4'>
                           <div className='space-y-2 col-span-3'>
