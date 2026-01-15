@@ -7,7 +7,7 @@ function getFirebaseConfig() {
   };
 
   // Correctly check for the custom staging environment
-  if (process.env.NODE_ENV === ('staging' as string)) {
+  if (process.env.NEXT_PUBLIC_APP_ENV === 'staging') {
     return {
       ...commonConfig,
       "apiKey": process.env.NEXT_PUBLIC_FIREBASE_API_KEY_STAGING,
