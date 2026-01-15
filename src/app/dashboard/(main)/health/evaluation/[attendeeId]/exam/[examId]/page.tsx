@@ -1,3 +1,4 @@
+
 'use client'
 
 import {
@@ -13,10 +14,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { ArrowLeft, FileUp, Loader2 } from 'lucide-react'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAttendeeStore } from '@/app/dashboard/(main)/health/queue/attendee-store'
 import Link from 'next/link'
+import Image from 'next/image'
 
 export default function PerformExamPage() {
   const params = useParams()
@@ -115,10 +117,12 @@ export default function PerformExamPage() {
             {filePreview && (
               <div className='border rounded-lg p-2 bg-muted/50 max-h-[60vh] overflow-auto'>
                 {file?.type.startsWith('image/') ? (
-                  <img
+                  <Image
                     src={filePreview}
                     alt='Pré-visualização do resultado'
-                    className='w-full h-auto rounded-md'
+                    width={800}
+                    height={600}
+                    className='w-full h-auto rounded-md object-contain'
                   />
                 ) : (
                   <iframe

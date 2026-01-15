@@ -36,8 +36,8 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
-import { useState, useEffect } from 'react'
-import { Logo } from './logo'
+import { useState, useEffect, useCallback } from 'react'
+import { Logo } from '@/components/logo'
 
 const mainNavItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Painel' },
@@ -88,14 +88,17 @@ const saudeSubNavItems = [
 export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
   const pathname = usePathname()
 
-  const getIsActive = (href: string) => {
-    // Exact match for the main dashboard page
-    if (href === '/dashboard') {
-      return pathname === href
-    }
-    // For other items, check if the path starts with the href.
-    return pathname.startsWith(href)
-  }
+  const getIsActive = useCallback(
+    (href: string) => {
+      // Exact match for the main dashboard page
+      if (href === '/dashboard') {
+        return pathname === href
+      }
+      // For other items, check if the path starts with the href.
+      return pathname.startsWith(href)
+    },
+    [pathname]
+  )
 
   const isSaudeActive = getIsActive('/dashboard/health')
   const [isSaudeOpen, setIsSaudeOpen] = useState(isSaudeActive)
@@ -111,7 +114,7 @@ export function DashboardNav({ isSheet = false }: { isSheet?: boolean }) {
     if (getIsActive('/dashboard/health/reports-portal'))
       setIsPortalLaudosOpen(true)
     // else setIsPortalLaudosOpen(false)
-  }, [pathname, isSaudeActive])
+  }, [pathname, isSaudeActive, getIsActive])
 
   return (
     <>

@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import {
   Card,
   CardContent,
@@ -41,7 +41,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { useToast } from '@/hooks/use-toast'
-import { type Process, type ProcessStep, type ProcessType } from './data'
+import { type Process, type ProcessStep, type ProcessType } from '@/app/dashboard/(main)/clients/[contractId]/processes/data'
 import {
   Select,
   SelectContent,
@@ -70,9 +70,9 @@ import {
   deleteDocumentNonBlocking
 } from '@/firebase'
 import { collection, doc, getDocs } from 'firebase/firestore'
-import type { Sector } from '../sectors/data'
-import type { Role } from '../roles/data'
-import type { Unit } from '../units/data'
+import type { Sector } from '@/app/dashboard/(main)/clients/[contractId]/sectors/data'
+import type { Role } from '@/app/dashboard/(main)/clients/[contractId]/roles/data'
+import type { Unit } from '@/app/dashboard/(main)/clients/[contractId]/units/data'
 import { suggestProcessTool, SuggestProcessToolOutput } from '@/app/actions'
 import {
   Table,
@@ -120,7 +120,7 @@ export default function ProcessesPage() {
   const [areSectorsLoading, setAreSectorsLoading] = useState(true)
 
   useEffect(() => {
-    if (unitsData && firestore) {
+    if (unitsData && firestore && !areUnitsLoading) {
       setAreSectorsLoading(true)
       const fetchSectors = async () => {
         const sectorsPromises = unitsData.map((unit) =>
@@ -158,19 +158,19 @@ export default function ProcessesPage() {
   const [assistantLoading, setAssistantLoading] = useState(false)
   const [assistantResult, setAssistantResult] = useState<SuggestProcessToolOutput | null>(null)
 
-  const getSectorNameForProcess = (process: Process) => {
+  const getSectorNameForProcess = useCallback((process: Process) => {
     const firstStep = process.steps[0]
     if (firstStep && firstStep.sectorId) {
       const sector = allSectors.find((s) => s.id === firstStep.sectorId)
       return sector?.name || 'Setor não definido'
     }
     return 'Setor não definido'
-  }
+  }, [allSectors])
 
   const uniqueSectors = useMemo(() => {
     if (!processes || !allSectors) return []
     const sectorIds = new Set(
-      processes.flatMap((p) => p.steps.map((s) => s.sectorId))
+      processes.flatMap((p) => p.steps.map((s: ProcessStep) => s.sectorId))
     )
     return allSectors.filter((s) => sectorIds.has(s.id)).map((s) => s.name)
   }, [processes, allSectors])
@@ -808,7 +808,7 @@ export default function ProcessesPage() {
                               />
                               <Label
                                 htmlFor={`control-point-${index}`}
-                                className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
+                                className='text-sm font-medium leading-none'
                               >
                                 Este é um Ponto de Controle Crítico
                               </Label>
@@ -828,7 +828,7 @@ export default function ProcessesPage() {
                               />
                               <Label
                                 htmlFor={`risk-source-${index}`}
-                                className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
+                                className='text-sm font-medium leading-none'
                               >
                                 Esta etapa é fonte geradora de risco?
                               </Label>

@@ -1,7 +1,6 @@
 
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
 import {
   Card,
   CardContent,
@@ -15,6 +14,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { ArrowLeft, FileUp, Loader2 } from 'lucide-react'
+import { useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useAttendeeStore } from '@/app/dashboard/(main)/health/queue/attendee-store'
 import Link from 'next/link'

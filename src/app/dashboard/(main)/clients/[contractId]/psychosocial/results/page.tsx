@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button'
 import { ArrowLeft, BrainCircuit, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
+import Image from 'next/image'
 import {
   BarChart,
   Bar,
@@ -25,19 +26,20 @@ import {
   LabelList,
 } from 'recharts'
 import {
+  ChartConfig,
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  ChartConfig,
 } from '@/components/ui/chart'
 import { Separator } from '@/components/ui/separator'
 import {
   psychosocialSurveyData,
   type PsychosocialSurvey,
   type PsychosocialStressorGroup,
-} from '../data'
+  type PsychosocialQuestion,
+} from '@/app/dashboard/(main)/clients/[contractId]/psychosocial/data'
 import { Logo } from '@/components/logo'
-import { useSurveyStore } from '../psychosocial-store'
+import { useSurveyStore } from '@/app/dashboard/(main)/clients/[contractId]/psychosocial/psychosocial-store'
 import { useMemo } from 'react'
 import { cn } from '@/lib/utils'
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase'
@@ -66,7 +68,7 @@ const calculateScoresFromResponses = (
     domains.forEach((domain) => {
       let domainTotal = 0
       let questionCount = 0
-      domain.questions.forEach((question) => {
+      domain.questions.forEach((question: PsychosocialQuestion) => {
         const responseKey = `${question.id}-${respondentId}`
         if (responses[responseKey] !== undefined) {
           domainTotal += responses[responseKey]
@@ -116,7 +118,7 @@ const calculateQuestionDetailsFromResponses = (
     let domainTotalMean = 0
     let questionCountInDomain = 0
 
-    const questionDetails = domain.questions.map((question) => {
+    const questionDetails = domain.questions.map((question: PsychosocialQuestion) => {
       // Find all responses for this question across all respondents
       const questionResponses = Object.entries(responses)
         .filter(([key]) => key.startsWith(question.id))
@@ -386,17 +388,17 @@ export default function PsychosocialResultsPage() {
               categorias: respostas favoráveis, neutras e desfavoráveis,
               apresentadas como porcentagens de respondentes. A categoria neutra
               contém respostas que pontuaram 3, onde as opções de resposta eram
-              'às vezes' ou 'neutro'. As categorias favorável e desfavorável
+              &apos;às vezes&apos; ou &apos;neutro&apos;. As categorias favorável e desfavorável
               combinam as duas respostas em ambos os lados da escala. Por
-              exemplo, para o item 'Eu posso decidir quando fazer uma pausa', as
-              respostas 'Frequentemente' e 'Sempre' são combinadas para produzir
+              exemplo, para o item &apos;Eu posso decidir quando fazer uma pausa&apos;, as
+              respostas &apos;Frequentemente&apos; e &apos;Sempre&apos; são combinadas para produzir
               a porcentagem de respondentes que deram uma resposta favorável,
-              enquanto as respostas 'Nunca' e 'Raramente' são combinadas para
+              enquanto as respostas &apos;Nunca&apos; e &apos;Raramente&apos; são combinadas para
               produzir a porcentagem de respondentes que deram uma resposta
               desfavorável. No entanto, para as pontuações de Relacionamentos,
               estas são apresentadas como categorias de resposta em vez de
               favorável/desfavorável. Isso ocorre porque, se os respondentes
-              responderem "às vezes" às perguntas neste domínio, isso pode
+              responderem &quot;às vezes&quot; às perguntas neste domínio, isso pode
               indicar a presença de bullying ou assédio, e qualquer relato de
               tais comportamentos deve ser considerado sério pela organização.
             </p>

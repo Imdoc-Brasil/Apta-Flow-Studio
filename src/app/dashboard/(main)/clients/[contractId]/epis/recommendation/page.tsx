@@ -1,7 +1,7 @@
 
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import {
   Card,
   CardContent,
@@ -31,12 +31,12 @@ import { collection, doc, getDocs } from 'firebase/firestore'
 import { useParams } from 'next/navigation'
 import type { Epi } from '@/app/dashboard/(main)/risks/page'
 import type { Hazard } from '@/app/dashboard/(main)/risks/page'
-import type { Employee } from '../../employees/data'
-import type { Role } from '../../roles/data'
-import type { Sector } from '../../sectors/data'
-import type { Unit } from '../../units/data'
-import type { GHE } from '../../ghe/data'
-import type { Environment } from '../../environments/data'
+import type { Employee } from '@/app/dashboard/(main)/clients/[contractId]/employees/data'
+import type { Role } from '@/app/dashboard/(main)/clients/[contractId]/roles/data'
+import type { Sector } from '@/app/dashboard/(main)/clients/[contractId]/sectors/data'
+import type { Unit } from '@/app/dashboard/(main)/clients/[contractId]/units/data'
+import type { GHE } from '@/app/dashboard/(main)/clients/[contractId]/ghe/data'
+import type { Environment } from '@/app/dashboard/(main)/clients/[contractId]/environments/data'
 
 type AssociationType =
   | 'risk'
@@ -116,8 +116,7 @@ export default function RecommendationMatrixPage() {
   const [environments, setEnvironments] = useState<Environment[]>([])
   const [isLoadingSub, setIsLoadingSub] = useState(true);
 
-
-  const getHazardById = (id: string) => hazardData?.find((h) => h.id === id)
+  const getHazardById = useCallback((id: string) => hazardData?.find((h) => h.id === id), [hazardData]);
 
   const [selectedUnit, setSelectedUnit] = useState('')
   const [selectedEpi, setSelectedEpi] = useState('')
@@ -139,7 +138,7 @@ export default function RecommendationMatrixPage() {
     return uniqueRiskIds
       .map((id) => getHazardById(id))
       .filter((h): h is Hazard => h !== undefined)
-  }, [inventory, selectedUnit, hazardData])
+  }, [inventory, selectedUnit, getHazardById])
   
    useEffect(() => {
     if (selectedUnit && firestore) {

@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState, useCallback } from 'react'
@@ -16,6 +17,7 @@ import { useToast } from '@/hooks/use-toast'
 import { analyzeEcg, AnalyzeEcgOutput } from '@/ai/flows/analyze-ecg-flow'
 import { UploadCloud, Bot, Loader2 } from 'lucide-react'
 import { Textarea } from '@/components/ui/textarea'
+import Image from 'next/image'
 
 export default function EcgAnalysisPage() {
   const { toast } = useToast()
@@ -106,10 +108,12 @@ export default function EcgAnalysisPage() {
               {filePreview && (
                 <div className='border rounded-lg p-2 bg-muted/50 max-h-96 overflow-auto'>
                   {file?.type.startsWith('image/') ? (
-                    <img
+                    <Image
                       src={filePreview}
                       alt='Pré-visualização do ECG'
-                      className='w-full h-auto rounded-md'
+                      width={800}
+                      height={600}
+                      className='w-full h-auto rounded-md object-contain'
                     />
                   ) : (
                     <iframe
@@ -159,7 +163,7 @@ export default function EcgAnalysisPage() {
               <div className='flex flex-col items-center justify-center h-full text-muted-foreground'>
                 <UploadCloud className='h-12 w-12 mb-4' />
                 <p className='text-center'>
-                  Carregue um exame e clique em "Analisar" para ver o laudo
+                  Carregue um exame e clique em &quot;Analisar&quot; para ver o laudo
                   preliminar aqui.
                 </p>
               </div>
