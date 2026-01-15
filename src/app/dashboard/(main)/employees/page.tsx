@@ -97,7 +97,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
-import type { Client } from '../clients/data'
+import type { Client } from '@/app/dashboard/(main)/clients/data'
 import {
   Popover,
   PopoverContent,

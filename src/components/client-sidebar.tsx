@@ -35,7 +35,7 @@ import {
 } from '@/components/ui/collapsible'
 import { cn } from '@/lib/utils'
 import { useState, useEffect } from 'react'
-import { Button } from './ui/button'
+import { Button } from '@/components/ui/button'
 
 export function ClientSidebar() {
   const pathname = usePathname()
@@ -90,11 +90,6 @@ export function ClientSidebar() {
       href: `${basePath}/trainings`,
       label: 'Gestão de Treinamentos',
       icon: GraduationCap,
-    },
-     {
-      href: `${basePath}/psychosocial`,
-      label: 'Riscos Psicossociais',
-      icon: Smile,
     },
      { href: `${basePath}/docs-sst`, label: 'Documentos de SST', icon: FileText },
   ]

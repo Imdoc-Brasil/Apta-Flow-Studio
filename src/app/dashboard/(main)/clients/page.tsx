@@ -49,7 +49,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import Link from 'next/link'
-import { type Client } from './data'
+import { type Client } from '@/app/dashboard/(main)/clients/data'
 import {
   useFirestore,
   useCollection,
@@ -85,7 +85,7 @@ import {
 } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { Checkbox } from '@/components/ui/checkbox'
-import type { Staff } from '../employees/page'
+import type { Staff } from '@/app/dashboard/(main)/employees/page'
 import axios from 'axios'
 
 export default function ClientsPage() {

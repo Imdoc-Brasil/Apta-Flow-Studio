@@ -1,4 +1,3 @@
-
 // Function to get Firebase config based on environment
 function getFirebaseConfig() {
   const commonConfig = {

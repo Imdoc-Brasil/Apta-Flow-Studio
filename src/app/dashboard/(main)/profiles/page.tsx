@@ -55,7 +55,7 @@ import {
   setDocumentNonBlocking,
 } from '@/firebase'
 import { collection, doc } from 'firebase/firestore'
-import type { Staff } from '../employees/page'
+import type { Staff } from '@/app/dashboard/(main)/employees/page'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useToast } from '@/hooks/use-toast'
