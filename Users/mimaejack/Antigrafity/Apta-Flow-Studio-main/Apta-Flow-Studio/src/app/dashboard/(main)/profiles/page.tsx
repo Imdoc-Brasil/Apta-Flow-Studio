@@ -72,6 +72,7 @@ import {
   type Action,
   type Module,
   type PermissionModule,
+  type SubModule
 } from '@/app/dashboard/(main)/profiles/data'
 
 // --- Fim da Estrutura de Permissões ---
@@ -268,7 +269,7 @@ export default function ProfilesPage() {
 
       // Ação em cascata para submódulos
       if (mainModule && mainModule.subModules) {
-        mainModule.subModules.forEach((subModule: {id: Module, name: string}) => {
+        mainModule.subModules.forEach((subModule: SubModule) => {
           const subPermission = `${action}:${subModule.id}` as Permission
           if (checked) {
             newSet.add(subPermission)
@@ -560,7 +561,7 @@ export default function ProfilesPage() {
                     <AccordionContent>
                       <div className='pl-12 py-2 space-y-2 border-l ml-6'>
                         {module.subModules ? (
-                          module.subModules.map((subModule: {id: Module, name: string}) => (
+                          module.subModules.map((subModule: SubModule) => (
                             <div
                               key={subModule.id}
                               className='flex items-center pr-4'

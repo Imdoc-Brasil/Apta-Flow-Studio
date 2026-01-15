@@ -158,6 +158,7 @@ const MultipleSelect = React.forwardRef<
     return (
        <div className="relative">
          <select multiple className="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+            {/* @ts-ignore */}
             {props.children}
          </select>
          {/* @ts-ignore */}

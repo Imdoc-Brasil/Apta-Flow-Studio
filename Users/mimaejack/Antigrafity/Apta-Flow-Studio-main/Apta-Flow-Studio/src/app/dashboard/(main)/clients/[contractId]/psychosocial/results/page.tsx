@@ -36,6 +36,7 @@ import {
   psychosocialSurveyData,
   type PsychosocialSurvey,
   type PsychosocialStressorGroup,
+  PsychosocialQuestion,
 } from '@/app/dashboard/(main)/clients/[contractId]/psychosocial/data'
 import { Logo } from '@/components/logo'
 import { useSurveyStore } from '@/app/dashboard/(main)/clients/[contractId]/psychosocial/psychosocial-store'
@@ -67,7 +68,7 @@ const calculateScoresFromResponses = (
     domains.forEach((domain) => {
       let domainTotal = 0
       let questionCount = 0
-      domain.questions.forEach((question: any) => {
+      domain.questions.forEach((question: PsychosocialQuestion) => {
         const responseKey = `${question.id}-${respondentId}`
         if (responses[responseKey] !== undefined) {
           domainTotal += responses[responseKey]
@@ -117,7 +118,7 @@ const calculateQuestionDetailsFromResponses = (
     let domainTotalMean = 0
     let questionCountInDomain = 0
 
-    const questionDetails = domain.questions.map((question: any) => {
+    const questionDetails = domain.questions.map((question: PsychosocialQuestion) => {
       // Find all responses for this question across all respondents
       const questionResponses = Object.entries(responses)
         .filter(([key]) => key.startsWith(question.id))
