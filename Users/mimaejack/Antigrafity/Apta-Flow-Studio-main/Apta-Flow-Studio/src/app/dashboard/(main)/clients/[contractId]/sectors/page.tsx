@@ -388,7 +388,7 @@ export default function SectorsPage() {
                             href={`/dashboard/clients/${contractId}/roles?sectorId=${sector.id}`}
                             onClick={(e) => e.stopPropagation()}
                           >
-                            Ver Cargos <ArrowRight className='ml-2 h-4 w-4' />
+                            Cargos <ArrowRight className='ml-2 h-4 w-4' />
                           </Link>
                         </Button>
                         <Button
