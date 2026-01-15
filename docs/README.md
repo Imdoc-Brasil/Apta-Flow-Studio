@@ -1,92 +1,53 @@
 # 📚 Documentação - AptaFlow Studio
 
-Toda a documentação técnica do projeto está organizada aqui.
+Toda a documentação técnica e de processo do projeto está organizada aqui.
 
 ---
 
-## 🚨 Correções Urgentes
+## 🚀 Documentos Principais
 
-**Comece por aqui se o build está falhando:**
+**Comece por aqui para entender o projeto e os processos.**
 
-### **[CORRECOES_URGENTES.md](./CORRECOES_URGENTES.md)** ⚡
-Guia rápido com 3 correções essenciais (30 minutos)
+### **[STATUS_ATUAL.md](./STATUS_ATUAL.md)** 🎯
+- **O que é:** O documento mais importante. Descreve o estado atual do projeto, o que foi feito, e quais são os próximos passos recomendados.
+- **Quando usar:** Para ter uma visão rápida e atualizada do projeto.
 
----
+### **[deploy-policy.md](./deploy-policy.md)** 📜
+- **O que é:** A política oficial e definitiva de deploy. Define quem faz o quê e como os deploys devem ser tratados.
+- **Quando usar:** **Leitura obrigatória** antes de qualquer deploy.
 
-## 📖 Guias Técnicos
-
-### **[GUIA_CORRECAO.md](./GUIA_CORRECAO.md)** 🔧
-Guia completo e detalhado de correções
-- Solução validada baseada no projeto real
-- Explicações técnicas
-- FAQs e troubleshooting
-
-### **[ANALISE_TECNICA.md](./ANALISE_TECNICA.md)** 📊
-Análise técnica completa do projeto
-- Validação de problemas identificados
-- Comparação com análise externa
-- Decisões arquiteturais
+### **[workflow-solo.md](./workflow-solo.md)** 🔄
+- **O que é:** O fluxo de trabalho recomendado para desenvolvimento solo, alternando entre os ambientes de forma segura.
+- **Quando usar:** Como um guia para o dia a dia de desenvolvimento e commits.
 
 ---
 
-## 🗂️ Outros Documentos
+## 🔍 Análise e Referência
 
-### **[backend.json](./backend.json)**
-Schema completo das entidades do sistema
-- Definições de todas as entidades
-- Relacionamentos
-- Validações
+### **[ANALISE_TECNICA.md](./docs/archive/ANALISE_TECNICA.md)** 📊
+- **O que é:** Análise técnica completa e validada dos problemas iniciais do projeto.
+- **Quando usar:** Para entender o contexto histórico das correções arquiteturais que foram feitas.
+
+### **[backend.json](./backend.json)** 🗄️
+- **O que é:** O schema completo de todas as entidades de dados do sistema.
+- **Quando usar:** Como referência para entender o modelo de dados do Firestore.
+
+---
+
+## 🗂️ Arquivo Morto
 
 ### **[archive/](./archive/)**
-Documentos históricos e análises anteriores
-- Guias obsoletos (referência)
-- Análises externas
-- Histórico de decisões
+- **O que é:** Documentos históricos, análises e guias de correção que já não são mais relevantes, mas são mantidos para registro.
+- **Quando usar:** Apenas para consulta histórica, se necessário.
 
 ---
 
-## 🚀 Fluxo de Trabalho Recomendado
+## 📈 Releases
 
-### Para Novos Desenvolvedores
-1. Ler **[../README.md](../README.md)** - Visão geral do projeto
-2. Seguir **[../.agent/workflows/setup-complete.md](../.agent/workflows/setup-complete.md)** - Setup
-3. Ler **[CORRECOES_URGENTES.md](./CORRECOES_URGENTES.md)** - Correções necessárias
-
-### Para Correção de Problemas
-1. **[CORRECOES_URGENTES.md](./CORRECOES_URGENTES.md)** (30 min)
-2. **[GUIA_CORRECAO.md](./GUIA_CORRECAO.md)** (detalhes)
-3. **[ANALISE_TECNICA.md](./ANALISE_TECNICA.md)** (contexto)
-
-### Para Planejamento
-1. **[ANALISE_TECNICA.md](./ANALISE_TECNICA.md)** - Problemas e soluções
-2. **[backend.json](./backend.json)** - Modelo de dados
-3. **[../README.md](../README.md)** - Arquitetura geral
+### **[releases/](./releases/)**
+- **O que é:** Um diretório contendo as notas de cada release, seguindo um template padrão.
+- **Quando usar:** Para rastrear o que foi alterado em cada versão implantada.
 
 ---
 
-## 📊 Status dos Documentos
-
-| Documento | Status | Última Atualização |
-|-----------|--------|-------------------|
-| CORRECOES_URGENTES.md | ✅ Atual | 2026-01-08 |
-| GUIA_CORRECAO.md | ✅ Atual | 2026-01-08 |
-| ANALISE_TECNICA.md | ✅ Atual | 2026-01-08 |
-| backend.json | ✅ Atual | - |
-
----
-
-## 🔄 Manutenção
-
-Esta documentação deve ser atualizada sempre que:
-- Novos problemas forem identificados
-- Soluções forem implementadas
-- Arquitetura for modificada
-- Decisões técnicas importantes forem tomadas
-
-**Responsável:** Equipe de Desenvolvimento  
-**Frequência:** Conforme necessário
-
----
-
-**Última atualização:** 2026-01-08  
-**Desenvolvido com ❤️ usando Antigravity**
+**Última atualização:** 2026-01-15

@@ -2,7 +2,7 @@
 
 **Plataforma tudo-em-um para gerenciar clientes, funcionários e processos com insights alimentados por IA para máxima eficiência.**
 
-[![Next.js](https://img.shields.io/badge/Next.js-15.3.3-black)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-15.5.9-black)](https://nextjs.org/)
 [![Firebase](https://img.shields.io/badge/Firebase-11.9.1-orange)](https://firebase.google.com/)
 [![Genkit](https://img.shields.io/badge/Genkit-1.20.0-blue)](https://firebase.google.com/docs/genkit)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)](https://www.typescriptlang.org/)
@@ -19,7 +19,7 @@
 
 ## 🛠️ Stack Tecnológica
 
-- **Framework:** Next.js 15.3.3 com Turbopack
+- **Framework:** Next.js 15.5.9 com Turbopack
 - **Backend:** Firebase (Firestore + Auth)
 - **IA:** Google Genkit com Gemini 2.5 Flash
 - **UI:** Radix UI + Tailwind CSS
@@ -55,15 +55,13 @@ npm run dev
 
 O aplicativo estará disponível em `http://localhost:9002`
 
-## 🚨 Correções Urgentes
+## 📖 Documentação e Status
 
-**⚠️ IMPORTANTE:** Antes de fazer o build, corrija os erros de TypeScript:
+Para entender o estado atual do projeto, as políticas e os próximos passos, consulte nossa documentação centralizada:
 
-👉 **[docs/CORRECOES_URGENTES.md](./docs/CORRECOES_URGENTES.md)** - 3 correções simples (30 min)
-
-Ou veja o guia completo:
-- **[docs/GUIA_CORRECAO.md](./docs/GUIA_CORRECAO.md)** - Guia detalhado
-- **[docs/ANALISE_TECNICA.md](./docs/ANALISE_TECNICA.md)** - Análise técnica
+- **[docs/README.md](./docs/README.md)** - Índice da Documentação
+- **[docs/STATUS_ATUAL.md](./docs/STATUS_ATUAL.md)** - Relatório de Status e Próximos Passos
+- **[docs/deploy-policy.md](./docs/deploy-policy.md)** - Política Oficial de Deploy
 
 ## 📋 Scripts Disponíveis
 
@@ -80,6 +78,8 @@ npm start                # Inicia servidor de produção
 # Qualidade de Código
 npm run lint             # Executa ESLint
 npm run typecheck        # Verifica tipos TypeScript
+npm run validate         # Roda typecheck e lint
+npm run validate:build   # Roda validação completa com build
 
 # Firebase
 firebase emulators:start              # Inicia emuladores locais
@@ -182,18 +182,6 @@ firebase deploy
 - App Hosting: `https://studio--studio-9804515494-e1a53.us-central1.hosted.app`
 - Firebase Hosting: `https://studio-9804515494-e1a53.web.app`
 
-## 🧪 Desenvolvimento Local com Emuladores
-
-```bash
-# Inicie os emuladores Firebase
-firebase emulators:start
-
-# Os emuladores estarão disponíveis em:
-# - Auth: http://localhost:9099
-# - Firestore: http://localhost:8080
-# - UI: http://localhost:4000
-```
-
 ## 📝 Configuração de Variáveis de Ambiente
 
 Crie um arquivo `.env.local` na raiz do projeto:
@@ -217,18 +205,6 @@ GOOGLE_GENAI_API_KEY=your_api_key_here
 ## 📄 Licença
 
 Este projeto é privado e proprietário.
-
-## 🆘 Suporte
-
-Para documentação completa da configuração, veja:
-- [Setup Completo](./.agent/workflows/setup-complete.md)
-
-Para mais informações sobre as tecnologias utilizadas:
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Firebase Documentation](https://firebase.google.com/docs)
-- [Genkit Documentation](https://firebase.google.com/docs/genkit)
-- [Radix UI](https://www.radix-ui.com/)
-- [Tailwind CSS](https://tailwindcss.com/)
 
 ---
 
