@@ -10,7 +10,21 @@ import type {
   ChecklistItem,
   TextElement,
   Attachment,
+  Label,
 } from './data'
+import { availableLabels, kanbanColumns } from './data'
+
+// Re-export types and constants for backward compatibility
+export type {
+  Ticket,
+  TicketStatus,
+  Checklist,
+  ChecklistItem,
+  TextElement,
+  Attachment,
+  Label,
+}
+export { availableLabels, kanbanColumns }
 
 type NewTicketData = Omit<
   Ticket,

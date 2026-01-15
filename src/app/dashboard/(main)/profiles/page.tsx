@@ -70,6 +70,7 @@ import {
   permissionActions,
   type Permission,
   type Action,
+  type Module,
   type PermissionModule,
   type SubModule,
 } from './data'
@@ -136,7 +137,7 @@ export default function ProfilesPage() {
           createdBy: 'sistema',
           createdAt: new Date().toISOString(),
           permissions: permissionModules.flatMap((m: PermissionModule) =>
-            permissionActions.map((a: {id: Action, name: string}) => `${a.id}:${m.id}`)
+            permissionActions.map((a: { id: Action, name: string }) => `${a.id}:${m.id}`)
           ) as Permission[],
         };
         const profileDocRef = doc(firestore, 'profiles', superAdminProfile.id);
@@ -518,7 +519,7 @@ export default function ProfilesPage() {
             <div className='sticky top-0 bg-background/95 p-2 flex items-center border-b z-10'>
               <div className='flex-1 font-semibold pl-4'>Módulo</div>
               <div className='grid grid-cols-4 gap-4 w-[300px] text-center text-xs font-semibold text-muted-foreground'>
-                {permissionActions.map((action: {id: Action, name: string}) => (
+                {permissionActions.map((action: { id: Action, name: string }) => (
                   <div key={action.id} className='flex justify-center'>
                     {action.name}
                   </div>
@@ -535,7 +536,7 @@ export default function ProfilesPage() {
                         <div className='py-3'>{module.name}</div>
                       </AccordionTrigger>
                       <div className='grid grid-cols-4 gap-4 w-[300px]'>
-                        {permissionActions.map((action: {id: Action, name: string}) => (
+                        {permissionActions.map((action: { id: Action, name: string }) => (
                           <div
                             key={`${module.id}-${action.id}`}
                             className='flex justify-center'
@@ -569,7 +570,7 @@ export default function ProfilesPage() {
                                 </Label>
                               </div>
                               <div className='grid grid-cols-4 gap-4 w-[300px]'>
-                                {permissionActions.map((action: {id: Action, name: string}) => (
+                                {permissionActions.map((action: { id: Action, name: string }) => (
                                   <div
                                     key={`${subModule.id}-${action.id}`}
                                     className='flex justify-center'
