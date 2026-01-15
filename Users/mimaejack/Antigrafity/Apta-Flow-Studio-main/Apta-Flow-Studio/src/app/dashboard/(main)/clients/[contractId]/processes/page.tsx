@@ -41,7 +41,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { useToast } from '@/hooks/use-toast'
-import { type Process, type ProcessStep, type ProcessType } from './data'
+import { type Process, type ProcessStep, type ProcessType } from '@/app/dashboard/(main)/clients/[contractId]/processes/data'
 import {
   Select,
   SelectContent,
@@ -70,9 +70,9 @@ import {
   deleteDocumentNonBlocking
 } from '@/firebase'
 import { collection, doc, getDocs } from 'firebase/firestore'
-import type { Sector } from '../sectors/data'
-import type { Role } from '../roles/data'
-import type { Unit } from '../units/data'
+import type { Sector } from '@/app/dashboard/(main)/clients/[contractId]/sectors/data'
+import type { Role } from '@/app/dashboard/(main)/clients/[contractId]/roles/data'
+import type { Unit } from '@/app/dashboard/(main)/clients/[contractId]/units/data'
 import { suggestProcessTool, SuggestProcessToolOutput } from '@/app/actions'
 import {
   Table,
@@ -170,7 +170,7 @@ export default function ProcessesPage() {
   const uniqueSectors = useMemo(() => {
     if (!processes || !allSectors) return []
     const sectorIds = new Set(
-      processes.flatMap((p) => p.steps.map((s) => s.sectorId))
+      processes.flatMap((p) => p.steps.map((s: ProcessStep) => s.sectorId))
     )
     return allSectors.filter((s) => sectorIds.has(s.id)).map((s) => s.name)
   }, [processes, allSectors])

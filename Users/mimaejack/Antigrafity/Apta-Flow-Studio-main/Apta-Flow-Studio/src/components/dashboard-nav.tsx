@@ -37,7 +37,7 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible'
 import { useState, useEffect, useCallback } from 'react'
-import { Logo } from './logo'
+import { Logo } from '@/components/logo'
 
 const mainNavItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Painel' },

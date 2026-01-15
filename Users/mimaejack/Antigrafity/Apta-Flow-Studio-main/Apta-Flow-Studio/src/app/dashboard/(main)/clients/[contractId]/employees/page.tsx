@@ -72,7 +72,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { Employee, EmployeeStatus } from './data'
+import type { Employee, EmployeeStatus } from '@/app/dashboard/(main)/clients/[contractId]/employees/data'
 import { Separator } from '@/components/ui/separator'
 import { useRouter } from 'next/navigation'
 import { useParams } from 'next/navigation'
@@ -87,9 +87,9 @@ import {
 } from '@/firebase'
 import { collection, doc, getDocs } from 'firebase/firestore'
 import type { Staff } from '@/app/dashboard/(main)/employees/page'
-import type { Role } from '../roles/data'
-import type { Sector } from '../sectors/data'
-import type { Unit } from '../units/data'
+import type { Role } from '@/app/dashboard/(main)/clients/[contractId]/roles/data'
+import type { Sector } from '@/app/dashboard/(main)/clients/[contractId]/sectors/data'
+import type { Unit } from '@/app/dashboard/(main)/clients/[contractId]/units/data'
 import { ClientSideDateFormatter } from '@/components/client-side-date-formatter'
 
 export default function EmployeesPage() {
@@ -303,7 +303,7 @@ export default function EmployeesPage() {
 
     const fallback = employee.name
       .split(' ')
-      .map((n) => n[0])
+      .map((n: string) => n[0])
       .join('')
       .substring(0, 2)
       .toUpperCase()
@@ -679,7 +679,7 @@ export default function EmployeesPage() {
                           <AvatarFallback>
                             {employee.name
                               .split(' ')
-                              .map((n) => n[0])
+                              .map((n: string) => n[0])
                               .join('')}
                           </AvatarFallback>
                         </Avatar>
@@ -734,7 +734,7 @@ export default function EmployeesPage() {
                           <AvatarFallback>
                             {employee.name
                               .split(' ')
-                              .map((n) => n[0])
+                              .map((n: string) => n[0])
                               .join('')}
                           </AvatarFallback>
                         </Avatar>

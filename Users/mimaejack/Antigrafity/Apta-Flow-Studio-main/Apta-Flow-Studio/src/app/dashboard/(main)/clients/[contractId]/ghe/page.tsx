@@ -50,10 +50,10 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { type GHE } from './data'
-import type { Unit } from '../units/data'
-import type { Role } from '../roles/data'
-import type { Sector } from '../sectors/data'
+import { type GHE } from '@/app/dashboard/(main)/clients/[contractId]/ghe/data'
+import type { Unit } from '@/app/dashboard/(main)/clients/[contractId]/units/data'
+import type { Role } from '@/app/dashboard/(main)/clients/[contractId]/roles/data'
+import type { Sector } from '@/app/dashboard/(main)/clients/[contractId]/sectors/data'
 import {
   Select,
   SelectContent,
@@ -617,7 +617,7 @@ export default function GhePage() {
               <div>
                 <h4 className='font-semibold text-sm'>Cargos Incluídos</h4>
                 <div className='flex flex-wrap gap-2 mt-2'>
-                  {selectedGhe.roleIds.map((roleId) => {
+                  {selectedGhe.roleIds.map((roleId: string) => {
                     const role = rolesWithSectors.find((r) => r.id === roleId)
                     if (!role) return null
                     return (

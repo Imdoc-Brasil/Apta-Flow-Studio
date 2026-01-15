@@ -55,7 +55,7 @@ import {
   setDocumentNonBlocking,
 } from '@/firebase'
 import { collection, doc } from 'firebase/firestore'
-import type { Staff } from '../employees/page'
+import type { Staff } from '@/app/dashboard/(main)/employees/page'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useToast } from '@/hooks/use-toast'
@@ -72,7 +72,7 @@ import {
   type Action,
   type Module,
   type PermissionModule,
-} from './data'
+} from '@/app/dashboard/(main)/profiles/data'
 
 // --- Fim da Estrutura de Permissões ---
 
@@ -137,8 +137,8 @@ export default function ProfilesPage() {
           code: 'SADM',
           createdBy: 'sistema',
           createdAt: new Date().toISOString(),
-          permissions: permissionModules.flatMap(m =>
-            permissionActions.map(a => `${a.id}:${m.id}`)
+          permissions: permissionModules.flatMap((m: PermissionModule) =>
+            permissionActions.map((a: {id: Action, name: string}) => `${a.id}:${m.id}`)
           ) as Permission[],
         };
         const profileDocRef = doc(firestore, 'profiles', superAdminProfile.id);
@@ -264,11 +264,11 @@ export default function ProfilesPage() {
     setSelectedPermissions((prev) => {
       const newSet = new Set(prev)
       const [action, moduleId] = permission.split(':') as [Action, Module]
-      const mainModule = permissionModules.find((m) => m.id === moduleId)
+      const mainModule = permissionModules.find((m: PermissionModule) => m.id === moduleId)
 
       // Ação em cascata para submódulos
       if (mainModule && mainModule.subModules) {
-        mainModule.subModules.forEach((subModule) => {
+        mainModule.subModules.forEach((subModule: {id: Module, name: string}) => {
           const subPermission = `${action}:${subModule.id}` as Permission
           if (checked) {
             newSet.add(subPermission)
@@ -520,7 +520,7 @@ export default function ProfilesPage() {
             <div className='sticky top-0 bg-background/95 p-2 flex items-center border-b z-10'>
               <div className='flex-1 font-semibold pl-4'>Módulo</div>
               <div className='grid grid-cols-4 gap-4 w-[300px] text-center text-xs font-semibold text-muted-foreground'>
-                {permissionActions.map((action) => (
+                {permissionActions.map((action: {id: Action, name: string}) => (
                   <div key={action.id} className='flex justify-center'>
                     {action.name}
                   </div>
@@ -530,14 +530,14 @@ export default function ProfilesPage() {
 
             <ScrollArea className='h-[60vh] mt-2'>
               <Accordion type='multiple' className='w-full'>
-                {permissionModules.map((module) => (
+                {permissionModules.map((module: PermissionModule) => (
                   <AccordionItem value={module.id} key={module.id}>
                     <div className='flex items-center pr-4 border-b hover:bg-muted/50'>
                       <AccordionTrigger className='flex-1 p-0 pl-4 font-medium text-sm hover:no-underline'>
                         <div className='py-3'>{module.name}</div>
                       </AccordionTrigger>
                       <div className='grid grid-cols-4 gap-4 w-[300px]'>
-                        {permissionActions.map((action) => (
+                        {permissionActions.map((action: {id: Action, name: string}) => (
                           <div
                             key={`${module.id}-${action.id}`}
                             className='flex justify-center'
@@ -560,7 +560,7 @@ export default function ProfilesPage() {
                     <AccordionContent>
                       <div className='pl-12 py-2 space-y-2 border-l ml-6'>
                         {module.subModules ? (
-                          module.subModules.map((subModule) => (
+                          module.subModules.map((subModule: {id: Module, name: string}) => (
                             <div
                               key={subModule.id}
                               className='flex items-center pr-4'
@@ -571,7 +571,7 @@ export default function ProfilesPage() {
                                 </Label>
                               </div>
                               <div className='grid grid-cols-4 gap-4 w-[300px]'>
-                                {permissionActions.map((action) => (
+                                {permissionActions.map((action: {id: Action, name: string}) => (
                                   <div
                                     key={`${subModule.id}-${action.id}`}
                                     className='flex justify-center'
