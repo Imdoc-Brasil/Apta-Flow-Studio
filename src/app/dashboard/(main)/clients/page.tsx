@@ -725,8 +725,8 @@ export default function ClientsPage() {
                       <DropdownMenuContent align='end'>
                         <DropdownMenuLabel>Ações</DropdownMenuLabel>
                         <DropdownMenuItem asChild>
-                          <Link href={`/dashboard/clients/${client.id}`}>
-                            Ver Detalhes
+                          <Link href={`/dashboard/clients/${client.id}/info`}>
+                            Detalhes
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem>Editar</DropdownMenuItem>

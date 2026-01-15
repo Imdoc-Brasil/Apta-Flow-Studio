@@ -70,12 +70,9 @@ import {
   permissionActions,
   type Permission,
   type Action,
-  type Module,
   type PermissionModule,
   type SubModule
-} from '@/app/dashboard/(main)/profiles/data'
-
-// --- Fim da Estrutura de Permissões ---
+} from './data'
 
 interface Profile {
   id: string

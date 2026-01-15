@@ -58,10 +58,7 @@ export default function ClientDashboardPage() {
   )
   
   const ticketsRef = useMemoFirebase(
-    () =>
-      firestore
-        ? collection(firestore, 'tickets')
-        : null,
+    () => (firestore ? collection(firestore, 'tickets') : null),
     [firestore]
   )
 
@@ -236,7 +233,7 @@ export default function ClientDashboardPage() {
         </CardContent>
          <CardFooter>
           <Button asChild variant="outline">
-              <Link href={`/dashboard/clients/${contractId}/info`}>Ver todas as informações</Link>
+              <Link href={`/dashboard/clients/${contractId}/info`}>Todas as Informações</Link>
           </Button>
         </CardFooter>
       </Card>
