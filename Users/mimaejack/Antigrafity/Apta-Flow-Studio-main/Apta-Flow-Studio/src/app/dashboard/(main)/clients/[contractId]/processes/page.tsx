@@ -41,7 +41,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { useToast } from '@/hooks/use-toast'
-import { type Process, type ProcessStep, type ProcessType } from '@/app/dashboard/(main)/clients/[contractId]/processes/data'
+import {
+  type Process,
+  type ProcessStep,
+  type ProcessType,
+} from '@/app/dashboard/(main)/clients/[contractId]/processes/data'
 import {
   Select,
   SelectContent,
@@ -67,7 +71,7 @@ import {
   useMemoFirebase,
   addDocumentNonBlocking,
   updateDocumentNonBlocking,
-  deleteDocumentNonBlocking
+  deleteDocumentNonBlocking,
 } from '@/firebase'
 import { collection, doc, getDocs } from 'firebase/firestore'
 import type { Sector } from '@/app/dashboard/(main)/clients/[contractId]/sectors/data'
@@ -82,7 +86,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-
 
 type ScopeType = 'unidade' | 'setor' | 'cargo'
 
@@ -120,7 +123,7 @@ export default function ProcessesPage() {
   const [areSectorsLoading, setAreSectorsLoading] = useState(true)
 
   useEffect(() => {
-    if (unitsData && firestore) {
+    if (unitsData && firestore && !areUnitsLoading) {
       setAreSectorsLoading(true)
       const fetchSectors = async () => {
         const sectorsPromises = unitsData.map((unit) =>
@@ -156,16 +159,20 @@ export default function ProcessesPage() {
 
   const [isAssistantOpen, setIsAssistantOpen] = useState(false)
   const [assistantLoading, setAssistantLoading] = useState(false)
-  const [assistantResult, setAssistantResult] = useState<SuggestProcessToolOutput | null>(null)
+  const [assistantResult, setAssistantResult] =
+    useState<SuggestProcessToolOutput | null>(null)
 
-  const getSectorNameForProcess = useCallback((process: Process) => {
-    const firstStep = process.steps[0]
-    if (firstStep && firstStep.sectorId) {
-      const sector = allSectors.find((s) => s.id === firstStep.sectorId)
-      return sector?.name || 'Setor não definido'
-    }
-    return 'Setor não definido'
-  }, [allSectors])
+  const getSectorNameForProcess = useCallback(
+    (process: Process) => {
+      const firstStep = process.steps[0]
+      if (firstStep && firstStep.sectorId) {
+        const sector = allSectors.find((s) => s.id === firstStep.sectorId)
+        return sector?.name || 'Setor não definido'
+      }
+      return 'Setor não definido'
+    },
+    [allSectors]
+  )
 
   const uniqueSectors = useMemo(() => {
     if (!processes || !allSectors) return []
@@ -204,13 +211,11 @@ export default function ProcessesPage() {
         typeof value === 'boolean' &&
         (field === 'isControlPoint' || field === 'isRiskSource')
       ) {
-        ; (step[field] as boolean | undefined) = value
+        (step[field] as boolean | undefined) = value
       } else if (typeof value === 'string') {
-        ; (
-          step[
+        (step[
           field as keyof Omit<ProcessStep, 'isControlPoint' | 'isRiskSource'>
-          ] as string | undefined
-        ) = value
+        ] as string | undefined) = value
       }
 
       // If sector is changed, reset the responsible role
@@ -255,25 +260,33 @@ export default function ProcessesPage() {
   }
 
   const handleDeleteProcess = (processId: string) => {
-    if (!firestore) return;
-    const docRef = doc(firestore, `clients/${contractId}/processes`, processId);
-    deleteDocumentNonBlocking(docRef);
-    toast({ title: "Processo Excluído", variant: "destructive" });
+    if (!firestore) return
+    const docRef = doc(firestore, `clients/${contractId}/processes`, processId)
+    deleteDocumentNonBlocking(docRef)
+    toast({ title: 'Processo Excluído', variant: 'destructive' })
   }
 
-
-  const openProcessDialog = (process: Process | null, suggestedName: string = '', suggestedObjective: string = '') => {
+  const openProcessDialog = (
+    process: Process | null,
+    suggestedName: string = '',
+    suggestedObjective: string = ''
+  ) => {
     setEditingProcess(process)
     setFormSteps(process ? [...process.steps] : [])
     setFormObligations(process ? [...process.obligations] : [])
 
     // Use timeout to set default values after dialog state is updated
     setTimeout(() => {
-      const nameInput = document.querySelector('input[name="name"]') as HTMLInputElement;
-      const objectiveInput = document.querySelector('textarea[name="objective"]') as HTMLTextAreaElement;
-      if (nameInput) nameInput.value = suggestedName || process?.name || '';
-      if (objectiveInput) objectiveInput.value = suggestedObjective || process?.objective || '';
-    }, 0);
+      const nameInput = document.querySelector(
+        'input[name="name"]'
+      ) as HTMLInputElement
+      const objectiveInput = document.querySelector(
+        'textarea[name="objective"]'
+      ) as HTMLTextAreaElement
+      if (nameInput) nameInput.value = suggestedName || process?.name || ''
+      if (objectiveInput)
+        objectiveInput.value = suggestedObjective || process?.objective || ''
+    }, 0)
 
     setIsProcessDialogOpen(true)
   }
@@ -303,37 +316,42 @@ export default function ProcessesPage() {
     )
   }
 
-  const handleAssistantSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setAssistantLoading(true);
-    setAssistantResult(null);
+  const handleAssistantSubmit = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
+    e.preventDefault()
+    setAssistantLoading(true)
+    setAssistantResult(null)
 
-    const formData = new FormData(e.currentTarget);
-    const projectDescription = formData.get('projectDescription') as string;
+    const formData = new FormData(e.currentTarget)
+    const projectDescription = formData.get('projectDescription') as string
 
     try {
-      const result = await suggestProcessTool({ projectDescription });
-      setAssistantResult(result);
+      const result = await suggestProcessTool({ projectDescription })
+      setAssistantResult(result)
     } catch (error) {
       toast({
         variant: 'destructive',
         title: 'Erro do Assistente de IA',
         description: 'Não foi possível obter uma sugestão. Tente novamente.',
-      });
-      console.error(error);
+      })
+      console.error(error)
     } finally {
-      setAssistantLoading(false);
+      setAssistantLoading(false)
     }
-  };
+  }
 
   const useSuggestion = () => {
     if (assistantResult) {
-      setIsAssistantOpen(false);
-      openProcessDialog(null, assistantResult.toolName, assistantResult.justification);
-      setAssistantResult(null);
+      setIsAssistantOpen(false)
+      openProcessDialog(
+        null,
+        assistantResult.toolName,
+        assistantResult.justification
+      )
+      setAssistantResult(null)
     }
-  };
-
+  }
 
   const isLoading = areProcessesLoading || areSectorsLoading || areRolesLoading
 
@@ -411,7 +429,7 @@ export default function ProcessesPage() {
               </div>
               <Dialog open={isAssistantOpen} onOpenChange={setIsAssistantOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="outline">
+                  <Button variant='outline'>
                     <Sparkles className='mr-2 h-4 w-4' /> Assistente IA
                   </Button>
                 </DialogTrigger>
@@ -419,35 +437,63 @@ export default function ProcessesPage() {
                   <DialogHeader>
                     <DialogTitle>Assistente de Processos</DialogTitle>
                     <DialogDescription>
-                      Descreva seu objetivo ou problema, e a IA sugerirá a melhor ferramenta de processo para você.
+                      Descreva seu objetivo ou problema, e a IA sugerirá a
+                      melhor ferramenta de processo para você.
                     </DialogDescription>
                   </DialogHeader>
-                  <form id="assistant-form" onSubmit={handleAssistantSubmit}>
-                    <div className="py-4 space-y-4">
-                      <Label htmlFor="projectDescription">Descrição do Projeto/Problema</Label>
+                  <form
+                    id='assistant-form'
+                    onSubmit={handleAssistantSubmit}
+                  >
+                    <div className='py-4 space-y-4'>
+                      <Label htmlFor='projectDescription'>
+                        Descrição do Projeto/Problema
+                      </Label>
                       <Textarea
-                        id="projectDescription"
-                        name="projectDescription"
+                        id='projectDescription'
+                        name='projectDescription'
                         placeholder="Ex: 'Precisamos organizar o fluxo de novas demandas de marketing, desde o pedido inicial até a publicação final, garantindo que todas as etapas de aprovação sejam cumpridas.'"
                         rows={5}
                       />
-                      {assistantLoading && <div className="flex justify-center items-center"><Loader2 className="h-6 w-6 animate-spin" /></div>}
+                      {assistantLoading && (
+                        <div className='flex justify-center items-center'>
+                          <Loader2 className='h-6 w-6 animate-spin' />
+                        </div>
+                      )}
                       {assistantResult && (
-                        <div className="p-4 bg-muted/50 rounded-lg border space-y-2">
-                          <h4 className="font-semibold">Sugestão da IA</h4>
-                          <p><strong>Ferramenta:</strong> {assistantResult.toolName}</p>
-                          <p><strong>Justificativa:</strong> {assistantResult.justification}</p>
+                        <div className='p-4 bg-muted/50 rounded-lg border space-y-2'>
+                          <h4 className='font-semibold'>Sugestão da IA</h4>
+                          <p>
+                            <strong>Ferramenta:</strong>{' '}
+                            {assistantResult.toolName}
+                          </p>
+                          <p>
+                            <strong>Justificativa:</strong>{' '}
+                            {assistantResult.justification}
+                          </p>
                         </div>
                       )}
                     </div>
                   </form>
                   <DialogFooter>
-                    <Button variant="ghost" onClick={() => setIsAssistantOpen(false)}>Cancelar</Button>
-                    <Button type="submit" form="assistant-form" disabled={assistantLoading}>
-                      <Sparkles className="mr-2 h-4 w-4" />
+                    <Button
+                      variant='ghost'
+                      onClick={() => setIsAssistantOpen(false)}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      type='submit'
+                      form='assistant-form'
+                      disabled={assistantLoading}
+                    >
+                      <Sparkles className='mr-2 h-4 w-4' />
                       Obter Sugestão
                     </Button>
-                    <Button onClick={useSuggestion} disabled={!assistantResult}>
+                    <Button
+                      onClick={useSuggestion}
+                      disabled={!assistantResult}
+                    >
                       Usar esta Sugestão
                     </Button>
                   </DialogFooter>
@@ -698,8 +744,9 @@ export default function ProcessesPage() {
                   <div className='space-y-4'>
                     {formSteps.map((step, index) => {
                       const rolesForSector =
-                        rolesData?.filter((r) => r.sectorId === step.sectorId) ||
-                        []
+                        rolesData?.filter(
+                          (r) => r.sectorId === step.sectorId
+                        ) || []
                       return (
                         <div
                           key={step.id}
@@ -718,7 +765,13 @@ export default function ProcessesPage() {
                                   id={`step-name-${index}`}
                                   name={`step-name-${index}`}
                                   defaultValue={step.name}
-                                  onChange={(e) => handleStepChange(index, 'name', e.target.value)}
+                                  onChange={(e) =>
+                                    handleStepChange(
+                                      index,
+                                      'name',
+                                      e.target.value
+                                    )
+                                  }
                                   required
                                 />
                               </div>
@@ -788,7 +841,13 @@ export default function ProcessesPage() {
                                 id={`step-description-${index}`}
                                 name={`step-description-${index}`}
                                 defaultValue={step.description}
-                                onChange={(e) => handleStepChange(index, 'description', e.target.value)}
+                                onChange={(e) =>
+                                  handleStepChange(
+                                    index,
+                                    'description',
+                                    e.target.value
+                                  )
+                                }
                                 placeholder='Descreva o que deve ser feito nesta etapa.'
                                 rows={2}
                               />

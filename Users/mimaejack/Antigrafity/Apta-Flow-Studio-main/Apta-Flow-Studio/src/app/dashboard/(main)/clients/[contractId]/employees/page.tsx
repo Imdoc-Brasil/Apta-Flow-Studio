@@ -72,7 +72,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { Employee, EmployeeStatus } from '@/app/dashboard/(main)/clients/[contractId]/employees/data'
+import type {
+  Employee,
+  EmployeeStatus,
+} from '@/app/dashboard/(main)/clients/[contractId]/employees/data'
 import { Separator } from '@/components/ui/separator'
 import { useRouter } from 'next/navigation'
 import { useParams } from 'next/navigation'
@@ -177,27 +180,31 @@ export default function EmployeesPage() {
   )
 
   const [selectedAddRole, setSelectedAddRole] = useState('')
-  
+
   const rolesWithDetails = useMemo(() => {
-    if (!rolesData || !allSectors || !allUnits) return [];
-    return rolesData.map(role => {
-      const sector = allSectors.find(s => s.id === role.sectorId);
-      const unit = sector ? allUnits.find(u => u.id === sector.unitId) : undefined;
+    if (!rolesData || !allSectors || !allUnits) return []
+    return rolesData.map((role) => {
+      const sector = allSectors.find((s) => s.id === role.sectorId)
+      const unit = sector
+        ? allUnits.find((u) => u.id === sector.unitId)
+        : undefined
       return {
         ...role,
         sectorName: sector?.name || 'N/A',
-        unitName: unit?.name || 'N/A'
+        unitName: unit?.name || 'N/A',
       }
     })
   }, [rolesData, allSectors, allUnits])
 
   const roleDetails = useMemo(() => {
     if (!selectedAddRole) return null
-    return rolesWithDetails.find((r) => r.id === selectedAddRole);
+    return rolesWithDetails.find((r) => r.id === selectedAddRole)
   }, [selectedAddRole, rolesWithDetails])
 
-  const getRoleById = useCallback((roleId: string) =>
-    rolesData?.find((r) => r.id === roleId), [rolesData]);
+  const getRoleById = useCallback(
+    (roleId: string) => rolesData?.find((r) => r.id === roleId),
+    [rolesData]
+  )
 
   const filteredEmployees = useMemo(() => {
     if (!employees) return []
@@ -362,7 +369,10 @@ export default function EmployeesPage() {
   }
 
   const isLoading =
-    areEmployeesLoading || areRolesLoading || areUnitsLoading || areSectorsLoading
+    areEmployeesLoading ||
+    areRolesLoading ||
+    areUnitsLoading ||
+    areSectorsLoading
 
   const renderAddEmployeeForm = () => (
     <div className='grid gap-4 py-4'>

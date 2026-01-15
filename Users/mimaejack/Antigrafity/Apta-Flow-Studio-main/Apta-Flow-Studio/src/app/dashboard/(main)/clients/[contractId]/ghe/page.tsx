@@ -107,30 +107,33 @@ export default function GhePage() {
 
   useEffect(() => {
     if (unitsData && firestore && !areUnitsLoading) {
-      setAreSectorsLoading(true);
+      setAreSectorsLoading(true)
       const fetchSectors = async () => {
         try {
-          const sectorsPromises = unitsData.map(unit =>
-            getDocs(collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`))
-          );
-          const sectorsSnapshots = await Promise.all(sectorsPromises);
-          const sectorsData = sectorsSnapshots.flatMap(snapshot =>
-            snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sector))
-          );
-          setAllSectors(sectorsData);
+          const sectorsPromises = unitsData.map((unit) =>
+            getDocs(
+              collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`)
+            )
+          )
+          const sectorsSnapshots = await Promise.all(sectorsPromises)
+          const sectorsData = sectorsSnapshots.flatMap((snapshot) =>
+            snapshot.docs.map(
+              (doc) => ({ id: doc.id, ...doc.data() } as Sector)
+            )
+          )
+          setAllSectors(sectorsData)
         } catch (error) {
-          console.error("Error fetching sectors: ", error);
-          setAllSectors([]);
+          console.error('Error fetching sectors: ', error)
+          setAllSectors([])
         } finally {
-          setAreSectorsLoading(false);
+          setAreSectorsLoading(false)
         }
-      };
-      fetchSectors();
+      }
+      fetchSectors()
     } else if (!areUnitsLoading) {
-      setAreSectorsLoading(false);
+      setAreSectorsLoading(false)
     }
-  }, [unitsData, firestore, contractId, areUnitsLoading]);
-
+  }, [unitsData, firestore, contractId, areUnitsLoading])
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)
@@ -148,10 +151,13 @@ export default function GhePage() {
   const getRoleName = (roleId: string) => {
     return rolesData?.find((role) => role.id === roleId)?.name || 'N/A'
   }
-  
-  const getSectorName = useCallback((sectorId: string) => {
-    return allSectors?.find((sector) => sector.id === sectorId)?.name || 'N/A'
-  }, [allSectors])
+
+  const getSectorName = useCallback(
+    (sectorId: string) => {
+      return allSectors?.find((sector) => sector.id === sectorId)?.name || 'N/A'
+    },
+    [allSectors]
+  )
 
   const rolesWithSectors = useMemo(() => {
     if (!rolesData || areSectorsLoading) return []
@@ -248,8 +254,9 @@ export default function GhePage() {
     resetRoleSelection()
     setIsAddDialogOpen(true)
   }
-  
-  const isLoading = areGhesLoading || areUnitsLoading || areRolesLoading || areSectorsLoading;
+
+  const isLoading =
+    areGhesLoading || areUnitsLoading || areRolesLoading || areSectorsLoading
 
   return (
     <>
