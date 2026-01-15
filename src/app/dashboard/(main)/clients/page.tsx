@@ -111,7 +111,7 @@ export default function ClientsPage() {
   const [cnpj, setCnpj] = useState('')
   const [isCnpjLoading, setIsCnpjLoading] = useState(false)
   const [cnpjError, setCnpjError] = useState<string | null>(null)
-  
+
   const [name, setName] = useState('')
   const [tradeName, setTradeName] = useState('')
   const [address, setAddress] = useState('')
@@ -181,7 +181,7 @@ export default function ClientsPage() {
     setSecondaryCnaes([])
     setCnpj('')
   }
-  
+
   const clearCnpjData = () => {
     setName('');
     setTradeName('');
@@ -194,9 +194,12 @@ export default function ClientsPage() {
   const handleCnpjBlur = async () => {
     if (!cnpj || !firestore || !clientsRef) return
 
-    const cnpjRegex = /^\d{2}\.?\d{3}\.?\d{3}\/\d{4}-?\d{2}$/
+    // Regex que aceita CNPJ com ou sem formatação
+    // Formato com pontuação: 00.000.000/0001-91
+    // Formato sem pontuação: 00000000000191
+    const cnpjRegex = /^(\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}|\d{14})$/
     const cleanCnpj = cnpj.replace(/[^\d]/g, '')
-    
+
     if (!cnpjRegex.test(cnpj)) {
       setCnpjError('Formato de CNPJ inválido.')
       return
@@ -206,44 +209,44 @@ export default function ClientsPage() {
     setCnpjError(null)
 
     try {
-        const q = query(clientsRef, where('cnpj', '==', cnpj))
-        const querySnapshot = await getDocs(q)
-        if (!querySnapshot.empty) {
-          throw new Error('Este CNPJ já está cadastrado.')
-        }
+      const q = query(clientsRef, where('cnpj', '==', cnpj))
+      const querySnapshot = await getDocs(q)
+      if (!querySnapshot.empty) {
+        throw new Error('Este CNPJ já está cadastrado.')
+      }
 
-        const { data } = await axios.get(`https://brasilapi.com.br/api/cnpj/v1/${cleanCnpj}`);
-        
-        setName(data.razao_social || '');
-        setTradeName(data.nome_fantasia || '');
-        setAddress(`${data.logradouro}, ${data.numero} - ${data.bairro}, ${data.municipio} - ${data.uf}, CEP: ${data.cep}`);
-        
-        if (data.cnae_fiscal) {
-            const mainCnaeData = cnaeList.find(c => c.code === data.cnae_fiscal.toString());
-            if(mainCnaeData) {
-                handleCnaeSelect(mainCnaeData);
-            }
-        }
+      const { data } = await axios.get(`https://brasilapi.com.br/api/cnpj/v1/${cleanCnpj}`);
 
-        if (data.cnaes_secundarios && data.cnaes_secundarios.length > 0) {
-            const secondaryCnaesData = data.cnaes_secundarios
-                .map((c: any) => cnaeList.find(cnae => cnae.code === c.codigo.toString()))
-                .filter(Boolean);
-            setSecondaryCnaes(secondaryCnaesData);
+      setName(data.razao_social || '');
+      setTradeName(data.nome_fantasia || '');
+      setAddress(`${data.logradouro}, ${data.numero} - ${data.bairro}, ${data.municipio} - ${data.uf}, CEP: ${data.cep}`);
+
+      if (data.cnae_fiscal) {
+        const mainCnaeData = cnaeList.find(c => c.code === data.cnae_fiscal.toString());
+        if (mainCnaeData) {
+          handleCnaeSelect(mainCnaeData);
         }
-        
-    } catch(error: any) {
-        clearCnpjData();
-        if(error.message === 'Este CNPJ já está cadastrado.') {
-            setCnpjError(error.message);
-        } else if (axios.isAxiosError(error) && error.response?.status === 404) {
-            setCnpjError('CNPJ não encontrado na base de dados da Receita Federal.')
-        } else {
-            console.error(error);
-            setCnpjError('Erro ao buscar dados do CNPJ. Tente novamente.')
-        }
+      }
+
+      if (data.cnaes_secundarios && data.cnaes_secundarios.length > 0) {
+        const secondaryCnaesData = data.cnaes_secundarios
+          .map((c: any) => cnaeList.find(cnae => cnae.code === c.codigo.toString()))
+          .filter(Boolean);
+        setSecondaryCnaes(secondaryCnaesData);
+      }
+
+    } catch (error: any) {
+      clearCnpjData();
+      if (error.message === 'Este CNPJ já está cadastrado.') {
+        setCnpjError(error.message);
+      } else if (axios.isAxiosError(error) && error.response?.status === 404) {
+        setCnpjError('CNPJ não encontrado na base de dados da Receita Federal.')
+      } else {
+        console.error(error);
+        setCnpjError('Erro ao buscar dados do CNPJ. Tente novamente.')
+      }
     } finally {
-        setIsCnpjLoading(false)
+      setIsCnpjLoading(false)
     }
   }
 
@@ -394,8 +397,8 @@ export default function ClientsPage() {
                                   <span className='truncate'>
                                     {cnae
                                       ? cnaeList.find(
-                                          (item) => item.code === cnae
-                                        )?.description
+                                        (item) => item.code === cnae
+                                      )?.description
                                       : 'Selecione ou busque um CNAE...'}
                                   </span>
                                   <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
