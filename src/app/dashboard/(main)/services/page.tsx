@@ -33,62 +33,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { useState } from 'react'
-import { sstPrograms } from './data'
-
-// --- Mock Data ---
-
-const technicalAdvisory = [
-  {
-    contractNumber: 'CT-MED-01',
-    name: 'Assessoria em Medicina do Trabalho',
-    hours: 10,
-    hourValue: 'R$ 250,00',
-    total: 'R$ 2.500,00',
-    validity: '12 meses',
-  },
-  {
-    contractNumber: 'CT-SEG-01',
-    name: 'Assessoria em Segurança do Trabalho',
-    hours: 20,
-    hourValue: 'R$ 200,00',
-    total: 'R$ 4.000,00',
-    validity: '12 meses',
-  },
-]
-
-const rentals = [
-  {
-    code: 'RENT-01',
-    description: 'Unidade Móvel',
-    dailyRate: 'R$ 1.500,00',
-    insurance: 'R$ 300,00',
-  },
-  {
-    code: 'RENT-02',
-    description: 'Eletrocardiograma',
-    dailyRate: 'R$ 250,00',
-    insurance: 'R$ 50,00',
-  },
-]
-
-const outsourcing = [
-  {
-    code: 'SESMT-01',
-    professional: 'Médico do Trabalho',
-    hourValue: 'R$ 300,00',
-    hours: 40,
-    professionals: 1,
-    total: 'R$ 12.000,00',
-  },
-  {
-    code: 'SESMT-02',
-    professional: 'Técnico de Segurança do Trabalho',
-    hourValue: 'R$ 150,00',
-    hours: 80,
-    professionals: 2,
-    total: 'R$ 24.000,00',
-  },
-]
+import {
+  sstPrograms,
+  technicalAdvisory,
+  rentals,
+  outsourcing,
+} from './data'
 
 function ServiceTableActions({
   buttonLabel,
