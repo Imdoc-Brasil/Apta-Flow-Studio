@@ -6,9 +6,7 @@ function getFirebaseConfig() {
     "messagingSenderId": "759963794370"
   };
 
-  // Use NEXT_PUBLIC_APP_ENV instead of NODE_ENV for staging
-  // This avoids TypeScript errors since NODE_ENV only accepts 'development' | 'production' | 'test'
-  if (process.env.NEXT_PUBLIC_APP_ENV === 'staging') {
+  if (process.env.NODE_ENV === 'staging') {
     return {
       ...commonConfig,
       "apiKey": process.env.NEXT_PUBLIC_FIREBASE_API_KEY_STAGING,
