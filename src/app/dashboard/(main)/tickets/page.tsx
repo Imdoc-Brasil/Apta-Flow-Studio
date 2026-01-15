@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
@@ -533,6 +532,8 @@ function AddTextElementDialog({
 
 function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
   const firestore = useFirestore()
+  const { user } = useUser()
+  const currentUserEmail = user?.email || ''
   const { data: staffs } = useCollection<Staff>(
     useMemoFirebase(
       () => (firestore ? collection(firestore, 'staffs') : null),
@@ -580,7 +581,7 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
               ? {
                   ...item,
                   completed,
-                  completedBy: completed ? 'user' : undefined,
+                  completedBy: completed ? user?.displayName : undefined,
                   completedAt: completed
                     ? new Date().toISOString()
                     : undefined,
@@ -592,6 +593,37 @@ function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
       return cl
     })
     updateDocumentNonBlocking(ticketDocRef, { checklists: updatedChecklists })
+  }
+
+  const handleAddTextElement = (
+    e: React.FormEvent<HTMLFormElement>,
+    type: 'question' | 'comment'
+  ) => {
+    e.preventDefault()
+    if (!firestore || !ticket.id) return
+    if (!user || !staffs) return;
+
+    const formData = new FormData(e.currentTarget)
+    const content = formData.get('content') as string
+    
+    const staffProfile = staffs.find(s => s.email === user.email);
+
+    const newElement: TextElement = {
+      id: `txt-${Date.now()}`,
+      type,
+      title: type === 'question' ? 'Pergunta' : 'Comentário',
+      content,
+      creator: staffProfile?.name || user?.displayName || 'Usuário',
+      creatorAvatar: staffProfile?.avatar,
+      creatorFallback: staffProfile?.fallback,
+      createdAt: new Date().toISOString(),
+    }
+
+    const ticketDocRef = doc(firestore, 'tickets', ticket.id)
+    updateDocumentNonBlocking(ticketDocRef, {
+      textElements: [...(ticket.textElements || []), newElement],
+    })
+    ;(e.target as HTMLFormElement).reset();
   }
 
   const assignedMembers =
