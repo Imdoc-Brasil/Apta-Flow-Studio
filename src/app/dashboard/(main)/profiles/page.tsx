@@ -71,7 +71,7 @@ import {
   type Permission,
   type Action,
   type PermissionModule,
-  type SubModule
+  type SubModule,
 } from './data'
 
 interface Profile {
