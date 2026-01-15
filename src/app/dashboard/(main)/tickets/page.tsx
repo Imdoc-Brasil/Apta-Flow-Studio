@@ -87,8 +87,8 @@ import {
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useTicketStore } from './tickets-store'
 import {
-  useTicketStore,
   kanbanColumns,
   type Ticket,
   type TicketStatus,
@@ -98,7 +98,7 @@ import {
   type ChecklistItem,
   type Attachment,
   type TextElement,
-} from './tickets-store'
+} from './data'
 import { useAttendeeStore } from '../health/queue/attendee-store'
 import { format, formatDistanceToNow, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -1788,4 +1788,3 @@ export default function TicketsPage() {
     </div>
   )
 }
-
