@@ -377,10 +377,10 @@ export default function SectorsPage() {
                           {sector.description}
                         </p>
                       </CardContent>
-                      <CardFooter className='flex-col lg:flex-row items-center gap-2'>
+                      <CardFooter className='flex flex-row flex-wrap items-center gap-2'>
                         <Button
                           asChild
-                          className='w-full'
+                          className='flex-1'
                           variant='outline'
                           size='sm'
                         >
@@ -393,7 +393,7 @@ export default function SectorsPage() {
                         </Button>
                         <Button
                           asChild
-                          className='w-full'
+                          className='flex-1'
                           variant='outline'
                           size='sm'
                         >
@@ -401,7 +401,7 @@ export default function SectorsPage() {
                             href={`/dashboard/clients/${contractId}/environments?unitId=${sector.unitId}&sectorId=${sector.id}`}
                             onClick={(e) => e.stopPropagation()}
                           >
-                            Ver Postos de Trabalho{' '}
+                            Postos de Trabalho{' '}
                             <ArrowRight className='ml-2 h-4 w-4' />
                           </Link>
                         </Button>
