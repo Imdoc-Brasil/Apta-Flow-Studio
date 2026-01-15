@@ -1,3 +1,14 @@
 {
+<<<<<<< HEAD
     "extends": "next/core-web-vitals"
 }
+=======
+  "extends": [
+    "next/core-web-vitals",
+    "next/typescript"
+  ],
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  }
+}
+>>>>>>> b33fef8 (studio-9804515494:~/studio{main}$ npm run validate)
