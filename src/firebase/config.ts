@@ -6,7 +6,8 @@ function getFirebaseConfig() {
     "messagingSenderId": "759963794370"
   };
 
-  if (process.env.NODE_ENV === 'staging') {
+  // Correctly check for the custom staging environment
+  if (process.env.NEXT_PUBLIC_APP_ENV === 'staging') {
     return {
       ...commonConfig,
       "apiKey": process.env.NEXT_PUBLIC_FIREBASE_API_KEY_STAGING,
