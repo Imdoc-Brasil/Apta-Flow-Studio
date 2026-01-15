@@ -10,6 +10,19 @@ Antigravity → QA, validação, refactors mecânicos, correções pontuais
 📌 Regra principal: nunca usar os dois ao mesmo tempo.
 Você sempre finaliza um e só depois vai para o outro.
 
+## 🚀 Deploy Policy (IMPORTANTE)
+
+**LEIA PRIMEIRO:** `docs/deploy-policy.md`
+
+**Regra absoluta:**
+- ✅ **Firebase Studio** executa todos os deploys (staging e produção)
+- ✅ **Antigravity** valida e aprova (QA), mas NÃO deploya
+
+**Analogia:**
+- Firebase Studio = Piloto (executa deploy)
+- Antigravity = Torre de Controle (autoriza deploy)
+
+
 ## 🧠 Regras de Ouro
 ✅ 1) Um ambiente por vez
 
