@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
@@ -25,6 +26,7 @@ import {
   UserPlus,
   Tag,
   Loader2,
+  Archive,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -335,6 +337,7 @@ export default function TicketsPage() {
 
   const { tickets, setTickets } = useTicketStore()
   const { user } = useUser()
+  const { toast } = useToast()
 
   useEffect(() => {
     if (ticketsData) {
@@ -354,6 +357,9 @@ export default function TicketsPage() {
 
   const filteredTickets = useMemo(() => {
     return tickets.filter((ticket) => {
+      if (ticket.status === 'Arquivado') {
+        return false
+      }
       const priorityMatch =
         priorityFilter.length === 0 || priorityFilter.includes(ticket.priority)
       const labelMatch =
@@ -446,6 +452,16 @@ export default function TicketsPage() {
         updated: new Date().toISOString(),
       })
     }
+  }
+
+  const handleArchiveTicket = (ticketId: string) => {
+    if (!firestore) return
+    const ticketDocRef = doc(firestore, 'tickets', ticketId)
+    updateDocumentNonBlocking(ticketDocRef, { status: 'Arquivado' })
+    toast({
+      title: 'Ticket Arquivado',
+      description: `O ticket foi movido para os arquivos.`,
+    })
   }
 
   const isLoading = areTicketsLoading || areClientsLoading
@@ -795,15 +811,18 @@ export default function TicketsPage() {
                                     onClick={(e) => e.stopPropagation()}
                                   >
                                     <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                                    <DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={() => {}}>
                                       Ver Detalhes
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem>
-                                      Atribuir
-                                    </DropdownMenuItem>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem>
-                                      Fechar Ticket
+                                    <DropdownMenuItem
+                                      className='text-destructive'
+                                      onSelect={() =>
+                                        handleArchiveTicket(ticket.id)
+                                      }
+                                    >
+                                      <Archive className='mr-2 h-4 w-4' />
+                                      Arquivar
                                     </DropdownMenuItem>
                                   </DropdownMenuContent>
                                 </DropdownMenu>
@@ -892,5 +911,3 @@ export default function TicketsPage() {
     </div>
   )
 }
-
-    

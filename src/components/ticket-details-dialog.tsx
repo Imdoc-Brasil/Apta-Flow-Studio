@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -21,6 +22,7 @@ import {
   File as FileIcon,
   MessageSquare,
   HelpCircle,
+  Archive,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -52,8 +54,8 @@ import type {
   ChecklistItem,
   TextElement,
   Attachment,
-  availableLabels,
 } from '@/app/dashboard/(main)/tickets/data'
+import { availableLabels } from '@/app/dashboard/(main)/tickets/tickets-store'
 import type { Staff } from '@/app/dashboard/(main)/employees/page'
 import {
   updateDocumentNonBlocking,
@@ -346,6 +348,16 @@ export function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
       return cl
     })
     updateDocumentNonBlocking(ticketDocRef, { checklists: updatedChecklists })
+  }
+
+  const handleArchive = () => {
+    if (!firestore || !ticket.id) return
+    const ticketDocRef = doc(firestore, 'tickets', ticket.id)
+    updateDocumentNonBlocking(ticketDocRef, { status: 'Arquivado' })
+    toast({
+      title: 'Ticket Arquivado!',
+      description: 'O ticket foi movido para o arquivo.',
+    })
   }
 
   const handleAddTextElement = (
@@ -800,6 +812,14 @@ export function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                 </div>
               </div>
             )}
+            <Separator />
+            <Button
+              variant='outline'
+              className='w-full mt-4 justify-start text-destructive hover:text-destructive hover:bg-destructive/10'
+              onClick={handleArchive}
+            >
+              <Archive className='mr-2 h-4 w-4' /> Arquivar Ticket
+            </Button>
           </div>
         </div>
       </div>

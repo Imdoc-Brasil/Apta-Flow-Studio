@@ -47,7 +47,12 @@ export interface TextElement {
   assignedTo?: string[]
 }
 
-export type TicketStatus = 'Aberto' | 'Em Progresso' | 'Resolvido' | 'Fechado'
+export type TicketStatus =
+  | 'Aberto'
+  | 'Em Progresso'
+  | 'Resolvido'
+  | 'Fechado'
+  | 'Arquivado'
 
 export const kanbanColumns: TicketStatus[] = [
   'Aberto',
