@@ -41,6 +41,7 @@ import {
   useMemoFirebase,
   useUser,
   useDoc,
+  updateDocumentNonBlocking,
 } from '@/firebase'
 import {
   collection,
@@ -48,11 +49,30 @@ import {
 } from 'firebase/firestore'
 import type { Staff } from '@/app/dashboard/(main)/employees/page'
 import { AddClientDialog } from '@/components/add-client-dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { useToast } from '@/hooks/use-toast'
 
 
 export default function ClientsPage() {
   const firestore = useFirestore()
   const { user } = useUser()
+  const { toast } = useToast()
+
+  const [editingClient, setEditingClient] = useState<Client | null>(null)
+  const [isAddClientDialogOpen, setIsAddClientDialogOpen] = useState(false)
+  const [isDeactivateDialogOpen, setIsDeactivateDialogOpen] = useState(false)
+  const [clientToDeactivate, setClientToDeactivate] = useState<Client | null>(
+    null
+  )
 
   const staffDocRef = useMemoFirebase(
     () => (firestore && user ? doc(firestore, 'staffs', user.uid) : null),
@@ -86,105 +106,177 @@ export default function ClientsPage() {
     }
   }
 
+  const handleOpenAddDialog = () => {
+    setEditingClient(null)
+    setIsAddClientDialogOpen(true)
+  }
+
+  const handleOpenEditDialog = (client: Client) => {
+    setEditingClient(client)
+    setIsAddClientDialogOpen(true)
+  }
+
+  const handleOpenDeactivateDialog = (client: Client) => {
+    setClientToDeactivate(client)
+    setIsDeactivateDialogOpen(true)
+  }
+
+  const handleDeactivateClient = () => {
+    if (!clientToDeactivate || !firestore) return
+    const clientDocRef = doc(firestore, 'clients', clientToDeactivate.id)
+    updateDocumentNonBlocking(clientDocRef, { status: 'Inativo' })
+    toast({
+      title: 'Cliente Desativado',
+      description: `O cliente "${clientToDeactivate.name}" foi marcado como inativo.`,
+    })
+    setIsDeactivateDialogOpen(false)
+    setClientToDeactivate(null)
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Hub de Clientes</CardTitle>
-        <CardDescription>
-          Gerencie seus clientes, contratos e acordos de serviço.
-        </CardDescription>
-        <div className='flex items-center gap-2 pt-4'>
-          <div className='relative w-full max-w-sm'>
-            <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
-            <Input
-              type='search'
-              placeholder='Buscar por nome ou CNPJ...'
-              className='pl-8'
-            />
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Hub de Clientes</CardTitle>
+          <CardDescription>
+            Gerencie seus clientes, contratos e acordos de serviço.
+          </CardDescription>
+          <div className='flex items-center gap-2 pt-4'>
+            <div className='relative w-full max-w-sm'>
+              <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
+              <Input
+                type='search'
+                placeholder='Buscar por nome ou CNPJ...'
+                className='pl-8'
+              />
+            </div>
+            <Button variant='outline' size='sm' className='h-10 gap-1 text-sm'>
+              <Filter className='h-3.5 w-3.5' />
+              <span className='sr-only sm:not-sr-only'>Filtro</span>
+            </Button>
+            <div className='ml-auto'>
+              <Button onClick={handleOpenAddDialog}>
+                Adicionar Cliente
+              </Button>
+            </div>
           </div>
-          <Button variant='outline' size='sm' className='h-10 gap-1 text-sm'>
-            <Filter className='h-3.5 w-3.5' />
-            <span className='sr-only sm:not-sr-only'>Filtro</span>
-          </Button>
-          <div className='ml-auto'>
-            <AddClientDialog allClients={allClients || []} />
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className='flex justify-center items-center h-64'>
-            <Loader2 className='h-8 w-8 animate-spin text-muted-foreground' />
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Contrato</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead className='hidden sm:table-cell'>Status</TableHead>
-                <TableHead className='hidden md:table-cell'>
-                  Responsável
-                </TableHead>
-                <TableHead>
-                  <span className='sr-only'>Ações</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {clientsToDisplay.map((client) => (
-                <TableRow key={client.id}>
-                  <TableCell className='font-medium'>{client.id}</TableCell>
-                  <TableCell>
-                    <Link
-                      href={`/dashboard/clients/${client.id}`}
-                      className='hover:underline'
-                    >
-                      {client.name}
-                    </Link>
-                  </TableCell>
-                  <TableCell className='hidden sm:table-cell'>
-                    <Badge
-                      variant={
-                        client.status === 'Ativo' ? 'secondary' : 'outline'
-                      }
-                    >
-                      {client.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className='hidden md:table-cell'>
-                    {client.contractResponsibleName}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          aria-haspopup='true'
-                          size='icon'
-                          variant='ghost'
-                        >
-                          <MoreHorizontal className='h-4 w-4' />
-                          <span className='sr-only'>Alternar menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align='end'>
-                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/dashboard/clients/${client.id}/info`}>
-                            Detalhes
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>Editar</DropdownMenuItem>
-                        <DropdownMenuItem>Desativar</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className='flex justify-center items-center h-64'>
+              <Loader2 className='h-8 w-8 animate-spin text-muted-foreground' />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Contrato</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead className='hidden sm:table-cell'>Status</TableHead>
+                  <TableHead className='hidden md:table-cell'>
+                    Responsável
+                  </TableHead>
+                  <TableHead>
+                    <span className='sr-only'>Ações</span>
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-    </Card>
+              </TableHeader>
+              <TableBody>
+                {clientsToDisplay.map((client) => (
+                  <TableRow key={client.id}>
+                    <TableCell className='font-medium'>{client.id}</TableCell>
+                    <TableCell>
+                      <Link
+                        href={`/dashboard/clients/${client.id}`}
+                        className='hover:underline'
+                      >
+                        {client.name}
+                      </Link>
+                    </TableCell>
+                    <TableCell className='hidden sm:table-cell'>
+                      <Badge
+                        variant={
+                          client.status === 'Ativo' ? 'secondary' : 'outline'
+                        }
+                      >
+                        {client.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className='hidden md:table-cell'>
+                      {client.contractResponsibleName}
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            aria-haspopup='true'
+                            size='icon'
+                            variant='ghost'
+                          >
+                            <MoreHorizontal className='h-4 w-4' />
+                            <span className='sr-only'>Alternar menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end'>
+                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/dashboard/clients/${client.id}/info`}>
+                              Detalhes
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => handleOpenEditDialog(client)}
+                          >
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => handleOpenDeactivateDialog(client)}
+                          >
+                            Desativar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <AddClientDialog
+        open={isAddClientDialogOpen}
+        onOpenChange={setIsAddClientDialogOpen}
+        clientToEdit={editingClient}
+        allClients={allClients || []}
+      />
+
+      <AlertDialog
+        open={isDeactivateDialogOpen}
+        onOpenChange={setIsDeactivateDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação marcará o cliente &quot;
+              {clientToDeactivate?.name}&quot; como Inativo, mas não removerá
+              seus dados permanentemente. Você poderá reativá-lo no futuro.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => setClientToDeactivate(null)}
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeactivateClient}>
+              Confirmar Desativação
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   )
 }
