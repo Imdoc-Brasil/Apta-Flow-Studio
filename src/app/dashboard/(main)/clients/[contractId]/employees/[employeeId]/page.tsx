@@ -38,6 +38,7 @@ import {
   useMemoFirebase,
 } from '@/firebase'
 import { doc, collection, getDocs, query, where, getDoc } from 'firebase/firestore'
+import { addYears, differenceInDays, isValid, parseISO } from 'date-fns'
 
 import type { Employee } from '@/app/dashboard/(main)/clients/[contractId]/employees/data'
 import type { Role } from '@/app/dashboard/(main)/clients/[contractId]/roles/data'
@@ -208,13 +209,58 @@ export default function EmployeeDetailsPage() {
 
   const episDeliveredCount = epiDeliveries?.length || 0
 
-  const summaryIndicators = [
-    {
+  const asoStatus = useMemo(() => {
+    if (!asos || asos.length === 0) {
+      return {
+        title: 'ASO',
+        status: 'Pendente',
+        variant: 'destructive',
+        days: 'Nenhum ASO encontrado',
+      };
+    }
+
+    const mostRecentAso = asos.sort((a, b) => new Date(b.issueDate).getTime() - new Date(a.issueDate).getTime())[0];
+
+    if (!mostRecentAso || !isValid(parseISO(mostRecentAso.issueDate))) {
+        return {
+            title: 'ASO',
+            status: 'Inválido',
+            variant: 'destructive',
+            days: 'Data do último ASO inválida',
+        };
+    }
+
+    const lastExamDate = parseISO(mostRecentAso.issueDate);
+    // Assuming 1 year validity for now. A better implementation would use role-specific rules.
+    const nextExamDate = addYears(lastExamDate, 1);
+    const daysRemaining = differenceInDays(nextExamDate, new Date());
+
+    if (daysRemaining < 0) {
+      return {
+        title: 'ASO',
+        status: 'Vencido',
+        variant: 'destructive',
+        days: `Vencido há ${Math.abs(daysRemaining)} dias`,
+      };
+    }
+    if (daysRemaining <= 30) {
+      return {
+        title: 'ASO',
+        status: 'Atenção',
+        variant: 'default', // Using default for yellow/orange-like attention color
+        days: `Vence em ${daysRemaining} dias`,
+      };
+    }
+    return {
       title: 'ASO',
       status: 'Em dia',
       variant: 'secondary',
-      days: 'Vence em 280 dias',
-    },
+      days: `Vence em ${daysRemaining} dias`,
+    };
+  }, [asos]);
+
+  const summaryIndicators = [
+    asoStatus,
     {
       title: 'Treinamentos Obrigatórios',
       status: 'Em dia',
@@ -540,4 +586,3 @@ export default function EmployeeDetailsPage() {
     </div>
   )
 }
-
