@@ -73,7 +73,7 @@ export default function ClientsPage() {
 
   let clientsToDisplay: Client[] = []
   if (!isLoading && allClients && staffProfile) {
-    if (staffProfile.perfilId === 'super_admin' || !staffProfile.clientIds) {
+    if (staffProfile.perfilId === 'super_admin' || (!staffProfile.clientIds && !staffProfile.contractId)) {
        clientsToDisplay = allClients;
     } else if (staffProfile.perfilId === 'cliente' && staffProfile.contractId) {
       clientsToDisplay = allClients.filter(
@@ -107,7 +107,7 @@ export default function ClientsPage() {
             <span className='sr-only sm:not-sr-only'>Filtro</span>
           </Button>
           <div className='ml-auto'>
-            <AddClientDialog />
+            <AddClientDialog allClients={allClients || []} />
           </div>
         </div>
       </CardHeader>

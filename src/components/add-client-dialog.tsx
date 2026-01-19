@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -25,8 +26,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
   useFirestore,
-  useCollection,
-  useMemoFirebase,
   setDocumentNonBlocking,
 } from '@/firebase'
 import { collection, query, where, getDocs, doc } from 'firebase/firestore'
@@ -53,16 +52,10 @@ import { Checkbox } from '@/components/ui/checkbox'
 import type { Client } from '@/app/dashboard/(main)/clients/data'
 import axios from 'axios'
 
-export function AddClientDialog() {
+export function AddClientDialog({ allClients }: { allClients: Client[] }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const firestore = useFirestore()
   const { toast } = useToast()
-
-  const clientsRef = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'clients') : null),
-    [firestore]
-  )
-  const { data: allClients } = useCollection<Client>(clientsRef)
 
   const [cnpj, setCnpj] = useState('')
   const [isCnpjLoading, setIsCnpjLoading] = useState(false)
@@ -108,7 +101,7 @@ export function AddClientDialog() {
 
   const handleAddClient = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!clientsRef || !firestore) return
+    if (!firestore) return
 
     const formData = new FormData(event.currentTarget)
 
@@ -173,7 +166,7 @@ export function AddClientDialog() {
   }
 
   const handleCnpjBlur = async () => {
-    if (!cnpj || !firestore || !clientsRef) return
+    if (!cnpj || !firestore) return
 
     const cnpjRegex = /^(\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}|\d{14})$/
     const cleanCnpj = cnpj.replace(/[^\d]/g, '')
@@ -187,7 +180,7 @@ export function AddClientDialog() {
     setCnpjError(null)
 
     try {
-      const q = query(clientsRef, where('cnpj', '==', cnpj))
+      const q = query(collection(firestore, 'clients'), where('cnpj', '==', cnpj))
       const querySnapshot = await getDocs(q)
       if (!querySnapshot.empty) {
         throw new Error('Este CNPJ já está cadastrado.')
