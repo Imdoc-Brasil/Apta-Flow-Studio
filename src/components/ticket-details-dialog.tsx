@@ -83,18 +83,18 @@ function TimeAgo({ dateString }: { dateString: string }) {
 function AddAttachmentDialog({
   ticketId,
   children,
+  onAttachmentAdd,
 }: {
   ticketId: string
   children: React.ReactNode
+  onAttachmentAdd: (newAttachment: Attachment) => void
 }) {
   const [open, setOpen] = useState(false)
   const { toast } = useToast()
   const [file, setFile] = useState<File | null>(null)
-  const firestore = useFirestore()
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (!firestore || !ticketId) return
     const formData = new FormData(e.currentTarget)
     const name = formData.get('name') as string
 
@@ -114,11 +114,7 @@ function AddAttachmentDialog({
       url: URL.createObjectURL(file), // Placeholder URL
     }
 
-    const ticketDocRef = doc(firestore, 'tickets', ticketId)
-    // In a real app, you'd fetch the current ticket data and update the array
-    // This is a simplified approach for demonstration
-    // const newAttachments = [...(currentTicket.attachments || []), newAttachment]
-    // updateDocumentNonBlocking(ticketDocRef, { attachments: newAttachments })
+    onAttachmentAdd(newAttachment)
 
     toast({
       title: 'Anexo Adicionado!',
@@ -126,7 +122,7 @@ function AddAttachmentDialog({
     })
     setOpen(false)
     setFile(null)
-      ; (e.currentTarget as HTMLFormElement).reset()
+    ;(e.currentTarget as HTMLFormElement).reset()
   }
 
   return (
@@ -207,14 +203,14 @@ function AddChecklistDialog({
       })
       return
     }
-    
-    const staffProfile = staffs?.find((s) => s.email === user.email);
+
+    const staffProfile = staffs?.find((s) => s.email === user.email)
 
     const newChecklist: Checklist = {
       id: `cl-${Date.now()}`,
       title,
       items: [],
-      creator: staffProfile?.name || user.displayName || "Usuário",
+      creator: staffProfile?.name || user.displayName || 'Usuário',
       creatorAvatar: staffProfile?.avatar,
       creatorFallback: staffProfile?.fallback,
       createdAt: new Date().toISOString(),
@@ -345,7 +341,6 @@ function AddChecklistItemForm({
   )
 }
 
-
 export function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
   const { toast } = useToast()
   const firestore = useFirestore()
@@ -376,10 +371,10 @@ export function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
 
     const newLabels = checked
       ? [
-        ...(ticket.labels || []),
-        // @ts-ignore
-        availableLabels.find((l) => l.id === labelId)!,
-      ]
+          ...(ticket.labels || []),
+          // @ts-ignore
+          availableLabels.find((l) => l.id === labelId)!,
+        ]
       : ticket.labels?.filter((l) => l.id !== labelId)
 
     updateDocumentNonBlocking(ticketDocRef, { labels: newLabels || [] })
@@ -392,7 +387,7 @@ export function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
   ) => {
     if (!firestore || !ticket.id || !user) return
     const ticketDocRef = doc(firestore, 'tickets', ticket.id)
-    const staffProfile = staffs?.find((s) => s.email === user.email);
+    const staffProfile = staffs?.find((s) => s.email === user.email)
 
     const updatedChecklists = ticket.checklists?.map((cl) => {
       if (cl.id === checklistId) {
@@ -401,13 +396,15 @@ export function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
           items: cl.items.map((item) =>
             item.id === itemId
               ? {
-                ...item,
-                completed,
-                completedBy: completed ? (staffProfile?.name || user?.displayName) : undefined,
-                completedAt: completed
-                  ? new Date().toISOString()
-                  : undefined,
-              }
+                  ...item,
+                  completed,
+                  completedBy: completed
+                    ? staffProfile?.name || user?.displayName
+                    : undefined,
+                  completedAt: completed
+                    ? new Date().toISOString()
+                    : undefined,
+                }
               : item
           ),
         }
@@ -462,7 +459,15 @@ export function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
     updateDocumentNonBlocking(ticketDocRef, {
       textElements: [...(ticket.textElements || []), newElement],
     })
-      ; (e.target as HTMLFormElement).reset()
+    ;(e.target as HTMLFormElement).reset()
+  }
+
+  const handleAddAttachment = (newAttachment: Attachment) => {
+    if (!firestore || !ticket.id) return;
+    const ticketDocRef = doc(firestore, 'tickets', ticket.id);
+    updateDocumentNonBlocking(ticketDocRef, {
+      attachments: [...(ticket.attachments || []), newAttachment]
+    })
   }
 
   function AddTextElementDialog({
@@ -604,15 +609,15 @@ export function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                         <h3 className='font-semibold'>{checklist.title}</h3>
                       </div>
                       <div className='flex items-center gap-2'>
-                         <p className='text-xs font-semibold text-muted-foreground'>
-                            {Math.round(progress)}%
-                         </p>
-                         <Avatar className='h-6 w-6'>
-                            <AvatarImage src={checklist.creatorAvatar} />
-                            <AvatarFallback>
-                                {checklist.creatorFallback}
-                            </AvatarFallback>
-                         </Avatar>
+                        <p className='text-xs font-semibold text-muted-foreground'>
+                          {Math.round(progress)}%
+                        </p>
+                        <Avatar className='h-6 w-6'>
+                          <AvatarImage src={checklist.creatorAvatar} />
+                          <AvatarFallback>
+                            {checklist.creatorFallback}
+                          </AvatarFallback>
+                        </Avatar>
                       </div>
                     </div>
                     <div className='ml-7 space-y-2'>
@@ -642,17 +647,18 @@ export function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                             <div className='grid gap-1 text-sm flex-1'>
                               <label
                                 htmlFor={`item-${item.id}`}
-                                className={`font-medium ${item.completed
+                                className={`font-medium ${
+                                  item.completed
                                     ? 'line-through text-muted-foreground'
                                     : ''
-                                  }`}
+                                }`}
                               >
                                 {item.text}
                               </label>
                               <div className='text-xs text-muted-foreground flex items-center gap-2 flex-wrap'>
                                 {item.completed &&
-                                  item.completedBy &&
-                                  item.completedAt ? (
+                                item.completedBy &&
+                                item.completedAt ? (
                                   <span>
                                     Concluído por {item.completedBy}{' '}
                                     <TimeAgo dateString={item.completedAt} />
@@ -845,7 +851,10 @@ export function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                   <CheckSquare className='mr-2 h-4 w-4' /> Checklist
                 </Button>
               </AddChecklistDialog>
-              <AddAttachmentDialog ticketId={ticket.id}>
+              <AddAttachmentDialog
+                ticketId={ticket.id}
+                onAttachmentAdd={handleAddAttachment}
+              >
                 <Button variant='secondary' className='justify-start'>
                   <Paperclip className='mr-2 h-4 w-4' /> Anexo
                 </Button>
