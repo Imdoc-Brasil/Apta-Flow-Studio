@@ -42,7 +42,7 @@ import {
 } from '@/components/ui/select'
 import { useAttendeeStore } from '../../../health/queue/attendee-store'
 import { useTicketStore } from '../../../tickets/tickets-store'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { Separator } from '@/components/ui/separator'
 import { aptaServiceUnits } from '@/app/dashboard/(main)/health/queue/data'
@@ -59,6 +59,10 @@ import type { Ticket } from '@/app/dashboard/(main)/tickets/tickets-store'
 import type { Employee } from '../employees/data'
 import type { Client } from '../../data'
 import { ClientSideDateFormatter } from '@/components/client-side-date-formatter'
+import type { Role } from '../roles/data'
+import type { PgrInventoryItem } from '../pgr/page'
+import type { Hazard } from '../../../risks/page'
+import type { Exam } from '../../../health/data/exams'
 
 export interface Aso {
   id: string
@@ -69,6 +73,12 @@ export interface Aso {
   status: string
 }
 
+interface PcmsoRule {
+  id: string
+  riskId: string
+  examIds: string[]
+}
+
 export default function AsosPage() {
   const { toast } = useToast()
   const params = useParams()
@@ -76,11 +86,18 @@ export default function AsosPage() {
 
   const firestore = useFirestore()
 
+  // State for the dialog
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState('')
+  const [pcmsoRisks, setPcmsoRisks] = useState('')
+  const [pcmsoExams, setPcmsoExams] = useState('')
+  const [isPcmsoLoading, setIsPcmsoLoading] = useState(false)
+
+  // Data fetching
   const clientRef = useMemoFirebase(
     () => (firestore ? doc(firestore, 'clients', contractId) : null),
     [firestore, contractId]
   )
-
   const employeesRef = useMemoFirebase(
     () =>
       firestore
@@ -90,22 +107,123 @@ export default function AsosPage() {
   )
   const asosRef = useMemoFirebase(
     () =>
-      firestore
-        ? collection(firestore, `clients/${contractId}/asos`)
-        : null,
+      firestore ? collection(firestore, `clients/${contractId}/asos`) : null,
     [firestore, contractId]
   )
   const ticketsRef = useMemoFirebase(
     () => (firestore ? collection(firestore, 'tickets') : null),
     [firestore]
   )
+  const rolesRef = useMemoFirebase(
+    () =>
+      firestore ? collection(firestore, `clients/${contractId}/roles`) : null,
+    [firestore, contractId]
+  )
+  const pgrInventoryRef = useMemoFirebase(
+    () =>
+      firestore
+        ? collection(firestore, `clients/${contractId}/pgr_inventory`)
+        : null,
+    [firestore, contractId]
+  )
+  const pcmsoRulesRef = useMemoFirebase(
+    () =>
+      firestore
+        ? collection(firestore, `clients/${contractId}/pcmso_rules`)
+        : null,
+    [firestore, contractId]
+  )
+  const hazardsRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'hazards') : null),
+    [firestore]
+  )
+  const medicalExamsRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'medical_exams') : null),
+    [firestore]
+  )
+
   const { data: client, isLoading: isClientLoading } = useDoc<Client>(clientRef)
   const { data: employees, isLoading: areEmployeesLoading } =
     useCollection<Employee>(employeesRef)
   const { data: asos, isLoading: areAsosLoading } = useCollection<Aso>(asosRef)
+  const { data: tickets, isLoading: areTicketsLoading } =
+    useCollection<Ticket>(ticketsRef)
+  const { data: roles, isLoading: areRolesLoading } = useCollection<Role>(
+    rolesRef
+  )
+  const { data: pgrInventory, isLoading: isInventoryLoading } =
+    useCollection<PgrInventoryItem>(pgrInventoryRef)
+  const { data: pcmsoRules, isLoading: areRulesLoading } =
+    useCollection<PcmsoRule>(pcmsoRulesRef)
+  const { data: hazards, isLoading: areHazardsLoading } =
+    useCollection<Hazard>(hazardsRef)
+  const { data: medicalExams, isLoading: areExamsLoading } =
+    useCollection<Exam>(medicalExamsRef)
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
   const { addAttendee } = useAttendeeStore()
+
+  useEffect(() => {
+    if (
+      !selectedEmployeeId ||
+      !employees ||
+      !roles ||
+      !pgrInventory ||
+      !pcmsoRules ||
+      !hazards ||
+      !medicalExams
+    ) {
+      setPcmsoRisks('')
+      setPcmsoExams('')
+      return
+    }
+
+    setIsPcmsoLoading(true)
+
+    const employee = employees.find((e) => e.id === selectedEmployeeId)
+    if (!employee) {
+      setIsPcmsoLoading(false)
+      return
+    }
+
+    const role = roles.find((r) => r.id === employee.roleId)
+    if (!role) {
+      setIsPcmsoLoading(false)
+      return
+    }
+
+    const risksInSector = pgrInventory
+      .filter((item) => item.sector === role.sectorId)
+      .map((item) => item.hazardId)
+    const uniqueRiskIds = [...new Set(risksInSector)]
+
+    const requiredExamIds = new Set<string>()
+    pcmsoRules.forEach((rule) => {
+      if (uniqueRiskIds.includes(rule.riskId)) {
+        rule.examIds.forEach((examId) => requiredExamIds.add(examId))
+      }
+    })
+
+    const riskNames = uniqueRiskIds
+      .map((id) => hazards.find((h) => h.id === id)?.name)
+      .filter(Boolean)
+      .join(', ')
+    const examNames = Array.from(requiredExamIds)
+      .map((id) => medicalExams.find((e) => e.code === id)?.name)
+      .filter(Boolean)
+      .join(', ')
+
+    setPcmsoRisks(riskNames || 'Nenhum risco específico encontrado para o cargo.')
+    setPcmsoExams(examNames || 'Nenhum exame específico encontrado para os riscos.')
+    setIsPcmsoLoading(false)
+  }, [
+    selectedEmployeeId,
+    employees,
+    roles,
+    pgrInventory,
+    pcmsoRules,
+    hazards,
+    medicalExams,
+  ])
 
   const handleNewRequest = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -139,11 +257,11 @@ export default function AsosPage() {
           name: 'Avaliação Clínica',
           status: 'Pendente',
         },
-        {
-          id: `EXM-${Date.now()}-B`,
-          name: 'Audiometria',
+        ...pcmsoExams.split(', ').map(examName => ({
+          id: `EXM-${Date.now()}-${examName.slice(0,3)}`,
+          name: examName,
           status: 'Pendente',
-        },
+        })).filter(e => e.name),
       ],
     })
 
@@ -152,7 +270,7 @@ export default function AsosPage() {
       subject: ticketSubject,
       client: client.name,
       priority: 'Média',
-      description: `Pedido de atendimento para ${solicitationType} do colaborador ${employee.name}.`,
+      description: `Pedido de atendimento para ${solicitationType} do colaborador ${employee.name}.\n\nRiscos Associados: ${pcmsoRisks}\nExames Recomendados: ${pcmsoExams}`,
       relatedEmployee: employee.name,
       createdAt: new Date().toISOString(),
     }
@@ -174,6 +292,7 @@ export default function AsosPage() {
     })
 
     setIsDialogOpen(false)
+    setSelectedEmployeeId('')
   }
 
   const getStatusVariant = (
@@ -191,7 +310,15 @@ export default function AsosPage() {
     }
   }
 
-  const isLoading = isClientLoading || areEmployeesLoading || areAsosLoading;
+  const isLoading =
+    isClientLoading ||
+    areEmployeesLoading ||
+    areAsosLoading ||
+    areRolesLoading ||
+    isInventoryLoading ||
+    areRulesLoading ||
+    areHazardsLoading ||
+    areExamsLoading
 
   return (
     <Card>
@@ -209,7 +336,13 @@ export default function AsosPage() {
               <Users className='mr-2 h-4 w-4' />
               Pedido em Massa
             </Button>
-            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <Dialog
+              open={isDialogOpen}
+              onOpenChange={(isOpen) => {
+                setIsDialogOpen(isOpen)
+                if (!isOpen) setSelectedEmployeeId('')
+              }}
+            >
               <DialogTrigger asChild>
                 <Button>
                   <PlusCircle className='mr-2 h-4 w-4' />
@@ -246,7 +379,11 @@ export default function AsosPage() {
                       </div>
                       <div className='space-y-2'>
                         <Label htmlFor='employeeId'>Colaborador</Label>
-                        <Select name='employeeId' required>
+                        <Select
+                          name='employeeId'
+                          onValueChange={setSelectedEmployeeId}
+                          required
+                        >
                           <SelectTrigger>
                             <SelectValue placeholder='Selecione o colaborador' />
                           </SelectTrigger>
@@ -283,18 +420,6 @@ export default function AsosPage() {
                             <SelectItem value='Avaliação Demissional'>
                               Avaliação Demissional
                             </SelectItem>
-                            <SelectItem value='Monitoramento Pontual' disabled>
-                              Monitoramento Pontual
-                            </SelectItem>
-                            <SelectItem
-                              value='Evolução de Afastamento'
-                              disabled
-                            >
-                              Evolução de Afastamento
-                            </SelectItem>
-                            <SelectItem value='Avaliação de Segmento' disabled>
-                              Avaliação de Segmento
-                            </SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -306,24 +431,33 @@ export default function AsosPage() {
                           Informações do PCMSO
                         </Label>
                         <p className='text-xs text-muted-foreground'>
-                          Os riscos e exames vinculados ao cargo do colaborador
-                          aparecerão aqui automaticamente.
+                          Riscos e exames vinculados ao cargo do colaborador.
                         </p>
                         <div className='space-y-2 pt-2'>
-                          <Label className='text-xs'>Riscos (PCMSO)</Label>
-                          <Textarea
-                            placeholder='[Carregado automaticamente...]'
-                            disabled
-                            rows={2}
-                          />
+                          <Label className='text-xs'>Riscos (PGR)</Label>
+                          {isPcmsoLoading ? (
+                            <Loader2 className='h-4 w-4 animate-spin' />
+                          ) : (
+                            <Textarea
+                              value={pcmsoRisks}
+                              readOnly
+                              rows={2}
+                              className='bg-white'
+                            />
+                          )}
                         </div>
                         <div className='space-y-2'>
                           <Label className='text-xs'>Exames (PCMSO)</Label>
-                          <Textarea
-                            placeholder='[Carregado automaticamente...]'
-                            disabled
-                            rows={2}
-                          />
+                           {isPcmsoLoading ? (
+                            <Loader2 className='h-4 w-4 animate-spin' />
+                          ) : (
+                            <Textarea
+                              value={pcmsoExams}
+                              readOnly
+                              rows={2}
+                              className='bg-white'
+                            />
+                          )}
                         </div>
                       </div>
 
@@ -345,15 +479,6 @@ export default function AsosPage() {
                             placeholder='Se sim, descreva se há alguma necessidade especial para o atendimento.'
                           />
                         </div>
-                        <div className='space-y-2'>
-                          <div className='flex items-center space-x-2'>
-                            <Checkbox id='priority' name='priority' />
-                            <Label htmlFor='priority' className='font-normal'>
-                              Atendimento prioritário?
-                            </Label>
-                          </div>
-                          {/* Futuramente, mostrar as opções se o checkbox estiver marcado */}
-                        </div>
                       </div>
                     </div>
                   </ScrollArea>
@@ -361,19 +486,12 @@ export default function AsosPage() {
                 <DialogFooter>
                   <Button
                     variant='outline'
-                    onClick={() => setIsDialogOpen(false)}
+                    onClick={() => {
+                      setIsDialogOpen(false)
+                      setSelectedEmployeeId('')
+                    }}
                   >
                     Cancelar
-                  </Button>
-                  <Button variant='secondary' form='new-aso-request-form'>
-                    Imprimir
-                  </Button>
-                  <Button
-                    variant='secondary'
-                    disabled
-                    form='new-aso-request-form'
-                  >
-                    Encaminhar
                   </Button>
                   <Button type='submit' form='new-aso-request-form'>
                     Salvar
@@ -439,5 +557,6 @@ export default function AsosPage() {
     </Card>
   )
 }
+
 
     
