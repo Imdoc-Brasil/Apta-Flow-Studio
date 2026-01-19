@@ -8,7 +8,6 @@ import {
   Search,
   Filter,
   Loader2,
-  FilePlus,
   Check,
   ChevronsUpDown,
   X,
@@ -79,8 +78,6 @@ import {
   addDocumentNonBlocking,
   updateDocumentNonBlocking,
   deleteDocumentNonBlocking,
-  useUser,
-  useDoc,
   setDocumentNonBlocking,
 } from '@/firebase'
 import { collection, doc } from 'firebase/firestore'
@@ -175,8 +172,7 @@ export default function StaffsPage() {
   )
   const { data: profiles, isLoading: areProfilesLoading } =
     useCollection<Profile>(profilesRef)
-    
-  // Effect to add initial data if collection is empty
+
   useEffect(() => {
     if (firestore && !isLoading && staffs) {
       const superAdminExists = staffs.some(
@@ -205,7 +201,6 @@ export default function StaffsPage() {
       }
     }
   }, [firestore, isLoading, staffs])
-
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
@@ -276,7 +271,9 @@ export default function StaffsPage() {
       avatar: data.avatar || `https://i.pravatar.cc/150?u=${Math.random()}`,
       fallback,
       ...(data.perfilId === 'cliente' && { contractId: data.contractId }),
-      ...(data.perfilId !== 'cliente' && { clientIds: data.allClients ? [] : data.clientIds }),
+      ...(data.perfilId !== 'cliente' && {
+        clientIds: data.allClients ? [] : data.clientIds,
+      }),
     }
 
     addDocumentNonBlocking(staffsRef, newStaff)
@@ -301,21 +298,21 @@ export default function StaffsPage() {
       .toUpperCase()
 
     const updatedData: Partial<Staff> = {
-        name: data.name,
-        email: data.email,
-        perfilId: data.perfilId,
-        assinatura: data.assinatura,
-        phone: data.phone || '',
-        fallback,
-        ...(data.avatar && { avatar: data.avatar }),
-    };
+      name: data.name,
+      email: data.email,
+      perfilId: data.perfilId,
+      assinatura: data.assinatura,
+      phone: data.phone || '',
+      fallback,
+      ...(data.avatar && { avatar: data.avatar }),
+    }
 
     if (data.perfilId === 'cliente') {
-      updatedData.contractId = data.contractId;
-      updatedData.clientIds = [];
+      updatedData.contractId = data.contractId
+      updatedData.clientIds = []
     } else {
-      updatedData.clientIds = data.allClients ? [] : data.clientIds;
-      updatedData.contractId = '';
+      updatedData.clientIds = data.allClients ? [] : data.clientIds
+      updatedData.contractId = ''
     }
 
     updateDocumentNonBlocking(staffDocRef, updatedData)
@@ -328,7 +325,7 @@ export default function StaffsPage() {
   }
 
   const handleDeleteStaff = () => {
-    if (!currentStaff?.id || !firestore) return
+    if (!currentStaff?.id || !firestore || currentStaff.perfilId === 'super_admin') return
     const staffDocRef = doc(firestore, 'staffs', currentStaff.id)
     deleteDocumentNonBlocking(staffDocRef)
     toast({
@@ -346,6 +343,14 @@ export default function StaffsPage() {
   }
 
   const openEditDialog = (staff: Staff) => {
+    if (staff.perfilId === 'super_admin') {
+      toast({
+        variant: 'destructive',
+        title: 'Não permitido',
+        description: 'Não é possível editar o Super Administrador.',
+      })
+      return
+    }
     setCurrentStaff(staff)
     editForm.reset({
       name: staff.name,
@@ -367,6 +372,14 @@ export default function StaffsPage() {
   }
 
   const openDeleteDialog = (staff: Staff) => {
+    if (staff.perfilId === 'super_admin') {
+      toast({
+        variant: 'destructive',
+        title: 'Não permitido',
+        description: 'Não é possível excluir o Super Administrador.',
+      })
+      return
+    }
     setCurrentStaff(staff)
     setIsDeleteDialogOpen(true)
   }
@@ -393,6 +406,262 @@ export default function StaffsPage() {
   }
 
   const isLoadingData = isLoading || areProfilesLoading || areClientsLoading
+
+  const StaffFormFields = ({ formInstance }: { formInstance: any }) => {
+    const perfilId = formInstance.watch('perfilId')
+    const allClients = formInstance.watch('allClients')
+    const clientIds = formInstance.watch('clientIds')
+
+    return (
+      <div className='space-y-4'>
+        <div className='flex items-center gap-4'>
+          <Avatar className='h-16 w-16'>
+            <AvatarFallback>AV</AvatarFallback>
+          </Avatar>
+          <div className='flex-1 space-y-2'>
+            <FormField
+              control={formInstance.control}
+              name='avatar'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Avatar (URL)</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder='https://...' />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        <FormField
+          control={formInstance.control}
+          name='name'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Nome</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className='grid grid-cols-2 gap-4'>
+          <FormField
+            control={formInstance.control}
+            name='email'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input type='email' {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={formInstance.control}
+            name='phone'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Telefone</FormLabel>
+                <FormControl>
+                  <Input {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+        <div className='grid grid-cols-2 gap-4'>
+          <FormField
+            control={formInstance.control}
+            name='perfilId'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Perfil</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Selecione um perfil' />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {profiles?.map((profile) => (
+                      <SelectItem key={profile.id} value={profile.id}>
+                        {profile.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={formInstance.control}
+            name='assinatura'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Assinatura (Credencial)</FormLabel>
+                <FormControl>
+                  <Input placeholder='Ex: Eng. Civil' {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        {perfilId === 'cliente' && (
+          <FormField
+            control={formInstance.control}
+            name='contractId'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Empresa Cliente</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value || ''}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Selecione a empresa do cliente' />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {clientsData?.map((client) => (
+                      <SelectItem key={client.id} value={client.id!}>
+                        {client.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+        {perfilId && perfilId !== 'cliente' && perfilId !== 'super_admin' && (
+          <FormItem>
+            <FormLabel>Acesso a Clientes</FormLabel>
+            <FormField
+              control={formInstance.control}
+              name='allClients'
+              render={({ field }) => (
+                <FormItem className='flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 mb-4'>
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className='space-y-1 leading-none'>
+                    <FormLabel>Conceder acesso a todas as empresas</FormLabel>
+                    <FormDescription>
+                      O membro terá acesso a todos os clientes atuais e futuros.
+                    </FormDescription>
+                  </div>
+                </FormItem>
+              )}
+            />
+
+            {!allClients && (
+              <FormField
+                control={formInstance.control}
+                name='clientIds'
+                render={({ field }) => (
+                  <FormItem>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant='outline'
+                            role='combobox'
+                            className={cn(
+                              'w-full justify-between font-normal',
+                              !field.value?.length && 'text-muted-foreground'
+                            )}
+                          >
+                            Selecionar clientes... ({field.value?.length || 0})
+                            <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className='w-[--radix-popover-trigger-width] p-0'>
+                        <Command>
+                          <CommandInput placeholder='Buscar cliente...' />
+                          <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
+                          <CommandList>
+                            <CommandGroup>
+                              {areClientsLoading ? (
+                                <Loader2 className='mx-auto h-4 w-4 animate-spin' />
+                              ) : (
+                                clientsData?.map((client) => (
+                                  <CommandItem
+                                    key={client.id}
+                                    onSelect={() => {
+                                      const selected = field.value || []
+                                      const newSelection = selected.includes(
+                                        client.id!
+                                      )
+                                        ? selected.filter(
+                                            (id) => id !== client.id
+                                          )
+                                        : [...selected, client.id!]
+                                      field.onChange(newSelection)
+                                    }}
+                                  >
+                                    <Check
+                                      className={cn(
+                                        'mr-2 h-4 w-4',
+                                        field.value?.includes(client.id!)
+                                          ? 'opacity-100'
+                                          : 'opacity-0'
+                                      )}
+                                    />
+                                    {client.name}
+                                  </CommandItem>
+                                ))
+                              )}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    <div className='mt-2 flex flex-wrap gap-1'>
+                      {(clientIds || []).map((clientId: string) => (
+                        <Badge key={clientId} variant='secondary'>
+                          {getClientName(clientId)}
+                          <button
+                            type='button'
+                            className='ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2'
+                            onClick={() =>
+                              field.onChange(
+                                (clientIds || []).filter(
+                                  (id: string) => id !== clientId
+                                )
+                              )
+                            }
+                          >
+                            <X className='h-3 w-3 text-muted-foreground hover:text-foreground' />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
+          </FormItem>
+        )}
+      </div>
+    )
+  }
 
   return (
     <>
@@ -462,292 +731,13 @@ export default function StaffsPage() {
               <DialogContent className='sm:max-w-lg'>
                 <DialogHeader>
                   <DialogTitle>Adicionar Novo Membro da Equipe</DialogTitle>
-                  <DialogDescription>
-                    Preencha os detalhes para adicionar um novo membro à equipe.
-                  </DialogDescription>
                 </DialogHeader>
                 <Form {...form}>
                   <form
                     id='add-staff-form'
                     onSubmit={form.handleSubmit(onSubmit)}
-                    className='space-y-4 py-4'
                   >
-                    <div className='flex items-center gap-4'>
-                      <Avatar className='h-16 w-16'>
-                        <AvatarFallback>AV</AvatarFallback>
-                      </Avatar>
-                      <div className='flex-1 space-y-2'>
-                        <Label htmlFor='avatar-upload'>Avatar</Label>
-                        <Input
-                          id='avatar-upload'
-                          name='avatar-upload'
-                          type='file'
-                          className='text-sm'
-                        />
-                      </div>
-                    </div>
-
-                    <div className='grid grid-cols-3 gap-4'>
-                      <div className='col-span-2 space-y-2'>
-                        <FormField
-                          control={form.control}
-                          name='name'
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Nome</FormLabel>
-                              <FormControl>
-                                <Input {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <div className='col-span-1 space-y-2'>
-                        <Label htmlFor='code'>Código</Label>
-                        <Input
-                          id='code'
-                          name='code'
-                          value={`STF-${'####'}`}
-                          disabled
-                        />
-                      </div>
-                    </div>
-
-                    <div className='grid grid-cols-2 gap-4'>
-                      <FormField
-                        control={form.control}
-                        name='email'
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email</FormLabel>
-                            <FormControl>
-                              <Input type='email' {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name='phone'
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Telefone</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-
-                    <div className='grid grid-cols-2 gap-4'>
-                      <FormField
-                        control={form.control}
-                        name='perfilId'
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Perfil</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder='Selecione um perfil' />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {profiles?.map((profile) => (
-                                  <SelectItem
-                                    key={profile.id}
-                                    value={profile.id}
-                                  >
-                                    {profile.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name='assinatura'
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Assinatura (Credencial)</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder='Ex: Eng. Civil'
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    
-                    {form.watch('perfilId') === 'cliente' && (
-                      <FormField
-                        control={form.control}
-                        name='contractId'
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Empresa Cliente</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              value={field.value || ''}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder='Selecione a empresa do cliente' />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {clientsData?.map((client) => (
-                                  <SelectItem
-                                    key={client.id}
-                                    value={client.id!}
-                                  >
-                                    {client.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
-
-                    {form.watch('perfilId') !== 'cliente' && form.watch('perfilId') && (
-                      <FormField
-                        control={form.control}
-                        name='clientIds'
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Acesso a Clientes</FormLabel>
-                            <FormField
-                              control={form.control}
-                              name="allClients"
-                              render={({ field: allClientsField }) => (
-                                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 mb-4">
-                                  <FormControl>
-                                    <Checkbox
-                                      checked={allClientsField.value}
-                                      onCheckedChange={allClientsField.onChange}
-                                    />
-                                  </FormControl>
-                                  <div className="space-y-1 leading-none">
-                                    <FormLabel>
-                                      Conceder acesso a todas as empresas
-                                    </FormLabel>
-                                    <FormDescription>
-                                      O membro terá acesso a todos os clientes atuais e futuros.
-                                    </FormDescription>
-                                  </div>
-                                </FormItem>
-                              )}
-                            />
-
-                            {!form.watch('allClients') && (
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <FormControl>
-                                  <Button
-                                    variant='outline'
-                                    role='combobox'
-                                    className={cn(
-                                      'w-full justify-between font-normal',
-                                      !field.value?.length &&
-                                        'text-muted-foreground'
-                                    )}
-                                  >
-                                    Selecionar clientes...
-                                    <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
-                                  </Button>
-                                </FormControl>
-                              </PopoverTrigger>
-                              <PopoverContent className='w-[--radix-popover-trigger-width] p-0'>
-                                <Command>
-                                  <CommandInput placeholder='Buscar cliente...' />
-                                  <CommandEmpty>
-                                    Nenhum cliente encontrado.
-                                  </CommandEmpty>
-                                  <CommandList>
-                                    <CommandGroup>
-                                      {areClientsLoading ? (
-                                        <Loader2 className='mx-auto h-4 w-4 animate-spin' />
-                                      ) : (
-                                        clientsData?.map((client) => (
-                                          <CommandItem
-                                            key={client.id}
-                                            onSelect={() => {
-                                              const selected =
-                                                field.value || []
-                                              const newSelection =
-                                                selected.includes(client.id!)
-                                                  ? selected.filter(
-                                                      (id) => id !== client.id
-                                                    )
-                                                  : [...selected, client.id!]
-                                              field.onChange(newSelection)
-                                            }}
-                                          >
-                                            <Check
-                                              className={cn(
-                                                'mr-2 h-4 w-4',
-                                                field.value?.includes(
-                                                  client.id!
-                                                )
-                                                  ? 'opacity-100'
-                                                  : 'opacity-0'
-                                              )}
-                                            />
-                                            {client.name}
-                                          </CommandItem>
-                                        ))
-                                      )}
-                                    </CommandGroup>
-                                  </CommandList>
-                                </Command>
-                              </PopoverContent>
-                            </Popover>
-                            )}
-                            <div className='mt-2 flex flex-wrap gap-1'>
-                              {(form.watch('clientIds') || []).map(
-                                (clientId: string) => (
-                                  <Badge key={clientId} variant='secondary'>
-                                    {getClientName(clientId)}
-                                    <button
-                                      type='button'
-                                      className='ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2'
-                                      onClick={() =>
-                                        field.onChange(
-                                          (
-                                            form.watch('clientIds') || []
-                                          ).filter(
-                                            (id: string) => id !== clientId
-                                          )
-                                        )
-                                      }
-                                    >
-                                      <X className='h-3 w-3 text-muted-foreground hover:text-foreground' />
-                                    </button>
-                                  </Badge>
-                                )
-                              )}
-                            </div>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
+                    <StaffFormFields formInstance={form} />
                   </form>
                 </Form>
                 <DialogFooter>
@@ -808,7 +798,9 @@ export default function StaffsPage() {
                         <Badge variant='secondary'>
                           {getClientName(staff.contractId)}
                         </Badge>
-                      ) : (staff.clientIds === undefined || staff.clientIds.length === 0) ? (
+                      ) : staff.perfilId === 'super_admin' ||
+                        !staff.clientIds ||
+                        staff.clientIds.length === 0 ? (
                         <Badge>Todos</Badge>
                       ) : (
                         <div className='flex flex-wrap gap-1'>
@@ -851,6 +843,7 @@ export default function StaffsPage() {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => openEditDialog(staff)}
+                            disabled={staff.perfilId === 'super_admin'}
                           >
                             Editar
                           </DropdownMenuItem>
@@ -898,6 +891,7 @@ export default function StaffsPage() {
                           <DropdownMenuItem
                             className='text-destructive'
                             onClick={() => openDeleteDialog(staff)}
+                            disabled={staff.perfilId === 'super_admin'}
                           >
                             Excluir
                           </DropdownMenuItem>
@@ -912,293 +906,17 @@ export default function StaffsPage() {
         </CardContent>
       </Card>
 
-      {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className='sm:max-w-lg'>
           <DialogHeader>
             <DialogTitle>Editar Membro da Equipe</DialogTitle>
-            <DialogDescription>
-              Modifique os detalhes do membro da equipe.
-            </DialogDescription>
           </DialogHeader>
           <Form {...editForm}>
             <form
               id='edit-staff-form'
               onSubmit={editForm.handleSubmit(onEditSubmit)}
-              className='space-y-4 py-4'
             >
-              <div className='flex items-center gap-4'>
-                <Avatar className='h-16 w-16'>
-                  <AvatarImage src={currentStaff?.avatar} />
-                  <AvatarFallback>
-                    {currentStaff?.fallback || 'AV'}
-                  </AvatarFallback>
-                </Avatar>
-                <div className='flex-1 space-y-2'>
-                  <Label htmlFor='avatar-upload'>Avatar</Label>
-                  <Input
-                    id='avatar-upload'
-                    name='avatar-upload'
-                    type='file'
-                    className='text-sm'
-                    onChange={(e) => {
-                      if (e.target.files?.[0]) {
-                        const file = e.target.files[0];
-                        const reader = new FileReader();
-                        reader.onloadend = () => {
-                          editForm.setValue('avatar', reader.result as string);
-                        };
-                        reader.readAsDataURL(file);
-                      }
-                    }}
-                  />
-                </div>
-              </div>
-
-              <div className='grid grid-cols-3 gap-4'>
-                <div className='col-span-2 space-y-2'>
-                  <FormField
-                    control={editForm.control}
-                    name='name'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Nome</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-                <div className='col-span-1 space-y-2'>
-                  <Label htmlFor='code'>Código</Label>
-                  <Input
-                    id='code'
-                    name='code'
-                    value={currentStaff?.code || `STF-${'####'}`}
-                    disabled
-                  />
-                </div>
-              </div>
-
-              <div className='grid grid-cols-2 gap-4'>
-                <FormField
-                  control={editForm.control}
-                  name='email'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input type='email' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={editForm.control}
-                  name='phone'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Telefone</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className='grid grid-cols-2 gap-4'>
-                <FormField
-                  control={editForm.control}
-                  name='perfilId'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Perfil</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder='Selecione um perfil' />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {profiles?.map((profile) => (
-                            <SelectItem key={profile.id} value={profile.id}>
-                              {profile.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={editForm.control}
-                  name='assinatura'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Assinatura (Credencial)</FormLabel>
-                      <FormControl>
-                        <Input placeholder='Ex: Eng. Civil' {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              {editForm.watch('perfilId') === 'cliente' ? (
-                <FormField
-                  control={editForm.control}
-                  name='contractId'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Empresa Cliente</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value || ''}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder='Selecione a empresa do cliente' />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {clientsData?.map((client) => (
-                            <SelectItem key={client.id} value={client.id!}>
-                              {client.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              ) : (
-                editForm.watch('perfilId') && (
-                  <FormField
-                    control={editForm.control}
-                    name='clientIds'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Acesso a Clientes</FormLabel>
-                        <FormField
-                            control={editForm.control}
-                            name="allClients"
-                            render={({ field: allClientsField }) => (
-                              <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 mb-4">
-                                <FormControl>
-                                  <Checkbox
-                                    checked={allClientsField.value}
-                                    onCheckedChange={allClientsField.onChange}
-                                  />
-                                </FormControl>
-                                <div className="space-y-1 leading-none">
-                                  <FormLabel>
-                                    Conceder acesso a todas as empresas
-                                  </FormLabel>
-                                </div>
-                              </FormItem>
-                            )}
-                          />
-                        
-                        {!editForm.watch('allClients') && (
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant='outline'
-                                role='combobox'
-                                className={cn(
-                                  'w-full justify-between font-normal',
-                                  !field.value?.length &&
-                                    'text-muted-foreground'
-                                )}
-                              >
-                                Selecionar clientes...
-                                <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className='w-[--radix-popover-trigger-width] p-0'>
-                            <Command>
-                              <CommandInput placeholder='Buscar cliente...' />
-                              <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
-                              <CommandList>
-                                <CommandGroup>
-                                  {areClientsLoading ? (
-                                    <Loader2 className='mx-auto h-4 w-4 animate-spin' />
-                                  ) : (
-                                    clientsData?.map((client) => (
-                                      <CommandItem
-                                        key={client.id}
-                                        onSelect={() => {
-                                          const selected = field.value || []
-                                          const newSelection = selected.includes(
-                                            client.id!
-                                          )
-                                            ? selected.filter(
-                                                (id) => id !== client.id
-                                              )
-                                            : [...selected, client.id!]
-                                          field.onChange(newSelection)
-                                        }}
-                                      >
-                                        <Check
-                                          className={cn(
-                                            'mr-2 h-4 w-4',
-                                            field.value?.includes(client.id!)
-                                              ? 'opacity-100'
-                                              : 'opacity-0'
-                                          )}
-                                        />
-                                        {client.name}
-                                      </CommandItem>
-                                    ))
-                                  )}
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
-                        )}
-                        <div className='mt-2 flex flex-wrap gap-1'>
-                          {(editForm.watch('clientIds') || []).map(
-                            (clientId: string) => (
-                              <Badge key={clientId} variant='secondary'>
-                                {getClientName(clientId)}
-                                <button
-                                  type='button'
-                                  className='ml-1 rounded-full outline-none ring-offset-background focus:ring-2 focus:ring-ring focus:ring-offset-2'
-                                  onClick={() =>
-                                    field.onChange(
-                                      (
-                                        editForm.watch('clientIds') || []
-                                      ).filter(
-                                        (id: string) => id !== clientId
-                                      )
-                                    )
-                                  }
-                                >
-                                  <X className='h-3 w-3 text-muted-foreground hover:text-foreground' />
-                                </button>
-                              </Badge>
-                            )
-                          )}
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )
-              )}
+              <StaffFormFields formInstance={editForm} />
             </form>
           </Form>
           <DialogFooter>
@@ -1214,8 +932,6 @@ export default function StaffsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Detail Dialog */}
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
         <DialogContent>
           <DialogHeader>
@@ -1283,8 +999,6 @@ export default function StaffsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Delete Confirmation Dialog */}
       <AlertDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
