@@ -61,10 +61,12 @@ import {
   useMemoFirebase,
   addDocumentNonBlocking,
   useDoc,
+  updateDocumentNonBlocking,
 } from '@/firebase'
 import { collection, doc } from 'firebase/firestore'
 import { Loader2 } from 'lucide-react'
 import type { Client } from '../../data'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 
 export default function UnitsPage() {
   const params = useParams()
@@ -85,33 +87,39 @@ export default function UnitsPage() {
     [firestore, contractId]
   )
   const { data: client, isLoading: isClientLoading } = useDoc<Client>(clientRef)
-  const { data: units, isLoading: areUnitsLoading } = useCollection<Unit>(unitsRef)
+  const { data: units, isLoading: areUnitsLoading } =
+    useCollection<Unit>(unitsRef)
 
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [editingUnit, setEditingUnit] = useState<Unit | null>(null)
+  const [unitToDeactivate, setUnitToDeactivate] = useState<Unit | null>(null)
+  const [isDeactivateDialogOpen, setIsDeactivateDialogOpen] = useState(false)
+  
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string[]>(['Ativa'])
   const [formType, setFormType] = useState<UnitType>('Unidade')
   const [inheritData, setInheritData] = useState(false)
 
-  const resetFormState = () => {
-    setFormType('Unidade')
-    setInheritData(false)
+  const openFormDialog = (unit: Unit | null) => {
+    setEditingUnit(unit)
+    setFormType(unit?.type || 'Unidade')
+    setInheritData(false) // Reset inheritance
+    setIsFormOpen(true)
   }
 
-  useEffect(() => {
-    if (!isAddDialogOpen) {
-      resetFormState()
-    }
-  }, [isAddDialogOpen])
+  const openDeactivateDialog = (unit: Unit) => {
+    setUnitToDeactivate(unit)
+    setIsDeactivateDialogOpen(true)
+  }
 
-  const handleAddUnit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleFormSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!unitsRef) return
+    if (!unitsRef || !firestore) return
 
     const formData = new FormData(event.currentTarget)
     const unitType = formData.get('type') as UnitType
 
-    const newUnitData: Omit<Unit, 'id'> = {
+    const unitData: Omit<Unit, 'id' | 'status'> = {
       name: formData.get('name') as string,
       type: unitType,
       description: formData.get('description') as string,
@@ -142,16 +150,31 @@ export default function UnitsPage() {
       pgrResponsible: formData.get('pgrResponsible') as string,
       ltcatResponsible: formData.get('ltcatResponsible') as string,
       pcmsoResponsible: formData.get('pcmsoResponsible') as string,
-      status: 'Ativa',
     }
-    
-    addDocumentNonBlocking(unitsRef, newUnitData)
-    
+
+    if (editingUnit) {
+      const docRef = doc(firestore, unitsRef.path, editingUnit.id as string)
+      updateDocumentNonBlocking(docRef, unitData)
+      toast({ title: 'Sucesso!', description: 'Unidade atualizada.' })
+    } else {
+      addDocumentNonBlocking(unitsRef, { ...unitData, status: 'Ativa' })
+      toast({ title: 'Sucesso!', description: 'Unidade adicionada.' })
+    }
+
+    setIsFormOpen(false)
+    setEditingUnit(null)
+  }
+  
+  const handleDeactivateUnit = () => {
+    if (!unitToDeactivate || !firestore) return;
+    const docRef = doc(firestore, `clients/${contractId}/units`, unitToDeactivate.id as string);
+    updateDocumentNonBlocking(docRef, { status: 'Inativa' });
     toast({
-      title: 'Unidade Adicionada!',
-      description: `A unidade "${newUnitData.name}" foi adicionada com sucesso.`,
+      title: 'Unidade Desativada',
+      description: `A unidade "${unitToDeactivate.name}" foi marcada como inativa.`,
     })
-    setIsAddDialogOpen(false)
+    setIsDeactivateDialogOpen(false);
+    setUnitToDeactivate(null);
   }
 
   const filteredUnits = useMemo(() => {
@@ -165,278 +188,189 @@ export default function UnitsPage() {
       return matchesSearch && matchesStatus
     })
   }, [units, searchTerm, statusFilter])
-    
+
   const isLoading = isClientLoading || areUnitsLoading
 
+  const renderUnitForm = (unitToEdit?: Unit | null) => (
+     <ScrollArea className='h-[60vh] pr-6'>
+      <div className='grid gap-4 py-4'>
+        {!unitToEdit && (
+            <div className='flex items-center space-x-2 mb-4'>
+              <Checkbox
+                id='inherit'
+                checked={inheritData}
+                onCheckedChange={(checked) =>
+                  setInheritData(checked as boolean)
+                }
+              />
+              <Label htmlFor='inherit' className='cursor-pointer'>
+                Herdar dados da empresa principal
+              </Label>
+            </div>
+        )}
+
+        <div className='space-y-2'>
+          <Label htmlFor='type'>Tipo</Label>
+          <Select
+            name='type'
+            value={formType}
+            onValueChange={(value) => setFormType(value as UnitType)}
+            required
+          >
+            <SelectTrigger>
+              <SelectValue placeholder='Selecione o tipo' />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value='Unidade'>Unidade</SelectItem>
+              <SelectItem value='Obra'>Obra</SelectItem>
+              <SelectItem value='Contrato'>Contrato</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {formType === 'Obra' && (
+          <div className='space-y-2'>
+            <Label htmlFor='cno'>Número do CNO</Label>
+            <Input id='cno' name='cno' defaultValue={unitToEdit?.cno} />
+          </div>
+        )}
+
+        {formType === 'Contrato' && (
+          <fieldset className='grid gap-4 rounded-lg border p-4'>
+            <legend className='-ml-1 px-1 text-sm font-medium'>
+              Informações da Contratante
+            </legend>
+            <div className='space-y-2'>
+              <Label htmlFor='contractingName'>Razão Social</Label>
+              <Input id='contractingName' name='contractingName' defaultValue={unitToEdit?.contractingCompany?.name}/>
+            </div>
+            <div className='grid grid-cols-2 gap-4'>
+              <div className='space-y-2'>
+                <Label htmlFor='contractingCnpj'>CNPJ</Label>
+                <Input id='contractingCnpj' name='contractingCnpj' defaultValue={unitToEdit?.contractingCompany?.cnpj}/>
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='contractingCnae'>CNAE</Label>
+                <Input id='contractingCnae' name='contractingCnae' defaultValue={unitToEdit?.contractingCompany?.cnae}/>
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='contractingRiskLevel'>Grau de Risco</Label>
+                <Input
+                  id='contractingRiskLevel'
+                  name='contractingRiskLevel'
+                  defaultValue={unitToEdit?.contractingCompany?.riskLevel}
+                />
+              </div>
+            </div>
+          </fieldset>
+        )}
+
+        <div className='space-y-2'>
+          <Label htmlFor='name'>Nome</Label>
+          <Input id='name' name='name' defaultValue={unitToEdit?.name} required />
+        </div>
+        <div className='space-y-2'>
+          <Label htmlFor='description'>Descrição</Label>
+          <Textarea id='description' name='description' defaultValue={unitToEdit?.description} />
+        </div>
+
+        <fieldset className='grid gap-4 rounded-lg border p-4'>
+          <legend className='-ml-1 px-1 text-sm font-medium'>
+            Informações Gerais
+          </legend>
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div className='space-y-2'>
+              <Label htmlFor='cnpj'>CNPJ</Label>
+              <Input id='cnpj' name='cnpj' defaultValue={inheritData ? client?.cnpj : unitToEdit?.cnpj} />
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='cnae'>CNAE</Label>
+              <Input id='cnae' name='cnae' defaultValue={inheritData ? client?.cnae : unitToEdit?.cnae}/>
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='riskLevel'>Grau de Risco</Label>
+              <Input id='riskLevel' name='riskLevel' defaultValue={inheritData ? client?.riskLevel : unitToEdit?.riskLevel}/>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset className='grid gap-4 rounded-lg border p-4'>
+          <legend className='-ml-1 px-1 text-sm font-medium'>
+            Informações do Imóvel
+          </legend>
+          <div className='space-y-2'>
+            <Label htmlFor='add-address'>Endereço Completo</Label>
+            <Input id='add-address' name='add-address' defaultValue={inheritData ? client?.address : unitToEdit?.propertyInfo.address} required />
+          </div>
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div className='space-y-2'>
+              <Label htmlFor='add-zipCode'>CEP</Label>
+              <Input id='add-zipCode' name='add-zipCode' defaultValue={unitToEdit?.propertyInfo.zipCode}/>
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='add-neighborhood'>Bairro</Label>
+              <Input id='add-neighborhood' name='add-neighborhood' defaultValue={unitToEdit?.propertyInfo.neighborhood}/>
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='add-city'>Cidade</Label>
+              <Input id='add-city' name='add-city' defaultValue={unitToEdit?.propertyInfo.city}/>
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='add-state'>Estado</Label>
+              <Input id='add-state' name='add-state' defaultValue={unitToEdit?.propertyInfo.state}/>
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='add-country'>País</Label>
+              <Input id='add-country' name='add-country' defaultValue={unitToEdit?.propertyInfo.country || 'Brasil'}/>
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='add-totalArea'>Área Total</Label>
+              <Input id='add-totalArea' name='add-totalArea' defaultValue={unitToEdit?.propertyInfo.totalArea}/>
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='add-builtArea'>Área Construída</Label>
+              <Input id='add-builtArea' name='add-builtArea' defaultValue={unitToEdit?.propertyInfo.builtArea}/>
+            </div>
+          </div>
+        </fieldset>
+
+        <div className='space-y-4 pt-4 border-t'>
+          <h3 className='font-medium text-lg'>Responsáveis</h3>
+          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div className='space-y-2'>
+              <Label htmlFor='legalResponsible'>Responsável Legal</Label>
+              <Input id='legalResponsible' name='legalResponsible' defaultValue={unitToEdit?.legalResponsible}/>
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='pgrResponsible'>Responsável pelo PGR</Label>
+              <Input id='pgrResponsible' name='pgrResponsible' defaultValue={unitToEdit?.pgrResponsible}/>
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='ltcatResponsible'>Responsável pelo LTCAT</Label>
+              <Input id='ltcatResponsible' name='ltcatResponsible' defaultValue={unitToEdit?.ltcatResponsible}/>
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='pcmsoResponsible'>Responsável pelo PCMSO</Label>
+              <Input id='pcmsoResponsible' name='pcmsoResponsible' defaultValue={unitToEdit?.pcmsoResponsible}/>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ScrollArea>
+  )
+  
   return (
     <>
       <Card>
         <CardHeader>
           <CardTitle className='flex items-center justify-between'>
             Mapa de Unidades
-            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size='sm' className='h-8 gap-1'>
-                  <PlusCircle className='h-3.5 w-3.5' />
-                  <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
-                    Adicionar
-                  </span>
-                </Button>
-              </DialogTrigger>
-              <DialogContent className='sm:max-w-2xl'>
-                <DialogHeader>
-                  <DialogTitle>
-                    Adicionar Nova Unidade/Obra/Contrato
-                  </DialogTitle>
-                  <DialogDescription>
-                    Preencha os detalhes da nova estrutura.
-                  </DialogDescription>
-                </DialogHeader>
-                <form id='add-unit-form' onSubmit={handleAddUnit}>
-                  <ScrollArea className='h-[60vh] pr-6'>
-                    <div className='grid gap-4 py-4'>
-                      <div className='flex items-center space-x-2 mb-4'>
-                        <Checkbox
-                          id='inherit'
-                          checked={inheritData}
-                          onCheckedChange={(checked) =>
-                            setInheritData(checked as boolean)
-                          }
-                        />
-                        <Label htmlFor='inherit' className='cursor-pointer'>
-                          Herdar dados da empresa principal
-                        </Label>
-                      </div>
-
-                      <div className='space-y-2'>
-                        <Label htmlFor='type'>Tipo</Label>
-                        <Select
-                          name='type'
-                          value={formType}
-                          onValueChange={(value) =>
-                            setFormType(value as UnitType)
-                          }
-                          required
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder='Selecione o tipo' />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value='Unidade'>Unidade</SelectItem>
-                            <SelectItem value='Obra'>Obra</SelectItem>
-                            <SelectItem value='Contrato'>Contrato</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {formType === 'Obra' && (
-                        <div className='space-y-2'>
-                          <Label htmlFor='cno'>Número do CNO</Label>
-                          <Input id='cno' name='cno' />
-                        </div>
-                      )}
-
-                      {formType === 'Contrato' && (
-                        <fieldset className='grid gap-4 rounded-lg border p-4'>
-                          <legend className='-ml-1 px-1 text-sm font-medium'>
-                            Informações da Contratante
-                          </legend>
-                          <div className='space-y-2'>
-                            <Label htmlFor='contractingName'>
-                              Razão Social
-                            </Label>
-                            <Input
-                              id='contractingName'
-                              name='contractingName'
-                            />
-                          </div>
-                          <div className='grid grid-cols-2 gap-4'>
-                            <div className='space-y-2'>
-                              <Label htmlFor='contractingCnpj'>CNPJ</Label>
-                              <Input
-                                id='contractingCnpj'
-                                name='contractingCnpj'
-                              />
-                            </div>
-                            <div className='space-y-2'>
-                              <Label htmlFor='contractingCnae'>CNAE</Label>
-                              <Input
-                                id='contractingCnae'
-                                name='contractingCnae'
-                              />
-                            </div>
-                            <div className='space-y-2'>
-                              <Label htmlFor='contractingRiskLevel'>
-                                Grau de Risco
-                              </Label>
-                              <Input
-                                id='contractingRiskLevel'
-                                name='contractingRiskLevel'
-                              />
-                            </div>
-                          </div>
-                        </fieldset>
-                      )}
-
-                      <div className='space-y-2'>
-                        <Label htmlFor='name'>Nome</Label>
-                        <Input id='name' name='name' required />
-                      </div>
-                      <div className='space-y-2'>
-                        <Label htmlFor='description'>Descrição</Label>
-                        <Textarea id='description' name='description' />
-                      </div>
-
-                      <fieldset className='grid gap-4 rounded-lg border p-4'>
-                        <legend className='-ml-1 px-1 text-sm font-medium'>
-                          Informações Gerais
-                        </legend>
-                        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                          <div className='space-y-2'>
-                            <Label htmlFor='cnpj'>CNPJ</Label>
-                            <Input
-                              id='cnpj'
-                              name='cnpj'
-                              defaultValue={inheritData ? client?.cnpj : ''}
-                            />
-                          </div>
-                          <div className='space-y-2'>
-                            <Label htmlFor='cnae'>CNAE</Label>
-                            <Input
-                              id='cnae'
-                              name='cnae'
-                              defaultValue={inheritData ? client?.cnae : ''}
-                            />
-                          </div>
-                          <div className='space-y-2'>
-                            <Label htmlFor='riskLevel'>Grau de Risco</Label>
-                            <Input
-                              id='riskLevel'
-                              name='riskLevel'
-                              defaultValue={
-                                inheritData ? client?.riskLevel : ''
-                              }
-                            />
-                          </div>
-                        </div>
-                      </fieldset>
-
-                      {/* Property Info */}
-                      <fieldset className='grid gap-4 rounded-lg border p-4'>
-                        <legend className='-ml-1 px-1 text-sm font-medium'>
-                          Informações do Imóvel
-                        </legend>
-                        <div className='space-y-2'>
-                          <Label htmlFor='add-address'>
-                            Endereço Completo
-                          </Label>
-                          <Input
-                            id='add-address'
-                            name='add-address'
-                            defaultValue={
-                              inheritData ? client?.address : ''
-                            }
-                            required
-                          />
-                        </div>
-                        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                          <div className='space-y-2'>
-                            <Label htmlFor='add-zipCode'>CEP</Label>
-                            <Input id='add-zipCode' name='add-zipCode' />
-                          </div>
-                          <div className='space-y-2'>
-                            <Label htmlFor='add-neighborhood'>Bairro</Label>
-                            <Input
-                              id='add-neighborhood'
-                              name='add-neighborhood'
-                            />
-                          </div>
-                          <div className='space-y-2'>
-                            <Label htmlFor='add-city'>Cidade</Label>
-                            <Input id='add-city' name='add-city' />
-                          </div>
-                          <div className='space-y-2'>
-                            <Label htmlFor='add-state'>Estado</Label>
-                            <Input id='add-state' name='add-state' />
-                          </div>
-                          <div className='space-y-2'>
-                            <Label htmlFor='add-country'>País</Label>
-                            <Input
-                              id='add-country'
-                              name='add-country'
-                              defaultValue='Brasil'
-                            />
-                          </div>
-                          <div className='space-y-2'>
-                            <Label htmlFor='add-totalArea'>Área Total</Label>
-                            <Input id='add-totalArea' name='add-totalArea' />
-                          </div>
-                          <div className='space-y-2'>
-                            <Label htmlFor='add-builtArea'>
-                              Área Construída
-                            </Label>
-                            <Input id='add-builtArea' name='add-builtArea' />
-                          </div>
-                        </div>
-                      </fieldset>
-
-                      <div className='space-y-4 pt-4 border-t'>
-                        <h3 className='font-medium text-lg'>Responsáveis</h3>
-                        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                          <div className='space-y-2'>
-                            <Label htmlFor='legalResponsible'>
-                              Responsável Legal
-                            </Label>
-                            <Input
-                              id='legalResponsible'
-                              name='legalResponsible'
-                            />
-                          </div>
-                          <div className='space-y-2'>
-                            <Label htmlFor='pgrResponsible'>
-                              Responsável pelo PGR
-                            </Label>
-                            <Input
-                              id='pgrResponsible'
-                              name='pgrResponsible'
-                            />
-                          </div>
-                          <div className='space-y-2'>
-                            <Label htmlFor='ltcatResponsible'>
-                              Responsável pelo LTCAT
-                            </Label>
-                            <Input
-                              id='ltcatResponsible'
-                              name='ltcatResponsible'
-                            />
-                          </div>
-                          <div className='space-y-2'>
-                            <Label htmlFor='pcmsoResponsible'>
-                              Responsável pelo PCMSO
-                            </Label>
-                            <Input
-                              id='pcmsoResponsible'
-                              name='pcmsoResponsible'
-                            />
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </ScrollArea>
-                </form>
-                <DialogFooter>
-                  <Button
-                    variant='outline'
-                    onClick={() => setIsAddDialogOpen(false)}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button type='submit' form='add-unit-form'>
-                    Salvar
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+             <Button size='sm' className='h-8 gap-1' onClick={() => openFormDialog(null)}>
+              <PlusCircle className='h-3.5 w-3.5' />
+              <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
+                Adicionar
+              </span>
+            </Button>
           </CardTitle>
           <CardDescription>
             Visualize e gerencie as unidades, obras e contratos ativos do cliente.
@@ -452,20 +386,33 @@ export default function UnitsPage() {
               {filteredUnits.map((unit) => (
                 <Card
                   key={unit.id}
-                  className='flex flex-col h-full hover:shadow-md transition-shadow cursor-pointer'
-                   onClick={() =>
-                    router.push(
-                      `/dashboard/clients/${contractId}/units/${unit.id}`
-                    )
-                  }
+                  className='flex flex-col h-full hover:shadow-md transition-shadow'
                 >
                   <CardHeader>
-                    <div className='flex justify-between items-start'>
-                      <CardTitle className='text-lg'>{unit.name}</CardTitle>
-                      <Badge variant='outline'>{unit.type}</Badge>
+                     <div className='flex justify-between items-start'>
+                       <Link href={`/dashboard/clients/${contractId}/units/${unit.id}`}>
+                        <CardTitle className='text-lg cursor-pointer hover:underline'>{unit.name}</CardTitle>
+                      </Link>
+                       <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              aria-haspopup='true'
+                              size='icon'
+                              variant='ghost'
+                            >
+                              <MoreHorizontal className='h-4 w-4' />
+                              <span className='sr-only'>Alternar menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align='end'>
+                            <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                            <DropdownMenuItem onSelect={() => openFormDialog(unit)}>Editar</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => openDeactivateDialog(unit)}>Desativar</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                     <CardDescription>
-                      {unit.propertyInfo.address}
+                      <Badge variant={unit.status === 'Ativa' ? 'secondary' : 'outline'}>{unit.status}</Badge> <Badge variant="outline">{unit.type}</Badge>
                     </CardDescription>
                   </CardHeader>
                   <CardContent className='flex-grow'>
@@ -478,12 +425,11 @@ export default function UnitsPage() {
                       asChild
                       variant='outline'
                       className='w-full'
-                      onClick={(e) => e.stopPropagation()}
                     >
                       <Link
                         href={`/dashboard/clients/${contractId}/sectors?unitId=${unit.id}`}
                       >
-                        Setores <ArrowRight className='ml-2 h-4 w-4' />
+                        Ver Setores <ArrowRight className='ml-2 h-4 w-4' />
                       </Link>
                     </Button>
                   </CardFooter>
@@ -501,7 +447,7 @@ export default function UnitsPage() {
                 </p>
                 <Button
                   className='mt-4'
-                  onClick={() => setIsAddDialogOpen(true)}
+                  onClick={() => openFormDialog(null)}
                 >
                   Adicionar Unidade
                 </Button>
@@ -510,6 +456,41 @@ export default function UnitsPage() {
           )}
         </CardContent>
       </Card>
+       <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+        <DialogContent className='sm:max-w-2xl'>
+          <DialogHeader>
+            <DialogTitle>{editingUnit ? 'Editar' : 'Adicionar'} Unidade</DialogTitle>
+            <DialogDescription>
+             {editingUnit ? 'Atualize os detalhes' : 'Preencha os detalhes'} da estrutura.
+            </DialogDescription>
+          </DialogHeader>
+          <form id='unit-form' onSubmit={handleFormSubmit}>
+            {renderUnitForm(editingUnit)}
+          </form>
+          <DialogFooter>
+            <Button variant='outline' onClick={() => setIsFormOpen(false)}>
+              Cancelar
+            </Button>
+            <Button type='submit' form='unit-form'>
+              {editingUnit ? 'Salvar Alterações' : 'Salvar Unidade'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <AlertDialog open={isDeactivateDialogOpen} onOpenChange={setIsDeactivateDialogOpen}>
+          <AlertDialogContent>
+              <AlertDialogHeader>
+                  <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                      Esta ação marcará a unidade &quot;{unitToDeactivate?.name}&quot; como Inativa.
+                  </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                  <AlertDialogCancel onClick={() => setUnitToDeactivate(null)}>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeactivateUnit}>Confirmar Desativação</AlertDialogAction>
+              </AlertDialogFooter>
+          </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }
