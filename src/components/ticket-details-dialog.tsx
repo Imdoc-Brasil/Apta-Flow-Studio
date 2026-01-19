@@ -176,15 +176,16 @@ function AddAttachmentDialog({
 }
 
 function AddChecklistDialog({
-  ticketId,
+  ticket,
   children,
 }: {
-  ticketId: string
+  ticket: Ticket
   children: React.ReactNode
 }) {
   const [open, setOpen] = useState(false)
   const { toast } = useToast()
   const firestore = useFirestore()
+  const { user } = useUser()
   const { data: staffs } = useCollection<Staff>(
     useMemoFirebase(
       () => (firestore ? collection(firestore, 'staffs') : null),
@@ -194,16 +195,37 @@ function AddChecklistDialog({
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (!firestore || !ticketId) return
+    if (!firestore || !ticket.id || !user) return
+
     const formData = new FormData(e.currentTarget)
     const title = formData.get('title') as string
 
-    // Real logic to update firestore would go here
+    if (!title) {
+      toast({
+        variant: 'destructive',
+        title: 'O título é obrigatório.',
+      })
+      return
+    }
+    
+    const staffProfile = staffs?.find((s) => s.email === user.email);
 
-    toast({
-      title: 'Checklist Adicionado!',
-      description: `O checklist "${title}" foi adicionado ao ticket.`,
+    const newChecklist: Checklist = {
+      id: `cl-${Date.now()}`,
+      title,
+      items: [],
+      creator: staffProfile?.name || user.displayName || "Usuário",
+      creatorAvatar: staffProfile?.avatar,
+      creatorFallback: staffProfile?.fallback,
+      createdAt: new Date().toISOString(),
+    }
+
+    const ticketDocRef = doc(firestore, 'tickets', ticket.id)
+    updateDocumentNonBlocking(ticketDocRef, {
+      checklists: [...(ticket.checklists || []), newChecklist],
     })
+
+    toast({ title: 'Checklist Adicionado!' })
     setOpen(false)
   }
 
@@ -214,12 +236,21 @@ function AddChecklistDialog({
         <DialogHeader>
           <DialogTitle>Adicionar Novo Checklist</DialogTitle>
           <DialogDescription>
-            Crie um novo checklist para detalhar as tarefas deste ticket.
+            Crie uma nova lista de tarefas para este ticket.
           </DialogDescription>
         </DialogHeader>
         <form id='add-checklist-form' onSubmit={handleSubmit}>
           <div className='grid gap-4 py-4'>
-            {/* Form fields for checklist */}
+            <div className='space-y-2'>
+              <Label htmlFor='title'>Título do Checklist</Label>
+              <Input
+                id='title'
+                name='title'
+                placeholder='Ex: Etapas de Verificação'
+                required
+                autoFocus
+              />
+            </div>
           </div>
           <DialogFooter>
             <Button variant='outline' onClick={() => setOpen(false)}>
@@ -237,26 +268,41 @@ function AddChecklistDialog({
 
 function AddChecklistItemForm({
   checklistId,
-  ticketId,
+  ticket,
 }: {
   checklistId: string
-  ticketId: string
+  ticket: Ticket
 }) {
   const { toast } = useToast()
   const [showForm, setShowForm] = useState(false)
   const firestore = useFirestore()
-  const { data: staffs } = useCollection<Staff>(
-    useMemoFirebase(
-      () => (firestore ? collection(firestore, 'staffs') : null),
-      [firestore]
-    )
-  )
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    // Firestore logic to add item
+    if (!firestore || !ticket.id) return
+
+    const formData = new FormData(e.currentTarget)
+    const text = formData.get('item-text') as string
+    if (!text) return
+
+    const newItem: ChecklistItem = {
+      id: `item-${Date.now()}`,
+      text,
+      completed: false,
+    }
+
+    const ticketDocRef = doc(firestore, 'tickets', ticket.id)
+    const updatedChecklists = ticket.checklists?.map((cl) => {
+      if (cl.id === checklistId) {
+        return { ...cl, items: [...cl.items, newItem] }
+      }
+      return cl
+    })
+
+    updateDocumentNonBlocking(ticketDocRef, { checklists: updatedChecklists })
+
     toast({ title: 'Tarefa adicionada!' })
-    setShowForm(false)
+    e.currentTarget.reset()
   }
 
   if (!showForm) {
@@ -265,7 +311,7 @@ function AddChecklistItemForm({
         variant='ghost'
         size='sm'
         onClick={() => setShowForm(true)}
-        className='mt-2 justify-start p-1 h-auto'
+        className='mt-2 justify-start p-1 h-auto text-muted-foreground'
       >
         <Plus className='h-4 w-4 mr-2' />
         Adicionar uma tarefa
@@ -275,7 +321,26 @@ function AddChecklistItemForm({
 
   return (
     <form onSubmit={handleSubmit} className='mt-2 space-y-2'>
-      {/* Form fields for checklist item */}
+      <Textarea
+        name='item-text'
+        placeholder='Adicionar uma tarefa...'
+        rows={2}
+        autoFocus
+        required
+      />
+      <div className='flex items-center gap-2'>
+        <Button type='submit' size='sm'>
+          Adicionar
+        </Button>
+        <Button
+          type='button'
+          variant='ghost'
+          size='sm'
+          onClick={() => setShowForm(false)}
+        >
+          Cancelar
+        </Button>
+      </div>
     </form>
   )
 }
@@ -325,8 +390,10 @@ export function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
     itemId: string,
     completed: boolean
   ) => {
-    if (!firestore || !ticket.id) return
+    if (!firestore || !ticket.id || !user) return
     const ticketDocRef = doc(firestore, 'tickets', ticket.id)
+    const staffProfile = staffs?.find((s) => s.email === user.email);
+
     const updatedChecklists = ticket.checklists?.map((cl) => {
       if (cl.id === checklistId) {
         return {
@@ -336,7 +403,7 @@ export function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
               ? {
                 ...item,
                 completed,
-                completedBy: completed ? user?.displayName : undefined,
+                completedBy: completed ? (staffProfile?.name || user?.displayName) : undefined,
                 completedAt: completed
                   ? new Date().toISOString()
                   : undefined,
@@ -534,19 +601,20 @@ export function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                     <div className='flex items-center justify-between'>
                       <div className='flex items-center gap-2'>
                         <CheckSquare className='h-5 w-5 text-muted-foreground' />
-                        <Avatar className='h-6 w-6'>
-                          <AvatarImage src={checklist.creatorAvatar} />
-                          <AvatarFallback>
-                            {checklist.creatorFallback}
-                          </AvatarFallback>
-                        </Avatar>
                         <h3 className='font-semibold'>{checklist.title}</h3>
                       </div>
-                      <p className='text-xs text-muted-foreground'>
-                        <TimeAgo dateString={checklist.createdAt} />
-                      </p>
+                      <div className='flex items-center gap-2'>
+                         <p className='text-xs font-semibold text-muted-foreground'>
+                            {Math.round(progress)}%
+                         </p>
+                         <Avatar className='h-6 w-6'>
+                            <AvatarImage src={checklist.creatorAvatar} />
+                            <AvatarFallback>
+                                {checklist.creatorFallback}
+                            </AvatarFallback>
+                         </Avatar>
+                      </div>
                     </div>
-
                     <div className='ml-7 space-y-2'>
                       <Progress value={progress} className='h-2' />
                       {checklist.items.map((item) => {
@@ -623,7 +691,7 @@ export function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                       })}
                       <AddChecklistItemForm
                         checklistId={checklist.id}
-                        ticketId={ticket.id}
+                        ticket={ticket}
                       />
                     </div>
                   </div>
@@ -631,35 +699,6 @@ export function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
               })}
             </div>
           )}
-
-          <div className='space-y-4 pl-7'>
-            <div className='space-y-2'>
-              <div className='flex items-center gap-2'>
-                <Flag className='h-5 w-5 text-muted-foreground' />
-                <h3 className='font-semibold'>Prioridade</h3>
-              </div>
-              <Badge
-                variant={
-                  ticket.priority === 'Alta'
-                    ? 'destructive'
-                    : ticket.priority === 'Média'
-                      ? 'default'
-                      : 'secondary'
-                }
-              >
-                {ticket.priority}
-              </Badge>
-            </div>
-            <div className='space-y-2'>
-              <div className='flex items-center gap-2'>
-                <Clock className='h-5 w-5 text-muted-foreground' />
-                <h3 className='font-semibold'>Aberto</h3>
-              </div>
-              <p className='text-sm'>
-                <TimeAgo dateString={ticket.createdAt} />
-              </p>
-            </div>
-          </div>
         </div>
 
         <div className='col-span-1 flex flex-col'>
@@ -755,7 +794,29 @@ export function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                     </div>
                     <Separator />
                     <div className='flex flex-col gap-2'>
-                      {/* This should map availableLabels, not an empty array */}
+                      {availableLabels.map((label) => {
+                        const isChecked = ticket.labels?.some(
+                          (l) => l.id === label.id
+                        )
+                        return (
+                          <Label
+                            key={label.id}
+                            className='flex items-center gap-2 font-normal'
+                          >
+                            <Checkbox
+                              checked={isChecked}
+                              onCheckedChange={(checked) =>
+                                handleLabelChange(label.id, !!checked)
+                              }
+                            />
+                            <span
+                              className={`px-2 py-0.5 text-xs rounded-full text-white ${label.color}`}
+                            >
+                              {label.name}
+                            </span>
+                          </Label>
+                        )
+                      })}
                     </div>
                   </div>
                 </PopoverContent>
@@ -779,7 +840,7 @@ export function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                   Comentário
                 </Button>
               </AddTextElementDialog>
-              <AddChecklistDialog ticketId={ticket.id}>
+              <AddChecklistDialog ticket={ticket}>
                 <Button variant='secondary' className='justify-start'>
                   <CheckSquare className='mr-2 h-4 w-4' /> Checklist
                 </Button>
