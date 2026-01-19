@@ -36,6 +36,7 @@ import {
 } from '@/components/ui/popover'
 import {
   Dialog,
+  DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -123,7 +124,7 @@ function AddAttachmentDialog({
     })
     setOpen(false)
     setFile(null)
-    ;(e.currentTarget as HTMLFormElement).reset()
+      ; (e.currentTarget as HTMLFormElement).reset()
   }
 
   return (
@@ -173,110 +174,110 @@ function AddAttachmentDialog({
 }
 
 function AddChecklistDialog({
-    ticketId,
-    children,
-  }: {
-    ticketId: string
-    children: React.ReactNode
-  }) {
-    const [open, setOpen] = useState(false)
-    const { toast } = useToast()
-    const firestore = useFirestore()
-    const { data: staffs } = useCollection<Staff>(
-      useMemoFirebase(
-        () => (firestore ? collection(firestore, 'staffs') : null),
-        [firestore]
-      )
+  ticketId,
+  children,
+}: {
+  ticketId: string
+  children: React.ReactNode
+}) {
+  const [open, setOpen] = useState(false)
+  const { toast } = useToast()
+  const firestore = useFirestore()
+  const { data: staffs } = useCollection<Staff>(
+    useMemoFirebase(
+      () => (firestore ? collection(firestore, 'staffs') : null),
+      [firestore]
     )
-  
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault()
-      if (!firestore || !ticketId) return
-      const formData = new FormData(e.currentTarget)
-      const title = formData.get('title') as string
-  
-      // Real logic to update firestore would go here
-  
-      toast({
-        title: 'Checklist Adicionado!',
-        description: `O checklist "${title}" foi adicionado ao ticket.`,
-      })
-      setOpen(false)
-    }
-  
+  )
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    if (!firestore || !ticketId) return
+    const formData = new FormData(e.currentTarget)
+    const title = formData.get('title') as string
+
+    // Real logic to update firestore would go here
+
+    toast({
+      title: 'Checklist Adicionado!',
+      description: `O checklist "${title}" foi adicionado ao ticket.`,
+    })
+    setOpen(false)
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Adicionar Novo Checklist</DialogTitle>
+          <DialogDescription>
+            Crie um novo checklist para detalhar as tarefas deste ticket.
+          </DialogDescription>
+        </DialogHeader>
+        <form id='add-checklist-form' onSubmit={handleSubmit}>
+          <div className='grid gap-4 py-4'>
+            {/* Form fields for checklist */}
+          </div>
+          <DialogFooter>
+            <Button variant='outline' onClick={() => setOpen(false)}>
+              Cancelar
+            </Button>
+            <Button type='submit' form='add-checklist-form'>
+              Adicionar
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function AddChecklistItemForm({
+  checklistId,
+  ticketId,
+}: {
+  checklistId: string
+  ticketId: string
+}) {
+  const { toast } = useToast()
+  const [showForm, setShowForm] = useState(false)
+  const firestore = useFirestore()
+  const { data: staffs } = useCollection<Staff>(
+    useMemoFirebase(
+      () => (firestore ? collection(firestore, 'staffs') : null),
+      [firestore]
+    )
+  )
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    // Firestore logic to add item
+    toast({ title: 'Tarefa adicionada!' })
+    setShowForm(false)
+  }
+
+  if (!showForm) {
     return (
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>{children}</DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Adicionar Novo Checklist</DialogTitle>
-            <DialogDescription>
-              Crie um novo checklist para detalhar as tarefas deste ticket.
-            </DialogDescription>
-          </DialogHeader>
-          <form id='add-checklist-form' onSubmit={handleSubmit}>
-            <div className='grid gap-4 py-4'>
-              {/* Form fields for checklist */}
-            </div>
-            <DialogFooter>
-              <Button variant='outline' onClick={() => setOpen(false)}>
-                Cancelar
-              </Button>
-              <Button type='submit' form='add-checklist-form'>
-                Adicionar
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      <Button
+        variant='ghost'
+        size='sm'
+        onClick={() => setShowForm(true)}
+        className='mt-2 justify-start p-1 h-auto'
+      >
+        <Plus className='h-4 w-4 mr-2' />
+        Adicionar uma tarefa
+      </Button>
     )
   }
-  
-  function AddChecklistItemForm({
-    checklistId,
-    ticketId,
-  }: {
-    checklistId: string
-    ticketId: string
-  }) {
-    const { toast } = useToast()
-    const [showForm, setShowForm] = useState(false)
-    const firestore = useFirestore()
-    const { data: staffs } = useCollection<Staff>(
-      useMemoFirebase(
-        () => (firestore ? collection(firestore, 'staffs') : null),
-        [firestore]
-      )
-    )
-  
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault()
-      // Firestore logic to add item
-      toast({ title: 'Tarefa adicionada!' })
-      setShowForm(false)
-    }
-  
-    if (!showForm) {
-      return (
-        <Button
-          variant='ghost'
-          size='sm'
-          onClick={() => setShowForm(true)}
-          className='mt-2 justify-start p-1 h-auto'
-        >
-          <Plus className='h-4 w-4 mr-2' />
-          Adicionar uma tarefa
-        </Button>
-      )
-    }
-  
-    return (
-      <form onSubmit={handleSubmit} className='mt-2 space-y-2'>
-        {/* Form fields for checklist item */}
-      </form>
-    )
-  }
-  
+
+  return (
+    <form onSubmit={handleSubmit} className='mt-2 space-y-2'>
+      {/* Form fields for checklist item */}
+    </form>
+  )
+}
+
 
 export function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
   const { toast } = useToast()
@@ -308,10 +309,10 @@ export function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
 
     const newLabels = checked
       ? [
-          ...(ticket.labels || []),
-          // @ts-ignore
-          availableLabels.find((l) => l.id === labelId)!,
-        ]
+        ...(ticket.labels || []),
+        // @ts-ignore
+        availableLabels.find((l) => l.id === labelId)!,
+      ]
       : ticket.labels?.filter((l) => l.id !== labelId)
 
     updateDocumentNonBlocking(ticketDocRef, { labels: newLabels || [] })
@@ -331,13 +332,13 @@ export function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
           items: cl.items.map((item) =>
             item.id === itemId
               ? {
-                  ...item,
-                  completed,
-                  completedBy: completed ? user?.displayName : undefined,
-                  completedAt: completed
-                    ? new Date().toISOString()
-                    : undefined,
-                }
+                ...item,
+                completed,
+                completedBy: completed ? user?.displayName : undefined,
+                completedAt: completed
+                  ? new Date().toISOString()
+                  : undefined,
+              }
               : item
           ),
         }
@@ -382,7 +383,7 @@ export function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
     updateDocumentNonBlocking(ticketDocRef, {
       textElements: [...(ticket.textElements || []), newElement],
     })
-    ;(e.target as HTMLFormElement).reset()
+      ; (e.target as HTMLFormElement).reset()
   }
 
   function AddTextElementDialog({
@@ -561,18 +562,17 @@ export function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                             <div className='grid gap-1 text-sm flex-1'>
                               <label
                                 htmlFor={`item-${item.id}`}
-                                className={`font-medium ${
-                                  item.completed
+                                className={`font-medium ${item.completed
                                     ? 'line-through text-muted-foreground'
                                     : ''
-                                }`}
+                                  }`}
                               >
                                 {item.text}
                               </label>
                               <div className='text-xs text-muted-foreground flex items-center gap-2 flex-wrap'>
                                 {item.completed &&
-                                item.completedBy &&
-                                item.completedAt ? (
+                                  item.completedBy &&
+                                  item.completedAt ? (
                                   <span>
                                     Concluído por {item.completedBy}{' '}
                                     <TimeAgo dateString={item.completedAt} />
@@ -631,8 +631,8 @@ export function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                   ticket.priority === 'Alta'
                     ? 'destructive'
                     : ticket.priority === 'Média'
-                    ? 'default'
-                    : 'secondary'
+                      ? 'default'
+                      : 'secondary'
                 }
               >
                 {ticket.priority}

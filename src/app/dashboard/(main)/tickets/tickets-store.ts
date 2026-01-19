@@ -14,6 +14,18 @@ import {
   kanbanColumns,
 } from './data'
 
+// Re-export types and constants for backward compatibility
+export type {
+  Ticket,
+  TicketStatus,
+  Checklist,
+  ChecklistItem,
+  TextElement,
+  Attachment,
+  Label,
+}
+export { availableLabels, kanbanColumns }
+
 type NewTicketData = Omit<
   Ticket,
   'id' | 'status' | 'updated' | 'checklists' | 'attachments' | 'textElements'
@@ -31,4 +43,3 @@ export const useTicketStore = create<TicketStore>()((set) => ({
   setTickets: (tickets) => set({ tickets }),
 }))
 
-    
