@@ -116,7 +116,7 @@ export default function RolesPage() {
           )
           const sectorsSnapshots = await Promise.all(sectorsPromises)
           const sectorsData = sectorsSnapshots.flatMap((snapshot) =>
-            snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Sector))
+            snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data(), unitId: (doc.ref.parent.parent as any).id } as Sector))
           )
           setAllSectors(sectorsData)
           setAreSectorsLoading(false)
@@ -158,10 +158,15 @@ export default function RolesPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [formActivities, setFormActivities] = useState<string[]>([])
   const [activityInput, setActivityInput] = useState('')
-
+  
+  const [unitFilter, setUnitFilter] = useState<string[]>([])
   const [sectorFilter, setSectorFilter] = useState<string[]>(
     urlSectorId ? [urlSectorId] : []
   )
+  
+  // State for dynamic form selects
+  const [formUnit, setFormUnit] = useState('');
+  const [formSector, setFormSector] = useState('');
 
   const sectorsWithUnit = useMemo(() => {
     return allSectors.map((sector) => {
@@ -169,6 +174,11 @@ export default function RolesPage() {
       return { ...sector, unitName: unit?.name || 'N/A' }
     })
   }, [allSectors, units])
+  
+  const sectorsForFilter = useMemo(() => {
+     if (unitFilter.length === 0) return sectorsWithUnit;
+     return sectorsWithUnit.filter(s => unitFilter.includes(s.unitId));
+  }, [unitFilter, sectorsWithUnit]);
 
   const getSectorInfo = (sectorId: string) => {
     return sectorsWithUnit.find((s) => s.id === sectorId)
@@ -176,7 +186,13 @@ export default function RolesPage() {
 
   const filteredRoles = useMemo(() => {
     if (!roles) return []
-    let filtered = roles
+    let filtered = roles;
+
+    if (unitFilter.length > 0) {
+      const sectorsInFilteredUnits = allSectors.filter(s => unitFilter.includes(s.unitId)).map(s => s.id);
+      filtered = filtered.filter(role => sectorsInFilteredUnits.includes(role.sectorId));
+    }
+
     if (sectorFilter.length > 0) {
       filtered = filtered.filter((role) =>
         sectorFilter.includes(role.sectorId)
@@ -190,7 +206,7 @@ export default function RolesPage() {
       )
     }
     return filtered
-  }, [roles, searchTerm, sectorFilter])
+  }, [roles, searchTerm, unitFilter, sectorFilter, allSectors])
 
   const handleAddActivity = () => {
     if (
@@ -237,6 +253,8 @@ export default function RolesPage() {
     })
     setIsAddDialogOpen(false)
     setFormActivities([])
+    setFormUnit('');
+    setFormSector('');
   }
 
   const isLoading =
@@ -268,13 +286,40 @@ export default function RolesPage() {
               <DropdownMenuTrigger asChild>
                 <Button variant='outline' size='sm' className='h-10 gap-1'>
                   <Filter className='h-3.5 w-3.5' />
-                  <span className='sr-only sm:not-sr-only'>Filtrar</span>
+                  <span className='sr-only sm:not-sr-only'>Unidade</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end'>
+                <DropdownMenuLabel>Filtrar por Unidade</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {units?.map((unit) => (
+                  <DropdownMenuCheckboxItem
+                    key={unit.id}
+                    checked={unitFilter.includes(unit.id!)}
+                    onCheckedChange={(checked) => {
+                      setUnitFilter((prev) =>
+                        checked
+                          ? [...prev, unit.id!]
+                          : prev.filter((id) => id !== unit.id)
+                      )
+                    }}
+                  >
+                    {unit.name}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+             <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant='outline' size='sm' className='h-10 gap-1'>
+                  <Filter className='h-3.5 w-3.5' />
+                  <span className='sr-only sm:not-sr-only'>Setor</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align='end'>
                 <DropdownMenuLabel>Filtrar por Setor</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {sectorsWithUnit.map((sector) => (
+                {sectorsForFilter.map((sector) => (
                   <DropdownMenuCheckboxItem
                     key={sector.id}
                     checked={sectorFilter.includes(sector.id)}
@@ -297,7 +342,11 @@ export default function RolesPage() {
               <Button
                 size='sm'
                 className='h-8 gap-1'
-                onClick={() => setFormActivities([])}
+                onClick={() => {
+                   setFormActivities([]);
+                   setFormUnit('');
+                   setFormSector('');
+                }}
               >
                 <PlusCircle className='h-3.5 w-3.5' />
                 <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
@@ -317,139 +366,160 @@ export default function RolesPage() {
                   <div className='grid gap-6 p-4'>
                     <div className='grid grid-cols-2 gap-4'>
                       <div className='space-y-2'>
-                        <Label htmlFor='name'>Nome do Cargo</Label>
-                        <Input id='name' name='name' required />
+                        <Label htmlFor='unitId'>Unidade</Label>
+                        <Select onValueChange={(value) => { setFormUnit(value); setFormSector(''); }} value={formUnit} required>
+                           <SelectTrigger>
+                             <SelectValue placeholder='Selecione a unidade' />
+                           </SelectTrigger>
+                           <SelectContent>
+                             {units?.map((unit) => (
+                               <SelectItem key={unit.id} value={unit.id!}>
+                                 {unit.name}
+                               </SelectItem>
+                             ))}
+                           </SelectContent>
+                         </Select>
                       </div>
                       <div className='space-y-2'>
-                        <Label htmlFor='cbo'>CBO</Label>
-                        <Input id='cbo' name='cbo' placeholder='Ex: 2525-05' />
+                        <Label htmlFor='sectorId'>Setor</Label>
+                        <Select name='sectorId' onValueChange={setFormSector} value={formSector} required disabled={!formUnit}>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Selecione o setor' />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {allSectors.filter(s => s.unitId === formUnit).map((sector) => (
+                              <SelectItem key={sector.id} value={sector.id}>
+                                {sector.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='sectorId'>Setor</Label>
-                      <Select name='sectorId' required>
-                        <SelectTrigger>
-                          <SelectValue placeholder='Selecione o setor' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {sectorsWithUnit.map((sector) => (
-                            <SelectItem key={sector.id} value={sector.id}>
-                              {sector.name} ({sector.unitName})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='mainWorkstationId'>
-                        Posto de Trabalho Principal
-                      </Label>
-                      <Select name='mainWorkstationId'>
-                        <SelectTrigger>
-                          <SelectValue placeholder='Selecione o posto de trabalho principal (opcional)' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {allEnvironments.map((env) => (
-                            <SelectItem key={env.id} value={env.id}>
-                              {env.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className='space-y-4'>
-                      <Separator />
-                      <Label className='font-semibold'>
-                        Outros Postos de Trabalho Associados
-                      </Label>
-                      <ScrollArea className='h-40 rounded-md border p-4'>
-                        <div className='space-y-2'>
-                          {allEnvironments.map((env) => (
-                            <div
-                              key={`additional-${env.id}`}
-                              className='flex items-center gap-2'
-                            >
-                              <Checkbox
-                                id={`additional-${env.id}`}
-                                name={`additional-${env.id}`}
-                              />
-                              <Label htmlFor={`additional-${env.id}`}>
-                                {env.name}
-                              </Label>
-                            </div>
-                          ))}
+                    <Separator />
+                    <fieldset disabled={!formSector}>
+                      <div className='grid gap-6'>
+                         <div className='grid grid-cols-2 gap-4'>
+                          <div className='space-y-2'>
+                            <Label htmlFor='name'>Nome do Cargo</Label>
+                            <Input id='name' name='name' required />
+                          </div>
+                          <div className='space-y-2'>
+                            <Label htmlFor='cbo'>CBO</Label>
+                            <Input id='cbo' name='cbo' placeholder='Ex: 2525-05' />
+                          </div>
                         </div>
-                      </ScrollArea>
-                    </div>
-
-                    <div className='space-y-2'>
-                      <Label htmlFor='description'>Descrição Sumária</Label>
-                      <Textarea
-                        id='description'
-                        name='description'
-                        placeholder='Descreva as principais atribuições do cargo'
-                      />
-                    </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='activities'>Atividades Principais</Label>
-                      <div className='flex gap-2'>
-                        <Input
-                          id='activities'
-                          name='activities'
-                          value={activityInput}
-                          onChange={(e) => setActivityInput(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault()
-                              handleAddActivity()
-                            }
-                          }}
-                          placeholder='Digite uma atividade e tecle Enter'
-                        />
-                        <Button type='button' onClick={handleAddActivity}>
-                          Adicionar
-                        </Button>
+                        <div className='space-y-2'>
+                          <Label htmlFor='mainWorkstationId'>
+                            Posto de Trabalho Principal
+                          </Label>
+                          <Select name='mainWorkstationId' disabled={areEnvironmentsLoading}>
+                            <SelectTrigger>
+                              <SelectValue placeholder='Selecione o posto de trabalho principal (opcional)' />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {allEnvironments.filter(e => e.sectorId === formSector).map((env) => (
+                                <SelectItem key={env.id} value={env.id}>
+                                  {env.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className='space-y-4'>
+                          <Label className='font-semibold'>
+                            Outros Postos de Trabalho Associados
+                          </Label>
+                          <ScrollArea className='h-40 rounded-md border p-4'>
+                            {areEnvironmentsLoading ? <Loader2 className="mx-auto animate-spin" /> : (
+                                <div className='space-y-2'>
+                                  {allEnvironments.filter(e => e.sectorId === formSector).map((env) => (
+                                    <div
+                                      key={`additional-${env.id}`}
+                                      className='flex items-center gap-2'
+                                    >
+                                      <Checkbox
+                                        id={`additional-${env.id}`}
+                                        name={`additional-${env.id}`}
+                                      />
+                                      <Label htmlFor={`additional-${env.id}`} className="font-normal">
+                                        {env.name}
+                                      </Label>
+                                    </div>
+                                  ))}
+                                </div>
+                            )}
+                          </ScrollArea>
+                        </div>
+                        <div className='space-y-2'>
+                          <Label htmlFor='description'>Descrição Sumária</Label>
+                          <Textarea
+                            id='description'
+                            name='description'
+                            placeholder='Descreva as principais atribuições do cargo'
+                          />
+                        </div>
+                        <div className='space-y-2'>
+                          <Label htmlFor='activities'>Atividades Principais</Label>
+                          <div className='flex gap-2'>
+                            <Input
+                              id='activities'
+                              name='activities'
+                              value={activityInput}
+                              onChange={(e) => setActivityInput(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault()
+                                  handleAddActivity()
+                                }
+                              }}
+                              placeholder='Digite uma atividade e tecle Enter'
+                            />
+                            <Button type='button' onClick={handleAddActivity}>
+                              Adicionar
+                            </Button>
+                          </div>
+                          <div className='flex flex-wrap gap-2 mt-2'>
+                            {formActivities.map((activity) => (
+                              <Badge
+                                key={activity}
+                                variant='secondary'
+                                className='flex items-center gap-1'
+                              >
+                                {activity}
+                                <button
+                                  type='button'
+                                  onClick={() => handleRemoveActivity(activity)}
+                                  className='rounded-full hover:bg-background/50'
+                                >
+                                  <Trash2 className='h-3 w-3' />
+                                </button>
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                        <div className='space-y-2'>
+                          <Label htmlFor='requirements'>
+                            Requisitos/Qualificações
+                          </Label>
+                          <Textarea
+                            id='requirements'
+                            name='requirements'
+                            placeholder='Liste competências, treinamentos obrigatórios (NRs), certificações, etc.'
+                          />
+                        </div>
+                        <div className='space-y-2'>
+                          <Label htmlFor='requiredExams'>
+                            Exames Médicos (PCMSO)
+                          </Label>
+                          <Input
+                            id='requiredExams'
+                            name='requiredExams'
+                            placeholder='Ex: ASO, Audiometria, Acuidade Visual...'
+                          />
+                        </div>
                       </div>
-                      <div className='flex flex-wrap gap-2 mt-2'>
-                        {formActivities.map((activity) => (
-                          <Badge
-                            key={activity}
-                            variant='secondary'
-                            className='flex items-center gap-1'
-                          >
-                            {activity}
-                            <button
-                              type='button'
-                              onClick={() => handleRemoveActivity(activity)}
-                              className='rounded-full hover:bg-background/50'
-                            >
-                              <Trash2 className='h-3 w-3' />
-                            </button>
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='requirements'>
-                        Requisitos/Qualificações
-                      </Label>
-                      <Textarea
-                        id='requirements'
-                        name='requirements'
-                        placeholder='Liste competências, treinamentos obrigatórios (NRs), certificações, etc.'
-                      />
-                    </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='requiredExams'>
-                        Exames Médicos (PCMSO)
-                      </Label>
-                      <Input
-                        id='requiredExams'
-                        name='requiredExams'
-                        placeholder='Ex: ASO, Audiometria, Acuidade Visual...'
-                      />
-                    </div>
+                    </fieldset>
                   </div>
                 </ScrollArea>
               </form>
@@ -460,7 +530,7 @@ export default function RolesPage() {
                 >
                   Cancelar
                 </Button>
-                <Button type='submit' form='add-role-form'>
+                <Button type='submit' form='add-role-form' disabled={!formSector}>
                   Salvar
                 </Button>
               </DialogFooter>
