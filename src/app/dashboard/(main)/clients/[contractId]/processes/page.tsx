@@ -192,7 +192,6 @@ export default function ProcessesPage() {
       .filter((process) => {
         const matchesSearch =
           process.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          process.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           process.objective.toLowerCase().includes(searchTerm.toLowerCase())
 
         const sectorName = getSectorNameForProcess(process)
@@ -202,7 +201,7 @@ export default function ProcessesPage() {
 
         return matchesSearch && matchesSector
       })
-  }, [processes, searchTerm, sectorFilter, getSectorNameForProcess, statusFilter])
+  }, [processes, searchTerm, sectorFilter, statusFilter, getSectorNameForProcess])
 
   const handleStepChange = (
     index: number,
