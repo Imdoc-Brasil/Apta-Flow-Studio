@@ -20,7 +20,8 @@
     "commit": "bash scripts/commit-and-push.sh",
     "deploy:staging": "bash scripts/deploy.sh staging",
     "deploy:production": "bash scripts/deploy.sh production",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "save": "git add . && git commit"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.1.0",
