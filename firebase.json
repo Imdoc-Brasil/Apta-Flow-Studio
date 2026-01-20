@@ -4,20 +4,15 @@
     "indexes": "firestore.indexes.json"
   },
   "hosting": {
+    "source": ".",
     "ignore": [
       "firebase.json",
       "**/.*",
       "**/node_modules/**"
     ],
-    "rewrites": [
-      {
-        "source": "**",
-        "apphosting": {
-          "backendId": "studio",
-          "region": "us-central1"
-        }
-      }
-    ]
+    "frameworksBackend": {
+      "region": "us-central1"
+    }
   },
   "emulators": {
     "auth": {
