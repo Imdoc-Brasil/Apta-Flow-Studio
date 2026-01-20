@@ -42,16 +42,14 @@ import { Logo } from '@/components/logo'
 const mainNavItems = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Painel' },
   { href: '/dashboard/clients', icon: Briefcase, label: 'Clientes' },
-  { href: '/dashboard/employees', icon: Users, label: 'Equipe' },
-  { href: '/dashboard/profiles', icon: HardHat, label: 'Perfis' },
-  { href: '/dashboard/audit-logs', icon: ShieldAlert, label: 'Logs de Auditoria' },
+  { href: '/dashboard/tickets', icon: Ticket, label: 'Tickets' },
   { href: '/dashboard/services', icon: ClipboardList, label: 'Serviços' },
   { href: '/dashboard/risks', icon: ShieldAlert, label: 'Riscos' },
   { href: '/dashboard/trainings', icon: GraduationCap, label: 'Treinamentos' },
-  { href: '/dashboard/tickets', icon: Ticket, label: 'Tickets' },
-  { href: '/dashboard/performance', icon: Activity, label: 'Desempenho' },
   { href: '/dashboard/processes/diagram', icon: Workflow, label: 'Processos' },
+  { href: '/dashboard/performance', icon: Activity, label: 'Desempenho' },
   { href: '/dashboard/analytics', icon: BarChart2, label: 'Analytics' },
+  { href: '/dashboard/admin', icon: HardHat, label: 'Administração' },
 ]
 
 const saudeSubNavItems = [

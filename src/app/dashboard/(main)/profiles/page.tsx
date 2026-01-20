@@ -60,6 +60,14 @@ import type { Staff } from '@/app/dashboard/(main)/employees/page'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useToast } from '@/hooks/use-toast'
+import { Search, Filter } from 'lucide-react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   Accordion,
   AccordionContent,
@@ -114,6 +122,10 @@ export default function ProfilesPage() {
   const [selectedPermissions, setSelectedPermissions] = useState<
     Set<Permission>
   >(new Set())
+
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterByType, setFilterByType] = useState<'all' | 'system' | 'custom'>('all')
 
   const { user } = useUser()
   const { toast } = useToast()
@@ -186,6 +198,37 @@ export default function ProfilesPage() {
     }
     return counts
   }, [staffs])
+
+  // Filtered profiles
+  const filteredProfiles = useMemo(() => {
+    if (!profiles) return []
+
+    return profiles.filter((profile) => {
+      const matchesSearch =
+        searchTerm === '' ||
+        profile.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        profile.code?.toLowerCase().includes(searchTerm.toLowerCase())
+
+      const matchesType =
+        filterByType === 'all' ||
+        (filterByType === 'system' && profile.createdBy === 'sistema') ||
+        (filterByType === 'custom' && profile.createdBy !== 'sistema')
+
+      return matchesSearch && matchesType
+    })
+  }, [profiles, searchTerm, filterByType])
+
+  // Get permission summary
+  const getPermissionSummary = (permissions: Permission[] = []) => {
+    const summary = {
+      total: permissions.length,
+      view: permissions.filter(p => p.startsWith('view:')).length,
+      create: permissions.filter(p => p.startsWith('create:')).length,
+      edit: permissions.filter(p => p.startsWith('edit:')).length,
+      delete: permissions.filter(p => p.startsWith('delete:')).length,
+    }
+    return summary
+  }
 
   useEffect(() => {
     if (isAddDialogOpen || isEditDialogOpen) {
@@ -414,6 +457,30 @@ export default function ProfilesPage() {
               </DialogContent>
             </Dialog>
           </div>
+
+          {/* Search and Filter */}
+          <div className='flex items-center gap-2 pt-4'>
+            <div className='relative flex-1 max-w-sm'>
+              <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
+              <Input
+                type='search'
+                placeholder='Buscar por nome ou código...'
+                className='pl-8'
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <Select value={filterByType} onValueChange={(value: 'all' | 'system' | 'custom') => setFilterByType(value)}>
+              <SelectTrigger className='w-[180px]'>
+                <SelectValue placeholder='Tipo de perfil' />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value='all'>Todos os Perfis</SelectItem>
+                <SelectItem value='system'>Perfis do Sistema</SelectItem>
+                <SelectItem value='custom'>Perfis Personalizados</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -426,6 +493,7 @@ export default function ProfilesPage() {
                 <TableRow>
                   <TableHead>Nome do Perfil</TableHead>
                   <TableHead>Código</TableHead>
+                  <TableHead>Permissões</TableHead>
                   <TableHead>Criado por</TableHead>
                   <TableHead>Data de Criação</TableHead>
                   <TableHead className='text-right'>
@@ -437,52 +505,67 @@ export default function ProfilesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {profiles?.map((profile) => (
-                  <TableRow key={profile.id}>
-                    <TableCell className='font-medium'>{profile.name}</TableCell>
-                    <TableCell>{profile.code}</TableCell>
-                    <TableCell className='text-muted-foreground'>
-                      {profile.createdBy}
-                    </TableCell>
-                    <TableCell className='text-muted-foreground'>
-                      <ClientSideDate dateString={profile.createdAt} />
-                    </TableCell>
-                    <TableCell className='text-right'>
-                      <Badge variant='secondary'>
-                        {staffCountByProfile[profile.id] || 0}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className='text-right'>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            aria-haspopup='true'
-                            size='icon'
-                            variant='ghost'
-                            disabled={profile.id === 'cliente' && profile.createdBy === 'sistema'}
-                          >
-                            <MoreHorizontal className='h-4 w-4' />
-                            <span className='sr-only'>Alternar menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align='end'>
-                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                          <DropdownMenuItem
-                            onClick={() => openEditDialog(profile)}
-                            disabled={profile.createdBy === 'sistema'}
-                          >
-                            Editar Nome
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => openPermissionsDialog(profile)}
-                          >
-                            Editar Permissões
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {filteredProfiles?.map((profile) => {
+                  const permSummary = getPermissionSummary(profile.permissions)
+                  return (
+                    <TableRow key={profile.id}>
+                      <TableCell className='font-medium'>{profile.name}</TableCell>
+                      <TableCell>{profile.code}</TableCell>
+                      <TableCell>
+                        <div className='flex gap-1'>
+                          <Badge variant='outline' className='text-xs'>
+                            {permSummary.total} total
+                          </Badge>
+                          {permSummary.view > 0 && (
+                            <Badge variant='secondary' className='text-xs'>
+                              {permSummary.view} ver
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className='text-muted-foreground'>
+                        {profile.createdBy}
+                      </TableCell>
+                      <TableCell className='text-muted-foreground'>
+                        <ClientSideDate dateString={profile.createdAt} />
+                      </TableCell>
+                      <TableCell className='text-right'>
+                        <Badge variant='secondary'>
+                          {staffCountByProfile[profile.id] || 0}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className='text-right'>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              aria-haspopup='true'
+                              size='icon'
+                              variant='ghost'
+                              disabled={profile.id === 'cliente' && profile.createdBy === 'sistema'}
+                            >
+                              <MoreHorizontal className='h-4 w-4' />
+                              <span className='sr-only'>Alternar menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align='end'>
+                            <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                            <DropdownMenuItem
+                              onClick={() => openEditDialog(profile)}
+                              disabled={profile.createdBy === 'sistema'}
+                            >
+                              Editar Nome
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => openPermissionsDialog(profile)}
+                            >
+                              Editar Permissões
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
               </TableBody>
             </Table>
           )}
