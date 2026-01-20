@@ -168,19 +168,66 @@ npm run genkit:dev
 
 ## 🌐 Deploy
 
-### Firebase App Hosting
+### 🚀 Deploy Automático via Firebase App Hosting
 
-O projeto está configurado para deploy automático no Firebase App Hosting:
+O projeto utiliza **Firebase App Hosting** como plataforma oficial de deploy, com CI/CD automático via GitHub Actions.
+
+#### Deploy para Produção (Live)
 
 ```bash
-# Build e deploy
-npm run build
-firebase deploy
+# Commit e push para main dispara deploy automático
+git add .
+git commit -m "feat: sua feature"
+git push origin main
+
+# Acompanhe em: https://github.com/Imdoc-Brasil/Apta-Flow-Studio/actions
 ```
 
-**URLs de Produção:**
-- App Hosting: `https://studio--studio-9804515494-e1a53.us-central1.hosted.app`
-- Firebase Hosting: `https://studio-9804515494-e1a53.web.app`
+**Tempo de deploy**: ~3-5 minutos  
+**Canal**: Live (Produção)
+
+#### Deploy para Desenvolvimento (Dev)
+
+```bash
+# Push para branch dev
+git push origin dev
+```
+
+**Canal**: Dev (Preview)
+
+#### Deploy Manual (Emergência)
+
+```bash
+# Build local
+npm run build
+
+# Deploy via Firebase CLI
+firebase deploy --only hosting
+```
+
+### 📋 Guias de Deploy
+
+- **Quick Start**: [`DEPLOY.md`](./DEPLOY.md) - Comandos rápidos
+- **Guia Completo**: [`docs/DEPLOY_GUIDE.md`](./docs/DEPLOY_GUIDE.md) - Documentação detalhada
+- **Troubleshooting**: [`docs/DEPLOY_FIXES.md`](./docs/DEPLOY_FIXES.md) - Correções comuns
+
+### 🔗 URLs de Produção
+
+- **App Hosting (Live)**: Via Firebase Console
+- **Preview (Dev)**: Gerado automaticamente por branch
+
+### ⚙️ Configuração do CI/CD
+
+O workflow do GitHub Actions (`firebase-deploy.yml`) executa:
+1. ✅ Checkout do código
+2. ✅ Setup Node.js 20
+3. ✅ Instalação de dependências
+4. ✅ Build do Next.js
+5. ✅ Deploy automático no Firebase
+
+**Secrets Necessários**:
+- `FIREBASE_SERVICE_ACCOUNT` - Credenciais do Firebase
+- `GOOGLE_GENAI_API_KEY` - API key do Google AI Studio
 
 ## 📝 Configuração de Variáveis de Ambiente
 
