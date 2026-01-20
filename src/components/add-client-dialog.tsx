@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -25,9 +26,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
   useFirestore,
-  useCollection,
-  useMemoFirebase,
   setDocumentNonBlocking,
+  updateDocumentNonBlocking,
 } from '@/firebase'
 import { collection, query, where, getDocs, doc } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
@@ -53,83 +53,80 @@ import { Checkbox } from '@/components/ui/checkbox'
 import type { Client } from '@/app/dashboard/(main)/clients/data'
 import axios from 'axios'
 
-export function AddClientDialog() {
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
+interface AddClientDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  clientToEdit: Client | null
+  allClients: Client[]
+}
+
+export function AddClientDialog({
+  open,
+  onOpenChange,
+  clientToEdit,
+  allClients,
+}: AddClientDialogProps) {
   const firestore = useFirestore()
   const { toast } = useToast()
-
-  const clientsRef = useMemoFirebase(
-    () => (firestore ? collection(firestore, 'clients') : null),
-    [firestore]
-  )
-  const { data: allClients } = useCollection<Client>(clientsRef)
 
   const [cnpj, setCnpj] = useState('')
   const [isCnpjLoading, setIsCnpjLoading] = useState(false)
   const [cnpjError, setCnpjError] = useState<string | null>(null)
-
   const [name, setName] = useState('')
   const [tradeName, setTradeName] = useState('')
   const [address, setAddress] = useState('')
-
   const [cnae, setCnae] = useState('')
   const [riskLevel, setRiskLevel] = useState('')
   const [isCnaePopoverOpen, setIsCnaePopoverOpen] = useState(false)
-
   const [secondaryCnaes, setSecondaryCnaes] = useState<CnaeData[]>([])
   const [isSecondaryCnaePopoverOpen, setIsSecondaryCnaePopoverOpen] =
     useState(false)
-
   const [inheritData, setInheritData] = useState(false)
-  
-  const clientDataForInheritance = allClients?.[0]; // Simplified: just takes the first client
 
-  useEffect(() => {
-    if (inheritData && clientDataForInheritance) {
-      setName(clientDataForInheritance.name);
-      setTradeName(clientDataForInheritance.tradeName || '');
-      setAddress(clientDataForInheritance.address || '');
-      if (clientDataForInheritance.cnae) {
-        const mainCnae = cnaeList.find(c => c.code === clientDataForInheritance.cnae);
-        if (mainCnae) handleCnaeSelect(mainCnae);
-      }
-    } else {
-        clearCnpjData();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inheritData, clientDataForInheritance])
+  const clientDataForInheritance = allClients?.[0]
 
   const clearForm = () => {
     setCnpj('')
     setCnpjError(null)
-    clearCnpjData()
+    setName('')
+    setTradeName('')
+    setAddress('')
+    setCnae('')
+    setRiskLevel('')
+    setSecondaryCnaes([])
     setInheritData(false)
   }
 
-  const handleAddClient = async (event: React.FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    if (open) {
+      if (clientToEdit) {
+        setName(clientToEdit.name)
+        setTradeName(clientToEdit.tradeName || '')
+        setCnpj(clientToEdit.cnpj)
+        setAddress(clientToEdit.address || '')
+        if (clientToEdit.cnae) {
+          const mainCnae = cnaeList.find((c) => c.code === clientToEdit.cnae)
+          if (mainCnae) handleCnaeSelect(mainCnae)
+        }
+        if (clientToEdit.secondaryCnaes) {
+          const secondaryCnaesData = clientToEdit.secondaryCnaes
+            .map((c) => cnaeList.find((cnae) => cnae.code === c))
+            .filter((c): c is CnaeData => !!c)
+          setSecondaryCnaes(secondaryCnaesData)
+        }
+      } else {
+        clearForm()
+      }
+    }
+  }, [open, clientToEdit])
+
+  const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!clientsRef || !firestore) return
+    if (!firestore) return
 
     const formData = new FormData(event.currentTarget)
 
-    const highestContractNumber =
-      allClients?.reduce((max, client) => {
-        const match = client.id.match(/CTR-\d{4}-(\d{3})/)
-        if (match) {
-          const num = parseInt(match[1], 10)
-          return Math.max(max, num)
-        }
-        return max
-      }, 0) || 0
-
-    const newContractId = `CTR-${new Date().getFullYear()}-${(
-      highestContractNumber + 1
-    )
-      .toString()
-      .padStart(3, '0')}`
-
-    const newClientData: Omit<Client, 'id'> & { id?: string } = {
-      id: newContractId,
+    const clientDataPayload = {
       name: formData.get('name') as string,
       tradeName: formData.get('tradeName') as string,
       cnpj: formData.get('cnpj') as string,
@@ -137,7 +134,6 @@ export function AddClientDialog() {
       cnae: formData.get('cnae') as string,
       riskLevel: formData.get('riskLevel') as string,
       secondaryCnaes: secondaryCnaes.map((c) => c.code),
-      status: 'Ativo',
       adminResponsibleName: formData.get('adminResponsibleName') as string,
       adminResponsibleCPF: formData.get('adminResponsibleCPF') as string,
       contractResponsibleName: formData.get(
@@ -151,29 +147,52 @@ export function AddClientDialog() {
       ) as string,
     }
 
-    const clientDocRef = doc(firestore, 'clients', newContractId)
-    setDocumentNonBlocking(clientDocRef, newClientData, { merge: false })
+    if (clientToEdit) {
+      // Update logic
+      const clientDocRef = doc(firestore, 'clients', clientToEdit.id)
+      updateDocumentNonBlocking(clientDocRef, clientDataPayload)
+      toast({
+        title: 'Cliente Atualizado!',
+        description: `O cliente "${clientDataPayload.name}" foi atualizado.`,
+      })
+    } else {
+      // Create logic
+      const highestContractNumber =
+        allClients?.reduce((max, client) => {
+          const match = client.id.match(/CTR-\d{4}-(\d{3})/)
+          if (match) {
+            const num = parseInt(match[1], 10)
+            return Math.max(max, num)
+          }
+          return max
+        }, 0) || 0
 
-    toast({
-      title: 'Cliente Adicionado!',
-      description: `O cliente "${newClientData.name}" foi adicionado com sucesso.`,
-    })
+      const newContractId = `CTR-${new Date().getFullYear()}-${(
+        highestContractNumber + 1
+      )
+        .toString()
+        .padStart(3, '0')}`
 
-    setIsDialogOpen(false)
-    clearForm()
-  }
+      const newClientData = {
+        ...clientDataPayload,
+        id: newContractId,
+        status: 'Ativo' as const,
+      }
 
-  const clearCnpjData = () => {
-    setName('')
-    setTradeName('')
-    setAddress('')
-    setCnae('')
-    setRiskLevel('')
-    setSecondaryCnaes([])
+      const clientDocRef = doc(firestore, 'clients', newContractId)
+      setDocumentNonBlocking(clientDocRef, newClientData, { merge: false })
+
+      toast({
+        title: 'Cliente Adicionado!',
+        description: `O cliente "${newClientData.name}" foi adicionado.`,
+      })
+    }
+
+    onOpenChange(false)
   }
 
   const handleCnpjBlur = async () => {
-    if (!cnpj || !firestore || !clientsRef) return
+    if (!cnpj || !firestore || clientToEdit) return // Don't fetch on edit
 
     const cnpjRegex = /^(\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}|\d{14})$/
     const cleanCnpj = cnpj.replace(/[^\d]/g, '')
@@ -187,7 +206,10 @@ export function AddClientDialog() {
     setCnpjError(null)
 
     try {
-      const q = query(clientsRef, where('cnpj', '==', cnpj))
+      const q = query(
+        collection(firestore, 'clients'),
+        where('cnpj', '==', cnpj)
+      )
       const querySnapshot = await getDocs(q)
       if (!querySnapshot.empty) {
         throw new Error('Este CNPJ já está cadastrado.')
@@ -221,7 +243,6 @@ export function AddClientDialog() {
         setSecondaryCnaes(secondaryCnaesData)
       }
     } catch (error: any) {
-      clearCnpjData()
       if (error.message === 'Este CNPJ já está cadastrado.') {
         setCnpjError(error.message)
       } else if (axios.isAxiosError(error) && error.response?.status === 404) {
@@ -240,7 +261,6 @@ export function AddClientDialog() {
     setRiskLevel(selectedCnae.riskLevel.toString())
     setIsCnaePopoverOpen(false)
   }
-
   const handleSecondaryCnaeSelect = (selectedCnae: CnaeData) => {
     if (
       !secondaryCnaes.some((c) => c.code === selectedCnae.code) &&
@@ -255,23 +275,19 @@ export function AddClientDialog() {
   }
 
   return (
-    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-      <DialogTrigger asChild>
-        <Button size='sm' className='h-8 gap-1'>
-          <PlusCircle className='h-3.5 w-3.5' />
-          <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
-            Adicionar Cliente
-          </span>
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className='sm:max-w-2xl'>
         <DialogHeader>
-          <DialogTitle>Adicionar Novo Cliente</DialogTitle>
+          <DialogTitle>
+            {clientToEdit ? 'Editar Cliente' : 'Adicionar Novo Cliente'}
+          </DialogTitle>
           <DialogDescription>
-            Preencha os detalhes para cadastrar um novo cliente.
+            {clientToEdit
+              ? 'Atualize os detalhes do cliente.'
+              : 'Preencha os detalhes para cadastrar um novo cliente.'}
           </DialogDescription>
         </DialogHeader>
-        <form id='add-client-form' onSubmit={handleAddClient}>
+        <form id='client-form' onSubmit={handleFormSubmit}>
           <ScrollArea className='h-[60vh] pr-6'>
             <div className='grid gap-6 py-4'>
               <div className='space-y-2'>
@@ -283,25 +299,24 @@ export function AddClientDialog() {
                     placeholder='00.000.000/0000-00'
                     required
                     value={cnpj}
-                    onChange={(e) => {
-                      setCnpj(e.target.value)
-                      setCnpjError(null)
-                      clearCnpjData()
-                    }}
+                    onChange={(e) => setCnpj(e.target.value)}
                     onBlur={handleCnpjBlur}
+                    disabled={!!clientToEdit}
                   />
-                  <Button
-                    type='button'
-                    variant='secondary'
-                    disabled={isCnpjLoading}
-                    onClick={handleCnpjBlur}
-                  >
-                    {isCnpjLoading ? (
-                      <Loader2 className='h-4 w-4 animate-spin' />
-                    ) : (
-                      <Search className='h-4 w-4' />
-                    )}
-                  </Button>
+                  {!clientToEdit && (
+                    <Button
+                      type='button'
+                      variant='secondary'
+                      disabled={isCnpjLoading}
+                      onClick={handleCnpjBlur}
+                    >
+                      {isCnpjLoading ? (
+                        <Loader2 className='h-4 w-4 animate-spin' />
+                      ) : (
+                        <Search className='h-4 w-4' />
+                      )}
+                    </Button>
+                  )}
                 </div>
                 {cnpjError && (
                   <p className='text-sm text-destructive'>{cnpjError}</p>
@@ -309,18 +324,6 @@ export function AddClientDialog() {
               </div>
 
               <fieldset className='grid gap-4' disabled={isCnpjLoading}>
-                <div className='flex items-center space-x-2'>
-                  <Checkbox
-                    id='inherit'
-                    checked={inheritData}
-                    onCheckedChange={(checked) =>
-                      setInheritData(checked as boolean)
-                    }
-                  />
-                  <Label htmlFor='inherit' className='cursor-pointer'>
-                    Herdar dados da empresa principal (para filiais)
-                  </Label>
-                </div>
                 <div className='grid grid-cols-2 gap-4'>
                   <div className='space-y-2'>
                     <Label htmlFor='name'>Nome Empresarial</Label>
@@ -516,6 +519,7 @@ export function AddClientDialog() {
                     <Input
                       id='adminResponsibleName'
                       name='adminResponsibleName'
+                      defaultValue={clientToEdit?.adminResponsibleName}
                       required
                     />
                   </div>
@@ -526,6 +530,7 @@ export function AddClientDialog() {
                     <Input
                       id='adminResponsibleCPF'
                       name='adminResponsibleCPF'
+                      defaultValue={clientToEdit?.adminResponsibleCPF}
                       required
                     />
                   </div>
@@ -537,6 +542,7 @@ export function AddClientDialog() {
                   <Input
                     id='contractResponsibleName'
                     name='contractResponsibleName'
+                    defaultValue={clientToEdit?.contractResponsibleName}
                     required
                   />
                 </div>
@@ -549,6 +555,7 @@ export function AddClientDialog() {
                       id='contractResponsiblePhone'
                       name='contractResponsiblePhone'
                       type='tel'
+                      defaultValue={clientToEdit?.contractResponsiblePhone}
                       required
                     />
                   </div>
@@ -560,37 +567,9 @@ export function AddClientDialog() {
                       id='contractResponsibleEmail'
                       name='contractResponsibleEmail'
                       type='email'
+                      defaultValue={clientToEdit?.contractResponsibleEmail}
                       required
                     />
-                  </div>
-                </div>
-
-                <Separator className='my-4' />
-
-                <h3 className='text-lg font-semibold'>
-                  Checklist de Documentos
-                </h3>
-                <div className='space-y-3'>
-                  <div className='flex items-center justify-between p-2 border rounded-md'>
-                    <Label>Cartão CNPJ</Label>
-                    <Button type='button' size='sm' variant='outline'>
-                      <FilePlus className='mr-2 h-4 w-4' />
-                      Adicionar
-                    </Button>
-                  </div>
-                  <div className='flex items-center justify-between p-2 border rounded-md'>
-                    <Label>Contrato Social</Label>
-                    <Button type='button' size='sm' variant='outline'>
-                      <FilePlus className='mr-2 h-4 w-4' />
-                      Adicionar
-                    </Button>
-                  </div>
-                  <div className='flex items-center justify-between p-2 border rounded-md'>
-                    <Label>Serviços e Tabela de Preços</Label>
-                    <Button type='button' size='sm' variant='outline'>
-                      <FilePlus className='mr-2 h-4 w-4' />
-                      Adicionar
-                    </Button>
                   </div>
                 </div>
               </fieldset>
@@ -598,21 +577,15 @@ export function AddClientDialog() {
           </ScrollArea>
         </form>
         <DialogFooter>
-          <Button
-            variant='outline'
-            onClick={() => {
-              setIsDialogOpen(false)
-              clearForm()
-            }}
-          >
+          <Button variant='outline' onClick={() => onOpenChange(false)}>
             Cancelar
           </Button>
           <Button
             type='submit'
-            form='add-client-form'
+            form='client-form'
             disabled={isCnpjLoading || !!cnpjError}
           >
-            Salvar Cliente
+            {clientToEdit ? 'Salvar Alterações' : 'Salvar Cliente'}
           </Button>
         </DialogFooter>
       </DialogContent>
