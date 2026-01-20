@@ -1,13 +1,17 @@
 
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   MoreHorizontal,
+  PlusCircle,
   Search,
   Filter,
   Loader2,
-  PlusCircle,
+  FilePlus,
+  Check,
+  ChevronsUpDown,
+  X,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -35,7 +39,6 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import Link from 'next/link'
 import { type Client } from '@/app/dashboard/(main)/clients/data'
 import {
