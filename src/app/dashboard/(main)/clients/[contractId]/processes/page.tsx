@@ -202,7 +202,7 @@ export default function ProcessesPage() {
 
         return matchesSearch && matchesSector
       })
-  }, [processes, searchTerm, sectorFilter, getSectorNameForProcess])
+  }, [processes, searchTerm, sectorFilter, getSectorNameForProcess, statusFilter])
 
   const handleStepChange = (
     index: number,

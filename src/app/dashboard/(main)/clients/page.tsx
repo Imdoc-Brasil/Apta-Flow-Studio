@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState, useMemo } from 'react'
@@ -7,6 +6,7 @@ import {
   Search,
   Filter,
   Loader2,
+  PlusCircle,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -69,6 +69,8 @@ export default function ClientsPage() {
 
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string[]>(['Ativo'])
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [clientToEdit, setClientToEdit] = useState<Client | null>(null)
 
   const clientsRef = useMemoFirebase(
     () => (firestore ? collection(firestore, 'clients') : null),
@@ -140,136 +142,161 @@ export default function ClientsPage() {
     })
   }
 
+  const openAddDialog = () => {
+    setClientToEdit(null)
+    setIsAddDialogOpen(true)
+  }
+
+  const openEditDialog = (client: Client) => {
+    setClientToEdit(client)
+    setIsAddDialogOpen(true)
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Hub de Clientes</CardTitle>
-        <CardDescription>
-          Gerencie seus clientes, contratos e acordos de serviço.
-        </CardDescription>
-        <div className='flex items-center gap-2 pt-4'>
-          <div className='relative w-full max-w-sm'>
-            <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
-            <Input
-              type='search'
-              placeholder='Buscar por nome ou código...'
-              className='pl-8'
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant='outline'
-                size='sm'
-                className='h-10 gap-1 text-sm'
-              >
-                <Filter className='h-3.5 w-3.5' />
-                <span className='sr-only sm:not-sr-only'>Status</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align='end'>
-              <DropdownMenuLabel>Filtrar por Status</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {['Ativo', 'Inativo'].map((status) => (
-                <DropdownMenuCheckboxItem
-                  key={status}
-                  checked={statusFilter.includes(status)}
-                  onCheckedChange={(checked) => {
-                    setStatusFilter((prev) =>
-                      checked
-                        ? [...prev, status]
-                        : prev.filter((s) => s !== status)
-                    )
-                  }}
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Hub de Clientes</CardTitle>
+          <CardDescription>
+            Gerencie seus clientes, contratos e acordos de serviço.
+          </CardDescription>
+          <div className='flex items-center gap-2 pt-4'>
+            <div className='relative w-full max-w-sm'>
+              <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
+              <Input
+                type='search'
+                placeholder='Buscar por nome ou código...'
+                className='pl-8'
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  className='h-10 gap-1 text-sm'
                 >
-                  {status}
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <div className='ml-auto'>
-            <AddClientDialog />
+                  <Filter className='h-3.5 w-3.5' />
+                  <span className='sr-only sm:not-sr-only'>Status</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end'>
+                <DropdownMenuLabel>Filtrar por Status</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {['Ativo', 'Inativo'].map((status) => (
+                  <DropdownMenuCheckboxItem
+                    key={status}
+                    checked={statusFilter.includes(status)}
+                    onCheckedChange={(checked) => {
+                      setStatusFilter((prev) =>
+                        checked
+                          ? [...prev, status]
+                          : prev.filter((s) => s !== status)
+                      )
+                    }}
+                  >
+                    {status}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <div className='ml-auto'>
+              <Button size='sm' className='h-8 gap-1' onClick={openAddDialog}>
+                <PlusCircle className='h-3.5 w-3.5' />
+                <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
+                  Adicionar Cliente
+                </span>
+              </Button>
+            </div>
           </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className='flex justify-center items-center h-64'>
-            <Loader2 className='h-8 w-8 animate-spin text-muted-foreground' />
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Contrato</TableHead>
-                <TableHead>Cliente</TableHead>
-                <TableHead className='hidden sm:table-cell'>Status</TableHead>
-                <TableHead className='hidden md:table-cell'>
-                  Responsável
-                </TableHead>
-                <TableHead>
-                  <span className='sr-only'>Ações</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {clientsToDisplay.map((client) => (
-                <TableRow key={client.id}>
-                  <TableCell className='font-medium'>{client.id}</TableCell>
-                  <TableCell>
-                    <Link
-                      href={`/dashboard/clients/${client.id}`}
-                      className='hover:underline'
-                    >
-                      {client.name}
-                    </Link>
-                  </TableCell>
-                  <TableCell className='hidden sm:table-cell'>
-                    <Badge
-                      variant={
-                        client.status === 'Ativo' ? 'secondary' : 'outline'
-                      }
-                    >
-                      {client.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className='hidden md:table-cell'>
-                    {client.contractResponsibleName}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          aria-haspopup='true'
-                          size='icon'
-                          variant='ghost'
-                        >
-                          <MoreHorizontal className='h-4 w-4' />
-                          <span className='sr-only'>Alternar menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align='end'>
-                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/dashboard/clients/${client.id}/info`}>
-                            Detalhes
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>Editar</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDisableClient(client.id)}>
-                          Desativar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className='flex justify-center items-center h-64'>
+              <Loader2 className='h-8 w-8 animate-spin text-muted-foreground' />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Contrato</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead className='hidden sm:table-cell'>Status</TableHead>
+                  <TableHead className='hidden md:table-cell'>
+                    Responsável
+                  </TableHead>
+                  <TableHead>
+                    <span className='sr-only'>Ações</span>
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-    </Card>
+              </TableHeader>
+              <TableBody>
+                {clientsToDisplay.map((client) => (
+                  <TableRow key={client.id}>
+                    <TableCell className='font-medium'>{client.id}</TableCell>
+                    <TableCell>
+                      <Link
+                        href={`/dashboard/clients/${client.id}`}
+                        className='hover:underline'
+                      >
+                        {client.name}
+                      </Link>
+                    </TableCell>
+                    <TableCell className='hidden sm:table-cell'>
+                      <Badge
+                        variant={
+                          client.status === 'Ativo' ? 'secondary' : 'outline'
+                        }
+                      >
+                        {client.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className='hidden md:table-cell'>
+                      {client.contractResponsibleName}
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            aria-haspopup='true'
+                            size='icon'
+                            variant='ghost'
+                          >
+                            <MoreHorizontal className='h-4 w-4' />
+                            <span className='sr-only'>Alternar menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end'>
+                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/dashboard/clients/${client.id}/info`}>
+                              Detalhes
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => openEditDialog(client)}>
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDisableClient(client.id)}>
+                            Desativar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+      <AddClientDialog
+        open={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        clientToEdit={clientToEdit}
+        allClients={allClients || []}
+      />
+    </>
   )
 }
