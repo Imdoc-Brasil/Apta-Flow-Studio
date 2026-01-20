@@ -57,6 +57,7 @@ import { useToast } from '@/hooks/use-toast'
 import { updateDocumentNonBlocking } from '@/firebase'
 import type { Staff } from '@/app/dashboard/(main)/employees/page'
 import { AddClientDialog } from '@/components/add-client-dialog'
+import { Input } from '@/components/ui/input'
 
 
 export default function ClientsPage() {
