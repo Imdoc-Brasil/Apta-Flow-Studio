@@ -9,9 +9,15 @@
       "**/.*",
       "**/node_modules/**"
     ],
-    "frameworksBackend": {
-      "region": "us-central1"
-    }
+    "rewrites": [
+      {
+        "source": "**",
+        "apphosting": {
+          "backendId": "studio",
+          "region": "us-central1"
+        }
+      }
+    ]
   },
   "emulators": {
     "auth": {
