@@ -35,3 +35,4 @@ jobs:
           channelId: ${{ github.ref == 'refs/heads/main' && 'live' || 'dev' }}
         env:
           FIREBASE_CLI_EXPERIMENTS: webframeworks
+          GOOGLE_GENAI_API_KEY: ${{ secrets.GOOGLE_GENAI_API_KEY }}
