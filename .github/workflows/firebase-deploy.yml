@@ -12,7 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       FIREBASE_CLI_EXPERIMENTS: webframeworks
-      GOOGLE_GENAI_API_KEY: ${{ secrets.GOOGLE_GENAI_API_KEY }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -33,3 +32,5 @@ jobs:
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
           projectId: studio-9804515494-e1a53
           channelId: ${{ github.ref == 'refs/heads/main' && 'live' || 'dev' }}
+        env:
+          GOOGLE_GENAI_API_KEY: ${{ secrets.GOOGLE_GENAI_API_KEY }}
