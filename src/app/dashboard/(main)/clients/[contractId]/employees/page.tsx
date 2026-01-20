@@ -81,7 +81,6 @@ import {
   useFirestore,
   addDocumentNonBlocking,
   updateDocumentNonBlocking,
-  deleteDocumentNonBlocking,
   useCollection,
   useMemoFirebase,
 } from '@/firebase'
@@ -177,7 +176,7 @@ export default function EmployeesPage() {
   )
 
   const [selectedAddRole, setSelectedAddRole] = useState('')
-  
+
   const rolesWithDetails = useMemo(() => {
     if (!rolesData || !allSectors || !allUnits) return [];
     return rolesData.map(role => {
@@ -278,11 +277,11 @@ export default function EmployeesPage() {
       `clients/${contractId}/staffs`,
       currentEmployee.id
     )
-    deleteDocumentNonBlocking(employeeDocRef)
+    updateDocumentNonBlocking(employeeDocRef, { status: 'Desligado' })
 
     setIsDeleteDialogOpen(false)
     setCurrentEmployee(null)
-    toast({ title: 'Colaborador excluído!', variant: 'destructive' })
+    toast({ title: 'Colaborador desativado!', variant: 'destructive' })
   }
 
   const handleChangeStatus = (

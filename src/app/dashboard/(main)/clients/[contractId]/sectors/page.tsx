@@ -48,6 +48,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuItem,
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -70,8 +71,9 @@ import {
   useCollection,
   useMemoFirebase,
   addDocumentNonBlocking,
+  updateDocumentNonBlocking,
 } from '@/firebase'
-import { collection, query, where, getDocs } from 'firebase/firestore'
+import { collection, query, where, getDocs, doc } from 'firebase/firestore'
 
 export default function SectorsPage() {
   const params = useParams()
@@ -86,9 +88,11 @@ export default function SectorsPage() {
   const [isAddSectorDialogOpen, setIsAddSectorDialogOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
+  const [statusFilter, setStatusFilter] = useState<string[]>(['Ativo'])
   const [unitFilter, setUnitFilter] = useState<string[]>(
     urlUnitId ? [urlUnitId] : []
   )
+  const [editingSector, setEditingSector] = useState<Sector | null>(null)
 
   const unitsRef = useMemoFirebase(
     () =>
@@ -139,6 +143,12 @@ export default function SectorsPage() {
 
   const filteredSectors = useMemo(() => {
     let filtered = allSectors
+    if (statusFilter.length > 0) {
+      filtered = filtered.filter((sector) => {
+        const status = sector.status || 'Ativo'
+        return statusFilter.includes(status)
+      })
+    }
     if (unitFilter.length > 0) {
       filtered = filtered.filter((sector) => unitFilter.includes(sector.unitId))
     }
@@ -173,27 +183,44 @@ export default function SectorsPage() {
       `clients/${contractId}/units/${unitId}/sectors`
     )
 
-    const newSectorData = {
+    const newSectorData: Omit<Sector, 'id'> = {
       code: formData.get('code') as string,
       name: formData.get('name') as string,
       description: formData.get('description') as string,
       unitId: unitId,
+      status: editingSector?.status || 'Ativo',
     }
 
-    // Non-blocking update
-    addDocumentNonBlocking(sectorsColRef, newSectorData)
+    if (editingSector?.id) {
+      const sectorDocRef = doc(firestore, `clients/${contractId}/units/${unitId}/sectors`, editingSector.id)
+      updateDocumentNonBlocking(sectorDocRef, newSectorData)
+      toast({ title: 'Setor Atualizado!' })
+    } else {
+      addDocumentNonBlocking(sectorsColRef, newSectorData)
+      toast({
+        title: 'Setor Adicionado!',
+        description: `O setor "${newSectorData.name}" foi criado.`,
+      })
+    }
 
-    // Optimistic UI update
-    setAllSectors((prev) => [
-      ...prev,
-      { id: `optimistic-${Date.now()}`, ...newSectorData },
-    ])
-
-    toast({
-      title: 'Setor Adicionado!',
-      description: `O setor "${newSectorData.name}" foi criado.`,
-    })
     setIsAddSectorDialogOpen(false)
+    setEditingSector(null)
+  }
+
+  const handleArchiveSector = (sector: Sector) => {
+    if (!firestore || !sector.id) return
+    const sectorDocRef = doc(firestore, `clients/${contractId}/units/${sector.unitId}/sectors`, sector.id)
+    updateDocumentNonBlocking(sectorDocRef, { status: 'Arquivado' })
+    toast({
+      title: 'Setor Arquivado',
+      description: 'O setor foi marcado como Arquivado.',
+      variant: 'destructive'
+    })
+  }
+
+  const openEditSectorDialog = (sector: Sector) => {
+    setEditingSector(sector)
+    setIsAddSectorDialogOpen(true)
   }
 
   const getUnitName = (unitId: string) => {
@@ -225,16 +252,16 @@ export default function SectorsPage() {
       <div className='grid grid-cols-3 gap-4'>
         <div className='space-y-2 col-span-2'>
           <Label htmlFor='name'>Nome do Setor</Label>
-          <Input id='name' name='name' required />
+          <Input id='name' name='name' defaultValue={editingSector?.name} required />
         </div>
         <div className='space-y-2'>
           <Label htmlFor='code'>Código</Label>
-          <Input id='code' name='code' placeholder='Opcional' />
+          <Input id='code' name='code' defaultValue={editingSector?.code} placeholder='Opcional' />
         </div>
       </div>
       <div className='space-y-2'>
         <Label htmlFor='description'>Descrição</Label>
-        <Textarea id='description' name='description' />
+        <Textarea id='description' name='description' defaultValue={editingSector?.description} />
       </div>
     </div>
   )
@@ -286,7 +313,7 @@ export default function SectorsPage() {
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Adicionar Novo Setor</DialogTitle>
+                    <DialogTitle>{editingSector ? 'Editar' : 'Adicionar Novo'} Setor</DialogTitle>
                   </DialogHeader>
                   <form id='add-sector-form' onSubmit={handleAddSector}>
                     {renderSectorForm()}
@@ -294,12 +321,15 @@ export default function SectorsPage() {
                   <DialogFooter>
                     <Button
                       variant='outline'
-                      onClick={() => setIsAddSectorDialogOpen(false)}
+                      onClick={() => {
+                        setIsAddSectorDialogOpen(false)
+                        setEditingSector(null)
+                      }}
                     >
                       Cancelar
                     </Button>
                     <Button type='submit' form='add-sector-form'>
-                      Salvar
+                      {editingSector ? 'Salvar Alterações' : 'Salvar'}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -341,6 +371,23 @@ export default function SectorsPage() {
                     {unit.name}
                   </DropdownMenuCheckboxItem>
                 ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Filtrar por Status</DropdownMenuLabel>
+                {['Ativo', 'Arquivado'].map((status) => (
+                  <DropdownMenuCheckboxItem
+                    key={status}
+                    checked={statusFilter.includes(status)}
+                    onCheckedChange={(checked) => {
+                      setStatusFilter((prev) =>
+                        checked
+                          ? [...prev, status]
+                          : prev.filter((s) => s !== status)
+                      )
+                    }}
+                  >
+                    {status}
+                  </DropdownMenuCheckboxItem>
+                ))}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -365,7 +412,30 @@ export default function SectorsPage() {
                       className='flex flex-col h-full hover:shadow-md transition-shadow cursor-pointer'
                     >
                       <CardHeader>
-                        <CardTitle>{sector.name}</CardTitle>
+                        <div className='flex items-start justify-between'>
+                          <CardTitle>{sector.name}</CardTitle>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant='ghost'
+                                size='icon'
+                                className='h-8 w-8'
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MoreHorizontal className='h-4 w-4' />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align='end' onClick={(e) => e.stopPropagation()}>
+                              <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                              <DropdownMenuItem onClick={() => openEditSectorDialog(sector)}>
+                                Editar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleArchiveSector(sector)}>
+                                Arquivar
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                         <CardDescription>
                           <Badge variant='outline'>
                             {getUnitName(sector.unitId)}
@@ -484,4 +554,3 @@ export default function SectorsPage() {
   )
 }
 
-    

@@ -60,6 +60,7 @@ import {
   useCollection,
   useMemoFirebase,
   addDocumentNonBlocking,
+  updateDocumentNonBlocking,
   useDoc,
 } from '@/firebase'
 import { collection, doc } from 'firebase/firestore'
@@ -92,6 +93,7 @@ export default function UnitsPage() {
   const [statusFilter, setStatusFilter] = useState<string[]>(['Ativa'])
   const [formType, setFormType] = useState<UnitType>('Unidade')
   const [inheritData, setInheritData] = useState(false)
+  const [editingUnit, setEditingUnit] = useState<Unit | null>(null)
 
   const resetFormState = () => {
     setFormType('Unidade')
@@ -120,11 +122,11 @@ export default function UnitsPage() {
       contractingCompany:
         unitType === 'Contrato'
           ? {
-              name: formData.get('contractingName') as string,
-              cnpj: formData.get('contractingCnpj') as string,
-              cnae: formData.get('contractingCnae') as string,
-              riskLevel: formData.get('contractingRiskLevel') as string,
-            }
+            name: formData.get('contractingName') as string,
+            cnpj: formData.get('contractingCnpj') as string,
+            cnae: formData.get('contractingCnae') as string,
+            riskLevel: formData.get('contractingRiskLevel') as string,
+          }
           : undefined,
       propertyInfo: {
         address: formData.get('add-address') as string,
@@ -142,16 +144,40 @@ export default function UnitsPage() {
       pgrResponsible: formData.get('pgrResponsible') as string,
       ltcatResponsible: formData.get('ltcatResponsible') as string,
       pcmsoResponsible: formData.get('pcmsoResponsible') as string,
-      status: 'Ativa',
+      status: editingUnit?.status || 'Ativa',
     }
-    
-    addDocumentNonBlocking(unitsRef, newUnitData)
-    
-    toast({
-      title: 'Unidade Adicionada!',
-      description: `A unidade "${newUnitData.name}" foi adicionada com sucesso.`,
-    })
+
+    if (editingUnit?.id) {
+      const unitDocRef = doc(firestore!, `clients/${contractId}/units`, editingUnit.id)
+      updateDocumentNonBlocking(unitDocRef, newUnitData)
+      toast({ title: 'Unidade Atualizada!' })
+    } else {
+      addDocumentNonBlocking(unitsRef, newUnitData)
+      toast({
+        title: 'Unidade Adicionada!',
+        description: `A unidade "${newUnitData.name}" foi adicionada com sucesso.`,
+      })
+    }
+
     setIsAddDialogOpen(false)
+    setEditingUnit(null)
+  }
+
+  const handleArchiveUnit = (unit: Unit) => {
+    if (!firestore || !unit.id) return
+    const unitDocRef = doc(firestore, `clients/${contractId}/units`, unit.id)
+    updateDocumentNonBlocking(unitDocRef, { status: 'Inativa' })
+    toast({
+      title: 'Unidade Inativada',
+      description: 'A unidade foi marcada como Inativa.',
+      variant: 'destructive'
+    })
+  }
+
+  const openEditDialog = (unit: Unit) => {
+    setEditingUnit(unit)
+    setFormType(unit.type)
+    setIsAddDialogOpen(true)
   }
 
   const filteredUnits = useMemo(() => {
@@ -165,7 +191,7 @@ export default function UnitsPage() {
       return matchesSearch && matchesStatus
     })
   }, [units, searchTerm, statusFilter])
-    
+
   const isLoading = isClientLoading || areUnitsLoading
 
   return (
@@ -186,10 +212,10 @@ export default function UnitsPage() {
               <DialogContent className='sm:max-w-2xl'>
                 <DialogHeader>
                   <DialogTitle>
-                    Adicionar Nova Unidade/Obra/Contrato
+                    {editingUnit ? 'Editar' : 'Adicionar Nova'} Unidade/Obra/Contrato
                   </DialogTitle>
                   <DialogDescription>
-                    Preencha os detalhes da nova estrutura.
+                    {editingUnit ? 'Atualize os detalhes da estrutura.' : 'Preencha os detalhes da nova estrutura.'}
                   </DialogDescription>
                 </DialogHeader>
                 <form id='add-unit-form' onSubmit={handleAddUnit}>
@@ -280,11 +306,11 @@ export default function UnitsPage() {
 
                       <div className='space-y-2'>
                         <Label htmlFor='name'>Nome</Label>
-                        <Input id='name' name='name' required />
+                        <Input id='name' name='name' defaultValue={editingUnit?.name} required />
                       </div>
                       <div className='space-y-2'>
                         <Label htmlFor='description'>Descrição</Label>
-                        <Textarea id='description' name='description' />
+                        <Textarea id='description' name='description' defaultValue={editingUnit?.description} />
                       </div>
 
                       <fieldset className='grid gap-4 rounded-lg border p-4'>
@@ -314,7 +340,7 @@ export default function UnitsPage() {
                               id='riskLevel'
                               name='riskLevel'
                               defaultValue={
-                                inheritData ? client?.riskLevel : ''
+                                editingUnit?.riskLevel || (inheritData ? client?.riskLevel : '')
                               }
                             />
                           </div>
@@ -427,12 +453,15 @@ export default function UnitsPage() {
                 <DialogFooter>
                   <Button
                     variant='outline'
-                    onClick={() => setIsAddDialogOpen(false)}
+                    onClick={() => {
+                      setIsAddDialogOpen(false)
+                      setEditingUnit(null)
+                    }}
                   >
                     Cancelar
                   </Button>
                   <Button type='submit' form='add-unit-form'>
-                    Salvar
+                    {editingUnit ? 'Salvar Alterações' : 'Salvar'}
                   </Button>
                 </DialogFooter>
               </DialogContent>
@@ -441,19 +470,58 @@ export default function UnitsPage() {
           <CardDescription>
             Visualize e gerencie as unidades, obras e contratos ativos do cliente.
           </CardDescription>
+          <div className='flex items-center gap-2 pt-4'>
+            <div className='relative w-full max-w-sm'>
+              <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
+              <Input
+                type='search'
+                placeholder='Buscar por nome ou CNPJ...'
+                className='pl-8'
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant='outline' size='sm' className='h-10 gap-1 text-sm'>
+                  <Filter className='h-3.5 w-3.5' />
+                  <span className='sr-only sm:not-sr-only'>Filtrar</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end'>
+                <DropdownMenuLabel>Filtrar por Status</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {['Ativa', 'Inativa'].map((status) => (
+                  <DropdownMenuCheckboxItem
+                    key={status}
+                    checked={statusFilter.includes(status)}
+                    onCheckedChange={(checked) => {
+                      setStatusFilter((prev) =>
+                        checked
+                          ? [...prev, status]
+                          : prev.filter((s) => s !== status)
+                      )
+                    }}
+                  >
+                    {status}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
-             <div className='flex items-center justify-center h-64'>
-                <Loader2 className='h-8 w-8 animate-spin' />
-              </div>
+            <div className='flex items-center justify-center h-64'>
+              <Loader2 className='h-8 w-8 animate-spin' />
+            </div>
           ) : filteredUnits.length > 0 ? (
             <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
               {filteredUnits.map((unit) => (
                 <Card
                   key={unit.id}
                   className='flex flex-col h-full hover:shadow-md transition-shadow cursor-pointer'
-                   onClick={() =>
+                  onClick={() =>
                     router.push(
                       `/dashboard/clients/${contractId}/units/${unit.id}`
                     )
@@ -462,7 +530,30 @@ export default function UnitsPage() {
                   <CardHeader>
                     <div className='flex justify-between items-start'>
                       <CardTitle className='text-lg'>{unit.name}</CardTitle>
-                      <Badge variant='outline'>{unit.type}</Badge>
+                      <div className='flex items-center gap-2'>
+                        <Badge variant='outline'>{unit.type}</Badge>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant='ghost'
+                              size='icon'
+                              className='h-8 w-8'
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MoreHorizontal className='h-4 w-4' />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align='end' onClick={(e) => e.stopPropagation()}>
+                            <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => openEditDialog(unit)}>
+                              Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleArchiveUnit(unit)}>
+                              Inativar
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
                     <CardDescription>
                       {unit.propertyInfo.address}

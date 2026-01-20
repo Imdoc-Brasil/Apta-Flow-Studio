@@ -17,6 +17,9 @@
     "release:pr:minor": "node scripts/release-pr.js minor",
     "release:pr:major": "node scripts/release-pr.js major",
     "release:ship": "node scripts/release-ship.js",
+    "commit": "bash scripts/commit-and-push.sh",
+    "deploy:staging": "bash scripts/deploy.sh staging",
+    "deploy:production": "bash scripts/deploy.sh production",
     "postinstall": "patch-package"
   },
   "dependencies": {

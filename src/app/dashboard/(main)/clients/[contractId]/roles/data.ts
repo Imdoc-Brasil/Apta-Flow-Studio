@@ -10,6 +10,7 @@ export interface Role {
   mainWorkstationId?: string
   additionalWorkstationIds?: string[]
   requiredExams?: string
+  status?: 'Ativo' | 'Arquivado'
 }
 
 export const initialRolesData: Role[] = [

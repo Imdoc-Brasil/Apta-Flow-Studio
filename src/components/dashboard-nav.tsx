@@ -44,6 +44,7 @@ const mainNavItems = [
   { href: '/dashboard/clients', icon: Briefcase, label: 'Clientes' },
   { href: '/dashboard/employees', icon: Users, label: 'Equipe' },
   { href: '/dashboard/profiles', icon: HardHat, label: 'Perfis' },
+  { href: '/dashboard/audit-logs', icon: ShieldAlert, label: 'Logs de Auditoria' },
   { href: '/dashboard/services', icon: ClipboardList, label: 'Serviços' },
   { href: '/dashboard/risks', icon: ShieldAlert, label: 'Riscos' },
   { href: '/dashboard/trainings', icon: GraduationCap, label: 'Treinamentos' },

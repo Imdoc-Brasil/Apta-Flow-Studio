@@ -62,6 +62,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuItem,
 } from '@/components/ui/dropdown-menu'
 import {
   useFirestore,
@@ -123,8 +124,8 @@ export default function RolesPage() {
 
           setAreEnvironmentsLoading(true)
           if (sectorsData.length > 0) {
-            const environmentsPromises = sectorsData.flatMap(sector => 
-               getDocs(collection(firestore, `clients/${contractId}/units/${sector.unitId}/sectors/${sector.id}/environments`))
+            const environmentsPromises = sectorsData.flatMap(sector =>
+              getDocs(collection(firestore, `clients/${contractId}/units/${sector.unitId}/sectors/${sector.id}/environments`))
             );
 
             const environmentsSnapshots = await Promise.all(
@@ -162,6 +163,8 @@ export default function RolesPage() {
   const [sectorFilter, setSectorFilter] = useState<string[]>(
     urlSectorId ? [urlSectorId] : []
   )
+  const [statusFilter, setStatusFilter] = useState<string[]>(['Ativo'])
+  const [editingRole, setEditingRole] = useState<Role | null>(null)
 
   const sectorsWithUnit = useMemo(() => {
     return allSectors.map((sector) => {
@@ -177,6 +180,12 @@ export default function RolesPage() {
   const filteredRoles = useMemo(() => {
     if (!roles) return []
     let filtered = roles
+    if (statusFilter.length > 0) {
+      filtered = filtered.filter((role) => {
+        const status = role.status || 'Ativo'
+        return statusFilter.includes(status)
+      })
+    }
     if (sectorFilter.length > 0) {
       filtered = filtered.filter((role) =>
         sectorFilter.includes(role.sectorId)
@@ -227,16 +236,41 @@ export default function RolesPage() {
       mainWorkstationId: formData.get('mainWorkstationId') as string,
       additionalWorkstationIds,
       requiredExams: formData.get('requiredExams') as string,
+      status: editingRole?.status || 'Ativo',
     }
 
-    addDocumentNonBlocking(rolesRef, newRoleData)
+    if (editingRole?.id) {
+      const roleDocRef = doc(firestore!, `clients/${contractId}/roles`, editingRole.id)
+      updateDocumentNonBlocking(roleDocRef, newRoleData)
+      toast({ title: 'Cargo Atualizado!' })
+    } else {
+      addDocumentNonBlocking(rolesRef, newRoleData)
+      toast({
+        title: 'Cargo Adicionado!',
+        description: `O cargo "${newRoleData.name}" foi adicionado.`,
+      })
+    }
 
-    toast({
-      title: 'Cargo Adicionado!',
-      description: `O cargo "${newRoleData.name}" foi adicionado.`,
-    })
     setIsAddDialogOpen(false)
+    setEditingRole(null)
     setFormActivities([])
+  }
+
+  const handleArchiveRole = (role: Role) => {
+    if (!firestore || !role.id) return
+    const roleDocRef = doc(firestore, `clients/${contractId}/roles`, role.id)
+    updateDocumentNonBlocking(roleDocRef, { status: 'Arquivado' })
+    toast({
+      title: 'Cargo Arquivado',
+      description: 'O cargo foi marcado como Arquivado.',
+      variant: 'destructive'
+    })
+  }
+
+  const openEditRoleDialog = (role: Role) => {
+    setEditingRole(role)
+    setFormActivities(role.activities || [])
+    setIsAddDialogOpen(true)
   }
 
   const isLoading =
@@ -289,6 +323,23 @@ export default function RolesPage() {
                     {sector.name} ({sector.unitName})
                   </DropdownMenuCheckboxItem>
                 ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Filtrar por Status</DropdownMenuLabel>
+                {['Ativo', 'Arquivado'].map((status) => (
+                  <DropdownMenuCheckboxItem
+                    key={status}
+                    checked={statusFilter.includes(status)}
+                    onCheckedChange={(checked) => {
+                      setStatusFilter((prev) =>
+                        checked
+                          ? [...prev, status]
+                          : prev.filter((s) => s !== status)
+                      )
+                    }}
+                  >
+                    {status}
+                  </DropdownMenuCheckboxItem>
+                ))}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -318,16 +369,16 @@ export default function RolesPage() {
                     <div className='grid grid-cols-2 gap-4'>
                       <div className='space-y-2'>
                         <Label htmlFor='name'>Nome do Cargo</Label>
-                        <Input id='name' name='name' required />
+                        <Input id='name' name='name' defaultValue={editingRole?.name} required />
                       </div>
                       <div className='space-y-2'>
                         <Label htmlFor='cbo'>CBO</Label>
-                        <Input id='cbo' name='cbo' placeholder='Ex: 2525-05' />
+                        <Input id='cbo' name='cbo' defaultValue={editingRole?.cbo} placeholder='Ex: 2525-05' />
                       </div>
                     </div>
                     <div className='space-y-2'>
                       <Label htmlFor='sectorId'>Setor</Label>
-                      <Select name='sectorId' required>
+                      <Select name='sectorId' defaultValue={editingRole?.sectorId} required>
                         <SelectTrigger>
                           <SelectValue placeholder='Selecione o setor' />
                         </SelectTrigger>
@@ -344,7 +395,7 @@ export default function RolesPage() {
                       <Label htmlFor='mainWorkstationId'>
                         Posto de Trabalho Principal
                       </Label>
-                      <Select name='mainWorkstationId'>
+                      <Select name='mainWorkstationId' defaultValue={editingRole?.mainWorkstationId}>
                         <SelectTrigger>
                           <SelectValue placeholder='Selecione o posto de trabalho principal (opcional)' />
                         </SelectTrigger>
@@ -373,6 +424,7 @@ export default function RolesPage() {
                               <Checkbox
                                 id={`additional-${env.id}`}
                                 name={`additional-${env.id}`}
+                                defaultChecked={editingRole?.additionalWorkstationIds?.includes(env.id)}
                               />
                               <Label htmlFor={`additional-${env.id}`}>
                                 {env.name}
@@ -388,6 +440,7 @@ export default function RolesPage() {
                       <Textarea
                         id='description'
                         name='description'
+                        defaultValue={editingRole?.description}
                         placeholder='Descreva as principais atribuições do cargo'
                       />
                     </div>
@@ -437,6 +490,7 @@ export default function RolesPage() {
                       <Textarea
                         id='requirements'
                         name='requirements'
+                        defaultValue={editingRole?.requirements}
                         placeholder='Liste competências, treinamentos obrigatórios (NRs), certificações, etc.'
                       />
                     </div>
@@ -447,6 +501,7 @@ export default function RolesPage() {
                       <Input
                         id='requiredExams'
                         name='requiredExams'
+                        defaultValue={editingRole?.requiredExams}
                         placeholder='Ex: ASO, Audiometria, Acuidade Visual...'
                       />
                     </div>
@@ -456,12 +511,15 @@ export default function RolesPage() {
               <DialogFooter>
                 <Button
                   variant='outline'
-                  onClick={() => setIsAddDialogOpen(false)}
+                  onClick={() => {
+                    setIsAddDialogOpen(false)
+                    setEditingRole(null)
+                  }}
                 >
                   Cancelar
                 </Button>
                 <Button type='submit' form='add-role-form'>
-                  Salvar
+                  {editingRole ? 'Salvar Alterações' : 'Salvar'}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -502,10 +560,23 @@ export default function RolesPage() {
                       {role.cbo}
                     </TableCell>
                     <TableCell>
-                      <Button aria-haspopup='true' size='icon' variant='ghost'>
-                        <MoreHorizontal className='h-4 w-4' />
-                        <span className='sr-only'>Alternar menu</span>
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button aria-haspopup='true' size='icon' variant='ghost'>
+                            <MoreHorizontal className='h-4 w-4' />
+                            <span className='sr-only'>Alternar menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end'>
+                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => openEditRoleDialog(role)}>
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleArchiveRole(role)}>
+                            Arquivar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 )

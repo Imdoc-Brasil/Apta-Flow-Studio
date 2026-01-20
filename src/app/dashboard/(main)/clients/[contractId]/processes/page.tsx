@@ -55,6 +55,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
+  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -67,7 +68,8 @@ import {
   useMemoFirebase,
   addDocumentNonBlocking,
   updateDocumentNonBlocking,
-  deleteDocumentNonBlocking
+  useUser,
+  createAuditLog,
 } from '@/firebase'
 import { collection, doc, getDocs } from 'firebase/firestore'
 import type { Sector } from '@/app/dashboard/(main)/clients/[contractId]/sectors/data'
@@ -149,10 +151,12 @@ export default function ProcessesPage() {
   const [formSteps, setFormSteps] = useState<ProcessStep[]>([])
   const [formObligations, setFormObligations] = useState<string[]>([])
   const { toast } = useToast()
+  const { user } = useUser()
 
   const [viewMode, setViewMode] = useState<'card' | 'list'>('card')
   const [searchTerm, setSearchTerm] = useState('')
   const [sectorFilter, setSectorFilter] = useState<string[]>([])
+  const [statusFilter, setStatusFilter] = useState<string[]>(['Ativo'])
 
   const [isAssistantOpen, setIsAssistantOpen] = useState(false)
   const [assistantLoading, setAssistantLoading] = useState(false)
@@ -177,18 +181,27 @@ export default function ProcessesPage() {
 
   const filteredProcesses = useMemo(() => {
     if (!processes) return []
-    return processes.filter((process) => {
-      const matchesSearch =
-        process.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        process.objective.toLowerCase().includes(searchTerm.toLowerCase())
+    let filtered = processes
+    if (statusFilter.length > 0) {
+      filtered = filtered.filter((p) => {
+        const status = p.status || 'Ativo'
+        return statusFilter.includes(status)
+      })
+    }
+    return filtered
+      .filter((process) => {
+        const matchesSearch =
+          process.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          process.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          process.objective.toLowerCase().includes(searchTerm.toLowerCase())
 
-      const sectorName = getSectorNameForProcess(process)
+        const sectorName = getSectorNameForProcess(process)
 
-      const matchesSector =
-        sectorFilter.length === 0 || sectorFilter.includes(sectorName)
+        const matchesSector =
+          sectorFilter.length === 0 || sectorFilter.includes(sectorName)
 
-      return matchesSearch && matchesSector
-    })
+        return matchesSearch && matchesSector
+      })
   }, [processes, searchTerm, sectorFilter, getSectorNameForProcess])
 
   const handleStepChange = (
@@ -235,6 +248,7 @@ export default function ProcessesPage() {
       isCritical: formData.get('isCritical') === 'on',
       obligations: formObligations,
       steps: formSteps,
+      status: editingProcess?.status || 'Ativo',
     }
 
     if (editingProcess) {
@@ -255,10 +269,52 @@ export default function ProcessesPage() {
   }
 
   const handleDeleteProcess = (processId: string) => {
-    if (!firestore) return;
-    const docRef = doc(firestore, `clients/${contractId}/processes`, processId);
-    deleteDocumentNonBlocking(docRef);
-    toast({ title: "Processo Excluído", variant: "destructive" });
+    if (!firestore) return
+    const process = processes?.find(p => p.id === processId)
+    const docRef = doc(firestore, `clients/${contractId}/processes`, processId)
+
+    updateDocumentNonBlocking(docRef, { status: 'Arquivado' })
+
+    createAuditLog(firestore, {
+      userId: user?.uid || '',
+      userEmail: user?.email || '',
+      userName: user?.displayName || '',
+      action: 'archive',
+      module: 'processes',
+      entityId: processId,
+      entityName: process?.name || processId,
+      details: { contractId, previousStatus: process?.status }
+    })
+
+    toast({
+      title: 'Processo Arquivado',
+      description: 'O processo foi movido para o arquivo.',
+      variant: 'destructive'
+    })
+  }
+
+  const handleRestoreProcess = (processId: string) => {
+    if (!firestore) return
+    const process = processes?.find(p => p.id === processId)
+    const docRef = doc(firestore, `clients/${contractId}/processes`, processId)
+
+    updateDocumentNonBlocking(docRef, { status: 'Ativo' })
+
+    createAuditLog(firestore, {
+      userId: user?.uid || '',
+      userEmail: user?.email || '',
+      userName: user?.displayName || '',
+      action: 'restore',
+      module: 'processes',
+      entityId: processId,
+      entityName: process?.name || processId,
+      details: { contractId, previousStatus: 'Arquivado' }
+    })
+
+    toast({
+      title: 'Processo Restaurado',
+      description: 'O processo está ativo novamente.'
+    })
   }
 
 
@@ -385,6 +441,33 @@ export default function ProcessesPage() {
                       }}
                     >
                       {sector}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant='outline' size='sm' className='h-10 gap-1'>
+                    <Filter className='h-3.5 w-3.5' />
+                    <span className='sr-only sm:not-sr-only'>Status</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align='end'>
+                  <DropdownMenuLabel>Filtrar por Status</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {['Ativo', 'Arquivado'].map((status) => (
+                    <DropdownMenuCheckboxItem
+                      key={status}
+                      checked={statusFilter.includes(status)}
+                      onCheckedChange={(checked) => {
+                        setStatusFilter((prev) =>
+                          checked
+                            ? [...prev, status]
+                            : prev.filter((s) => s !== status)
+                        )
+                      }}
+                    >
+                      {status}
                     </DropdownMenuCheckboxItem>
                   ))}
                 </DropdownMenuContent>
@@ -523,9 +606,32 @@ export default function ProcessesPage() {
                     </TableCell>
                     <TableCell>{process.steps.length}</TableCell>
                     <TableCell>
-                      <Button variant='ghost' size='icon'>
-                        <MoreHorizontal className='h-4 w-4' />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant='ghost'
+                            size='icon'
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreHorizontal className='h-4 w-4' />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end' onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => openProcessDialog(process)}>
+                            Editar
+                          </DropdownMenuItem>
+                          {process.status !== 'Arquivado' ? (
+                            <DropdownMenuItem onClick={() => handleDeleteProcess(process.id)}>
+                              Arquivar
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem onClick={() => handleRestoreProcess(process.id)}>
+                              Restaurar
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}

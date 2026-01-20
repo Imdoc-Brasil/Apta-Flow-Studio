@@ -15,6 +15,7 @@ export interface Environment {
   activities: string;
   equipment: string;
   physicalCharacteristics: PhysicalCharacteristics;
+  status?: 'Ativo' | 'Arquivado';
 }
 
 export const initialEnvironmentsData: Environment[] = [
@@ -48,7 +49,7 @@ export const initialEnvironmentsData: Environment[] = [
       exhaustSystem: 'Exaustores eólicos no telhado',
     },
   },
-   {
+  {
     id: 'ENV-03',
     name: 'Recepção',
     sectorId: 'SEC-01', // Administrativo

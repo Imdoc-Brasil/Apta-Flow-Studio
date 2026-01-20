@@ -21,6 +21,7 @@ import {
   File as FileIcon,
   MessageSquare,
   HelpCircle,
+  Archive,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -61,6 +62,7 @@ import {
   useFirestore,
   useMemoFirebase,
   useUser,
+  createAuditLog,
 } from '@/firebase'
 import { collection, doc } from 'firebase/firestore'
 
@@ -443,6 +445,29 @@ export function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
   const assignedMembers =
     staffs?.filter((emp: Staff) => ticket.assignedTo?.includes(emp.email)) ?? []
 
+  const handleArchive = () => {
+    if (!firestore || !ticket.id) return
+    const ticketDocRef = doc(firestore, 'tickets', ticket.id)
+    updateDocumentNonBlocking(ticketDocRef, {
+      status: 'Arquivado',
+      updated: new Date().toISOString(),
+    })
+    createAuditLog(firestore, {
+      userId: user?.uid || '',
+      userEmail: user?.email || '',
+      userName: user?.displayName || '',
+      action: 'archive',
+      module: 'tickets',
+      entityId: ticket.id,
+      entityName: ticket.subject,
+      details: { previousStatus: ticket.status }
+    })
+    toast({
+      title: 'Ticket Arquivado!',
+      description: 'Este ticket foi movido para o arquivo.',
+    })
+  }
+
   return (
     <DialogContent className='sm:max-w-4xl'>
       <DialogHeader>
@@ -563,8 +588,8 @@ export function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                               <label
                                 htmlFor={`item-${item.id}`}
                                 className={`font-medium ${item.completed
-                                    ? 'line-through text-muted-foreground'
-                                    : ''
+                                  ? 'line-through text-muted-foreground'
+                                  : ''
                                   }`}
                               >
                                 {item.text}
@@ -777,6 +802,14 @@ export function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                   <Paperclip className='mr-2 h-4 w-4' /> Anexo
                 </Button>
               </AddAttachmentDialog>
+              <Separator className='my-2' />
+              <Button
+                variant='secondary'
+                className='justify-start text-destructive hover:text-white hover:bg-destructive'
+                onClick={handleArchive}
+              >
+                <Archive className='mr-2 h-4 w-4' /> Arquivar Ticket
+              </Button>
             </div>
             {ticket.attachments && ticket.attachments.length > 0 && (
               <div className='mt-6 space-y-4'>

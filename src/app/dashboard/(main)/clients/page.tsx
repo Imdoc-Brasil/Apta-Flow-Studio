@@ -22,6 +22,8 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
+  DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu'
 import {
   Table,
@@ -41,11 +43,14 @@ import {
   useMemoFirebase,
   useUser,
   useDoc,
+  createAuditLog,
 } from '@/firebase'
 import {
   collection,
   doc,
 } from 'firebase/firestore'
+import { useToast } from '@/hooks/use-toast'
+import { updateDocumentNonBlocking } from '@/firebase'
 import type { Staff } from '@/app/dashboard/(main)/employees/page'
 import { AddClientDialog } from '@/components/add-client-dialog'
 
@@ -53,6 +58,7 @@ import { AddClientDialog } from '@/components/add-client-dialog'
 export default function ClientsPage() {
   const firestore = useFirestore()
   const { user } = useUser()
+  const { toast } = useToast()
 
   const staffDocRef = useMemoFirebase(
     () => (firestore && user ? doc(firestore, 'staffs', user.uid) : null),
@@ -60,6 +66,9 @@ export default function ClientsPage() {
   )
   const { data: staffProfile, isLoading: isStaffLoading } =
     useDoc<Staff>(staffDocRef)
+
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState<string[]>(['Ativo'])
 
   const clientsRef = useMemoFirebase(
     () => (firestore ? collection(firestore, 'clients') : null),
@@ -71,19 +80,64 @@ export default function ClientsPage() {
 
   const isLoading = isStaffLoading || areClientsLoading
 
-  let clientsToDisplay: Client[] = []
-  if (!isLoading && allClients && staffProfile) {
+  const clientsToDisplay = useMemo(() => {
+    if (isLoading || !allClients || !staffProfile) return []
+
+    let filtered = allClients
+
+    // Global filters (Status and Search)
+    if (statusFilter.length > 0) {
+      filtered = filtered.filter(c => statusFilter.includes(c.status))
+    }
+
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase()
+      filtered = filtered.filter(c =>
+        c.name.toLowerCase().includes(term) ||
+        c.id.toLowerCase().includes(term)
+      )
+    }
+
+    // Permission filters
     if (staffProfile.perfilId === 'super_admin' || !staffProfile.clientIds) {
-       clientsToDisplay = allClients;
+      return filtered
     } else if (staffProfile.perfilId === 'cliente' && staffProfile.contractId) {
-      clientsToDisplay = allClients.filter(
+      return filtered.filter(
         (client) => client.id === staffProfile?.contractId
       )
     } else if (staffProfile.clientIds && staffProfile.clientIds.length > 0) {
-      clientsToDisplay = allClients.filter((client) =>
+      return filtered.filter((client) =>
         staffProfile.clientIds?.includes(client.id)
       )
     }
+
+    return []
+  }, [allClients, staffProfile, isLoading, searchTerm, statusFilter])
+
+  const handleDisableClient = (clientId: string) => {
+    if (!firestore || !clientId) return
+    const client = allClients?.find(c => c.id === clientId)
+    const clientDocRef = doc(firestore, 'clients', clientId)
+
+    updateDocumentNonBlocking(clientDocRef, {
+      status: 'Inativo'
+    })
+
+    createAuditLog(firestore, {
+      userId: user?.uid || '',
+      userEmail: user?.email || '',
+      userName: user?.displayName || '',
+      action: 'deactivate',
+      module: 'clients',
+      entityId: clientId,
+      entityName: client?.name || clientId,
+      details: { previousStatus: client?.status }
+    })
+
+    toast({
+      title: 'Cliente Desativado',
+      description: 'O cliente foi marcado como Inativo e removido da visualização padrão.',
+    })
   }
 
   return (
@@ -98,14 +152,43 @@ export default function ClientsPage() {
             <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
             <Input
               type='search'
-              placeholder='Buscar por nome ou CNPJ...'
+              placeholder='Buscar por nome ou código...'
               className='pl-8'
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          <Button variant='outline' size='sm' className='h-10 gap-1 text-sm'>
-            <Filter className='h-3.5 w-3.5' />
-            <span className='sr-only sm:not-sr-only'>Filtro</span>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant='outline'
+                size='sm'
+                className='h-10 gap-1 text-sm'
+              >
+                <Filter className='h-3.5 w-3.5' />
+                <span className='sr-only sm:not-sr-only'>Status</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='end'>
+              <DropdownMenuLabel>Filtrar por Status</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {['Ativo', 'Inativo'].map((status) => (
+                <DropdownMenuCheckboxItem
+                  key={status}
+                  checked={statusFilter.includes(status)}
+                  onCheckedChange={(checked) => {
+                    setStatusFilter((prev) =>
+                      checked
+                        ? [...prev, status]
+                        : prev.filter((s) => s !== status)
+                    )
+                  }}
+                >
+                  {status}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <div className='ml-auto'>
             <AddClientDialog />
           </div>
@@ -175,7 +258,9 @@ export default function ClientsPage() {
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem>Editar</DropdownMenuItem>
-                        <DropdownMenuItem>Desativar</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDisableClient(client.id)}>
+                          Desativar
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

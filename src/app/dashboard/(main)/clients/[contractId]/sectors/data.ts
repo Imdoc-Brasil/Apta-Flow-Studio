@@ -5,6 +5,7 @@ export interface Sector {
   name: string
   description: string
   unitId: string
+  status?: 'Ativo' | 'Arquivado'
 }
 
 // Export array vazio para compatibilidade com imports

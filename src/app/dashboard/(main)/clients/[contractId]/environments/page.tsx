@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
-import { MoreHorizontal, PlusCircle, Search } from 'lucide-react'
+import { MoreHorizontal, PlusCircle, Search, Filter } from 'lucide-react'
 import {
   Card,
   CardContent,
@@ -51,6 +51,15 @@ import { collection, doc, getDocs } from 'firebase/firestore'
 import { Loader2 } from 'lucide-react'
 import type { Unit } from '../units/data'
 import { DialogFooter } from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
+} from '@/components/ui/dropdown-menu'
 
 export default function EnvironmentsPage() {
   const params = useParams()
@@ -64,6 +73,7 @@ export default function EnvironmentsPage() {
     useState<Environment | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedUnit, setSelectedUnit] = useState<string>(urlUnitId || '')
+  const [statusFilter, setStatusFilter] = useState<string[]>(['Ativo'])
   const [sectorFilter, setSectorFilter] = useState<string>(urlSectorId || '')
   const { toast } = useToast()
 
@@ -127,13 +137,20 @@ export default function EnvironmentsPage() {
 
   const filteredEnvironments = useMemo(() => {
     if (!environments) return []
+    let filtered = environments
+    if (statusFilter.length > 0) {
+      filtered = filtered.filter((env) => {
+        const status = env.status || 'Ativo'
+        return statusFilter.includes(status)
+      })
+    }
     if (searchTerm) {
-      return environments.filter((env) =>
+      filtered = filtered.filter((env) =>
         env.name.toLowerCase().includes(searchTerm.toLowerCase())
       )
     }
-    return environments
-  }, [environments, searchTerm])
+    return filtered
+  }, [environments, searchTerm, statusFilter])
 
   const getSectorName = (sectorId: string) => {
     return allSectors.find((s) => s.id === sectorId)?.name || 'N/A'
@@ -169,6 +186,7 @@ export default function EnvironmentsPage() {
         wallCoverings: formData.get('wallCoverings') as string,
         exhaustSystem: formData.get('exhaustSystem') as string,
       },
+      status: editingEnvironment?.status || 'Ativo',
     }
 
     if (editingEnvironment) {
@@ -194,6 +212,21 @@ export default function EnvironmentsPage() {
 
     setIsFormDialogOpen(false)
     setEditingEnvironment(null)
+  }
+
+  const handleArchiveEnvironment = (env: Environment) => {
+    if (!firestore || !env.id || !selectedUnit || !sectorFilter) return
+    const envDocRef = doc(
+      firestore,
+      `clients/${contractId}/units/${selectedUnit}/sectors/${sectorFilter}/environments`,
+      env.id
+    )
+    updateDocumentNonBlocking(envDocRef, { status: 'Arquivado' })
+    toast({
+      title: 'Posto de Trabalho Arquivado',
+      description: 'O posto de trabalho foi marcado como Arquivado.',
+      variant: 'destructive'
+    })
   }
 
   const openFormDialog = (environment: Environment | null) => {
@@ -375,6 +408,33 @@ export default function EnvironmentsPage() {
                   ))}
                 </SelectContent>
               </Select>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant='outline' size='sm' className='h-10 gap-1'>
+                    <Filter className='h-3.5 w-3.5' />
+                    <span className='sr-only sm:not-sr-only'>Status</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align='end'>
+                  <DropdownMenuLabel>Filtrar por Status</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {['Ativo', 'Arquivado'].map((status) => (
+                    <DropdownMenuCheckboxItem
+                      key={status}
+                      checked={statusFilter.includes(status)}
+                      onCheckedChange={(checked) => {
+                        setStatusFilter((prev) =>
+                          checked
+                            ? [...prev, status]
+                            : prev.filter((s) => s !== status)
+                        )
+                      }}
+                    >
+                      {status}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
             <Button
               size='sm'
@@ -426,10 +486,28 @@ export default function EnvironmentsPage() {
                       </p>
                     </TableCell>
                     <TableCell>
-                      <Button aria-haspopup='true' size='icon' variant='ghost'>
-                        <MoreHorizontal className='h-4 w-4' />
-                        <span className='sr-only'>Alternar menu</span>
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            aria-haspopup='true'
+                            size='icon'
+                            variant='ghost'
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MoreHorizontal className='h-4 w-4' />
+                            <span className='sr-only'>Alternar menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align='end' onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => openFormDialog(env)}>
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleArchiveEnvironment(env)}>
+                            Arquivar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}

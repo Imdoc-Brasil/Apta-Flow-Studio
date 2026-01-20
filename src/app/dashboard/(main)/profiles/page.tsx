@@ -53,6 +53,7 @@ import {
   addDocumentNonBlocking,
   updateDocumentNonBlocking,
   setDocumentNonBlocking,
+  createAuditLog,
 } from '@/firebase'
 import { collection, doc } from 'firebase/firestore'
 import type { Staff } from '@/app/dashboard/(main)/employees/page'
@@ -248,6 +249,20 @@ export default function ProfilesPage() {
     const updatedPermissions = Array.from(selectedPermissions)
     const profileDocRef = doc(firestore, 'profiles', currentProfile.id)
     updateDocumentNonBlocking(profileDocRef, { permissions: updatedPermissions })
+
+    createAuditLog(firestore, {
+      userId: user?.uid || '',
+      userEmail: user?.email || '',
+      userName: user?.displayName || '',
+      action: 'update_permissions',
+      module: 'profiles',
+      entityId: currentProfile.id,
+      entityName: currentProfile.name,
+      details: {
+        previousPermissions: currentProfile.permissions || [],
+        newPermissions: updatedPermissions
+      }
+    })
 
     toast({
       title: 'Permissões atualizadas!',

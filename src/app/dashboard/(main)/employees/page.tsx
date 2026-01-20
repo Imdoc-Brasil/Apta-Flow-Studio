@@ -78,10 +78,10 @@ import {
   useMemoFirebase,
   addDocumentNonBlocking,
   updateDocumentNonBlocking,
-  deleteDocumentNonBlocking,
   useUser,
   useDoc,
   setDocumentNonBlocking,
+  createAuditLog,
 } from '@/firebase'
 import { collection, doc } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
@@ -156,6 +156,7 @@ type StaffFormValues = z.infer<typeof staffFormSchema>
 
 export default function StaffsPage() {
   const firestore = useFirestore()
+  const { user } = useUser()
   const staffsRef = useMemoFirebase(
     () => (firestore ? collection(firestore, 'staffs') : null),
     [firestore]
@@ -175,7 +176,7 @@ export default function StaffsPage() {
   )
   const { data: profiles, isLoading: areProfilesLoading } =
     useCollection<Profile>(profilesRef)
-    
+
   // Effect to add initial data if collection is empty
   useEffect(() => {
     if (firestore && !isLoading && staffs) {
@@ -216,7 +217,6 @@ export default function StaffsPage() {
   const [statusFilter, setStatusFilter] = useState<string[]>([
     'Ativo',
     'Licença',
-    'Suspenso',
   ])
   const { toast } = useToast()
 
@@ -301,13 +301,13 @@ export default function StaffsPage() {
       .toUpperCase()
 
     const updatedData: Partial<Staff> = {
-        name: data.name,
-        email: data.email,
-        perfilId: data.perfilId,
-        assinatura: data.assinatura,
-        phone: data.phone || '',
-        fallback,
-        ...(data.avatar && { avatar: data.avatar }),
+      name: data.name,
+      email: data.email,
+      perfilId: data.perfilId,
+      assinatura: data.assinatura,
+      phone: data.phone || '',
+      fallback,
+      ...(data.avatar && { avatar: data.avatar }),
     };
 
     if (data.perfilId === 'cliente') {
@@ -330,9 +330,19 @@ export default function StaffsPage() {
   const handleDeleteStaff = () => {
     if (!currentStaff?.id || !firestore) return
     const staffDocRef = doc(firestore, 'staffs', currentStaff.id)
-    deleteDocumentNonBlocking(staffDocRef)
+    updateDocumentNonBlocking(staffDocRef, { status: 'Suspenso' })
+    createAuditLog(firestore, {
+      userId: user?.uid || '',
+      userEmail: user?.email || '',
+      userName: user?.displayName || '',
+      action: 'suspend',
+      module: 'staffs',
+      entityId: currentStaff.id,
+      entityName: currentStaff.name,
+      details: { previousStatus: currentStaff.status }
+    })
     toast({
-      title: 'Membro Removido!',
+      title: 'Membro Desativado!',
       variant: 'destructive',
     })
     setIsDeleteDialogOpen(false)
@@ -342,7 +352,20 @@ export default function StaffsPage() {
   const handleChangeStatus = (staffId: string, newStatus: StaffStatus) => {
     if (!firestore) return
     const staffDocRef = doc(firestore, 'staffs', staffId)
+    const staff = staffs?.find(s => s.id === staffId || s.email === staffId)
+
     updateDocumentNonBlocking(staffDocRef, { status: newStatus })
+
+    createAuditLog(firestore, {
+      userId: user?.uid || '',
+      userEmail: user?.email || '',
+      userName: user?.displayName || '',
+      action: 'change_status',
+      module: 'staffs',
+      entityId: staffId,
+      entityName: staff?.name || staffId,
+      details: { previousStatus: staff?.status, newStatus }
+    })
   }
 
   const openEditDialog = (staff: Staff) => {
@@ -591,7 +614,7 @@ export default function StaffsPage() {
                         )}
                       />
                     </div>
-                    
+
                     {form.watch('perfilId') === 'cliente' && (
                       <FormField
                         control={form.control}
@@ -656,68 +679,68 @@ export default function StaffsPage() {
                             />
 
                             {!form.watch('allClients') && (
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <FormControl>
-                                  <Button
-                                    variant='outline'
-                                    role='combobox'
-                                    className={cn(
-                                      'w-full justify-between font-normal',
-                                      !field.value?.length &&
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <FormControl>
+                                    <Button
+                                      variant='outline'
+                                      role='combobox'
+                                      className={cn(
+                                        'w-full justify-between font-normal',
+                                        !field.value?.length &&
                                         'text-muted-foreground'
-                                    )}
-                                  >
-                                    Selecionar clientes...
-                                    <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
-                                  </Button>
-                                </FormControl>
-                              </PopoverTrigger>
-                              <PopoverContent className='w-[--radix-popover-trigger-width] p-0'>
-                                <Command>
-                                  <CommandInput placeholder='Buscar cliente...' />
-                                  <CommandEmpty>
-                                    Nenhum cliente encontrado.
-                                  </CommandEmpty>
-                                  <CommandList>
-                                    <CommandGroup>
-                                      {areClientsLoading ? (
-                                        <Loader2 className='mx-auto h-4 w-4 animate-spin' />
-                                      ) : (
-                                        clientsData?.map((client) => (
-                                          <CommandItem
-                                            key={client.id}
-                                            onSelect={() => {
-                                              const selected =
-                                                field.value || []
-                                              const newSelection =
-                                                selected.includes(client.id!)
-                                                  ? selected.filter(
+                                      )}
+                                    >
+                                      Selecionar clientes...
+                                      <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+                                    </Button>
+                                  </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className='w-[--radix-popover-trigger-width] p-0'>
+                                  <Command>
+                                    <CommandInput placeholder='Buscar cliente...' />
+                                    <CommandEmpty>
+                                      Nenhum cliente encontrado.
+                                    </CommandEmpty>
+                                    <CommandList>
+                                      <CommandGroup>
+                                        {areClientsLoading ? (
+                                          <Loader2 className='mx-auto h-4 w-4 animate-spin' />
+                                        ) : (
+                                          clientsData?.map((client) => (
+                                            <CommandItem
+                                              key={client.id}
+                                              onSelect={() => {
+                                                const selected =
+                                                  field.value || []
+                                                const newSelection =
+                                                  selected.includes(client.id!)
+                                                    ? selected.filter(
                                                       (id) => id !== client.id
                                                     )
-                                                  : [...selected, client.id!]
-                                              field.onChange(newSelection)
-                                            }}
-                                          >
-                                            <Check
-                                              className={cn(
-                                                'mr-2 h-4 w-4',
-                                                field.value?.includes(
-                                                  client.id!
-                                                )
-                                                  ? 'opacity-100'
-                                                  : 'opacity-0'
-                                              )}
-                                            />
-                                            {client.name}
-                                          </CommandItem>
-                                        ))
-                                      )}
-                                    </CommandGroup>
-                                  </CommandList>
-                                </Command>
-                              </PopoverContent>
-                            </Popover>
+                                                    : [...selected, client.id!]
+                                                field.onChange(newSelection)
+                                              }}
+                                            >
+                                              <Check
+                                                className={cn(
+                                                  'mr-2 h-4 w-4',
+                                                  field.value?.includes(
+                                                    client.id!
+                                                  )
+                                                    ? 'opacity-100'
+                                                    : 'opacity-0'
+                                                )}
+                                              />
+                                              {client.name}
+                                            </CommandItem>
+                                          ))
+                                        )}
+                                      </CommandGroup>
+                                    </CommandList>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
                             )}
                             <div className='mt-2 flex flex-wrap gap-1'>
                               {(form.watch('clientIds') || []).map(
@@ -1090,84 +1113,84 @@ export default function StaffsPage() {
                       <FormItem>
                         <FormLabel>Acesso a Clientes</FormLabel>
                         <FormField
-                            control={editForm.control}
-                            name="allClients"
-                            render={({ field: allClientsField }) => (
-                              <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 mb-4">
-                                <FormControl>
-                                  <Checkbox
-                                    checked={allClientsField.value}
-                                    onCheckedChange={allClientsField.onChange}
-                                  />
-                                </FormControl>
-                                <div className="space-y-1 leading-none">
-                                  <FormLabel>
-                                    Conceder acesso a todas as empresas
-                                  </FormLabel>
-                                </div>
-                              </FormItem>
-                            )}
-                          />
-                        
+                          control={editForm.control}
+                          name="allClients"
+                          render={({ field: allClientsField }) => (
+                            <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 mb-4">
+                              <FormControl>
+                                <Checkbox
+                                  checked={allClientsField.value}
+                                  onCheckedChange={allClientsField.onChange}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel>
+                                  Conceder acesso a todas as empresas
+                                </FormLabel>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+
                         {!editForm.watch('allClients') && (
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <FormControl>
-                              <Button
-                                variant='outline'
-                                role='combobox'
-                                className={cn(
-                                  'w-full justify-between font-normal',
-                                  !field.value?.length &&
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant='outline'
+                                  role='combobox'
+                                  className={cn(
+                                    'w-full justify-between font-normal',
+                                    !field.value?.length &&
                                     'text-muted-foreground'
-                                )}
-                              >
-                                Selecionar clientes...
-                                <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
-                              </Button>
-                            </FormControl>
-                          </PopoverTrigger>
-                          <PopoverContent className='w-[--radix-popover-trigger-width] p-0'>
-                            <Command>
-                              <CommandInput placeholder='Buscar cliente...' />
-                              <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
-                              <CommandList>
-                                <CommandGroup>
-                                  {areClientsLoading ? (
-                                    <Loader2 className='mx-auto h-4 w-4 animate-spin' />
-                                  ) : (
-                                    clientsData?.map((client) => (
-                                      <CommandItem
-                                        key={client.id}
-                                        onSelect={() => {
-                                          const selected = field.value || []
-                                          const newSelection = selected.includes(
-                                            client.id!
-                                          )
-                                            ? selected.filter(
+                                  )}
+                                >
+                                  Selecionar clientes...
+                                  <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className='w-[--radix-popover-trigger-width] p-0'>
+                              <Command>
+                                <CommandInput placeholder='Buscar cliente...' />
+                                <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
+                                <CommandList>
+                                  <CommandGroup>
+                                    {areClientsLoading ? (
+                                      <Loader2 className='mx-auto h-4 w-4 animate-spin' />
+                                    ) : (
+                                      clientsData?.map((client) => (
+                                        <CommandItem
+                                          key={client.id}
+                                          onSelect={() => {
+                                            const selected = field.value || []
+                                            const newSelection = selected.includes(
+                                              client.id!
+                                            )
+                                              ? selected.filter(
                                                 (id) => id !== client.id
                                               )
-                                            : [...selected, client.id!]
-                                          field.onChange(newSelection)
-                                        }}
-                                      >
-                                        <Check
-                                          className={cn(
-                                            'mr-2 h-4 w-4',
-                                            field.value?.includes(client.id!)
-                                              ? 'opacity-100'
-                                              : 'opacity-0'
-                                          )}
-                                        />
-                                        {client.name}
-                                      </CommandItem>
-                                    ))
-                                  )}
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
+                                              : [...selected, client.id!]
+                                            field.onChange(newSelection)
+                                          }}
+                                        >
+                                          <Check
+                                            className={cn(
+                                              'mr-2 h-4 w-4',
+                                              field.value?.includes(client.id!)
+                                                ? 'opacity-100'
+                                                : 'opacity-0'
+                                            )}
+                                          />
+                                          {client.name}
+                                        </CommandItem>
+                                      ))
+                                    )}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
                         )}
                         <div className='mt-2 flex flex-wrap gap-1'>
                           {(editForm.watch('clientIds') || []).map(
@@ -1267,11 +1290,10 @@ export default function StaffsPage() {
                 <p className='text-sm font-medium'>Situação</p>
                 <div className='flex items-center gap-2'>
                   <span
-                    className={`h-2 w-2 rounded-full ${
-                      currentStaff.situacao === 'Online'
-                        ? 'bg-green-500'
-                        : 'bg-gray-400'
-                    }`}
+                    className={`h-2 w-2 rounded-full ${currentStaff.situacao === 'Online'
+                      ? 'bg-green-500'
+                      : 'bg-gray-400'
+                      }`}
                   ></span>
                   <span>{currentStaff.situacao}</span>
                 </div>

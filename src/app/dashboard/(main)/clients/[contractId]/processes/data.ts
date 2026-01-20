@@ -20,4 +20,5 @@ export interface Process {
   type: ProcessType
   obligations: string[]
   isCritical: boolean
+  status?: 'Ativo' | 'Arquivado'
 }

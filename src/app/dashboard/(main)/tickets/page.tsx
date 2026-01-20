@@ -101,6 +101,7 @@ import {
   useFirestore,
   useMemoFirebase,
   useUser,
+  createAuditLog,
 } from '@/firebase'
 import { collection, doc } from 'firebase/firestore'
 import { TicketDetailsDialog } from '@/components/ticket-details-dialog'
@@ -116,6 +117,7 @@ const statusVariant = {
   'Em Progresso': 'secondary',
   Resolvido: 'outline',
   Fechado: 'outline',
+  Arquivado: 'secondary',
 } as const
 
 function ClientSideDate({ dateString }: { dateString: string }) {
@@ -152,6 +154,7 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
   } = useSortable({ id: ticket.id, data: { type: 'Ticket', ticket } })
   const firestore = useFirestore()
   const { user } = useUser()
+  const { toast } = useToast()
   const currentUserEmail = user?.email || ''
 
   const style = {
@@ -218,7 +221,7 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
                   <Badge
                     variant={
                       priorityVariant[
-                        ticket.priority as keyof typeof priorityVariant
+                      ticket.priority as keyof typeof priorityVariant
                       ]
                     }
                   >
@@ -256,6 +259,35 @@ const TicketCard = ({ ticket }: { ticket: Ticket }) => {
                     <DropdownMenuContent onClick={(e) => e.stopPropagation()}>
                       <DropdownMenuLabel>Ações</DropdownMenuLabel>
                       <DropdownMenuItem>Ver Detalhes</DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          if (firestore && ticket.id) {
+                            const ticketDocRef = doc(firestore, 'tickets', ticket.id)
+                            updateDocumentNonBlocking(ticketDocRef, {
+                              status: 'Arquivado',
+                              updated: new Date().toISOString(),
+                            })
+                            createAuditLog(firestore, {
+                              userId: user?.uid || '',
+                              userEmail: user?.email || '',
+                              userName: user?.displayName || '',
+                              action: 'archive',
+                              module: 'tickets',
+                              entityId: ticket.id,
+                              entityName: ticket.subject,
+                              details: { previousStatus: ticket.status }
+                            })
+                            toast({
+                              title: 'Ticket Arquivado!',
+                              description: 'O ticket foi movido para o arquivo.',
+                            })
+                          }
+                        }}
+                      >
+                        Arquivar Ticket
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -335,6 +367,7 @@ export default function TicketsPage() {
 
   const { tickets, setTickets } = useTicketStore()
   const { user } = useUser()
+  const { toast } = useToast()
 
   useEffect(() => {
     if (ticketsData) {
@@ -446,6 +479,29 @@ export default function TicketsPage() {
         updated: new Date().toISOString(),
       })
     }
+  }
+
+  const handleArchiveTicket = (ticket: Ticket) => {
+    if (!firestore || !ticket.id) return
+    const ticketDocRef = doc(firestore, 'tickets', ticket.id)
+    updateDocumentNonBlocking(ticketDocRef, {
+      status: 'Arquivado',
+      updated: new Date().toISOString(),
+    })
+    createAuditLog(firestore, {
+      userId: user?.uid || '',
+      userEmail: user?.email || '',
+      userName: user?.displayName || '',
+      action: 'archive',
+      module: 'tickets',
+      entityId: ticket.id,
+      entityName: ticket.subject,
+      details: { previousStatus: ticket.status }
+    })
+    toast({
+      title: 'Ticket Arquivado!',
+      description: 'O ticket foi movido para o arquivo.',
+    })
   }
 
   const isLoading = areTicketsLoading || areClientsLoading
@@ -639,8 +695,8 @@ export default function TicketsPage() {
                                           checked
                                             ? [...prev, label]
                                             : prev.filter(
-                                                (l) => l.id !== label.id
-                                              )
+                                              (l) => l.id !== label.id
+                                            )
                                         )
                                       }
                                     />
@@ -752,7 +808,7 @@ export default function TicketsPage() {
                                 <Badge
                                   variant={
                                     priorityVariant[
-                                      ticket.priority as keyof typeof priorityVariant
+                                    ticket.priority as keyof typeof priorityVariant
                                     ]
                                   }
                                 >
@@ -763,7 +819,7 @@ export default function TicketsPage() {
                                 <Badge
                                   variant={
                                     statusVariant[
-                                      ticket.status as keyof typeof statusVariant
+                                    ticket.status as keyof typeof statusVariant
                                     ]
                                   }
                                 >
@@ -800,6 +856,10 @@ export default function TicketsPage() {
                                     </DropdownMenuItem>
                                     <DropdownMenuItem>
                                       Atribuir
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={() => handleArchiveTicket(ticket)}>
+                                      Arquivar Ticket
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem>
@@ -872,7 +932,7 @@ export default function TicketsPage() {
                             <Badge
                               variant={
                                 priorityVariant[
-                                  activeTicket.priority as keyof typeof priorityVariant
+                                activeTicket.priority as keyof typeof priorityVariant
                                 ]
                               }
                             >
@@ -893,4 +953,3 @@ export default function TicketsPage() {
   )
 }
 
-    
