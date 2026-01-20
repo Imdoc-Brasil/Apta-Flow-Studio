@@ -40,7 +40,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { useAttendeeStore } from '../../../health/queue/attendee-store'
+import {
+  useAttendeeStore,
+  type Exam as AttendeeExam,
+} from '../../../health/queue/attendee-store'
 import { useTicketStore } from '../../../tickets/tickets-store'
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
@@ -246,23 +249,28 @@ export default function AsosPage() {
 
     const ticketSubject = `Solicitação de ${solicitationType} para ${employee.name}`
 
+    const examsForAttendee: AttendeeExam[] = [
+      {
+        id: `EXM-${Date.now()}-A`,
+        name: 'Avaliação Clínica',
+        status: 'Pendente',
+      },
+      ...pcmsoExams
+        .split(', ')
+        .map((examName) => ({
+          id: `EXM-${Date.now()}-${examName.slice(0, 3)}`,
+          name: examName,
+          status: 'Pendente' as 'Pendente' | 'Realizado',
+        }))
+        .filter((e) => e.name),
+    ]
+
     // 1. Add to attendee queue for the health module
     addAttendee({
       clientName: client.name,
       patientName: employee.name,
       solicitationType: solicitationType,
-      exams: [
-        {
-          id: `EXM-${Date.now()}-A`,
-          name: 'Avaliação Clínica',
-          status: 'Pendente',
-        },
-        ...pcmsoExams.split(', ').map(examName => ({
-          id: `EXM-${Date.now()}-${examName.slice(0,3)}`,
-          name: examName,
-          status: 'Pendente',
-        })).filter(e => e.name),
-      ],
+      exams: examsForAttendee,
     })
 
     // 2. Add a corresponding ticket for tracking
@@ -557,6 +565,3 @@ export default function AsosPage() {
     </Card>
   )
 }
-
-
-    

@@ -195,8 +195,10 @@ export default function EmployeesPage() {
     return rolesWithDetails.find((r) => r.id === selectedAddRole);
   }, [selectedAddRole, rolesWithDetails])
 
-  const getRoleById = useCallback((roleId: string) =>
-    rolesData?.find((r) => r.id === roleId), [rolesData]);
+  const getRoleById = useCallback(
+    (roleId: string) => rolesData?.find((r) => r.id === roleId),
+    [rolesData]
+  )
 
   const filteredEmployees = useMemo(() => {
     if (!employees) return []

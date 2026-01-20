@@ -199,7 +199,7 @@ export default function RolesPage() {
       )
     }
     return filtered
-  }, [roles, searchTerm, sectorFilter])
+  }, [roles, searchTerm, sectorFilter, statusFilter])
 
   const handleAddActivity = () => {
     if (

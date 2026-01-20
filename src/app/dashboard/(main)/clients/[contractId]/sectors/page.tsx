@@ -161,7 +161,7 @@ export default function SectorsPage() {
       )
     }
     return filtered
-  }, [allSectors, unitFilter, searchTerm])
+  }, [allSectors, unitFilter, searchTerm, statusFilter])
 
   const handleAddSector = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -553,4 +553,3 @@ export default function SectorsPage() {
     </>
   )
 }
-
