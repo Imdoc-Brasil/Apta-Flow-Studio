@@ -74,24 +74,15 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
-import {
-  permissionModules,
-  permissionActions,
-  type Permission,
-  type Action,
-  type Module,
-  type PermissionModule,
-  type SubModule,
-} from './data'
-
-interface Profile {
-  id: string
-  name: string
-  code?: string
-  createdBy?: string
-  createdAt?: string
-  permissions?: Permission[]
-}
+import { permissionModules, permissionActions } from './data'
+import type {
+  Profile,
+  Permission,
+  Action,
+  Module,
+  PermissionModule,
+  SubModule,
+} from '@/lib/types/profile'
 
 function ClientSideDate({ dateString }: { dateString?: string }) {
   const [formattedDate, setFormattedDate] = useState('')
