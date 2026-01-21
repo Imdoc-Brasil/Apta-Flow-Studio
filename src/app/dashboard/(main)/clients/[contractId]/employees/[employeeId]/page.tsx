@@ -41,7 +41,7 @@ import { doc, collection, getDocs, query, where, getDoc } from 'firebase/firesto
 import { addYears, differenceInDays, isValid, parseISO } from 'date-fns'
 
 import type { Employee } from '@/lib/types/employee'
-import type { Role } from '@/app/dashboard/(main)/clients/[contractId]/roles/data'
+import type { Role } from '@/lib/types/role'
 import type { Sector } from '@/app/dashboard/(main)/clients/[contractId]/sectors/data'
 import type { Unit } from '@/lib/types/unit'
 import type { Environment } from '@/app/dashboard/(main)/clients/[contractId]/environments/data'
