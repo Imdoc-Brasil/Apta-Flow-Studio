@@ -28,7 +28,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Separator } from '@/components/ui/separator'
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase'
 import { collection } from 'firebase/firestore'
-import type { Hazard } from '../../../risks/page'
+import type { Hazard } from '@/lib/types/risk'
 
 export default function ClinicalEvaluationSettingsPage() {
   const { toast } = useToast()

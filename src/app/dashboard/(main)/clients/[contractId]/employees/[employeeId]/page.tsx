@@ -46,7 +46,7 @@ import type { Sector } from '@/lib/types/sector'
 import type { Unit } from '@/lib/types/unit'
 import type { Environment } from '@/lib/types/environment'
 import type { Process } from '@/app/dashboard/(main)/clients/[contractId]/processes/data'
-import type { EpiDelivery } from '@/app/dashboard/(main)/risks/page'
+import type { EpiDelivery } from '@/lib/types/risk'
 import type { Aso } from '@/app/dashboard/(main)/clients/[contractId]/asos/page'
 import { ClientSideDateFormatter } from '@/components/client-side-date-formatter'
 

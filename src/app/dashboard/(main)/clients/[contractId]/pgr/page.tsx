@@ -61,7 +61,7 @@ import {
   addDocumentNonBlocking,
 } from '@/firebase'
 import { collection, getDocs } from 'firebase/firestore'
-import type { Hazard } from '@/app/dashboard/(main)/risks/page'
+import type { Hazard } from '@/lib/types/risk'
 import type { Unit } from '../units/data'
 import type { Sector } from '../sectors/data'
 import type { Role } from '@/lib/types/role'

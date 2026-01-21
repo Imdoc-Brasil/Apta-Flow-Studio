@@ -64,7 +64,7 @@ import type { Client } from '../../data'
 import { ClientSideDateFormatter } from '@/components/client-side-date-formatter'
 import type { Role } from '../roles/data'
 import type { PgrInventoryItem } from '../pgr/page'
-import type { Hazard } from '../../../risks/page'
+import type { Hazard } from '@/lib/types/risk'
 import type { Exam } from '../../../health/data/exams'
 
 export interface Aso {

@@ -49,7 +49,7 @@ import {
 import { collection } from 'firebase/firestore'
 import { useParams } from 'next/navigation'
 import type { Exam } from '@/app/dashboard/(main)/health/data/exams'
-import type { Hazard } from '@/app/dashboard/(main)/risks/page'
+import type { Hazard } from '@/lib/types/risk'
 import { PgrInventoryItem } from '../pgr/page'
 import { Role } from '../roles/data'
 import { Separator } from '@/components/ui/separator'

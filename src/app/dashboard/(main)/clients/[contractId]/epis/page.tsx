@@ -44,7 +44,7 @@ import {
   type Epi,
   type EpiStock,
   type EpiDelivery,
-} from '@/app/dashboard/(main)/risks/page'
+} from '@/lib/types/risk'
 import type { Employee } from '@/lib/types/employee'
 import {
   Select,

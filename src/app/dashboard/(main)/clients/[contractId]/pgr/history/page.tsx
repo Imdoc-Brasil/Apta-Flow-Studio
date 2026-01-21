@@ -68,7 +68,7 @@ import {
   addDocumentNonBlocking,
 } from '@/firebase'
 import { collection, query, getDocs } from 'firebase/firestore'
-import type { Hazard } from '@/app/dashboard/(main)/risks/page'
+import type { Hazard } from '@/lib/types/risk'
 import type { Role } from '../../roles/data'
 import { ClientSideDateFormatter } from '@/components/client-side-date-formatter'
 

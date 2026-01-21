@@ -53,47 +53,7 @@ import {
 } from '@/firebase'
 import { collection } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
-
-export interface Hazard {
-  id: string
-  name: string
-  esocialCode: string
-  method: string
-  category: string
-  legalBasis: string
-  potentialEffects: string
-}
-
-export interface Epc {
-  id: string
-  name: string
-  active: boolean
-  attenuation: string
-}
-
-export interface Epi {
-  id: string
-  name: string
-  ca: string
-  active: boolean
-}
-
-export interface EpiStock {
-  id: string
-  epiId: string
-  quantity: number
-  minStock: number
-}
-
-export interface EpiDelivery {
-  id: string
-  epiId: string
-  epiName: string
-  employeeId: string
-  employeeName: string
-  deliveryDate: string
-  quantity: number
-}
+import { type Hazard, type Epc, type Epi } from '@/lib/types/risk'
 
 export default function RisksPage() {
   const { toast } = useToast()
