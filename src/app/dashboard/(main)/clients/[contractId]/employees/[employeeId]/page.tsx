@@ -42,7 +42,7 @@ import { addYears, differenceInDays, isValid, parseISO } from 'date-fns'
 
 import type { Employee } from '@/lib/types/employee'
 import type { Role } from '@/lib/types/role'
-import type { Sector } from '@/app/dashboard/(main)/clients/[contractId]/sectors/data'
+import type { Sector } from '@/lib/types/sector'
 import type { Unit } from '@/lib/types/unit'
 import type { Environment } from '@/app/dashboard/(main)/clients/[contractId]/environments/data'
 import type { Process } from '@/app/dashboard/(main)/clients/[contractId]/processes/data'

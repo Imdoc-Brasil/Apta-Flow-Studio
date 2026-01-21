@@ -53,7 +53,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { type GHE } from '@/app/dashboard/(main)/clients/[contractId]/ghe/data'
 import type { Unit } from '@/lib/types/unit'
 import type { Role } from '@/lib/types/role'
-import type { Sector } from '@/app/dashboard/(main)/clients/[contractId]/sectors/data'
+import type { Sector } from '@/lib/types/sector'
 import {
   Select,
   SelectContent,
