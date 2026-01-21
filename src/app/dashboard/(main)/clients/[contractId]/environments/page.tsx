@@ -29,7 +29,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { type Environment } from './data'
+import type { Environment } from '@/lib/types/environment'
 import type { Sector } from '@/lib/types/sector'
 import type { Unit } from '@/lib/types/unit'
 import {

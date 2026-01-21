@@ -38,10 +38,10 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { type Role } from './data'
-import { type Sector } from '../sectors/data'
+import type { Role } from '@/lib/types/role'
+import type { Sector } from '@/lib/types/sector'
 import type { Unit } from '@/lib/types/unit'
-import { type Environment } from '../environments/data'
+import type { Environment } from '@/lib/types/environment'
 import {
   Select,
   SelectContent,
