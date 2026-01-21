@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/chart'
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase'
 import { collection, query, where } from 'firebase/firestore'
-import { type Ticket } from '../tickets/tickets-store'
+import { type Ticket } from '@/lib/types/ticket'
 import { format, subDays, startOfMonth, endOfMonth, eachMonthOfInterval, differenceInHours, parseISO, isValid } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
@@ -204,5 +204,3 @@ export default function AnalyticsPage() {
     </div>
   )
 }
-
-    

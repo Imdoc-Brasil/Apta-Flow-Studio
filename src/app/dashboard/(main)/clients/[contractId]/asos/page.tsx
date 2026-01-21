@@ -44,7 +44,7 @@ import {
   useAttendeeStore,
   type Exam as AttendeeExam,
 } from '../../../health/queue/attendee-store'
-import { useTicketStore } from '../../../tickets/tickets-store'
+import { useTicketStore } from '@/app/dashboard/(main)/tickets/tickets-store'
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { Separator } from '@/components/ui/separator'
@@ -58,7 +58,7 @@ import {
   useDoc,
 } from '@/firebase'
 import { collection, doc } from 'firebase/firestore'
-import type { Ticket } from '@/app/dashboard/(main)/tickets/tickets-store'
+import type { Ticket } from '@/lib/types/ticket'
 import type { Employee } from '../employees/data'
 import type { Client } from '../../data'
 import { ClientSideDateFormatter } from '@/components/client-side-date-formatter'

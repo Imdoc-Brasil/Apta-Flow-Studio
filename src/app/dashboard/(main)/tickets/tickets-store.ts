@@ -2,29 +2,7 @@
 'use client'
 
 import { create } from 'zustand'
-import {
-  type Ticket,
-  type TicketStatus,
-  type Checklist,
-  type ChecklistItem,
-  type TextElement,
-  type Attachment,
-  type Label,
-  availableLabels,
-  kanbanColumns,
-} from './data'
-
-// Re-export types and constants for backward compatibility
-export type {
-  Ticket,
-  TicketStatus,
-  Checklist,
-  ChecklistItem,
-  TextElement,
-  Attachment,
-  Label,
-}
-export { availableLabels, kanbanColumns }
+import { type Ticket } from '@/lib/types/ticket'
 
 type NewTicketData = Omit<
   Ticket,
@@ -42,4 +20,3 @@ export const useTicketStore = create<TicketStore>()((set) => ({
   tickets: [],
   setTickets: (tickets) => set({ tickets }),
 }))
-

@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -6,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogTrigger,
 } from '@/components/ui/dialog'
 import {
   AlignLeft,
@@ -37,7 +39,6 @@ import {
 } from '@/components/ui/popover'
 import {
   Dialog,
-  DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
@@ -45,6 +46,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { format, formatDistanceToNow, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { availableLabels } from '@/app/dashboard/(main)/tickets/data'
 
 import type {
   Ticket,
@@ -53,8 +55,7 @@ import type {
   ChecklistItem,
   TextElement,
   Attachment,
-  availableLabels,
-} from '@/app/dashboard/(main)/tickets/data'
+} from '@/lib/types/ticket'
 import type { Staff } from '@/app/dashboard/(main)/employees/page'
 import {
   updateDocumentNonBlocking,
