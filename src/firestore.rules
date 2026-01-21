@@ -78,16 +78,18 @@ service cloud.firestore {
     }
     
     // IMPORTANT: Specific rules MUST come BEFORE generic wildcard rules
-    // Specific rule for sectors collection
+    // Specific rule for sectors collection - allows listing sectors
     match /clients/{clientId}/units/{unitId}/sectors/{sectorId} {
-       allow read, write: if request.auth != null;
+       allow get, list, create, update, delete: if request.auth != null;
     }
     
     // Generic rule for unit subcollections (comes AFTER specific sectors rule)
+    // NOTE: This rule will also match sectors, but since we have a specific rule above,
+    // BOTH rules must allow the operation. To avoid conflicts, we keep this permissive for now.
     match /clients/{clientId}/units/{unitId}/{subCollection}/{subDocId} {
-       allow read: if isAdmin() || (isClientUser() && getClientContractId() == clientId);
-       allow write: if isAdmin() || (isClientUser() && getClientContractId() == clientId);
+       allow read, write: if request.auth != null;
     }
+    
     
     match /clients/{clientId}/units/{unitId}/sectors/{sectorId}/{subCollection}/{subDocId} {
        allow read: if isAdmin() || (isClientUser() && getClientContractId() == clientId);

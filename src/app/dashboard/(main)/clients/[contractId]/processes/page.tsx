@@ -421,7 +421,7 @@ export default function ProcessesPage() {
                     className='h-10 gap-1 text-sm'
                   >
                     <Filter className='h-3.5 w-3.5' />
-                    <span className='sr-only sm:not-sr-only'>Filtrar</span>
+                    <span className='sr-only sm:not-sr-only'>Setor</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align='end'>
@@ -621,11 +621,11 @@ export default function ProcessesPage() {
                             Editar
                           </DropdownMenuItem>
                           {process.status !== 'Arquivado' ? (
-                            <DropdownMenuItem onClick={() => handleDeleteProcess(process.id)}>
+                            <DropdownMenuItem onClick={() => handleDeleteProcess(process.id!)}>
                               Arquivar
                             </DropdownMenuItem>
                           ) : (
-                            <DropdownMenuItem onClick={() => handleRestoreProcess(process.id)}>
+                            <DropdownMenuItem onClick={() => handleRestoreProcess(process.id!)}>
                               Restaurar
                             </DropdownMenuItem>
                           )}
