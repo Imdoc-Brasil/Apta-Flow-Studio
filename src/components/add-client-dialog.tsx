@@ -372,7 +372,7 @@ export function AddClientDialog({
                           <span className='truncate'>
                             {cnae
                               ? cnaeList.find((item) => item.code === cnae)
-                                  ?.description
+                                ?.description
                               : 'Selecione ou busque um CNAE...'}
                           </span>
                           <ChevronsUpDown className='ml-2 h-4 w-4 shrink-0 opacity-50' />
@@ -510,7 +510,7 @@ export function AddClientDialog({
 
                 <Separator className='my-4' />
 
-                <h3 className='text-lg font-semibold'>Responsáveis</h3>
+                <h3 className='text-lg font-semibold'>Responsáveis <span className='text-sm font-normal text-muted-foreground'>(Opcional - pode ser preenchido posteriormente)</span></h3>
                 <div className='grid grid-cols-2 gap-4'>
                   <div className='space-y-2'>
                     <Label htmlFor='adminResponsibleName'>
@@ -520,7 +520,7 @@ export function AddClientDialog({
                       id='adminResponsibleName'
                       name='adminResponsibleName'
                       defaultValue={clientToEdit?.adminResponsibleName}
-                      required
+                      placeholder='Nome completo'
                     />
                   </div>
                   <div className='space-y-2'>
@@ -531,7 +531,9 @@ export function AddClientDialog({
                       id='adminResponsibleCPF'
                       name='adminResponsibleCPF'
                       defaultValue={clientToEdit?.adminResponsibleCPF}
-                      required
+                      placeholder='000.000.000-00'
+                      pattern='\d{3}\.?\d{3}\.?\d{3}-?\d{2}'
+                      title='Digite um CPF válido (000.000.000-00)'
                     />
                   </div>
                 </div>
@@ -543,7 +545,7 @@ export function AddClientDialog({
                     id='contractResponsibleName'
                     name='contractResponsibleName'
                     defaultValue={clientToEdit?.contractResponsibleName}
-                    required
+                    placeholder='Nome completo'
                   />
                 </div>
                 <div className='grid grid-cols-2 gap-4'>
@@ -556,7 +558,9 @@ export function AddClientDialog({
                       name='contractResponsiblePhone'
                       type='tel'
                       defaultValue={clientToEdit?.contractResponsiblePhone}
-                      required
+                      placeholder='(00) 00000-0000'
+                      pattern='\(?\d{2}\)?\s?\d{4,5}-?\d{4}'
+                      title='Digite um telefone válido ((00) 00000-0000)'
                     />
                   </div>
                   <div className='space-y-2'>
@@ -568,7 +572,7 @@ export function AddClientDialog({
                       name='contractResponsibleEmail'
                       type='email'
                       defaultValue={clientToEdit?.contractResponsibleEmail}
-                      required
+                      placeholder='email@exemplo.com'
                     />
                   </div>
                 </div>

@@ -12,6 +12,7 @@ import {
   Check,
   ChevronsUpDown,
   X,
+  AlertCircle,
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -40,7 +41,7 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { type Client } from '@/app/dashboard/(main)/clients/data'
+import { type Client, hasClientPendingFields, getClientPendingFields } from '@/app/dashboard/(main)/clients/data'
 import {
   useFirestore,
   useCollection,
@@ -259,7 +260,19 @@ export default function ClientsPage() {
                       </Badge>
                     </TableCell>
                     <TableCell className='hidden md:table-cell'>
-                      {client.contractResponsibleName}
+                      <div className='flex items-center gap-2'>
+                        <span>{client.contractResponsibleName || '-'}</span>
+                        {hasClientPendingFields(client) && (
+                          <Badge
+                            variant='outline'
+                            className='text-orange-600 border-orange-600'
+                            title={`Pendências: ${getClientPendingFields(client).join(', ')}`}
+                          >
+                            <AlertCircle className='h-3 w-3 mr-1' />
+                            {getClientPendingFields(client).length} pendência(s)
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>

@@ -77,6 +77,13 @@ service cloud.firestore {
       allow write: if isAdmin() || (isClientUser() && getClientContractId() == clientId);
     }
     
+    // IMPORTANT: Specific rules MUST come BEFORE generic wildcard rules
+    // Specific rule for sectors collection
+    match /clients/{clientId}/units/{unitId}/sectors/{sectorId} {
+       allow read, write: if request.auth != null;
+    }
+    
+    // Generic rule for unit subcollections (comes AFTER specific sectors rule)
     match /clients/{clientId}/units/{unitId}/{subCollection}/{subDocId} {
        allow read: if isAdmin() || (isClientUser() && getClientContractId() == clientId);
        allow write: if isAdmin() || (isClientUser() && getClientContractId() == clientId);
