@@ -62,8 +62,13 @@ service cloud.firestore {
     
     // Generic rule for all client subcollections.
     // Access is granted to admins or the specific client user.
-    match /clients/{clientId}/{subcollection}/{docId} {
+    match /clients/{clientId}/{collection}/{docId} {
       allow read, write: if isAdmin() || (isClientUser() && getClientContractId() == clientId);
+    }
+    
+    // Specific rule for sectors collection
+    match /clients/{clientId}/units/{unitId}/sectors/{sectorId} {
+       allow read, write: if isAdmin() || (isClientUser() && getClientContractId() == clientId);
     }
 
     // --- Admin and System Collections ---
