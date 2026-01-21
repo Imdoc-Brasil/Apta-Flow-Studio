@@ -1,3 +1,4 @@
+
 export type UnitType = 'Unidade' | 'Obra' | 'Contrato'
 
 export interface PropertyInfo {

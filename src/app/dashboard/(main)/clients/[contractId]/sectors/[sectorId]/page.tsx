@@ -53,7 +53,7 @@ import {
 } from '@/firebase'
 import { collection, doc, query, where } from 'firebase/firestore'
 import type { Sector } from '../data'
-import type { Unit } from '../../units/data'
+import type { Unit } from '@/lib/types/unit'
 import type { Role } from '../../roles/data'
 import type { Employee } from '../../employees/data'
 import { Badge } from '@/components/ui/badge'

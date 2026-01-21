@@ -74,7 +74,7 @@ import {
 import { collection, doc, getDocs } from 'firebase/firestore'
 import type { Sector } from '@/app/dashboard/(main)/clients/[contractId]/sectors/data'
 import type { Role } from '@/app/dashboard/(main)/clients/[contractId]/roles/data'
-import type { Unit } from '@/app/dashboard/(main)/clients/[contractId]/units/data'
+import type { Unit } from '@/lib/types/unit'
 import { suggestProcessTool, SuggestProcessToolOutput } from '@/app/actions'
 import {
   Table,

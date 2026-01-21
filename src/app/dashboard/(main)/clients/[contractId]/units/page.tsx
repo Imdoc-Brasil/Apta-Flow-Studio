@@ -45,7 +45,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Textarea } from '@/components/ui/textarea'
 import Link from 'next/link'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { type Unit, UnitType, ContractingCompany } from './data'
+import { type Unit, type UnitType, type ContractingCompany } from '@/lib/types/unit'
 import { Separator } from '@/components/ui/separator'
 import {
   Select,

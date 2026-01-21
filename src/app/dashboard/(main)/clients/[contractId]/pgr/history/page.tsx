@@ -52,7 +52,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
-import type { Unit } from '@/app/dashboard/(main)/clients/[contractId]/units/data'
+import type { Unit } from '@/lib/types/unit'
 import type { Sector } from '@/app/dashboard/(main)/clients/[contractId]/sectors/data'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'

@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
@@ -30,6 +31,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { type Environment } from './data'
 import { type Sector } from '../sectors/data'
+import type { Unit } from '@/lib/types/unit'
 import {
   Select,
   SelectContent,
@@ -49,7 +51,6 @@ import {
 } from '@/firebase'
 import { collection, doc, getDocs } from 'firebase/firestore'
 import { Loader2 } from 'lucide-react'
-import type { Unit } from '../units/data'
 import { DialogFooter } from '@/components/ui/dialog'
 import {
   DropdownMenu,
