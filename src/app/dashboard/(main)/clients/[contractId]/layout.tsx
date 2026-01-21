@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useParams } from 'next/navigation'
@@ -7,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase'
 import { doc } from 'firebase/firestore'
-import { type Client } from '../data'
+import { type Client } from '@/lib/types/client'
 
 export default function ClientDetailLayout({
   children,

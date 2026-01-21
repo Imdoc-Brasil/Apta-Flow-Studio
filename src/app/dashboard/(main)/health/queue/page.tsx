@@ -55,7 +55,7 @@ import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase'
 import { collection } from 'firebase/firestore'
-import type { Client } from '../../clients/data'
+import type { Client } from '@/lib/types/client'
 import type { Employee } from '../../clients/[contractId]/employees/data'
 
 

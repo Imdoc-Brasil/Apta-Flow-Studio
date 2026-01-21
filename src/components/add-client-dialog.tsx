@@ -50,7 +50,7 @@ import {
 } from '@/components/ui/popover'
 import { cn } from '@/lib/utils'
 import { Checkbox } from '@/components/ui/checkbox'
-import type { Client } from '@/app/dashboard/(main)/clients/data'
+import type { Client } from '@/lib/types/client'
 import axios from 'axios'
 
 interface AddClientDialogProps {
@@ -532,7 +532,7 @@ export function AddClientDialog({
                       name='adminResponsibleCPF'
                       defaultValue={clientToEdit?.adminResponsibleCPF}
                       placeholder='000.000.000-00'
-                      pattern='\d{3}\.?\d{3}\.?\d{3}-?\d{2}'
+                      pattern='\\d{3}\\.?\\d{3}\\.?\\d{3}-?\\d{2}'
                       title='Digite um CPF válido (000.000.000-00)'
                     />
                   </div>
@@ -559,7 +559,7 @@ export function AddClientDialog({
                       type='tel'
                       defaultValue={clientToEdit?.contractResponsiblePhone}
                       placeholder='(00) 00000-0000'
-                      pattern='\(?\d{2}\)?\s?\d{4,5}-?\d{4}'
+                      pattern='\\(?\\d{2}\\)?\\s?\\d{4,5}-?\\d{4}'
                       title='Digite um telefone válido ((00) 00000-0000)'
                     />
                   </div>

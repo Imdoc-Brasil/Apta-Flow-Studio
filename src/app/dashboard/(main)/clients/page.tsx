@@ -41,7 +41,7 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { type Client, hasClientPendingFields, getClientPendingFields } from '@/app/dashboard/(main)/clients/data'
+import { type Client, hasClientPendingFields, getClientPendingFields } from '@/lib/types/client'
 import {
   useFirestore,
   useCollection,

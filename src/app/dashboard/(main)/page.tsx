@@ -40,7 +40,7 @@ import {
 } from '@/firebase'
 import { doc, getDoc, serverTimestamp, collection, query, orderBy, limit, setDoc } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
-import type { Client } from './clients/data'
+import type { Client } from '@/lib/types/client'
 import type { Staff } from './employees/page'
 import type { Ticket } from './tickets/tickets-store'
 

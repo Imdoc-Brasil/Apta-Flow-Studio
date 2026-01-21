@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
@@ -93,7 +94,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Checkbox } from '@/components/ui/checkbox'
 import { useToast } from '@/hooks/use-toast'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import type { Client } from '../clients/data'
+import type { Client } from '@/lib/types/client'
 import {
   addDocumentNonBlocking,
   updateDocumentNonBlocking,
@@ -952,4 +953,3 @@ export default function TicketsPage() {
     </div>
   )
 }
-

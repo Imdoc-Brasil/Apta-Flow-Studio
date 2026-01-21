@@ -12,7 +12,7 @@ import {
 import { useDoc, useFirestore, useMemoFirebase } from '@/firebase'
 import { doc } from 'firebase/firestore'
 import { useParams } from 'next/navigation'
-import type { Client } from '../../data'
+import type { Client } from '@/lib/types/client'
 import { Loader2 } from 'lucide-react'
 
 export default function InfoDashboard() {
