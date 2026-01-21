@@ -45,7 +45,7 @@ import {
   type EpiStock,
   type EpiDelivery,
 } from '@/app/dashboard/(main)/risks/page'
-import { type Employee } from '../employees/data'
+import type { Employee } from '@/lib/types/employee'
 import {
   Select,
   SelectContent,
@@ -542,4 +542,3 @@ export default function EpisPage() {
     </>
   )
 }
-

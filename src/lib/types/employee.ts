@@ -1,4 +1,3 @@
-
 export type EmployeeStatus = 'Ativo' | 'Férias' | 'Desligado' | 'Candidato'
 
 export interface Employee {

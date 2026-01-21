@@ -61,7 +61,7 @@ import {
 } from '@/firebase'
 import { collection, doc, getDocs } from 'firebase/firestore'
 import type { Client } from '../../../clients/data'
-import type { Employee } from '../../../clients/[contractId]/employees/data'
+import type { Employee } from '@/lib/types/employee'
 import type { Role } from '../../../clients/[contractId]/roles/data'
 import type { Sector } from '../../../clients/[contractId]/sectors/data'
 

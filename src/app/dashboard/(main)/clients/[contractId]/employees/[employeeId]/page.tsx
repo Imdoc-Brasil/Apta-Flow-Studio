@@ -40,7 +40,7 @@ import {
 import { doc, collection, getDocs, query, where, getDoc } from 'firebase/firestore'
 import { addYears, differenceInDays, isValid, parseISO } from 'date-fns'
 
-import type { Employee } from '@/app/dashboard/(main)/clients/[contractId]/employees/data'
+import type { Employee } from '@/lib/types/employee'
 import type { Role } from '@/app/dashboard/(main)/clients/[contractId]/roles/data'
 import type { Sector } from '@/app/dashboard/(main)/clients/[contractId]/sectors/data'
 import type { Unit } from '@/app/dashboard/(main)/clients/[contractId]/units/data'
