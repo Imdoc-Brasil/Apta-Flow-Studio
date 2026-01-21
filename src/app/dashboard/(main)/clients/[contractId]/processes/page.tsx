@@ -41,7 +41,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { useToast } from '@/hooks/use-toast'
-import { type Process, type ProcessStep, type ProcessType } from '@/app/dashboard/(main)/clients/[contractId]/processes/data'
+import { type Process, type ProcessStep, type ProcessType } from '@/lib/types/process'
 import {
   Select,
   SelectContent,
