@@ -66,6 +66,11 @@ service cloud.firestore {
     match /clients/{clientId}/units/{unitId}/{subCollection}/{subDocId} {
        allow read, write: if isAdmin() || (isClientUser() && getClientContractId() == clientId);
     }
+
+    // Specific rule for sectors collection to fix create issue.
+    match /clients/{clientId}/units/{unitId}/sectors/{sectorId} {
+      allow read, write: if isAdmin() || (isClientUser() && getClientContractId() == clientId);
+    }
     
     // This rule is for even deeper subcollections, e.g., inside a sector
     match /clients/{clientId}/units/{unitId}/sectors/{sectorId}/{subCollection}/{subDocId} {
