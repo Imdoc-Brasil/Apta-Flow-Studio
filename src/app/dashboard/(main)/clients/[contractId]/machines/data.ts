@@ -1,10 +1,1 @@
-export interface Machine {
-  id: string
-  name: string
-  manufacturer: string
-  model: string
-  function: string
-  isRiskSource: boolean
-  riskDescription?: string
-  maintenanceInfo: string
-}
+// This file is obsolete. The 'Machine' type has been moved to src/lib/types/machine.ts
