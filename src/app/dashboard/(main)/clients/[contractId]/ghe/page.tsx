@@ -50,7 +50,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { type GHE } from '@/app/dashboard/(main)/clients/[contractId]/ghe/data'
+import type { GHE } from '@/lib/types/ghe'
 import type { Unit } from '@/lib/types/unit'
 import type { Role } from '@/lib/types/role'
 import type { Sector } from '@/lib/types/sector'

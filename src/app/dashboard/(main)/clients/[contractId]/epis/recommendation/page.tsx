@@ -35,7 +35,7 @@ import type { Employee } from '@/lib/types/employee'
 import type { Role } from '@/lib/types/role'
 import type { Sector } from '@/lib/types/sector'
 import type { Unit } from '@/lib/types/unit'
-import type { GHE } from '@/app/dashboard/(main)/clients/[contractId]/ghe/data'
+import type { GHE } from '@/lib/types/ghe'
 import type { Environment } from '@/lib/types/environment'
 
 type AssociationType =

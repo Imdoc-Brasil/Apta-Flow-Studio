@@ -1,8 +1,1 @@
-
-export interface GHE {
-  id?: string;
-  name: string;
-  description: string;
-  unitId: string;
-  roleIds: string[];
-}
+// This file is obsolete. The 'GHE' type has been moved to src/lib/types/ghe.ts
