@@ -39,3 +39,36 @@ export interface EpiDelivery {
     deliveryDate: string
     quantity: number
 }
+
+export type RiskLevelLabel =
+  | 'Irrelevante'
+  | 'Leve'
+  | 'Médio'
+  | 'Alto'
+  | 'Crítico'
+
+export type RiskColor =
+  | 'bg-gray-300'
+  | 'bg-lime-200'
+  | 'bg-yellow-200'
+  | 'bg-orange-300'
+  | 'bg-red-400'
+  | 'bg-red-500'
+
+export interface RiskEvaluation {
+  frequency: number
+  severity: number
+  riskLevel: number
+  riskLabel: RiskLevelLabel
+  riskColor: RiskColor
+  riskDescription: string
+}
+
+export interface PgrInventoryItem {
+  id?: string
+  hazardId: string
+  unitId: string
+  sector: string
+  source: string
+  evaluation: RiskEvaluation | null
+}

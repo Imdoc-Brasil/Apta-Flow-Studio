@@ -53,12 +53,11 @@ import {
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 import type { Unit } from '@/lib/types/unit'
-import type { Sector } from '@/app/dashboard/(main)/clients/[contractId]/sectors/data'
+import type { Sector } from '@/lib/types/sector'
 import { Textarea } from '@/components/ui/textarea'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { getHazardById } from '../utils'
-import type { PgrInventoryItem } from '../page'
+import { getHazardById } from '@/lib/risk-utils'
 import { cn } from '@/lib/utils'
 import { useParams } from 'next/navigation'
 import {
@@ -68,8 +67,8 @@ import {
   addDocumentNonBlocking,
 } from '@/firebase'
 import { collection, query, getDocs } from 'firebase/firestore'
-import type { Hazard } from '@/lib/types/risk'
-import type { Role } from '../../roles/data'
+import type { Hazard, PgrInventoryItem } from '@/lib/types/risk'
+import type { Role } from '@/lib/types/role'
 import { ClientSideDateFormatter } from '@/components/client-side-date-formatter'
 
 interface PgrEntry {

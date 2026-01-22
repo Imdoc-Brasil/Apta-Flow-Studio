@@ -19,7 +19,6 @@ import {
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
-import { type PgrInventoryItem } from '@/app/dashboard/(main)/clients/[contractId]/pgr/page'
 import { ChevronsRight, Loader2 } from 'lucide-react'
 import {
   useFirestore,
@@ -29,7 +28,7 @@ import {
 } from '@/firebase'
 import { collection, doc, getDocs } from 'firebase/firestore'
 import { useParams } from 'next/navigation'
-import type { Epi, Hazard } from '@/lib/types/risk'
+import type { Epi, Hazard, PgrInventoryItem } from '@/lib/types/risk'
 import type { Employee } from '@/lib/types/employee'
 import type { Role } from '@/lib/types/role'
 import type { Sector } from '@/lib/types/sector'

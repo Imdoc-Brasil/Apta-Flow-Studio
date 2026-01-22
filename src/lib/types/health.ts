@@ -1,3 +1,5 @@
+import type { Employee } from './employee'
+
 export interface Aso {
   id: string
   employee: string

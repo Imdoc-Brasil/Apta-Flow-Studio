@@ -49,9 +49,8 @@ import {
 import { collection } from 'firebase/firestore'
 import { useParams } from 'next/navigation'
 import type { Exam } from '@/lib/types/exam'
-import type { Hazard } from '@/lib/types/risk'
-import { PgrInventoryItem } from '../pgr/page'
-import { Role } from '../roles/data'
+import type { Hazard, PgrInventoryItem } from '@/lib/types/risk'
+import type { Role } from '@/lib/types/role'
 import { Separator } from '@/components/ui/separator'
 
 interface PcmsoRule {
