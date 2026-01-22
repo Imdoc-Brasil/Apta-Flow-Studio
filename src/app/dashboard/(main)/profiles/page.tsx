@@ -70,6 +70,7 @@ import type {
   Permission,
 } from '@/lib/types/profile'
 import { EditPermissionsDialog } from '@/components/edit-permissions-dialog' // Import the new component
+import { usePermissions } from '@/hooks/use-permissions'
 
 function ClientSideDate({ dateString }: { dateString?: string }) {
   const [formattedDate, setFormattedDate] = useState('')
@@ -105,6 +106,7 @@ export default function ProfilesPage() {
   const { user } = useUser()
   const { toast } = useToast()
   const firestore = useFirestore()
+  const { hasPermission, isLoading: isLoadingPermissions } = usePermissions()
 
   const profilesRef = useMemoFirebase(
     () => (firestore ? collection(firestore, 'profiles') : null),
@@ -307,7 +309,7 @@ export default function ProfilesPage() {
     </div>
   )
 
-  const isLoading = areProfilesLoading
+  const isLoading = areProfilesLoading || isLoadingPermissions
 
   return (
     <>
@@ -326,6 +328,7 @@ export default function ProfilesPage() {
                   size='sm'
                   className='h-8 gap-1'
                   onClick={openAddDialog}
+                  disabled={!hasPermission('create:profiles')}
                 >
                   <PlusCircle className='h-3.5 w-3.5' />
                   <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
@@ -450,12 +453,13 @@ export default function ProfilesPage() {
                             <DropdownMenuLabel>Ações</DropdownMenuLabel>
                             <DropdownMenuItem
                               onClick={() => openEditDialog(profile)}
-                              disabled={profile.createdBy === 'sistema'}
+                              disabled={profile.createdBy === 'sistema' || !hasPermission('edit:profiles')}
                             >
                               Editar Nome
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => openPermissionsDialog(profile)}
+                              disabled={profile.id === 'super_admin' || !hasPermission('edit:profiles')}
                             >
                               Editar Permissões
                             </DropdownMenuItem>

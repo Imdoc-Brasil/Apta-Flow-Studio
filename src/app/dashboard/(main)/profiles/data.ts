@@ -30,10 +30,10 @@ export const permissionModules: PermissionModule[] = [
     id: 'risks',
     name: 'Riscos (Catálogos Globais)',
     subModules: [
-        { id: 'risks.hazards', name: 'Catálogo de Perigos' },
-        { id: 'risks.epc', name: 'Catálogo de EPC' },
-        { id: 'risks.epi', name: 'Catálogo de EPI' },
-    ]
+      { id: 'risks.hazards', name: 'Catálogo de Perigos' },
+      { id: 'risks.epc', name: 'Catálogo de EPC' },
+      { id: 'risks.epi', name: 'Catálogo de EPI' },
+    ],
   },
   {
     id: 'health',
@@ -48,6 +48,7 @@ export const permissionModules: PermissionModule[] = [
   { id: 'performance', name: 'Desempenho' },
   { id: 'processes', name: 'Processos' },
   { id: 'analytics', name: 'Analytics' },
+  { id: 'profiles', name: 'Perfis e Permissões' },
 ]
 
 export const permissionActions: { id: Action; name: string }[] = [
