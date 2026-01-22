@@ -41,11 +41,11 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { type Client } from '@/lib/types/client'
 import {
-  type Client,
   hasClientPendingFields,
   getClientPendingFields,
-} from '@/lib/types/client'
+} from '@/lib/client-utils'
 import {
   useFirestore,
   useCollection,
@@ -116,10 +116,9 @@ export default function ClientsPage() {
     return []
   }, [allClients, staffProfile, isLoading, searchTerm, statusFilter])
 
-  const handleDisableClient = (clientId: string) => {
-    if (!firestore || !clientId) return
-    const client = allClients?.find((c) => c.id === clientId)
-    const clientDocRef = doc(firestore, 'clients', clientId)
+  const handleDisableClient = (client: Client) => {
+    if (!firestore || !client.id) return
+    const clientDocRef = doc(firestore, 'clients', client.id)
 
     updateDocumentNonBlocking(clientDocRef, {
       status: 'Inativo',
@@ -131,9 +130,9 @@ export default function ClientsPage() {
       userName: user?.displayName || '',
       action: 'deactivate',
       module: 'clients',
-      entityId: clientId,
-      entityName: client?.name || clientId,
-      details: { previousStatus: client?.status },
+      entityId: client.id,
+      entityName: client.name,
+      details: { previousStatus: client.status },
     })
 
     toast({
@@ -296,7 +295,7 @@ export default function ClientsPage() {
                             Editar
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() => handleDisableClient(client.id)}
+                            onClick={() => handleDisableClient(client)}
                           >
                             Desativar
                           </DropdownMenuItem>
