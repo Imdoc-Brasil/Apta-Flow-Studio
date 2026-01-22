@@ -19,7 +19,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from '@/components/ui/card'
 import {
   DropdownMenu,
@@ -44,15 +43,6 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from '@/components/ui/dialog'
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -63,39 +53,31 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import type { Employee, EmployeeStatus } from '@/app/dashboard/(main)/clients/[contractId]/employees/data'
-import { Separator } from '@/components/ui/separator'
+import type { Employee, EmployeeStatus } from '@/lib/types/employee'
 import { useRouter } from 'next/navigation'
 import { useParams } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import {
   useFirestore,
-  addDocumentNonBlocking,
   updateDocumentNonBlocking,
   useCollection,
   useMemoFirebase,
+  addDocumentNonBlocking,
 } from '@/firebase'
 import { collection, doc, getDocs } from 'firebase/firestore'
 import type { Staff } from '@/app/dashboard/(main)/employees/page'
-import type { Role } from '@/app/dashboard/(main)/clients/[contractId]/roles/data'
-import type { Sector } from '@/app/dashboard/(main)/clients/[contractId]/sectors/data'
-import type { Unit } from '@/app/dashboard/(main)/clients/[contractId]/units/data'
+import type { Role } from '@/lib/types/role'
+import type { Sector } from '@/lib/types/sector'
+import type { Unit } from '@/lib/types/unit'
 import { ClientSideDateFormatter } from '@/components/client-side-date-formatter'
+import { AddClientEmployeeDialog } from '@/components/add-client-employee-dialog'
 
 export default function EmployeesPage() {
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isFormDialogOpen, setIsFormDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [currentEmployee, setCurrentEmployee] = useState<Employee | null>(null)
+  const [employeeToAction, setEmployeeToAction] = useState<Employee | null>(null) // For delete/status change
+  const [employeeToEdit, setEmployeeToEdit] = useState<Employee | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string[]>([
     'Ativo',
@@ -175,8 +157,6 @@ export default function EmployeesPage() {
     [firestore]
   )
 
-  const [selectedAddRole, setSelectedAddRole] = useState('')
-
   const rolesWithDetails = useMemo(() => {
     if (!rolesData || !allSectors || !allUnits) return [];
     return rolesData.map(role => {
@@ -189,11 +169,6 @@ export default function EmployeesPage() {
       }
     })
   }, [rolesData, allSectors, allUnits])
-
-  const roleDetails = useMemo(() => {
-    if (!selectedAddRole) return null
-    return rolesWithDetails.find((r) => r.id === selectedAddRole);
-  }, [selectedAddRole, rolesWithDetails])
 
   const getRoleById = useCallback(
     (roleId: string) => rolesData?.find((r) => r.id === roleId),
@@ -219,70 +194,17 @@ export default function EmployeesPage() {
       })
   }, [employees, searchTerm, statusFilter, getRoleById])
 
-  const handleAddEmployee = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (!employeesRef) return
-
-    const formData = new FormData(event.currentTarget)
-    const name = formData.get('name') as string
-
-    const newEmployee: Omit<Employee, 'id'> = {
-      name,
-      roleId: formData.get('roleId') as string,
-      email: formData.get('email') as string,
-      phone: formData.get('phone') as string,
-      status: 'Candidato',
-      admissionDate: new Date().toISOString().split('T')[0],
-      avatar: `https://i.pravatar.cc/150?u=${Math.random()}`,
-    }
-
-    addDocumentNonBlocking(employeesRef, newEmployee)
-
-    setIsAddDialogOpen(false)
-    setSelectedAddRole('')
-    toast({
-      title: 'Candidato Adicionado!',
-      description: `O candidato "${name}" foi adicionado e aguarda os próximos passos.`,
-    })
-  }
-
-  const handleEditEmployee = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (!currentEmployee?.id || !firestore) return
-    const employeeDocRef = doc(
-      firestore,
-      `clients/${contractId}/staffs`,
-      currentEmployee.id
-    )
-
-    const formData = new FormData(event.currentTarget)
-    const name = formData.get('name') as string
-
-    const updatedData = {
-      name,
-      roleId: formData.get('roleId') as string,
-      email: formData.get('email') as string,
-      phone: formData.get('phone') as string,
-    }
-
-    updateDocumentNonBlocking(employeeDocRef, updatedData)
-
-    setIsEditDialogOpen(false)
-    setCurrentEmployee(null)
-    toast({ title: 'Colaborador atualizado!' })
-  }
-
   const handleDeleteEmployee = () => {
-    if (!currentEmployee?.id || !firestore) return
+    if (!employeeToAction?.id || !firestore) return
     const employeeDocRef = doc(
       firestore,
       `clients/${contractId}/staffs`,
-      currentEmployee.id
+      employeeToAction.id
     )
     updateDocumentNonBlocking(employeeDocRef, { status: 'Desligado' })
 
     setIsDeleteDialogOpen(false)
-    setCurrentEmployee(null)
+    setEmployeeToAction(null)
     toast({ title: 'Colaborador desativado!', variant: 'destructive' })
   }
 
@@ -333,9 +255,14 @@ export default function EmployeesPage() {
     })
   }
 
+  const openAddDialog = () => {
+    setEmployeeToEdit(null)
+    setIsFormDialogOpen(true)
+  }
+
   const openEditDialog = (employee: Employee) => {
-    setCurrentEmployee(employee)
-    setIsEditDialogOpen(true)
+    setEmployeeToEdit(employee)
+    setIsFormDialogOpen(true)
   }
 
   const handleRowClick = (employeeId: string) => {
@@ -343,7 +270,7 @@ export default function EmployeesPage() {
   }
 
   const openDeleteDialog = (employee: Employee) => {
-    setCurrentEmployee(employee)
+    setEmployeeToAction(employee)
     setIsDeleteDialogOpen(true)
   }
 
@@ -364,102 +291,6 @@ export default function EmployeesPage() {
 
   const isLoading =
     areEmployeesLoading || areRolesLoading || areUnitsLoading || areSectorsLoading
-
-  const renderAddEmployeeForm = () => (
-    <div className='grid gap-4 py-4'>
-      <div className='space-y-2'>
-        <Label htmlFor='roleId'>Cargo</Label>
-        <Select
-          name='roleId'
-          value={selectedAddRole}
-          onValueChange={setSelectedAddRole}
-          required
-        >
-          <SelectTrigger>
-            <SelectValue placeholder='Selecione o cargo para o novo colaborador' />
-          </SelectTrigger>
-          <SelectContent>
-            {rolesWithDetails?.map((role) => (
-              <SelectItem key={role.id} value={role.id}>
-                {role.name} ({role.sectorName} / {role.unitName})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {roleDetails && (
-        <div className='grid grid-cols-2 gap-4 rounded-md border bg-muted/50 p-4'>
-          <div className='space-y-1'>
-            <p className='text-sm font-medium text-muted-foreground'>Unidade</p>
-            <p className='font-semibold'>{roleDetails.unitName}</p>
-          </div>
-          <div className='space-y-1'>
-            <p className='text-sm font-medium text-muted-foreground'>Setor</p>
-            <p className='font-semibold'>{roleDetails.sectorName}</p>
-          </div>
-        </div>
-      )}
-
-      <fieldset disabled={!selectedAddRole}>
-        <div className='grid gap-4 py-4'>
-          <Separator />
-          <div className='space-y-2'>
-            <Label htmlFor='name'>Nome do Colaborador</Label>
-            <Input id='name' name='name' required />
-          </div>
-          <div className='grid grid-cols-2 gap-4'>
-            <div className='space-y-2'>
-              <Label htmlFor='email'>Email</Label>
-              <Input id='email' name='email' type='email' required />
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='phone'>Telefone</Label>
-              <Input id='phone' name='phone' />
-            </div>
-          </div>
-        </div>
-      </fieldset>
-    </div>
-  )
-
-  const renderEditForm = (employee?: Employee | null) => (
-    <div className='grid gap-4 py-4'>
-      <div className='space-y-2'>
-        <Label htmlFor='name'>Nome</Label>
-        <Input id='name' name='name' defaultValue={employee?.name} required />
-      </div>
-      <div className='space-y-2'>
-        <Label htmlFor='roleId'>Cargo</Label>
-        <Select name='roleId' defaultValue={employee?.roleId} required>
-          <SelectTrigger>
-            <SelectValue placeholder='Selecione o cargo' />
-          </SelectTrigger>
-          <SelectContent>
-            {rolesData?.map((role) => (
-              <SelectItem key={role.id} value={role.id}>
-                {role.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className='space-y-2'>
-        <Label htmlFor='email'>Email</Label>
-        <Input
-          id='email'
-          name='email'
-          type='email'
-          defaultValue={employee?.email}
-          required
-        />
-      </div>
-      <div className='space-y-2'>
-        <Label htmlFor='phone'>Telefone</Label>
-        <Input id='phone' name='phone' defaultValue={employee?.phone} />
-      </div>
-    </div>
-  )
 
   const renderEmployeeActions = (employee: Employee) => (
     <DropdownMenu>
@@ -595,51 +426,16 @@ export default function EmployeesPage() {
                   <LayoutGrid className='h-4 w-4' />
                 </Button>
               </div>
-              <Dialog
-                open={isAddDialogOpen}
-                onOpenChange={(isOpen) => {
-                  setIsAddDialogOpen(isOpen)
-                  if (!isOpen) setSelectedAddRole('')
-                }}
+              <Button
+                size='sm'
+                className='h-8 gap-1'
+                onClick={openAddDialog}
               >
-                <DialogTrigger asChild>
-                  <Button size='sm' className='h-8 gap-1'>
-                    <PlusCircle className='h-3.5 w-3.5' />
-                    <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
-                      Adicionar Colaborador
-                    </span>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Adicionar Novo Colaborador</DialogTitle>
-                    <DialogDescription>
-                      Preencha os detalhes para adicionar um novo colaborador.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <form id='add-employee-form' onSubmit={handleAddEmployee}>
-                    {renderAddEmployeeForm()}
-                  </form>
-                  <DialogFooter>
-                    <Button
-                      variant='outline'
-                      onClick={() => {
-                        setIsAddDialogOpen(false)
-                        setSelectedAddRole('')
-                      }}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button
-                      type='submit'
-                      form='add-employee-form'
-                      disabled={!selectedAddRole}
-                    >
-                      Salvar
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+                <PlusCircle className='h-3.5 w-3.5' />
+                <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
+                  Adicionar Colaborador
+                </span>
+              </Button>
             </div>
           </div>
         </CardHeader>
@@ -761,32 +557,15 @@ export default function EmployeesPage() {
         </CardContent>
       </Card>
 
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className='sm:max-w-xl'>
-          <DialogHeader>
-            <DialogTitle>Editar Colaborador</DialogTitle>
-            <DialogDescription>
-              Modifique os detalhes do colaborador.
-            </DialogDescription>
-          </DialogHeader>
-          <form id='edit-employee-form' onSubmit={handleEditEmployee}>
-            {renderEditForm(currentEmployee)}
-          </form>
-          <DialogFooter>
-            <Button
-              variant='outline'
-              onClick={() => setIsEditDialogOpen(false)}
-            >
-              Cancelar
-            </Button>
-            <Button type='submit' form='edit-employee-form'>
-              Salvar Alterações
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
+      <AddClientEmployeeDialog
+        open={isFormDialogOpen}
+        onOpenChange={setIsFormDialogOpen}
+        contractId={contractId}
+        employeeToEdit={employeeToEdit}
+        rolesWithDetails={rolesWithDetails}
+        onSuccess={() => { /* Could trigger a re-fetch if not using real-time */ }}
+      />
+      
       {/* Delete Confirmation Dialog */}
       <AlertDialog
         open={isDeleteDialogOpen}
@@ -796,17 +575,16 @@ export default function EmployeesPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação não pode ser desfeita. Isso irá excluir
-              permanentemente o colaborador{' '}
-              <span className='font-semibold'>{currentEmployee?.name}</span>.
+              Esta ação não pode ser desfeita. Isso irá alterar o status do colaborador {' '}
+              <span className='font-semibold'>{employeeToAction?.name}</span> para &quot;Desligado&quot;.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setCurrentEmployee(null)}>
+            <AlertDialogCancel onClick={() => setEmployeeToAction(null)}>
               Cancelar
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteEmployee}>
-              Excluir
+              Confirmar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
