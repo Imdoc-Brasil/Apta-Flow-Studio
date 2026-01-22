@@ -6,7 +6,7 @@ import {
   Activity,
   ArrowUpRight,
   Briefcase,
-  CreditCard,
+  GraduationCap,
   Users,
 } from 'lucide-react'
 
@@ -32,32 +32,16 @@ import Link from 'next/link'
 import {
   useUser,
   useFirestore,
-  errorEmitter,
-  FirestorePermissionError,
   useCollection,
   useMemoFirebase,
   setDocumentNonBlocking,
 } from '@/firebase'
-import { doc, getDoc, serverTimestamp, collection, query, orderBy, limit, setDoc } from 'firebase/firestore'
+import { doc, serverTimestamp, collection, query, orderBy, limit } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
 import type { Client } from '@/lib/types/client'
-import type { Staff } from './employees/page'
+import type { Staff } from '@/lib/types/staff'
 import type { Ticket } from '@/lib/types/ticket'
-
-const kpiDataStatic = [
-  {
-    title: 'Conformidade de SLA',
-    value: '98.2%',
-    description: 'Meta: 98%',
-    icon: <CreditCard className='h-4 w-4 text-muted-foreground' />,
-  },
-  {
-    title: 'Projetos Ativos',
-    value: '12',
-    description: '+2 do último mês',
-    icon: <Activity className='h-4 w-4 text-muted-foreground' />,
-  },
-]
+import type { Training } from '@/lib/types/training'
 
 export default function Dashboard() {
   const { user, isUserLoading } = useUser()
@@ -74,7 +58,13 @@ export default function Dashboard() {
     () => (firestore ? collection(firestore, 'staffs') : null),
     [firestore]
   )
-  const { data: staffs } = useCollection<Staff>(staffsRef)
+  const { data: staffs, isLoading: areStaffsLoading } = useCollection<Staff>(staffsRef)
+
+  const trainingsRef = useMemoFirebase(
+    () => (firestore ? collection(firestore, 'trainings') : null),
+    [firestore]
+  )
+  const { data: trainings, isLoading: areTrainingsLoading } = useCollection<Training>(trainingsRef)
   
   const ticketsQuery = useMemoFirebase(
     () =>
@@ -87,13 +77,13 @@ export default function Dashboard() {
         : null,
     [firestore]
   )
-  const { data: recentTickets } = useCollection<Ticket>(ticketsQuery)
+  const { data: recentTickets, isLoading: areTicketsLoading } = useCollection<Ticket>(ticketsQuery)
 
   const allTicketsQuery = useMemoFirebase(
     () => (firestore ? collection(firestore, 'tickets') : null),
     [firestore]
   )
-  const { data: allTickets } = useCollection<Ticket>(allTicketsQuery)
+  const { data: allTickets, isLoading: areAllTicketsLoading } = useCollection<Ticket>(allTicketsQuery)
   
   // Effect to add initial data if collection is empty
   useEffect(() => {
@@ -125,17 +115,13 @@ export default function Dashboard() {
     const promoteToSuperAdmin = async () => {
       if (!user || !firestore) return;
   
-      // Use 'roles_admin' collection
       const adminRoleRef = doc(firestore, 'roles_admin', user.uid);
       const adminData = {
         email: user.email,
         promotedAt: serverTimestamp(),
       };
       
-      // We don't need to check for existence first. `setDoc` with `merge:true`
-      // will create or update the document without needing read permissions.
       setDocumentNonBlocking(adminRoleRef, adminData, { merge: true });
-
     };
   
     if (!isUserLoading && user) {
@@ -145,30 +131,38 @@ export default function Dashboard() {
 
   const activeClientsCount = clients?.filter(
     (c) => c.status === 'Ativo'
-  ).length
+  ).length || 0
 
-  const openTicketsCount = allTickets?.filter((t) => t.status === 'Aberto').length
+  const openTicketsCount = allTickets?.filter((t) => t.status === 'Aberto' || t.status === 'Em Progresso').length || 0
 
   const newStaffs = (staffs || []).slice(0, 2)
 
-  const kpiDataDynamic = [
+  const kpiData = [
     {
       title: 'Clientes Ativos',
-      value: `+${activeClientsCount || 0}`,
-      description: `Total de ${clients?.length || 0} clientes`,
+      value: `+${activeClientsCount}`,
+      description: `Total de ${clients?.length || 0} clientes na base`,
       icon: <Briefcase className='h-4 w-4 text-muted-foreground' />,
     },
     {
-      title: 'Tickets Abertos',
-      value: `${openTicketsCount || 0}`,
-      description: `${
-        allTickets?.filter((t) => t.status === 'Em Progresso').length || 0
-      } em progresso`,
+      title: 'Tickets em Aberto',
+      value: `${openTicketsCount}`,
+      description: 'Precisando de atenção imediata',
+      icon: <Ticket className='h-4 w-4 text-muted-foreground' />,
+    },
+    {
+      title: 'Membros da Equipe',
+      value: `${staffs?.length || 0}`,
+      description: 'Total de colaboradores internos',
       icon: <Users className='h-4 w-4 text-muted-foreground' />,
     },
+    {
+      title: 'Treinamentos Disponíveis',
+      value: `${trainings?.length || 0}`,
+      description: 'Cursos no catálogo de SST',
+      icon: <GraduationCap className='h-4 w-4 text-muted-foreground' />,
+    },
   ]
-
-  const kpiData = [...kpiDataDynamic, ...kpiDataStatic]
 
   return (
     <>
