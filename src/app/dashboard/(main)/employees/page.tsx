@@ -118,6 +118,7 @@ import {
   editStaffFormSchema,
   type EditStaffFormValues,
 } from '@/lib/schemas/staff'
+import { usePermissions } from '@/hooks/use-permissions'
 
 export default function StaffsPage() {
   const firestore = useFirestore()
@@ -183,6 +184,7 @@ export default function StaffsPage() {
     'Licença',
   ])
   const { toast } = useToast()
+  const { hasPermission, isLoading: isLoadingPermissions } = usePermissions()
 
   const editForm = useForm<EditStaffFormValues>({
     resolver: zodResolver(editStaffFormSchema),
@@ -332,7 +334,7 @@ export default function StaffsPage() {
     }
   }
 
-  const isLoadingData = isLoading || areProfilesLoading || areClientsLoading
+  const isLoadingData = isLoading || areProfilesLoading || areClientsLoading || isLoadingPermissions
 
   return (
     <>
@@ -390,6 +392,7 @@ export default function StaffsPage() {
               size='sm'
               className='h-8 gap-1'
               onClick={() => setIsAddDialogOpen(true)}
+              disabled={!hasPermission('create:staffs')}
             >
               <PlusCircle className='h-3.5 w-3.5' />
               <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
@@ -485,12 +488,13 @@ export default function StaffsPage() {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => openEditDialog(staff)}
+                            disabled={!hasPermission('edit:staffs')}
                           >
                             Editar
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuSub>
-                            <DropdownMenuSubTrigger>
+                            <DropdownMenuSubTrigger disabled={!hasPermission('edit:staffs')}>
                               Alterar Status
                             </DropdownMenuSubTrigger>
                             <DropdownMenuPortal>
@@ -532,6 +536,7 @@ export default function StaffsPage() {
                           <DropdownMenuItem
                             className='text-destructive'
                             onClick={() => openDeleteDialog(staff)}
+                            disabled={!hasPermission('delete:staffs')}
                           >
                             Excluir
                           </DropdownMenuItem>
@@ -815,7 +820,7 @@ export default function StaffsPage() {
                           </Popover>
                         )}
                         <div className='mt-2 flex flex-wrap gap-1'>
-                          {(editForm.watch('clientIds') || []).map(
+                          {(form.watch('clientIds') || []).map(
                             (clientId: string) => (
                               <Badge key={clientId} variant='secondary'>
                                 {getClientName(clientId)}
@@ -825,7 +830,7 @@ export default function StaffsPage() {
                                   onClick={() =>
                                     field.onChange(
                                       (
-                                        editForm.watch('clientIds') || []
+                                        form.watch('clientIds') || []
                                       ).filter(
                                         (id: string) => id !== clientId
                                       )
@@ -952,7 +957,10 @@ export default function StaffsPage() {
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
-    </>
-  )
+      </AlertDialogContent>
+    </AlertDialog>
+  </>
+)
 }
+
+    
