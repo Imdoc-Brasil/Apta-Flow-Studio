@@ -76,7 +76,6 @@ import {
   useCollection,
   useFirestore,
   useMemoFirebase,
-  addDocumentNonBlocking,
   updateDocumentNonBlocking,
   useUser,
   useDoc,
@@ -87,7 +86,6 @@ import { collection, doc } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import {
   Form,
   FormControl,
@@ -116,22 +114,10 @@ import { Checkbox } from '@/components/ui/checkbox'
 import type { Staff, StaffStatus } from '@/lib/types/staff'
 import type { Profile } from '@/lib/types/profile'
 import { AddStaffDialog } from '@/components/add-staff-dialog'
-
-const staffFormSchema = z.object({
-  name: z
-    .string()
-    .min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' }),
-  email: z.string().email({ message: 'Por favor, insira um email válido.' }),
-  perfilId: z.string({ required_error: 'Por favor, selecione um perfil.' }),
-  assinatura: z.string().min(2, { message: 'A assinatura é obrigatória.' }),
-  phone: z.string().optional(),
-  contractId: z.string().optional(),
-  clientIds: z.array(z.string()).optional(),
-  allClients: z.boolean().optional(),
-  avatar: z.string().optional(),
-})
-
-type StaffFormValues = z.infer<typeof staffFormSchema>
+import {
+  editStaffFormSchema,
+  type EditStaffFormValues,
+} from '@/lib/schemas/staff'
 
 export default function StaffsPage() {
   const firestore = useFirestore()
@@ -186,7 +172,6 @@ export default function StaffsPage() {
     }
   }, [firestore, isLoading, staffs])
 
-
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDetailOpen, setIsDetailOpen] = useState(false)
@@ -199,8 +184,8 @@ export default function StaffsPage() {
   ])
   const { toast } = useToast()
 
-  const editForm = useForm<StaffFormValues>({
-    resolver: zodResolver(staffFormSchema),
+  const editForm = useForm<EditStaffFormValues>({
+    resolver: zodResolver(editStaffFormSchema),
   })
 
   const filteredStaffs = useMemo(() => {
@@ -220,40 +205,7 @@ export default function StaffsPage() {
       })
   }, [staffs, searchTerm, statusFilter])
 
-  function onSubmit(data: StaffFormValues) {
-    if (!staffsRef) return
-    const name = data.name
-    const fallback = name
-      .split(' ')
-      .map((n) => n[0])
-      .join('')
-      .substring(0, 2)
-      .toUpperCase()
-
-    const newStaff: Omit<Staff, 'id'> = {
-      name: data.name,
-      email: data.email,
-      perfilId: data.perfilId,
-      assinatura: data.assinatura,
-      phone: data.phone || '',
-      code: `STF-${Math.floor(100 + Math.random() * 900)}`,
-      status: 'Ativo',
-      situacao: 'Offline',
-      avatar: data.avatar || `https://i.pravatar.cc/150?u=${Math.random()}`,
-      fallback,
-      ...(data.perfilId === 'cliente' && { contractId: data.contractId }),
-      ...(data.perfilId !== 'cliente' && { clientIds: data.allClients ? [] : data.clientIds }),
-    }
-
-    addDocumentNonBlocking(staffsRef, newStaff)
-    toast({
-      title: 'Membro Adicionado!',
-      description: `${name} foi adicionado à equipe.`,
-    })
-    setIsAddDialogOpen(false)
-  }
-
-  function onEditSubmit(data: StaffFormValues) {
+  function onEditSubmit(data: EditStaffFormValues) {
     if (!currentStaff?.id || !firestore) return
     const staffDocRef = doc(firestore, 'staffs', currentStaff.id)
 
@@ -273,14 +225,14 @@ export default function StaffsPage() {
       phone: data.phone || '',
       fallback,
       ...(data.avatar && { avatar: data.avatar }),
-    };
+    }
 
     if (data.perfilId === 'cliente') {
-      updatedData.contractId = data.contractId;
-      updatedData.clientIds = [];
+      updatedData.contractId = data.contractId
+      updatedData.clientIds = []
     } else {
-      updatedData.clientIds = data.allClients ? [] : data.clientIds;
-      updatedData.contractId = '';
+      updatedData.clientIds = data.allClients ? [] : data.clientIds
+      updatedData.contractId = ''
     }
 
     updateDocumentNonBlocking(staffDocRef, updatedData)
@@ -304,7 +256,7 @@ export default function StaffsPage() {
       module: 'staffs',
       entityId: currentStaff.id,
       entityName: currentStaff.name,
-      details: { previousStatus: currentStaff.status }
+      details: { previousStatus: currentStaff.status },
     })
     toast({
       title: 'Membro Desativado!',
@@ -317,7 +269,7 @@ export default function StaffsPage() {
   const handleChangeStatus = (staffId: string, newStatus: StaffStatus) => {
     if (!firestore) return
     const staffDocRef = doc(firestore, 'staffs', staffId)
-    const staff = staffs?.find(s => s.id === staffId || s.email === staffId)
+    const staff = staffs?.find((s) => s.id === staffId || s.email === staffId)
 
     updateDocumentNonBlocking(staffDocRef, { status: newStatus })
 
@@ -329,7 +281,7 @@ export default function StaffsPage() {
       module: 'staffs',
       entityId: staffId,
       entityName: staff?.name || staffId,
-      details: { previousStatus: staff?.status, newStatus }
+      details: { previousStatus: staff?.status, newStatus },
     })
   }
 
@@ -489,7 +441,8 @@ export default function StaffsPage() {
                         <Badge variant='secondary'>
                           {getClientName(staff.contractId)}
                         </Badge>
-                      ) : (staff.clientIds === undefined || staff.clientIds.length === 0) ? (
+                      ) : staff.clientIds === undefined ||
+                        staff.clientIds.length === 0 ? (
                         <Badge>Todos</Badge>
                       ) : (
                         <div className='flex flex-wrap gap-1'>
@@ -592,14 +545,13 @@ export default function StaffsPage() {
           )}
         </CardContent>
       </Card>
-      
+
       <AddStaffDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
         profiles={profiles}
         clientsData={clientsData}
         areClientsLoading={areClientsLoading}
-        onSubmit={onSubmit}
       />
 
       {/* Edit Dialog */}
@@ -633,12 +585,12 @@ export default function StaffsPage() {
                     className='text-sm'
                     onChange={(e) => {
                       if (e.target.files?.[0]) {
-                        const file = e.target.files[0];
-                        const reader = new FileReader();
+                        const file = e.target.files[0]
+                        const reader = new FileReader()
                         reader.onloadend = () => {
-                          editForm.setValue('avatar', reader.result as string);
-                        };
-                        reader.readAsDataURL(file);
+                          editForm.setValue('avatar', reader.result as string)
+                        }
+                        reader.readAsDataURL(file)
                       }
                     }}
                   />
@@ -781,16 +733,16 @@ export default function StaffsPage() {
                         <FormLabel>Acesso a Clientes</FormLabel>
                         <FormField
                           control={editForm.control}
-                          name="allClients"
+                          name='allClients'
                           render={({ field: allClientsField }) => (
-                            <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 mb-4">
+                            <FormItem className='flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 mb-4'>
                               <FormControl>
                                 <Checkbox
                                   checked={allClientsField.value}
                                   onCheckedChange={allClientsField.onChange}
                                 />
                               </FormControl>
-                              <div className="space-y-1 leading-none">
+                              <div className='space-y-1 leading-none'>
                                 <FormLabel>
                                   Conceder acesso a todas as empresas
                                 </FormLabel>
@@ -809,7 +761,7 @@ export default function StaffsPage() {
                                   className={cn(
                                     'w-full justify-between font-normal',
                                     !field.value?.length &&
-                                    'text-muted-foreground'
+                                      'text-muted-foreground'
                                   )}
                                 >
                                   Selecionar clientes...
@@ -820,7 +772,9 @@ export default function StaffsPage() {
                             <PopoverContent className='w-[--radix-popover-trigger-width] p-0'>
                               <Command>
                                 <CommandInput placeholder='Buscar cliente...' />
-                                <CommandEmpty>Nenhum cliente encontrado.</CommandEmpty>
+                                <CommandEmpty>
+                                  Nenhum cliente encontrado.
+                                </CommandEmpty>
                                 <CommandList>
                                   <CommandGroup>
                                     {areClientsLoading ? (
@@ -831,20 +785,21 @@ export default function StaffsPage() {
                                           key={client.id}
                                           onSelect={() => {
                                             const selected = field.value || []
-                                            const newSelection = selected.includes(
-                                              client.id!
-                                            )
-                                              ? selected.filter(
-                                                (id) => id !== client.id
-                                              )
-                                              : [...selected, client.id!]
+                                            const newSelection =
+                                              selected.includes(client.id!)
+                                                ? selected.filter(
+                                                    (id) => id !== client.id
+                                                  )
+                                                : [...selected, client.id!]
                                             field.onChange(newSelection)
                                           }}
                                         >
                                           <Check
                                             className={cn(
                                               'mr-2 h-4 w-4',
-                                              field.value?.includes(client.id!)
+                                              field.value?.includes(
+                                                client.id!
+                                              )
                                                 ? 'opacity-100'
                                                 : 'opacity-0'
                                             )}
@@ -957,10 +912,11 @@ export default function StaffsPage() {
                 <p className='text-sm font-medium'>Situação</p>
                 <div className='flex items-center gap-2'>
                   <span
-                    className={`h-2 w-2 rounded-full ${currentStaff.situacao === 'Online'
-                      ? 'bg-green-500'
-                      : 'bg-gray-400'
-                      }`}
+                    className={`h-2 w-2 rounded-full ${
+                      currentStaff.situacao === 'Online'
+                        ? 'bg-green-500'
+                        : 'bg-gray-400'
+                    }`}
                   ></span>
                   <span>{currentStaff.situacao}</span>
                 </div>
