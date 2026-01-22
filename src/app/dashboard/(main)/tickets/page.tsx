@@ -52,8 +52,8 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useTicketStore } from './tickets-store'
-import { kanbanColumns, type Ticket, type TicketStatus } from './data'
+import { kanbanColumns } from './data'
+import { type Ticket, type TicketStatus } from '@/lib/types/ticket'
 import {
   addDocumentNonBlocking,
   updateDocumentNonBlocking,
@@ -144,20 +144,13 @@ export default function TicketsPage() {
     [firestore]
   )
 
-  const { data: ticketsData, isLoading: areTicketsLoading } =
+  const { data: tickets, isLoading: areTicketsLoading } =
     useCollection<Ticket>(ticketsRef)
   const { data: clientsData, isLoading: areClientsLoading } =
     useCollection<Client>(clientsRef)
 
-  const { tickets, setTickets } = useTicketStore()
   const { user } = useUser()
   const { toast } = useToast()
-
-  useEffect(() => {
-    if (ticketsData) {
-      setTickets(ticketsData)
-    }
-  }, [ticketsData, setTickets])
 
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [activeTicket, setActiveTicket] = useState<Ticket | null>(null)
@@ -168,6 +161,7 @@ export default function TicketsPage() {
   const currentUserEmail = user?.email || ''
 
   const filteredTickets = useMemo(() => {
+    if (!tickets) return []
     return tickets.filter((ticket) => {
       const priorityMatch =
         priorityFilter.length === 0 || priorityFilter.includes(ticket.priority)
