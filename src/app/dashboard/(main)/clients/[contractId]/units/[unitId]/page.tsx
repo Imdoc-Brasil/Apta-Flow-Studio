@@ -43,10 +43,10 @@ import {
   updateDocumentNonBlocking,
 } from '@/firebase'
 import { doc, collection, getDocs } from 'firebase/firestore'
-import type { Unit } from '../data'
-import type { Sector } from '../../sectors/data'
-import type { Role } from '../../roles/data'
-import type { Employee } from '../../employees/data'
+import type { Unit } from '@/lib/types/unit'
+import type { Sector } from '@/lib/types/sector'
+import type { Role } from '@/lib/types/role'
+import type { Employee } from '@/lib/types/employee'
 
 export default function UnitDetailsPage() {
   const params = useParams()
@@ -637,3 +637,5 @@ export default function UnitDetailsPage() {
     </>
   )
 }
+
+    
