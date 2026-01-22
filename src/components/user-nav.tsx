@@ -13,24 +13,17 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { CreditCard, LogOut, Settings, User } from 'lucide-react'
-import { useAuth, useUser, useDoc, useFirestore, useMemoFirebase } from '@/firebase'
+import { useAuth, useUser } from '@/firebase'
 import { signOut } from 'firebase/auth'
 import { useRouter } from 'next/navigation'
-import { doc } from 'firebase/firestore'
-import type { Staff } from '@/lib/types/staff'
 import { Skeleton } from './ui/skeleton'
+import { useStaffProfile } from '@/hooks/use-staff-profile'
 
 export function UserNav() {
   const auth = useAuth()
   const { user } = useUser()
   const router = useRouter()
-  const firestore = useFirestore()
-
-  const staffDocRef = useMemoFirebase(
-    () => (firestore && user ? doc(firestore, 'staffs', user.uid) : null),
-    [firestore, user]
-  )
-  const { data: staffProfile, isLoading: isStaffLoading } = useDoc<Staff>(staffDocRef)
+  const { staffProfile, isLoading: isStaffLoading } = useStaffProfile()
 
   const handleLogout = async () => {
     try {
@@ -40,9 +33,9 @@ export function UserNav() {
       console.error('Erro ao fazer logout:', error)
     }
   }
-  
+
   if (isStaffLoading) {
-      return <Skeleton className="h-8 w-8 rounded-full" />
+    return <Skeleton className='h-8 w-8 rounded-full' />
   }
 
   const displayName = staffProfile?.name || user?.displayName || 'Usuário'
@@ -62,10 +55,7 @@ export function UserNav() {
       <DropdownMenuTrigger asChild>
         <Button variant='ghost' className='relative h-8 w-8 rounded-full'>
           <Avatar className='h-8 w-8'>
-            <AvatarImage
-              src={displayAvatar}
-              alt={`@${displayName}`}
-            />
+            <AvatarImage src={displayAvatar} alt={`@${displayName}`} />
             <AvatarFallback>{displayFallback}</AvatarFallback>
           </Avatar>
         </Button>

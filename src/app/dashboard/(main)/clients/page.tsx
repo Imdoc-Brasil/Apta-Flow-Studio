@@ -41,37 +41,31 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
-import { type Client, hasClientPendingFields, getClientPendingFields } from '@/lib/types/client'
+import {
+  type Client,
+  hasClientPendingFields,
+  getClientPendingFields,
+} from '@/lib/types/client'
 import {
   useFirestore,
   useCollection,
   useMemoFirebase,
   useUser,
-  useDoc,
   createAuditLog,
 } from '@/firebase'
-import {
-  collection,
-  doc,
-} from 'firebase/firestore'
+import { collection, doc } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
 import { updateDocumentNonBlocking } from '@/firebase'
-import type { Staff } from '@/lib/types/staff'
 import { AddClientDialog } from '@/components/add-client-dialog'
 import { Input } from '@/components/ui/input'
-
+import { useStaffProfile } from '@/hooks/use-staff-profile'
 
 export default function ClientsPage() {
   const firestore = useFirestore()
   const { user } = useUser()
   const { toast } = useToast()
 
-  const staffDocRef = useMemoFirebase(
-    () => (firestore && user ? doc(firestore, 'staffs', user.uid) : null),
-    [firestore, user]
-  )
-  const { data: staffProfile, isLoading: isStaffLoading } =
-    useDoc<Staff>(staffDocRef)
+  const { staffProfile, isLoading: isStaffLoading } = useStaffProfile()
 
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string[]>(['Ativo'])
@@ -85,7 +79,6 @@ export default function ClientsPage() {
   const { data: allClients, isLoading: areClientsLoading } =
     useCollection<Client>(clientsRef)
 
-
   const isLoading = isStaffLoading || areClientsLoading
 
   const clientsToDisplay = useMemo(() => {
@@ -95,14 +88,15 @@ export default function ClientsPage() {
 
     // Global filters (Status and Search)
     if (statusFilter.length > 0) {
-      filtered = filtered.filter(c => statusFilter.includes(c.status))
+      filtered = filtered.filter((c) => statusFilter.includes(c.status))
     }
 
     if (searchTerm) {
       const term = searchTerm.toLowerCase()
-      filtered = filtered.filter(c =>
-        c.name.toLowerCase().includes(term) ||
-        c.id.toLowerCase().includes(term)
+      filtered = filtered.filter(
+        (c) =>
+          c.name.toLowerCase().includes(term) ||
+          c.id.toLowerCase().includes(term)
       )
     }
 
@@ -124,11 +118,11 @@ export default function ClientsPage() {
 
   const handleDisableClient = (clientId: string) => {
     if (!firestore || !clientId) return
-    const client = allClients?.find(c => c.id === clientId)
+    const client = allClients?.find((c) => c.id === clientId)
     const clientDocRef = doc(firestore, 'clients', clientId)
 
     updateDocumentNonBlocking(clientDocRef, {
-      status: 'Inativo'
+      status: 'Inativo',
     })
 
     createAuditLog(firestore, {
@@ -139,12 +133,13 @@ export default function ClientsPage() {
       module: 'clients',
       entityId: clientId,
       entityName: client?.name || clientId,
-      details: { previousStatus: client?.status }
+      details: { previousStatus: client?.status },
     })
 
     toast({
       title: 'Cliente Desativado',
-      description: 'O cliente foi marcado como Inativo e removido da visualização padrão.',
+      description:
+        'O cliente foi marcado como Inativo e removido da visualização padrão.',
     })
   }
 
@@ -266,7 +261,9 @@ export default function ClientsPage() {
                           <Badge
                             variant='outline'
                             className='text-orange-600 border-orange-600'
-                            title={`Pendências: ${getClientPendingFields(client).join(', ')}`}
+                            title={`Pendências: ${getClientPendingFields(
+                              client
+                            ).join(', ')}`}
                           >
                             <AlertCircle className='h-3 w-3 mr-1' />
                             {getClientPendingFields(client).length} pendência(s)
@@ -293,10 +290,14 @@ export default function ClientsPage() {
                               Detalhes
                             </Link>
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => openEditDialog(client)}>
+                          <DropdownMenuItem
+                            onClick={() => openEditDialog(client)}
+                          >
                             Editar
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDisableClient(client.id)}>
+                          <DropdownMenuItem
+                            onClick={() => handleDisableClient(client.id)}
+                          >
                             Desativar
                           </DropdownMenuItem>
                         </DropdownMenuContent>
