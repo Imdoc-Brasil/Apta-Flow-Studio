@@ -1,4 +1,3 @@
-
 'use client'
 
 import Link from 'next/link'
@@ -25,9 +24,15 @@ import {
   HeartPulse,
   Ticket,
   ArrowLeft,
-  LayoutDashboard
+  LayoutDashboard,
+  Workflow,
 } from 'lucide-react'
-import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader } from '@/components/ui/sidebar'
+import {
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarHeader,
+} from '@/components/ui/sidebar'
 import {
   Collapsible,
   CollapsibleContent,
@@ -63,12 +68,20 @@ export function ClientSidebar() {
       icon: Factory,
     },
   ]
-  
+
   const saudeNavItems = [
-      { href: `${basePath}/asos`, label: 'Gestão de ASOs', icon: ClipboardCheck },
-      { href: `${basePath}/pcmso`, label: 'Gestão de PCMSO', icon: BookUser },
-      { href: `${basePath}/periodicos`, label: 'Controle de Periódicos', icon: CalendarCheck },
-      { href: `${basePath}/vaccines`, label: 'Controle de Vacinas', icon: Syringe },
+    { href: `${basePath}/asos`, label: 'Gestão de ASOs', icon: ClipboardCheck },
+    { href: `${basePath}/pcmso`, label: 'Gestão de PCMSO', icon: BookUser },
+    {
+      href: `${basePath}/periodicos`,
+      label: 'Controle de Periódicos',
+      icon: CalendarCheck,
+    },
+    {
+      href: `${basePath}/vaccines`,
+      label: 'Controle de Vacinas',
+      icon: Syringe,
+    },
   ]
 
   const sstNavItems = [
@@ -82,7 +95,7 @@ export function ClientSidebar() {
       label: 'Gestão de EPIs',
       icon: HardHat,
     },
-     {
+    {
       href: `${basePath}/epis/recommendation`,
       label: 'Matriz de Recomendação',
       icon: ClipboardList,
@@ -92,7 +105,7 @@ export function ClientSidebar() {
       label: 'Gestão de Treinamentos',
       icon: GraduationCap,
     },
-     { href: `${basePath}/docs-sst`, label: 'Documentos de SST', icon: FileText },
+    { href: `${basePath}/docs-sst`, label: 'Documentos de SST', icon: FileText },
   ]
 
   const getIsActive = (href: string) => {
@@ -114,12 +127,10 @@ export function ClientSidebar() {
   const [isEstruturaOpen, setIsEstruturaOpen] = useState(isEstruturaActive)
   const [isSaudeOpen, setIsSaudeOpen] = useState(isSaudeActive)
 
-
   useEffect(() => {
     if (isSstActive) setIsSstOpen(true)
     if (isEstruturaActive) setIsEstruturaOpen(true)
     if (isSaudeActive) setIsSaudeOpen(true)
-
   }, [pathname, isSstActive, isEstruturaActive, isSaudeActive])
 
   if (!contractId) {
@@ -201,7 +212,7 @@ export function ClientSidebar() {
           </CollapsibleContent>
         </Collapsible>
       </li>
-      
+
       <li className='relative'>
         <Collapsible open={isSaudeOpen} onOpenChange={setIsSaudeOpen}>
           <CollapsibleTrigger asChild>
