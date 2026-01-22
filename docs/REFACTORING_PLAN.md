@@ -8,58 +8,67 @@
 
 ## 🎯 Visão Geral
 
-O projeto possui uma base de código moderna e funcional. No entanto, para garantir o crescimento sustentável, é crucial organizar e padronizar a estrutura do projeto. Esta refatoração será dividida em fases, permitindo uma abordagem incremental e segura.
+O projeto possui uma base de código moderna e funcional. Esta refatoração foi dividida em fases para garantir uma abordagem incremental e segura, melhorando a organização e padronização da estrutura do projeto.
 
 ---
 
-### 🔥 **Fase 1: Centralização de Tipos e Utilitários (A Fundação)**
+### ✅ **Fase 1: Centralização de Tipos e Utilitários (Concluída)**
 
-*   **Status:** Em Andamento
-*   **Objetivo:** Criar uma "única fonte da verdade" para todas as definições de dados (interfaces TypeScript) e lógicas de negócio reutilizáveis. Atualmente, estas definições estão espalhadas por vários arquivos `data.ts` dentro das pastas de cada página, dificultando a manutenção.
-*   **Ações:**
-    1.  [✅] Criar o diretório `src/lib/types`.
-    2.  [✅] Mover a interface `Client` para `src/lib/types/client.ts`.
-    3.  [ ] Mover as interfaces `Employee` e `EmployeeStatus` para `src/lib/types/employee.ts`.
-    4.  [ ] Mover as interfaces `Unit`, `Sector`, `Role`, `Environment` e outras para seus respectivos arquivos em `src/lib/types/`.
-    5.  [ ] Mover funções utilitárias (ex: `getRiskLevel` em `pgr/utils.ts`) para um diretório central `src/lib/utils/`.
-    6.  [ ] Atualizar todos os `imports` no projeto para refletir os novos caminhos.
-    7.  [ ] Remover os arquivos `data.ts` e `utils.ts` obsoletos das pastas das páginas.
+*   **Status:** ✅ Concluído
+*   **Objetivo:** Criar uma "única fonte da verdade" para todas as definições de dados e lógicas de negócio reutilizáveis.
+*   **Ações Realizadas:**
+    1.  [✅] Criado o diretório `src/lib/types` e todos os tipos de `data.ts` foram movidos para lá.
+    2.  [✅] Funções utilitárias (ex: `getRiskLevel`, `getClientPendingFields`) foram movidas para um diretório central `src/lib/utils/`.
+    3.  [✅] Todos os `imports` no projeto foram atualizados para os novos caminhos centralizados.
+    4.  [✅] Os arquivos `data.ts` e `utils.ts` obsoletos foram removidos das pastas das páginas.
 *   **Benefício:** Redução de duplicidade, código mais limpo e manutenibilidade drasticamente melhorada.
 
 ---
 
-### 🧱 **Fase 2: Refatoração e Divisão de Componentes**
+### ✅ **Fase 2: Refatoração e Divisão de Componentes (Concluída)**
 
-*   **Status:** Pendente
-*   **Objetivo:** Quebrar componentes monolíticos (páginas que contêm lógica de estado, renderização e manipulação de eventos) em componentes menores, reutilizáveis e focados.
-*   **Ações:**
-    1.  Analisar páginas complexas como `tickets/page.tsx`, `clients/page.tsx`, e `employees/page.tsx`.
-    2.  Extrair componentes de UI, como tabelas, formulários de diálogo, e cartões, para o diretório `src/components/`.
-    3.  Garantir que os novos componentes recebam dados via `props` e emitam eventos via callbacks, tornando-os mais puros e testáveis.
+*   **Status:** ✅ Concluído
+*   **Objetivo:** Quebrar componentes monolíticos em componentes menores, reutilizáveis e focados.
+*   **Ações Realizadas:**
+    1.  [✅] Extraído `AddClientDialog` de `clients/page.tsx`.
+    2.  [✅] Extraído `TicketDetailsDialog` de `tickets/page.tsx`.
+    3.  [✅] Extraído `AddUnitDialog` de `units/page.tsx`.
+    4.  [✅] Extraído `AddPgrRiskDialog` de `pgr/page.tsx`.
+    5.  [✅] Extraído `AddClientEmployeeDialog` de `employees/page.tsx`.
+    6.  [✅] Extraído `EditPermissionsDialog` de `profiles/page.tsx`.
 *   **Benefício:** Componentes reutilizáveis, testes unitários facilitados e código muito mais fácil de ler e dar manutenção.
 
 ---
 
-### ⚙️ **Fase 3: Consolidação do Gerenciamento de Estado**
+### ✅ **Fase 3: Consolidação do Gerenciamento de Estado (Concluída)**
 
-*   **Status:** Pendente
-*   **Objetivo:** Unificar a estratégia de gerenciamento de estado, utilizando `Zustand` para estados globais e `useState`/`useReducer` para estados locais de componentes, de forma padronizada.
-*   **Ações:**
-    1.  Revisar todos os `useState` para identificar estados que deveriam ser globais ou compartilhados.
-    2.  Refatorar `stores` do Zustand para seguir um padrão consistente (ex: `actions`, `state`).
-    3.  Criar hooks customizados (ex: `useClientData`, `useUnitSectors`) para encapsular lógicas de busca e manipulação de dados do Firestore, simplificando os componentes das páginas.
-*   **Benefício:** Fluxo de dados claro e previsível, eliminação de "prop drilling", e desacoplamento da lógica de estado da UI.
+*   **Status:** ✅ Concluído
+*   **Objetivo:** Unificar e otimizar a estratégia de gerenciamento de estado.
+*   **Ações Realizadas:**
+    1.  [✅] Removida a store `Zustand` (`useTicketStore`) para simplificar o fluxo de dados dos tickets.
+    2.  [✅] Criado o hook customizado `useAllSectors` para centralizar a busca de setores.
+    3.  [✅] Criado o hook customizado `useStaffProfile` para buscar dados do usuário logado.
+    4.  [✅] Criado o hook customizado `useAllEnvironments` para buscar postos de trabalho.
+    5.  [✅] Componentes das páginas foram refatorados para usar os novos hooks, eliminando lógica de busca de dados duplicada.
+*   **Benefício:** Fluxo de dados claro e previsível, eliminação de código repetido e desacoplamento da lógica de estado da UI.
 
 ---
 
-## 🚀 Como Proceder (Handoff para Antigravity)
+## 🚀 Próximos Passos Sugeridos
 
-Quando a sessão com o Firebase Studio for encerrada, o agente do Antigravity deve:
+Com a base do código agora sólida e organizada, as próximas fases podem focar em:
 
-1.  **Ler este plano** para entender o status atual.
-2.  **Continuar da última tarefa concluída** na fase atual.
-3.  **Executar uma tarefa por vez**, de forma atômica (ex: mover um conjunto de tipos, refatorar um componente).
-4.  **Validar após cada alteração** com os comandos `npm run typecheck` e `npm run build` para garantir que nenhuma regressão foi introduzida.
-5.  **Fazer commits claros** descrevendo a refatoração realizada.
+### **Fase 4: Testes Automatizados**
+*   **Objetivo:** Aumentar a confiabilidade do código e prevenir regressões.
+*   **Ações:**
+    *   Implementar testes unitários com `vitest` para hooks customizados e funções utilitárias.
+    *   Implementar testes de integração com `React Testing Library` para componentes complexos.
+    *   Configurar testes E2E com `Playwright` para os fluxos de usuário mais críticos (login, criação de cliente, etc.).
 
-O objetivo é progredir de forma segura e consistente através das fases, sempre deixando o projeto em um estado funcional ao final de cada interação.
+### **Fase 5: Otimização de Performance**
+*   **Objetivo:** Garantir que a aplicação continue rápida e responsiva à medida que cresce.
+*   **Ações:**
+    *   Analisar o bundle da aplicação com `@next/bundle-analyzer` para identificar e otimizar pacotes pesados.
+    *   Implementar `React.lazy` para componentes que não são críticos para a renderização inicial.
+    *   Revisar e otimizar as consultas ao Firestore, garantindo o uso correto de índices.
+
