@@ -59,6 +59,11 @@ import { updateDocumentNonBlocking } from '@/firebase'
 import { AddClientDialog } from '@/components/add-client-dialog'
 import { Input } from '@/components/ui/input'
 import { useStaffProfile } from '@/hooks/use-staff-profile'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 export default function ClientsPage() {
   const firestore = useFirestore()
@@ -257,16 +262,30 @@ export default function ClientsPage() {
                       <div className='flex items-center gap-2'>
                         <span>{client.contractResponsibleName || '-'}</span>
                         {hasClientPendingFields(client) && (
-                          <Badge
-                            variant='outline'
-                            className='text-orange-600 border-orange-600'
-                            title={`Pendências: ${getClientPendingFields(
-                              client
-                            ).join(', ')}`}
-                          >
-                            <AlertCircle className='h-3 w-3 mr-1' />
-                            {getClientPendingFields(client).length} pendência(s)
-                          </Badge>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <Badge
+                                variant='outline'
+                                className='text-orange-600 border-orange-600 cursor-help'
+                              >
+                                <AlertCircle className='h-3 w-3 mr-1' />
+                                {getClientPendingFields(client).length}{' '}
+                                pendência(s)
+                              </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className='font-semibold'>
+                                Pendências de Cadastro:
+                              </p>
+                              <ul className='list-disc list-inside mt-1 text-xs'>
+                                {getClientPendingFields(client).map(
+                                  (field) => (
+                                    <li key={field}>{field}</li>
+                                  )
+                                )}
+                              </ul>
+                            </TooltipContent>
+                          </Tooltip>
                         )}
                       </div>
                     </TableCell>
