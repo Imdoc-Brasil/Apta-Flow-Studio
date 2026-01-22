@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { useAuth, useFirestore } from '@/firebase'
+import Image from 'next/image'
+import Link from 'next/link'
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -9,20 +10,16 @@ import {
 } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
+
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { Logo } from '@/components/logo'
 import { Loader2 } from 'lucide-react'
-import type { Staff } from '../dashboard/(main)/employees/page'
+import { useAuth, useFirestore } from '@/firebase'
+import type { Staff } from '@/lib/types/staff'
+import { placeholderImages } from '@/lib/placeholder-images'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -63,12 +60,23 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password)
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      )
       await handleSuccessfulLogin(userCredential.user)
     } catch (error: any) {
-      if (error.code === 'auth/invalid-credential') {
+      if (
+        error.code === 'auth/invalid-credential' ||
+        error.code === 'auth/user-not-found'
+      ) {
         try {
-          const userCredential = await createUserWithEmailAndPassword(auth, email, password)
+          const userCredential = await createUserWithEmailAndPassword(
+            auth,
+            email,
+            password
+          )
           toast({
             title: 'Conta criada com sucesso!',
             description:
@@ -94,19 +102,21 @@ export default function LoginPage() {
     }
   }
 
+  const heroImage = placeholderImages.find((p) => p.id === '1')
+
   return (
-    <div className='flex min-h-screen items-center justify-center bg-muted/40'>
-      <Card className='mx-auto max-w-sm'>
-        <CardHeader className='text-center'>
-          <div className='flex justify-center mb-4'>
-            <Logo />
+    <div className='w-full lg:grid lg:min-h-screen lg:grid-cols-2'>
+      <div className='flex items-center justify-center py-12'>
+        <div className='mx-auto grid w-[350px] gap-6'>
+          <div className='grid gap-2 text-center'>
+            <div className='flex justify-center mb-4'>
+              <Logo />
+            </div>
+            <h1 className='text-3xl font-bold'>Login</h1>
+            <p className='text-balance text-muted-foreground'>
+              Entre com seu email para acessar o painel
+            </p>
           </div>
-          <CardTitle className='text-2xl'>Login</CardTitle>
-          <CardDescription>
-            Entre com seu email para acessar o painel
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
           <form onSubmit={handleLogin}>
             <div className='grid gap-4'>
               <div className='grid gap-2'>
@@ -124,6 +134,12 @@ export default function LoginPage() {
               <div className='grid gap-2'>
                 <div className='flex items-center'>
                   <Label htmlFor='password'>Senha</Label>
+                  <Link
+                    href='#'
+                    className='ml-auto inline-block text-sm underline'
+                  >
+                    Esqueceu sua senha?
+                  </Link>
                 </div>
                 <Input
                   id='password'
@@ -143,8 +159,20 @@ export default function LoginPage() {
               </Button>
             </div>
           </form>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
+      <div className='hidden bg-muted lg:block'>
+        {heroImage && (
+          <Image
+            src={heroImage.imageUrl}
+            alt={heroImage.description}
+            data-ai-hint={heroImage.imageHint}
+            width='1920'
+            height='1080'
+            className='h-full w-full object-cover dark:brightness-[0.2] dark:grayscale'
+          />
+        )}
+      </div>
     </div>
   )
 }
