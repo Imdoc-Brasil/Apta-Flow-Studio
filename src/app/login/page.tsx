@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState } from 'react'
@@ -5,7 +6,6 @@ import Image from 'next/image'
 import Link from 'next/link'
 import {
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
   User,
 } from 'firebase/auth'
 import { doc, getDoc } from 'firebase/firestore'
@@ -67,36 +67,12 @@ export default function LoginPage() {
       )
       await handleSuccessfulLogin(userCredential.user)
     } catch (error: any) {
-      if (
-        error.code === 'auth/invalid-credential' ||
-        error.code === 'auth/user-not-found'
-      ) {
-        try {
-          const userCredential = await createUserWithEmailAndPassword(
-            auth,
-            email,
-            password
-          )
-          toast({
-            title: 'Conta criada com sucesso!',
-            description:
-              'Como este é seu primeiro acesso, uma nova conta foi criada para você.',
-          })
-          await handleSuccessfulLogin(userCredential.user)
-        } catch (createError: any) {
-          toast({
-            variant: 'destructive',
-            title: 'Erro ao Criar Conta',
-            description: `Não foi possível fazer login ou criar uma conta. Verifique os dados e tente novamente. (Erro: ${createError.code})`,
-          })
-        }
-      } else {
-        toast({
-          variant: 'destructive',
-          title: 'Erro de Login',
-          description: error.message,
-        })
-      }
+      toast({
+        variant: 'destructive',
+        title: 'Falha no login',
+        description:
+          'Credenciais inválidas. Verifique seu email e senha e tente novamente.',
+      })
     } finally {
       setIsLoading(false)
     }
