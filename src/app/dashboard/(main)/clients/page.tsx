@@ -56,7 +56,7 @@ import {
 } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
 import { updateDocumentNonBlocking } from '@/firebase'
-import type { Staff } from '@/app/dashboard/(main)/employees/page'
+import type { Staff } from '@/lib/types/staff'
 import { AddClientDialog } from '@/components/add-client-dialog'
 import { Input } from '@/components/ui/input'
 
