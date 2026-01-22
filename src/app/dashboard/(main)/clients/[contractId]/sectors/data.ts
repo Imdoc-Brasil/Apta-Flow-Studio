@@ -1,12 +1,1 @@
-
-export interface Sector {
-  id: string
-  code?: string
-  name: string
-  description: string
-  unitId: string
-  status?: 'Ativo' | 'Arquivado'
-}
-
-// Export array vazio para compatibilidade com imports
-export const sectors: Sector[] = []
+// This file is obsolete. The 'Sector' type has been moved to src/lib/types/sector.ts

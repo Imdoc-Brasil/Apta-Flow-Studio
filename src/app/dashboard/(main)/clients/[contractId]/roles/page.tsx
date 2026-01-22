@@ -78,8 +78,8 @@ import { useAllEnvironments } from '@/hooks/use-all-environments'
 export default function RolesPage() {
   const params = useParams()
   const contractId = params.contractId as string
-  const firestore = useFirestore()
   const { toast } = useToast()
+  const firestore = useFirestore()
   const searchParams = useSearchParams()
   const urlSectorId = searchParams.get('sectorId')
 
@@ -108,25 +108,26 @@ export default function RolesPage() {
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [formActivities, setFormActivities] = useState<string[]>([])
-  const [activityInput, setActivityInput] = useState('')
-
   const [sectorFilter, setSectorFilter] = useState<string[]>(
     urlSectorId ? [urlSectorId] : []
   )
   const [statusFilter, setStatusFilter] = useState<string[]>(['Ativo'])
   const [editingRole, setEditingRole] = useState<Role | null>(null)
+  const [formActivities, setFormActivities] = useState<string[]>([])
+  const [activityInput, setActivityInput] = useState('')
+  const [selectedUnit, setSelectedUnit] = useState('')
 
-  const sectorsWithUnit = useMemo(() => {
-    return allSectors.map((sector) => {
-      const unit = units?.find((u) => u.id === sector.unitId)
-      return { ...sector, unitName: unit?.name || 'N/A' }
-    })
-  }, [allSectors, units])
+  const sectorsInSelectedUnit = useMemo(() => {
+    if (!selectedUnit) return []
+    return allSectors.filter((s) => s.unitId === selectedUnit)
+  }, [selectedUnit, allSectors])
 
-  const getSectorInfo = (sectorId: string) => {
-    return sectorsWithUnit.find((s) => s.id === sectorId)
-  }
+  const environmentsInSelectedUnit = useMemo(() => {
+    if (!selectedUnit) return []
+    const sectorIds = sectorsInSelectedUnit.map(s => s.id)
+    return allEnvironments.filter(e => sectorIds.includes(e.sectorId))
+  }, [selectedUnit, sectorsInSelectedUnit, allEnvironments])
+
 
   const filteredRoles = useMemo(() => {
     if (!roles) return []
@@ -138,9 +139,7 @@ export default function RolesPage() {
       })
     }
     if (sectorFilter.length > 0) {
-      filtered = filtered.filter((role) =>
-        sectorFilter.includes(role.sectorId)
-      )
+      filtered = filtered.filter((role) => sectorFilter.includes(role.sectorId))
     }
     if (searchTerm) {
       filtered = filtered.filter(
@@ -151,6 +150,16 @@ export default function RolesPage() {
     }
     return filtered
   }, [roles, searchTerm, sectorFilter, statusFilter])
+
+  const getSectorInfo = (sectorId: string) => {
+    const sector = allSectors.find((s) => s.id === sectorId)
+    if (!sector) return { sectorName: 'N/A', unitName: 'N/A' }
+    const unit = units?.find((u) => u.id === sector.unitId)
+    return {
+      sectorName: sector.name,
+      unitName: unit?.name || 'N/A',
+    }
+  }
 
   const handleAddActivity = () => {
     if (
@@ -168,13 +177,39 @@ export default function RolesPage() {
     )
   }
 
+  const openAddDialog = () => {
+    setEditingRole(null)
+    setFormActivities([])
+    setSelectedUnit('')
+    setIsAddDialogOpen(true)
+  }
+  
+  const openEditDialog = (role: Role) => {
+    setEditingRole(role)
+    setFormActivities(role.activities || [])
+    const sector = allSectors.find(s => s.id === role.sectorId)
+    setSelectedUnit(sector?.unitId || '')
+    setIsAddDialogOpen(true)
+  }
+
+  const handleArchiveRole = (role: Role) => {
+    if (!firestore || !role.id) return
+    const roleDocRef = doc(firestore, `clients/${contractId}/roles`, role.id)
+    updateDocumentNonBlocking(roleDocRef, { status: 'Arquivado' })
+    toast({
+      title: 'Cargo Arquivado',
+      description: 'O cargo foi marcado como Arquivado.',
+      variant: 'destructive',
+    })
+  }
+
   const handleAddRole = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!rolesRef) return
 
     const formData = new FormData(event.currentTarget)
     const additionalWorkstationIds = allEnvironments
-      .map((env) => env.id)
+      .map(env => env.id)
       .filter((id) => formData.get(`additional-${id}`) === 'on')
 
     const newRoleData: Omit<Role, 'id'> = {
@@ -189,353 +224,309 @@ export default function RolesPage() {
       requiredExams: formData.get('requiredExams') as string,
       status: editingRole?.status || 'Ativo',
     }
-
+    
     if (editingRole?.id) {
-      const roleDocRef = doc(firestore!, `clients/${contractId}/roles`, editingRole.id)
-      updateDocumentNonBlocking(roleDocRef, newRoleData)
-      toast({ title: 'Cargo Atualizado!' })
+        const roleDocRef = doc(firestore, `clients/${contractId}/roles`, editingRole.id)
+        updateDocumentNonBlocking(roleDocRef, newRoleData);
+        toast({ title: 'Cargo Atualizado!' })
     } else {
-      addDocumentNonBlocking(rolesRef, newRoleData)
-      toast({
-        title: 'Cargo Adicionado!',
-        description: `O cargo "${newRoleData.name}" foi adicionado.`,
-      })
+        addDocumentNonBlocking(rolesRef, newRoleData)
+        toast({
+            title: 'Cargo Adicionado!',
+            description: `O cargo "${newRoleData.name}" foi adicionado.`,
+        })
     }
 
     setIsAddDialogOpen(false)
     setEditingRole(null)
-    setFormActivities([])
   }
-
-  const handleArchiveRole = (role: Role) => {
-    if (!firestore || !role.id) return
-    const roleDocRef = doc(firestore, `clients/${contractId}/roles`, role.id)
-    updateDocumentNonBlocking(roleDocRef, { status: 'Arquivado' })
-    toast({
-      title: 'Cargo Arquivado',
-      description: 'O cargo foi marcado como Arquivado.',
-      variant: 'destructive'
-    })
-  }
-
-  const openEditRoleDialog = (role: Role) => {
-    setEditingRole(role)
-    setFormActivities(role.activities || [])
-    setIsAddDialogOpen(true)
-  }
-
-  const isLoading =
-    areRolesLoading ||
-    areUnitsLoading ||
-    areSectorsLoading ||
-    areEnvironmentsLoading
+  
+  const isLoading = areRolesLoading || areUnitsLoading || areSectorsLoading || areEnvironmentsLoading;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Cargos</CardTitle>
-        <CardDescription>
-          Gerencie os cargos e suas atribuições dentro de cada setor.
-        </CardDescription>
-        <div className='flex items-center justify-between pt-4'>
-          <div className='flex items-center gap-2'>
-            <div className='relative w-full max-w-sm'>
-              <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
-              <Input
-                type='search'
-                placeholder='Buscar por nome do cargo...'
-                className='pl-8'
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle>Cargos</CardTitle>
+          <CardDescription>
+            Gerencie os cargos e suas atribuições dentro de cada setor.
+          </CardDescription>
+          <div className='flex items-center justify-between pt-4'>
+            <div className='flex items-center gap-2'>
+              <div className='relative w-full max-w-sm'>
+                <Search className='absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground' />
+                <Input
+                  type='search'
+                  placeholder='Buscar por nome do cargo...'
+                  className='pl-8'
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant='outline' size='sm' className='h-10 gap-1'>
+                    <Filter className='h-3.5 w-3.5' />
+                    <span className='sr-only sm:not-sr-only'>Filtrar</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align='end'>
+                  <DropdownMenuLabel>Filtrar por Setor</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {allSectors.map((sector) => (
+                    <DropdownMenuCheckboxItem
+                      key={sector.id}
+                      checked={sectorFilter.includes(sector.id)}
+                      onCheckedChange={(checked) => {
+                        setSectorFilter((prev) =>
+                          checked
+                            ? [...prev, sector.id]
+                            : prev.filter((id) => id !== sector.id)
+                        )
+                      }}
+                    >
+                      {sector.name} ({getSectorInfo(sector.id).unitName})
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                   <DropdownMenuSeparator />
+                  <DropdownMenuLabel>Filtrar por Status</DropdownMenuLabel>
+                  {['Ativo', 'Arquivado'].map((status) => (
+                    <DropdownMenuCheckboxItem
+                      key={status}
+                      checked={statusFilter.includes(status)}
+                      onCheckedChange={(checked) => {
+                        setStatusFilter((prev) =>
+                          checked
+                            ? [...prev, status]
+                            : prev.filter((s) => s !== status)
+                        )
+                      }}
+                    >
+                      {status}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant='outline' size='sm' className='h-10 gap-1'>
-                  <Filter className='h-3.5 w-3.5' />
-                  <span className='sr-only sm:not-sr-only'>Filtrar</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align='end'>
-                <DropdownMenuLabel>Filtrar por Setor</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {sectorsWithUnit.map((sector) => (
-                  <DropdownMenuCheckboxItem
-                    key={sector.id}
-                    checked={sectorFilter.includes(sector.id)}
-                    onCheckedChange={(checked) => {
-                      setSectorFilter((prev) =>
-                        checked
-                          ? [...prev, sector.id]
-                          : prev.filter((id) => id !== sector.id)
-                      )
-                    }}
-                  >
-                    {sector.name} ({sector.unitName})
-                  </DropdownMenuCheckboxItem>
-                ))}
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel>Filtrar por Status</DropdownMenuLabel>
-                {['Ativo', 'Arquivado'].map((status) => (
-                  <DropdownMenuCheckboxItem
-                    key={status}
-                    checked={statusFilter.includes(status)}
-                    onCheckedChange={(checked) => {
-                      setStatusFilter((prev) =>
-                        checked
-                          ? [...prev, status]
-                          : prev.filter((s) => s !== status)
-                      )
-                    }}
-                  >
-                    {status}
-                  </DropdownMenuCheckboxItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button size='sm' className='h-8 gap-1' onClick={openAddDialog}>
+              <PlusCircle className='h-3.5 w-3.5' />
+              <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
+                Adicionar Cargo
+              </span>
+            </Button>
           </div>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button
-                size='sm'
-                className='h-8 gap-1'
-                onClick={() => setFormActivities([])}
-              >
-                <PlusCircle className='h-3.5 w-3.5' />
-                <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
-                  Adicionar Cargo
-                </span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className='sm:max-w-2xl'>
-              <DialogHeader>
-                <DialogTitle>Adicionar Novo Cargo</DialogTitle>
-                <DialogDescription>
-                  Preencha os detalhes para criar um novo cargo.
-                </DialogDescription>
-              </DialogHeader>
-              <form id='add-role-form' onSubmit={handleAddRole}>
-                <ScrollArea className='h-[70vh]'>
-                  <div className='grid gap-6 p-4'>
-                    <div className='grid grid-cols-2 gap-4'>
-                      <div className='space-y-2'>
-                        <Label htmlFor='name'>Nome do Cargo</Label>
-                        <Input id='name' name='name' defaultValue={editingRole?.name} required />
-                      </div>
-                      <div className='space-y-2'>
-                        <Label htmlFor='cbo'>CBO</Label>
-                        <Input id='cbo' name='cbo' defaultValue={editingRole?.cbo} placeholder='Ex: 2525-05' />
-                      </div>
-                    </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='sectorId'>Setor</Label>
-                      <Select name='sectorId' defaultValue={editingRole?.sectorId} required>
-                        <SelectTrigger>
-                          <SelectValue placeholder='Selecione o setor' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {sectorsWithUnit.map((sector) => (
-                            <SelectItem key={sector.id} value={sector.id}>
-                              {sector.name} ({sector.unitName})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='mainWorkstationId'>
-                        Posto de Trabalho Principal
-                      </Label>
-                      <Select name='mainWorkstationId' defaultValue={editingRole?.mainWorkstationId}>
-                        <SelectTrigger>
-                          <SelectValue placeholder='Selecione o posto de trabalho principal (opcional)' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {allEnvironments.map((env) => (
-                            <SelectItem key={env.id} value={env.id}>
-                              {env.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className='space-y-4'>
-                      <Separator />
-                      <Label className='font-semibold'>
-                        Outros Postos de Trabalho Associados
-                      </Label>
-                      <ScrollArea className='h-40 rounded-md border p-4'>
-                        <div className='space-y-2'>
-                          {allEnvironments.map((env) => (
-                            <div
-                              key={`additional-${env.id}`}
-                              className='flex items-center gap-2'
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className='flex items-center justify-center h-64'>
+                <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Cargo</TableHead>
+                  <TableHead>Setor</TableHead>
+                  <TableHead className='hidden md:table-cell'>Unidade</TableHead>
+                  <TableHead className='hidden sm:table-cell'>CBO</TableHead>
+                  <TableHead>
+                    <span className='sr-only'>Ações</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredRoles.map((role) => {
+                  const sectorInfo = getSectorInfo(role.sectorId)
+                  return (
+                    <TableRow key={role.id}>
+                      <TableCell className='font-medium'>{role.name}</TableCell>
+                      <TableCell>{sectorInfo.sectorName}</TableCell>
+                      <TableCell className='hidden md:table-cell'>
+                        <Badge variant='outline'>{sectorInfo.unitName}</Badge>
+                      </TableCell>
+                      <TableCell className='hidden sm:table-cell'>
+                        {role.cbo}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              aria-haspopup='true'
+                              size='icon'
+                              variant='ghost'
                             >
-                              <Checkbox
-                                id={`additional-${env.id}`}
-                                name={`additional-${env.id}`}
-                                defaultChecked={editingRole?.additionalWorkstationIds?.includes(env.id)}
-                              />
-                              <Label htmlFor={`additional-${env.id}`}>
-                                {env.name}
-                              </Label>
-                            </div>
-                          ))}
-                        </div>
-                      </ScrollArea>
-                    </div>
-
-                    <div className='space-y-2'>
-                      <Label htmlFor='description'>Descrição Sumária</Label>
-                      <Textarea
-                        id='description'
-                        name='description'
-                        defaultValue={editingRole?.description}
-                        placeholder='Descreva as principais atribuições do cargo'
-                      />
-                    </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='activities'>Atividades Principais</Label>
-                      <div className='flex gap-2'>
-                        <Input
-                          id='activities'
-                          name='activities'
-                          value={activityInput}
-                          onChange={(e) => setActivityInput(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault()
-                              handleAddActivity()
-                            }
-                          }}
-                          placeholder='Digite uma atividade e tecle Enter'
-                        />
-                        <Button type='button' onClick={handleAddActivity}>
-                          Adicionar
-                        </Button>
-                      </div>
-                      <div className='flex flex-wrap gap-2 mt-2'>
-                        {formActivities.map((activity) => (
-                          <Badge
-                            key={activity}
-                            variant='secondary'
-                            className='flex items-center gap-1'
-                          >
-                            {activity}
-                            <button
-                              type='button'
-                              onClick={() => handleRemoveActivity(activity)}
-                              className='rounded-full hover:bg-background/50'
-                            >
-                              <Trash2 className='h-3 w-3' />
-                            </button>
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='requirements'>
-                        Requisitos/Qualificações
-                      </Label>
-                      <Textarea
-                        id='requirements'
-                        name='requirements'
-                        defaultValue={editingRole?.requirements}
-                        placeholder='Liste competências, treinamentos obrigatórios (NRs), certificações, etc.'
-                      />
-                    </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='requiredExams'>
-                        Exames Médicos (PCMSO)
-                      </Label>
-                      <Input
-                        id='requiredExams'
-                        name='requiredExams'
-                        defaultValue={editingRole?.requiredExams}
-                        placeholder='Ex: ASO, Audiometria, Acuidade Visual...'
-                      />
-                    </div>
+                              <MoreHorizontal className='h-4 w-4' />
+                              <span className='sr-only'>Alternar menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align='end'>
+                            <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => openEditDialog(role)}>Editar</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleArchiveRole(role)}>Arquivar</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+      
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className='sm:max-w-2xl'>
+          <DialogHeader>
+            <DialogTitle>Adicionar Novo Cargo</DialogTitle>
+            <DialogDescription>
+              Preencha os detalhes para criar um novo cargo.
+            </DialogDescription>
+          </DialogHeader>
+          <form id='add-role-form' onSubmit={handleAddRole}>
+            <ScrollArea className='h-[70vh]'>
+              <div className='grid gap-6 p-4'>
+                <div className='grid grid-cols-2 gap-4'>
+                  <div className='space-y-2'>
+                    <Label htmlFor='name'>Nome do Cargo</Label>
+                    <Input id='name' name='name' defaultValue={editingRole?.name} required />
                   </div>
-                </ScrollArea>
-              </form>
-              <DialogFooter>
-                <Button
-                  variant='outline'
-                  onClick={() => {
-                    setIsAddDialogOpen(false)
-                    setEditingRole(null)
-                  }}
-                >
-                  Cancelar
-                </Button>
-                <Button type='submit' form='add-role-form'>
-                  {editingRole ? 'Salvar Alterações' : 'Salvar'}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {isLoading ? (
-          <div className='flex items-center justify-center h-64'>
-            <Loader2 className='h-8 w-8 animate-spin' />
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Cargo</TableHead>
-                <TableHead>Setor</TableHead>
-                <TableHead className='hidden md:table-cell'>Unidade</TableHead>
-                <TableHead className='hidden sm:table-cell'>CBO</TableHead>
-                <TableHead>
-                  <span className='sr-only'>Ações</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredRoles.map((role) => {
-                const sectorInfo = getSectorInfo(role.sectorId)
-                return (
-                  <TableRow key={role.id}>
-                    <TableCell className='font-medium'>{role.name}</TableCell>
-                    <TableCell>{sectorInfo?.name || 'N/A'}</TableCell>
-                    <TableCell className='hidden md:table-cell'>
-                      <Badge variant='outline'>
-                        {sectorInfo?.unitName || 'N/A'}
+                  <div className='space-y-2'>
+                    <Label htmlFor='cbo'>CBO</Label>
+                    <Input id='cbo' name='cbo' defaultValue={editingRole?.cbo} placeholder='Ex: 2525-05' />
+                  </div>
+                </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='sectorId'>Setor</Label>
+                  <Select name='sectorId' defaultValue={editingRole?.sectorId} onValueChange={setSelectedUnit} required>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Selecione o setor' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {allSectors.map((sector) => (
+                        <SelectItem key={sector.id} value={sector.id}>
+                          {sector.name} ({getSectorInfo(sector.id).unitName})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='mainWorkstationId'>Posto de Trabalho Principal</Label>
+                  <Select name='mainWorkstationId' defaultValue={editingRole?.mainWorkstationId} disabled={!selectedUnit}>
+                    <SelectTrigger>
+                      <SelectValue placeholder='Selecione o posto principal (opcional)' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {environmentsInSelectedUnit.map(env => (
+                        <SelectItem key={env.id} value={env.id}>
+                          {env.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-4">
+                  <Separator />
+                  <Label className="font-semibold">Outros Postos de Trabalho Associados</Label>
+                   <ScrollArea className="h-40 rounded-md border p-4">
+                    <div className='space-y-2'>
+                       {environmentsInSelectedUnit.map((env) => (
+                          <div key={`additional-${env.id}`} className="flex items-center gap-2">
+                             <Checkbox id={`additional-${env.id}`} name={`additional-${env.id}`} defaultChecked={editingRole?.additionalWorkstationIds?.includes(env.id)} />
+                             <Label htmlFor={`additional-${env.id}`}>{env.name}</Label>
+                          </div>
+                       ))}
+                    </div>
+                  </ScrollArea>
+                </div>
+
+                <div className='space-y-2'>
+                  <Label htmlFor='description'>Descrição Sumária</Label>
+                  <Textarea
+                    id='description'
+                    name='description'
+                    defaultValue={editingRole?.description}
+                    placeholder='Descreva as principais atribuições do cargo'
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='activities'>Atividades Principais</Label>
+                  <div className='flex gap-2'>
+                    <Input
+                      id='activities'
+                      value={activityInput}
+                      onChange={(e) => setActivityInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          handleAddActivity()
+                        }
+                      }}
+                      placeholder='Digite uma atividade e tecle Enter'
+                    />
+                    <Button type='button' onClick={handleAddActivity}>
+                      Adicionar
+                    </Button>
+                  </div>
+                  <div className='flex flex-wrap gap-2 mt-2'>
+                    {formActivities.map((activity) => (
+                      <Badge
+                        key={activity}
+                        variant='secondary'
+                        className='flex items-center gap-1'
+                      >
+                        {activity}
+                        <button
+                          type='button'
+                          onClick={() => handleRemoveActivity(activity)}
+                          className='rounded-full hover:bg-background/50'
+                        >
+                          <Trash2 className='h-3 w-3' />
+                        </button>
                       </Badge>
-                    </TableCell>
-                    <TableCell className='hidden sm:table-cell'>
-                      {role.cbo}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup='true' size='icon' variant='ghost'>
-                            <MoreHorizontal className='h-4 w-4' />
-                            <span className='sr-only'>Alternar menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align='end'>
-                          <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => openEditRoleDialog(role)}>
-                            Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleArchiveRole(role)}>
-                            Arquivar
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
-        )}
-      </CardContent>
-    </Card>
+                    ))}
+                  </div>
+                </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='requirements'>
+                    Requisitos/Qualificações
+                  </Label>
+                  <Textarea
+                    id='requirements'
+                    name='requirements'
+                    defaultValue={editingRole?.requirements}
+                    placeholder='Liste competências, treinamentos obrigatórios (NRs), certificações, etc.'
+                  />
+                </div>
+                 <div className='space-y-2'>
+                  <Label htmlFor='requiredExams'>
+                    Exames Médicos (PCMSO)
+                  </Label>
+                  <Input
+                    id='requiredExams'
+                    name='requiredExams'
+                    defaultValue={editingRole?.requiredExams}
+                    placeholder='Ex: ASO, Audiometria, Acuidade Visual...'
+                  />
+                </div>
+              </div>
+            </ScrollArea>
+          </form>
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => setIsAddDialogOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button type='submit' form='add-role-form'>
+              {editingRole ? 'Salvar Alterações' : 'Salvar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

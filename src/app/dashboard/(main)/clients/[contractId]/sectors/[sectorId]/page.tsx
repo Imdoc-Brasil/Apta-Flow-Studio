@@ -21,7 +21,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { useState, useMemo, useEffect } from 'react'
-import { type Environment } from '../../environments/data'
+import { type Environment } from '@/lib/types/environment'
 import {
   Table,
   TableBody,
@@ -52,10 +52,10 @@ import {
   useDoc,
 } from '@/firebase'
 import { collection, doc, query, where } from 'firebase/firestore'
-import type { Sector } from '../data'
+import type { Sector } from '@/lib/types/sector'
 import type { Unit } from '@/lib/types/unit'
-import type { Role } from '../../roles/data'
-import type { Employee } from '../../employees/data'
+import type { Role } from '@/lib/types/role'
+import type { Employee } from '@/lib/types/employee'
 import { Badge } from '@/components/ui/badge'
 
 export default function SectorDetailsPage() {

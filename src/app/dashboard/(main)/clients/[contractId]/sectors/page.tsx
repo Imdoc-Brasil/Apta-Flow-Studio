@@ -12,8 +12,8 @@ import {
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
-  PlusCircle,
   MoreHorizontal,
+  PlusCircle,
   Search,
   Users,
   Building,
@@ -378,7 +378,7 @@ export default function SectorsPage() {
                       className='flex flex-col h-full hover:shadow-md transition-shadow cursor-pointer'
                     >
                       <CardHeader>
-                        <div className='flex items-start justify-between'>
+                        <div className='flex justify-between items-start'>
                           <CardTitle>{sector.name}</CardTitle>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
