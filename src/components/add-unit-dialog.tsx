@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -155,9 +156,9 @@ export function AddUnitDialog({
       toast({
         title: 'Erro de Conexão',
         description: 'Não foi possível conectar ao banco de dados.',
-        variant: 'destructive'
+        variant: 'destructive',
       })
-      return;
+      return
     }
     const unitsRef = collection(firestore, 'clients', contractId, 'units')
 
@@ -362,7 +363,7 @@ export function AddUnitDialog({
                 />
               </div>
               <div className='space-y-2'>
-                <Label htmlFor='description'>Descrição</Label>
+                <Label htmlFor='description'>Descrição (Opcional)</Label>
                 <Textarea
                   id='description'
                   name='description'
@@ -374,7 +375,7 @@ export function AddUnitDialog({
 
               <fieldset className='grid gap-4 rounded-lg border p-4'>
                 <legend className='-ml-1 px-1 text-sm font-medium'>
-                  Informações Gerais
+                  Informações Gerais (Opcional)
                 </legend>
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                   <div className='space-y-2'>
@@ -427,7 +428,7 @@ export function AddUnitDialog({
                 </div>
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                   <div className='space-y-2'>
-                    <Label htmlFor='add-zipCode'>CEP</Label>
+                    <Label htmlFor='add-zipCode'>CEP (Opcional)</Label>
                     <Input
                       id='add-zipCode'
                       name='add-zipCode'
@@ -437,7 +438,7 @@ export function AddUnitDialog({
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label htmlFor='add-neighborhood'>Bairro</Label>
+                    <Label htmlFor='add-neighborhood'>Bairro (Opcional)</Label>
                     <Input
                       id='add-neighborhood'
                       name='add-neighborhood'
@@ -447,7 +448,7 @@ export function AddUnitDialog({
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label htmlFor='add-city'>Cidade</Label>
+                    <Label htmlFor='add-city'>Cidade (Opcional)</Label>
                     <Input
                       id='add-city'
                       name='add-city'
@@ -457,7 +458,7 @@ export function AddUnitDialog({
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label htmlFor='add-state'>Estado</Label>
+                    <Label htmlFor='add-state'>Estado (Opcional)</Label>
                     <Input
                       id='add-state'
                       name='add-state'
@@ -467,7 +468,7 @@ export function AddUnitDialog({
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label htmlFor='add-country'>País</Label>
+                    <Label htmlFor='add-country'>País (Opcional)</Label>
                     <Input
                       id='add-country'
                       name='add-country'
@@ -476,7 +477,7 @@ export function AddUnitDialog({
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label htmlFor='add-totalArea'>Área Total</Label>
+                    <Label htmlFor='add-totalArea'>Área Total (Opcional)</Label>
                     <Input
                       id='add-totalArea'
                       name='add-totalArea'
@@ -486,7 +487,9 @@ export function AddUnitDialog({
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label htmlFor='add-builtArea'>Área Construída</Label>
+                    <Label htmlFor='add-builtArea'>
+                      Área Construída (Opcional)
+                    </Label>
                     <Input
                       id='add-builtArea'
                       name='add-builtArea'
@@ -499,7 +502,7 @@ export function AddUnitDialog({
               </fieldset>
 
               <div className='space-y-4 pt-4 border-t'>
-                <h3 className='font-medium text-lg'>Responsáveis</h3>
+                <h3 className='font-medium text-lg'>Responsáveis (Opcional)</h3>
                 <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                   <div className='space-y-2'>
                     <Label htmlFor='legalResponsible'>Responsável Legal</Label>
