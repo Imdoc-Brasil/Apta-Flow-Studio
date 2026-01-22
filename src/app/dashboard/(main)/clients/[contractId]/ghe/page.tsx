@@ -74,6 +74,7 @@ import {
   useMemoFirebase,
 } from '@/firebase'
 import { collection, getDocs } from 'firebase/firestore'
+import { useAllSectors } from '@/hooks/use-all-sectors'
 
 export default function GhePage() {
   const params = useParams()
@@ -102,35 +103,7 @@ export default function GhePage() {
   const { data: rolesData, isLoading: areRolesLoading } =
     useCollection<Role>(rolesRef)
 
-  const [allSectors, setAllSectors] = useState<Sector[]>([])
-  const [areSectorsLoading, setAreSectorsLoading] = useState(true)
-
-  useEffect(() => {
-    if (unitsData && firestore && !areUnitsLoading) {
-      setAreSectorsLoading(true);
-      const fetchSectors = async () => {
-        try {
-          const sectorsPromises = unitsData.map(unit =>
-            getDocs(collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`))
-          );
-          const sectorsSnapshots = await Promise.all(sectorsPromises);
-          const sectorsData = sectorsSnapshots.flatMap(snapshot =>
-            snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sector))
-          );
-          setAllSectors(sectorsData);
-        } catch (error) {
-          console.error("Error fetching sectors: ", error);
-          setAllSectors([]);
-        } finally {
-          setAreSectorsLoading(false);
-        }
-      };
-      fetchSectors();
-    } else if (!areUnitsLoading) {
-      setAreSectorsLoading(false);
-    }
-  }, [unitsData, firestore, contractId, areUnitsLoading]);
-
+  const { allSectors, isLoadingSectors: areSectorsLoading } = useAllSectors(contractId)
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false)

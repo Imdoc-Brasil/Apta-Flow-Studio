@@ -25,14 +25,13 @@ import {
   useCollection,
   useMemoFirebase,
 } from '@/firebase'
-import { collection, query, orderBy, getDocs } from 'firebase/firestore'
+import { collection, query } from 'firebase/firestore'
 import { differenceInDays, addYears, parseISO, isValid } from 'date-fns'
-
-import type { Employee } from '../employees/data'
-import type { Role } from '../roles/data'
-import type { Sector } from '../sectors/data'
-import type { Aso } from '../asos/page'
+import type { Employee } from '@/lib/types/employee'
+import type { Role } from '@/lib/types/role'
+import type { Aso } from '@/lib/types/health'
 import { ClientSideDateFormatter } from '@/components/client-side-date-formatter'
+import { useAllSectors } from '@/hooks/use-all-sectors'
 
 interface PeriodicControlItem {
   employeeId: string
@@ -70,38 +69,11 @@ export default function PeriodicControlPage() {
   const rolesRef = useMemoFirebase(() => (firestore ? collection(firestore, `clients/${contractId}/roles`) : null), [firestore, contractId])
   const asosRef = useMemoFirebase(() => (firestore ? collection(firestore, `clients/${contractId}/asos`) : null), [firestore, contractId])
   
-  const [allSectors, setAllSectors] = useState<Sector[]>([])
-  const [areSectorsLoading, setAreSectorsLoading] = useState(true);
+  const { allSectors, isLoadingSectors: areSectorsLoading } = useAllSectors(contractId)
 
   const { data: employees, isLoading: areEmployeesLoading } = useCollection<Employee>(employeesRef)
   const { data: roles, isLoading: areRolesLoading } = useCollection<Role>(rolesRef)
   const { data: asos, isLoading: areAsosLoading } = useCollection<Aso>(asosRef)
-
-  // This is a bit complex because sectors are nested under units. We have to fetch all of them.
-  useEffect(() => {
-    if (!firestore) return;
-    const fetchAllSectors = async () => {
-      setAreSectorsLoading(true);
-      try {
-        const unitsQuery = query(collection(firestore, `clients/${contractId}/units`));
-        const unitsSnapshot = await getDocs(unitsQuery);
-        const sectorsPromises = unitsSnapshot.docs.map(unitDoc => 
-          getDocs(collection(firestore, `clients/${contractId}/units/${unitDoc.id}/sectors`))
-        );
-        const sectorsSnapshots = await Promise.all(sectorsPromises);
-        const sectorsData = sectorsSnapshots.flatMap(snapshot =>
-          snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sector))
-        );
-        setAllSectors(sectorsData);
-      } catch (error) {
-        console.error("Error fetching sectors for periodic control:", error);
-      } finally {
-        setAreSectorsLoading(false);
-      }
-    };
-    fetchAllSectors();
-  }, [firestore, contractId]);
-
 
   const periodicData = useMemo<PeriodicControlItem[]>(() => {
     if (!employees || !roles || !asos || areSectorsLoading) return []

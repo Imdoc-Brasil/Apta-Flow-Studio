@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
@@ -61,6 +60,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem,
 } from '@/components/ui/dropdown-menu'
+import { useAllSectors } from '@/hooks/use-all-sectors'
 
 export default function EnvironmentsPage() {
   const params = useParams()
@@ -88,30 +88,10 @@ export default function EnvironmentsPage() {
   const { data: unitsData, isLoading: areUnitsLoading } =
     useCollection<Unit>(unitsRef)
 
-  const [allSectors, setAllSectors] = useState<Sector[]>([])
-  const [areSectorsLoading, setAreSectorsLoading] = useState(true)
+  const { allSectors, isLoadingSectors: areSectorsLoading } = useAllSectors(contractId)
 
-  useEffect(() => {
-    if (unitsData && firestore) {
-      setAreSectorsLoading(true)
-      const fetchSectors = async () => {
-        const sectorsPromises = unitsData.map((unit) =>
-          getDocs(
-            collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`)
-          )
-        )
-        const sectorsSnapshots = await Promise.all(sectorsPromises)
-        const sectorsData = sectorsSnapshots.flatMap((snapshot) =>
-          snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Sector))
-        )
-        setAllSectors(sectorsData)
-        setAreSectorsLoading(false)
-      }
-      fetchSectors()
-    } else if (!areUnitsLoading) {
-      setAreSectorsLoading(false)
-    }
-  }, [unitsData, firestore, contractId, areUnitsLoading])
+  const [allEnvironments, setAllEnvironments] = useState<Environment[]>([])
+  const [areEnvironmentsLoading, setAreEnvironmentsLoading] = useState(true)
 
   const unitSectors = useMemo(() => {
     if (!selectedUnit) return []
@@ -133,12 +113,20 @@ export default function EnvironmentsPage() {
     )
   }, [firestore, contractId, selectedUnit, sectorFilter])
 
-  const { data: environments, isLoading: areEnvironmentsLoading } =
+  const { data: environments, isLoading: areEnvironmentsLoadingCol } =
     useCollection<Environment>(environmentsRef)
+    
+  useEffect(() => {
+    setAreEnvironmentsLoading(areEnvironmentsLoadingCol)
+    if(environments) {
+      setAllEnvironments(environments)
+    }
+  }, [areEnvironmentsLoadingCol, environments])
+
 
   const filteredEnvironments = useMemo(() => {
-    if (!environments) return []
-    let filtered = environments
+    if (!allEnvironments) return []
+    let filtered = allEnvironments
     if (statusFilter.length > 0) {
       filtered = filtered.filter((env) => {
         const status = env.status || 'Ativo'
@@ -151,7 +139,7 @@ export default function EnvironmentsPage() {
       )
     }
     return filtered
-  }, [environments, searchTerm, statusFilter])
+  }, [allEnvironments, searchTerm, statusFilter])
 
   const getSectorName = (sectorId: string) => {
     return allSectors.find((s) => s.id === sectorId)?.name || 'N/A'
