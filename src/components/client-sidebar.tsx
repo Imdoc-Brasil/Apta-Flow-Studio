@@ -46,16 +46,17 @@ export function ClientSidebar() {
 
   const mainNavItems = [
     { href: `${basePath}`, label: 'Painel do Cliente', icon: LayoutDashboard },
-    { href: `${basePath}/tickets`, label: 'Meus Chamados', icon: Ticket },
+    { href: `${basePath}/info`, label: 'Informações', icon: Info },
+    { href: `${basePath}/tickets`, label: 'Chamados', icon: Ticket },
   ]
 
   const estruturaNavItems = [
     { href: `${basePath}/units`, label: 'Unidades', icon: Building },
-    { href: `${basePath}/sectors`, label: 'Setores', icon: HeartPulse },
+    { href: `${basePath}/sectors`, label: 'Setores', icon: Network },
     { href: `${basePath}/roles`, label: 'Cargos', icon: Briefcase },
     { href: `${basePath}/employees`, label: 'Colaboradores', icon: Users },
     { href: `${basePath}/ghe`, label: 'GHE', icon: Users },
-    { href: `${basePath}/processes`, label: 'Processos', icon: Network },
+    { href: `${basePath}/processes`, label: 'Processos', icon: Workflow },
     {
       href: `${basePath}/machines`,
       label: 'Máquinas e Equipamentos',
