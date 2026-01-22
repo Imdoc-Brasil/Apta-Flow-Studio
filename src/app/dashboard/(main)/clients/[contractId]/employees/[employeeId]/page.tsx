@@ -49,6 +49,9 @@ import type { Process } from '@/lib/types/process'
 import type { EpiDelivery } from '@/lib/types/risk'
 import type { Aso } from '@/lib/types/health'
 import { ClientSideDateFormatter } from '@/components/client-side-date-formatter'
+import { useAllSectors } from '@/hooks/use-all-sectors'
+import { useAllEnvironments } from '@/hooks/use-all-environments'
+
 
 const getStatusBadgeVariant = (status: Employee['status']) => {
   switch (status) {
@@ -91,10 +94,31 @@ export default function EmployeeDetailsPage() {
   const roleRef = useMemoFirebase(() => (firestore && employee?.roleId) ? doc(firestore, `clients/${contractId}/roles`, employee.roleId) : null, [firestore, contractId, employee]);
   const { data: role, isLoading: isRoleLoading } = useDoc<Role>(roleRef);
 
-  const [unit, setUnit] = useState<Unit | null>(null);
-  const [sector, setSector] = useState<Sector | null>(null);
-  const [mainWorkstation, setMainWorkstation] = useState<Environment | null>(null);
-  const [isHierarchyLoading, setIsHierarchyLoading] = useState(true);
+  const { allSectors, isLoadingSectors } = useAllSectors(contractId);
+  const { allEnvironments, isLoadingEnvironments } = useAllEnvironments(contractId);
+
+  const unitsRef = useMemoFirebase(() => firestore ? collection(firestore, `clients/${contractId}/units`) : null, [firestore, contractId]);
+  const { data: units, isLoading: areUnitsLoading } = useCollection<Unit>(unitsRef);
+
+  const { unit, sector, mainWorkstation } = useMemo(() => {
+    if (!role || !allSectors || !allEnvironments || !units) {
+      return { unit: null, sector: null, mainWorkstation: null };
+    }
+
+    const employeeSector = allSectors.find(s => s.id === role.sectorId);
+    if (!employeeSector) {
+      return { unit: null, sector: null, mainWorkstation: null };
+    }
+
+    const employeeUnit = units.find(u => u.id === employeeSector.unitId);
+    const employeeWorkstation = role.mainWorkstationId
+      ? allEnvironments.find(e => e.id === role.mainWorkstationId)
+      : null;
+
+    return { unit: employeeUnit || null, sector: employeeSector, mainWorkstation: employeeWorkstation || null };
+
+  }, [role, allSectors, allEnvironments, units]);
+
 
   const epiDeliveriesQuery = useMemoFirebase(
     () =>
@@ -170,41 +194,6 @@ export default function EmployeeDetailsPage() {
     return events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
   }, [scheduledTrainings, asos]);
-
-
-  useEffect(() => {
-    if (!role || !firestore || isRoleLoading) {
-      if (!isRoleLoading) setIsHierarchyLoading(false);
-      return;
-    };
-
-    setIsHierarchyLoading(true);
-    const findHierarchy = async () => {
-      // Because sectors are nested, we have to find which unit it belongs to.
-      // This is inefficient. A better model would have unitId on the role.
-      const unitsSnapshot = await getDocs(collection(firestore, `clients/${contractId}/units`));
-      for (const unitDoc of unitsSnapshot.docs) {
-        const sectorDocRef = doc(firestore, `clients/${contractId}/units/${unitDoc.id}/sectors`, role.sectorId);
-        const sectorDoc = await getDoc(sectorDocRef);
-        if (sectorDoc.exists()) {
-          setUnit({ id: unitDoc.id, ...unitDoc.data() } as Unit);
-          setSector({ id: sectorDoc.id, ...sectorDoc.data() } as Sector);
-
-          if (role.mainWorkstationId) {
-            const envDocRef = doc(firestore, `clients/${contractId}/units/${unitDoc.id}/sectors/${sectorDoc.id}/environments`, role.mainWorkstationId);
-            const envDoc = await getDoc(envDocRef);
-            if (envDoc.exists()) {
-              setMainWorkstation({ id: envDoc.id, ...envDoc.data() } as Environment);
-            }
-          }
-          break; // Found it, exit loop
-        }
-      }
-      setIsHierarchyLoading(false);
-    };
-
-    findHierarchy();
-  }, [role, firestore, contractId, isRoleLoading]);
 
 
   const episDeliveredCount = epiDeliveries?.length || 0
@@ -288,9 +277,11 @@ export default function EmployeeDetailsPage() {
     isEmployeeLoading ||
     isRoleLoading ||
     areEpiDeliveriesLoading ||
-    isHierarchyLoading ||
     areTrainingsLoading ||
-    areAsosLoading
+    areAsosLoading ||
+    isLoadingSectors ||
+    isLoadingEnvironments ||
+    areUnitsLoading;
 
   if (isLoading) {
     return (

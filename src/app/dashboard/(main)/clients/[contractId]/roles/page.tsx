@@ -72,6 +72,8 @@ import {
   updateDocumentNonBlocking,
 } from '@/firebase'
 import { collection, doc, getDocs } from 'firebase/firestore'
+import { useAllSectors } from '@/hooks/use-all-sectors'
+import { useAllEnvironments } from '@/hooks/use-all-environments'
 
 export default function RolesPage() {
   const params = useParams()
@@ -99,61 +101,10 @@ export default function RolesPage() {
     unitsRef
   )
 
-  const [allSectors, setAllSectors] = useState<Sector[]>([])
-  const [areSectorsLoading, setAreSectorsLoading] = useState(true)
-  const [allEnvironments, setAllEnvironments] = useState<Environment[]>([])
-  const [areEnvironmentsLoading, setAreEnvironmentsLoading] = useState(true)
-
-  // Fetch all sectors and environments from all units
-  useEffect(() => {
-    if (units && firestore) {
-      setAreSectorsLoading(true)
-      const fetchAllData = async () => {
-        try {
-          const sectorsPromises = units.map((unit) =>
-            getDocs(
-              collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`)
-            )
-          )
-          const sectorsSnapshots = await Promise.all(sectorsPromises)
-          const sectorsData = sectorsSnapshots.flatMap((snapshot) =>
-            snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Sector))
-          )
-          setAllSectors(sectorsData)
-          setAreSectorsLoading(false)
-
-          setAreEnvironmentsLoading(true)
-          if (sectorsData.length > 0) {
-            const environmentsPromises = sectorsData.flatMap(sector =>
-              getDocs(collection(firestore, `clients/${contractId}/units/${sector.unitId}/sectors/${sector.id}/environments`))
-            );
-
-            const environmentsSnapshots = await Promise.all(
-              environmentsPromises
-            )
-            const environmentsData = environmentsSnapshots.flatMap((snapshot) =>
-              snapshot.docs.map(
-                (doc) => ({ id: doc.id, ...doc.data() } as Environment)
-              )
-            )
-            setAllEnvironments(environmentsData)
-          } else {
-            setAllEnvironments([])
-          }
-        } catch (error) {
-          console.error("Failed to fetch sub-collections", error);
-          setAllSectors([]);
-          setAllEnvironments([]);
-        } finally {
-          setAreEnvironmentsLoading(false)
-        }
-      }
-      fetchAllData()
-    } else if (!areUnitsLoading) {
-      setAreSectorsLoading(false)
-      setAreEnvironmentsLoading(false)
-    }
-  }, [units, firestore, contractId, areUnitsLoading])
+  const { allSectors, isLoadingSectors: areSectorsLoading } =
+    useAllSectors(contractId)
+  const { allEnvironments, isLoadingEnvironments: areEnvironmentsLoading } =
+    useAllEnvironments(contractId)
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
