@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -37,13 +38,12 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { Dialog, DialogFooter } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import { format, formatDistanceToNow, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { availableLabels } from '@/app/dashboard/(main)/tickets/data'
 import { AddAttachmentDialog } from '@/components/add-attachment-dialog'
+import { AddTextElementDialog } from '@/components/add-text-element-dialog'
 
 import type {
   Ticket,
@@ -53,7 +53,7 @@ import type {
   TextElement,
   Attachment,
 } from '@/lib/types/ticket'
-import type { Staff } from '@/app/dashboard/(main)/employees/page'
+import type { Staff } from '@/lib/types/staff'
 import {
   updateDocumentNonBlocking,
   useCollection,
@@ -250,98 +250,6 @@ export function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
       return cl
     })
     updateDocumentNonBlocking(ticketDocRef, { checklists: updatedChecklists })
-  }
-
-  const handleAddTextElement = (
-    e: React.FormEvent<HTMLFormElement>,
-    type: 'question' | 'comment'
-  ) => {
-    e.preventDefault()
-    if (!firestore || !ticket.id || !user || !staffs) return
-
-    const formData = new FormData(e.currentTarget)
-    const content = formData.get('content') as string
-    if (!content) {
-      toast({
-        variant: 'destructive',
-        title: 'Conteúdo obrigatório',
-        description: 'Por favor, escreva sua mensagem.',
-      })
-      return
-    }
-
-    const staffProfile = staffs.find((s) => s.email === user.email)
-
-    const newElement: TextElement = {
-      id: `txt-${Date.now()}`,
-      type,
-      title: type === 'question' ? 'Pergunta' : 'Comentário',
-      content,
-      creator: staffProfile?.name || user?.displayName || 'Usuário',
-      creatorAvatar: staffProfile?.avatar,
-      creatorFallback: staffProfile?.fallback,
-      createdAt: new Date().toISOString(),
-    }
-
-    const ticketDocRef = doc(firestore, 'tickets', ticket.id)
-    updateDocumentNonBlocking(ticketDocRef, {
-      textElements: [...(ticket.textElements || []), newElement],
-    })
-    ;(e.target as HTMLFormElement).reset()
-  }
-
-  function AddTextElementDialog({
-    children,
-    elementType,
-    dialogTitle,
-    dialogDescription,
-  }: {
-    children: React.ReactNode
-    elementType: 'question' | 'comment'
-    dialogTitle: string
-    dialogDescription: string
-  }) {
-    const [open, setOpen] = useState(false)
-    return (
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogTrigger asChild>{children}</DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{dialogTitle}</DialogTitle>
-            <DialogDescription>{dialogDescription}</DialogDescription>
-          </DialogHeader>
-          <form
-            id={`add-text-${elementType}-form`}
-            onSubmit={(e) => {
-              handleAddTextElement(e, elementType)
-              setOpen(false)
-            }}
-          >
-            <div className='grid gap-4 py-4'>
-              <div className='space-y-2'>
-                <Label htmlFor='content'>{dialogTitle}</Label>
-                <Textarea
-                  id='content'
-                  name='content'
-                  placeholder='Escreva aqui...'
-                  required
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                type='button'
-                variant='outline'
-                onClick={() => setOpen(false)}
-              >
-                Cancelar
-              </Button>
-              <Button type='submit'>Adicionar</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-    )
   }
 
   const assignedMembers =
@@ -680,6 +588,9 @@ export function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                 elementType='question'
                 dialogTitle='Fazer Pergunta'
                 dialogDescription='Sua pergunta será enviada à nossa equipe de suporte.'
+                ticketId={ticket.id}
+                textElements={ticket.textElements || []}
+                staffs={staffs || null}
               >
                 <Button variant='secondary' className='justify-start w-full'>
                   <HelpCircle className='mr-2 h-4 w-4' /> Fazer uma Pergunta
@@ -689,6 +600,9 @@ export function TicketDetailsDialog({ ticket }: { ticket: Ticket }) {
                 elementType='comment'
                 dialogTitle='Adicionar um Comentário'
                 dialogDescription='Adicione uma atualização ou mais informações ao chamado.'
+                ticketId={ticket.id}
+                textElements={ticket.textElements || []}
+                staffs={staffs || null}
               >
                 <Button variant='secondary' className='justify-start w-full'>
                   <MessageSquare className='mr-2 h-4 w-4' /> Adicionar
