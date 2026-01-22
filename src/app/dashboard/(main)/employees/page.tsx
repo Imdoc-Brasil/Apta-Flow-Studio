@@ -113,30 +113,8 @@ import {
 } from '@/components/ui/command'
 import { cn } from '@/lib/utils'
 import { Checkbox } from '@/components/ui/checkbox'
-
-type StaffStatus = 'Ativo' | 'Licença' | 'Suspenso'
-type StaffSituation = 'Online' | 'Offline'
-
-export interface Staff {
-  id?: string
-  code: string
-  name: string
-  perfilId: string
-  assinatura: string
-  avatar: string
-  fallback: string
-  email: string
-  phone?: string
-  status: StaffStatus
-  situacao: StaffSituation
-  contractId?: string
-  clientIds?: string[]
-}
-
-interface Profile {
-  id: string
-  name: string
-}
+import type { Staff, StaffStatus } from '@/lib/types/staff'
+import type { Profile } from '@/lib/types/profile'
 
 const staffFormSchema = z.object({
   name: z

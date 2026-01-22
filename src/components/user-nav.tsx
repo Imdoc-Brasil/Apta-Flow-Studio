@@ -17,7 +17,7 @@ import { useAuth, useUser, useDoc, useFirestore, useMemoFirebase } from '@/fireb
 import { signOut } from 'firebase/auth'
 import { useRouter } from 'next/navigation'
 import { doc } from 'firebase/firestore'
-import type { Staff } from '@/app/dashboard/(main)/employees/page'
+import type { Staff } from '@/lib/types/staff'
 import { Skeleton } from './ui/skeleton'
 
 export function UserNav() {
