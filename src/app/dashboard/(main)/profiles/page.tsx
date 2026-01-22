@@ -272,14 +272,6 @@ export default function ProfilesPage() {
   }
 
   const openPermissionsDialog = (profile: Profile) => {
-    if (profile.id === 'cliente' && profile.createdBy === 'sistema') {
-      toast({
-        variant: 'destructive',
-        title: 'Não permitido',
-        description: 'Não é possível editar as permissões do perfil de Cliente.',
-      })
-      return
-    }
     setCurrentProfile(profile)
     setIsPermissionsDialogOpen(true)
   }
@@ -449,7 +441,6 @@ export default function ProfilesPage() {
                               aria-haspopup='true'
                               size='icon'
                               variant='ghost'
-                              disabled={profile.id === 'cliente' && profile.createdBy === 'sistema'}
                             >
                               <MoreHorizontal className='h-4 w-4' />
                               <span className='sr-only'>Alternar menu</span>

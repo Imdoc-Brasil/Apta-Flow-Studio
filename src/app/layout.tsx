@@ -26,13 +26,14 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang='pt-BR' suppressHydrationWarning>
+    <html lang='pt-BR'>
       <body
         className={cn(
           'min-h-screen font-body antialiased',
           fontBody.variable,
           fontHeadline.variable
         )}
+        suppressHydrationWarning={true}
       >
         <FirebaseClientProvider>{children}</FirebaseClientProvider>
         <Toaster />
