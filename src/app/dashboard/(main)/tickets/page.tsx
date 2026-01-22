@@ -16,7 +16,6 @@ import {
 import {
   SortableContext,
   verticalListSortingStrategy,
-  useSortable,
 } from '@dnd-kit/sortable'
 import {
   MoreHorizontal,
@@ -52,43 +51,9 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useTicketStore } from './tickets-store'
-import {
-  kanbanColumns,
-  type Ticket,
-  type TicketStatus,
-  availableLabels,
-  type Label as LabelType,
-} from './data'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import { Checkbox } from '@/components/ui/checkbox'
-import { useToast } from '@/hooks/use-toast'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import type { Client } from '@/lib/types/client'
+import { kanbanColumns, type Ticket, type TicketStatus } from './data'
 import {
   addDocumentNonBlocking,
   updateDocumentNonBlocking,
@@ -102,6 +67,8 @@ import { collection, doc } from 'firebase/firestore'
 import { TicketDetailsDialog } from '@/components/ticket-details-dialog'
 import { ClientSideDateFormatter } from '@/components/client-side-date-formatter'
 import { TicketCard } from '@/components/ticket-card'
+import { AddTicketDialog } from '@/components/add-ticket-dialog'
+import type { Client } from '@/lib/types/client'
 
 const statusVariant = {
   Aberto: 'default',
@@ -109,6 +76,12 @@ const statusVariant = {
   Resolvido: 'outline',
   Fechado: 'outline',
   Arquivado: 'secondary',
+} as const
+
+const priorityVariant = {
+  Alta: 'destructive',
+  Média: 'default',
+  Baixa: 'secondary',
 } as const
 
 function ClientOnly({ children }: { children: React.ReactNode }) {
@@ -191,8 +164,6 @@ export default function TicketsPage() {
   const [labelFilter, setLabelFilter] = useState<string[]>([])
   const [staffFilter, setStaffFilter] = useState<string[]>([])
   const [clientFilter, setClientFilter] = useState<string[]>([])
-  const [selectedLabels, setSelectedLabels] = useState<LabelType[]>([])
-  const [assignedTo, setAssignedTo] = useState<string[]>([])
   const currentUserEmail = user?.email || ''
 
   const filteredTickets = useMemo(() => {
@@ -218,36 +189,6 @@ export default function TicketsPage() {
       },
     })
   )
-
-  const handleAddTicket = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (!ticketsRef) return
-
-    const formData = new FormData(event.currentTarget)
-    const subject = formData.get('subject') as string
-    const clientName = formData.get('client') as string
-    const relatedEmployeeId = formData.get('relatedEmployee') as string
-
-    // We need to fetch the employees for the selected client to find the name
-    // This is a simplification; in a real app, you'd probably have this data more readily available
-    const newTicketData: Omit<Ticket, 'id'> = {
-      subject,
-      client: clientName,
-      priority: formData.get('priority') as Ticket['priority'],
-      description: (formData.get('description') as string) || '',
-      labels: selectedLabels,
-      assignedTo: assignedTo,
-      relatedEmployee: relatedEmployeeId, // For now, we save the ID
-      status: 'Aberto' as TicketStatus,
-      updated: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
-    }
-    addDocumentNonBlocking(ticketsRef, newTicketData)
-
-    setIsDialogOpen(false)
-    setSelectedLabels([])
-    setAssignedTo([])
-  }
 
   const handleDragStart = (event: DragStartEvent) => {
     if (event.active.data.current?.type === 'Ticket') {
@@ -306,7 +247,7 @@ export default function TicketsPage() {
       module: 'tickets',
       entityId: ticket.id,
       entityName: ticket.subject,
-      details: { previousStatus: ticket.status }
+      details: { previousStatus: ticket.status },
     })
     toast({
       title: 'Ticket Arquivado!',
@@ -336,217 +277,58 @@ export default function TicketsPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align='end' className='w-56'>
-              <ScrollArea className='h-72'>
-                <div className='p-1'>
-                  <DropdownMenuLabel>Filtrar por Prioridade</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {(['Alta', 'Média', 'Baixa'] as const).map((priority) => (
-                    <DropdownMenuCheckboxItem
-                      key={priority}
-                      checked={priorityFilter.includes(priority)}
-                      onCheckedChange={(checked) => {
-                        setPriorityFilter((prev) =>
-                          checked
-                            ? [...prev, priority]
-                            : prev.filter((p) => p !== priority)
-                        )
-                      }}
-                    >
-                      {priority}
-                    </DropdownMenuCheckboxItem>
-                  ))}
+              <div className='p-1'>
+                <DropdownMenuLabel>Filtrar por Prioridade</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {(['Alta', 'Média', 'Baixa'] as const).map((priority) => (
+                  <DropdownMenuCheckboxItem
+                    key={priority}
+                    checked={priorityFilter.includes(priority)}
+                    onCheckedChange={(checked) => {
+                      setPriorityFilter((prev) =>
+                        checked
+                          ? [...prev, priority]
+                          : prev.filter((p) => p !== priority)
+                      )
+                    }}
+                  >
+                    {priority}
+                  </DropdownMenuCheckboxItem>
+                ))}
 
-                  <DropdownMenuSeparator />
+                <DropdownMenuSeparator />
 
-                  <DropdownMenuLabel>Filtrar por Cliente</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {clientsData?.map((client) => (
-                    <DropdownMenuCheckboxItem
-                      key={client.id}
-                      checked={clientFilter.includes(client.name)}
-                      onCheckedChange={(checked) => {
-                        setClientFilter((prev) =>
-                          checked
-                            ? [...prev, client.name]
-                            : prev.filter((c) => c !== client.name)
-                        )
-                      }}
-                    >
-                      {client.name}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-                </div>
-              </ScrollArea>
+                <DropdownMenuLabel>Filtrar por Cliente</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {clientsData?.map((client) => (
+                  <DropdownMenuCheckboxItem
+                    key={client.id}
+                    checked={clientFilter.includes(client.name)}
+                    onCheckedChange={(checked) => {
+                      setClientFilter((prev) =>
+                        checked
+                          ? [...prev, client.name]
+                          : prev.filter((c) => c !== client.name)
+                      )
+                    }}
+                  >
+                    {client.name}
+                  </DropdownMenuCheckboxItem>
+                ))}
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size='sm' className='h-8 gap-1'>
-                <PlusCircle className='h-3.5 w-3.5' />
-                <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
-                  Novo Ticket
-                </span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className='sm:max-w-2xl'>
-              <DialogHeader>
-                <DialogTitle>Abrir Novo Ticket</DialogTitle>
-                <DialogDescription>
-                  Preencha as informações abaixo para registrar uma nova
-                  solicitação de serviço.
-                </DialogDescription>
-              </DialogHeader>
-              <form id='add-ticket-form' onSubmit={handleAddTicket}>
-                <ScrollArea className='h-[60vh]'>
-                  <div className='grid gap-4 py-4 px-6'>
-                    <div className='space-y-2'>
-                      <Label htmlFor='client'>Cliente</Label>
-                      <Select name='client' required>
-                        <SelectTrigger>
-                          <SelectValue placeholder='Selecione o cliente' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {clientsData?.map((client) => (
-                            <SelectItem key={client.id} value={client.name}>
-                              {client.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='relatedEmployee'>
-                        Colaborador Relacionado (Opcional)
-                      </Label>
-                      <Input
-                        name='relatedEmployee'
-                        placeholder='Nome do colaborador do cliente'
-                      />
-                    </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='subject'>Assunto</Label>
-                      <Input id='subject' name='subject' required />
-                    </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='priority'>Prioridade</Label>
-                      <Select name='priority' required>
-                        <SelectTrigger>
-                          <SelectValue placeholder='Selecione a prioridade' />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value='Baixa'>Baixa</SelectItem>
-                          <SelectItem value='Média'>Média</SelectItem>
-                          <SelectItem value='Alta'>Alta</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className='space-y-2'>
-                      <Label>Atribuir a</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant='outline'
-                            className='w-full justify-start font-normal'
-                          >
-                            <UserPlus className='mr-2' />
-                            {assignedTo.length > 0
-                              ? `${assignedTo.length} membro(s) selecionado(s)`
-                              : 'Selecione membros'}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className='w-80'>
-                          <div className='grid gap-4'>
-                            <h4 className='font-medium leading-none'>
-                              Membros
-                            </h4>
-                            <ScrollArea className='h-48'>
-                              <div className='flex flex-col gap-2 p-1'>
-                                {/* Staffs data needs to be available here */}
-                              </div>
-                            </ScrollArea>
-                          </div>
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                    <div className='space-y-2'>
-                      <Label>Etiquetas</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant='outline'
-                            className='w-full justify-start font-normal'
-                          >
-                            <Tag className='mr-2' />
-                            {selectedLabels.length > 0
-                              ? `${selectedLabels.length} etiqueta(s) selecionada(s)`
-                              : 'Selecione etiquetas'}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className='w-64'>
-                          <div className='grid gap-4'>
-                            <h4 className='font-medium leading-none'>
-                              Etiquetas
-                            </h4>
-                            <div className='flex flex-col gap-2'>
-                              {availableLabels.map((label) => {
-                                const isChecked = selectedLabels.some(
-                                  (l) => l.id === label.id
-                                )
-                                return (
-                                  <Label
-                                    key={label.id}
-                                    className='flex items-center gap-2 font-normal'
-                                  >
-                                    <Checkbox
-                                      checked={isChecked}
-                                      onCheckedChange={(checked) =>
-                                        setSelectedLabels((prev) =>
-                                          checked
-                                            ? [...prev, label]
-                                            : prev.filter(
-                                              (l) => l.id !== label.id
-                                            )
-                                        )
-                                      }
-                                    />
-                                    <span
-                                      className={`px-2 py-0.5 text-xs rounded-full text-white ${label.color}`}
-                                    >
-                                      {label.name}
-                                    </span>
-                                  </Label>
-                                )
-                              })}
-                            </div>
-                          </div>
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                    <div className='space-y-2'>
-                      <Label htmlFor='description'>Descrição</Label>
-                      <Textarea
-                        id='description'
-                        name='description'
-                        placeholder='Detalhe a solicitação...'
-                      />
-                    </div>
-                  </div>
-                </ScrollArea>
-              </form>
-              <DialogFooter>
-                <Button
-                  variant='outline'
-                  onClick={() => setIsDialogOpen(false)}
-                >
-                  Cancelar
-                </Button>
-                <Button type='submit' form='add-ticket-form'>
-                  Salvar Ticket
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <Button
+            size='sm'
+            className='h-8 gap-1'
+            onClick={() => setIsDialogOpen(true)}
+          >
+            <PlusCircle className='h-3.5 w-3.5' />
+            <span className='sr-only sm:not-sr-only sm:whitespace-nowrap'>
+              Novo Ticket
+            </span>
+          </Button>
         </div>
       </div>
 
@@ -637,7 +419,9 @@ export default function TicketsPage() {
                                 </Badge>
                               </TableCell>
                               <TableCell className='hidden md:table-cell'>
-                                <ClientSideDateFormatter dateString={ticket.updated} />
+                                <ClientSideDateFormatter
+                                  dateString={ticket.updated}
+                                />
                               </TableCell>
                               <TableCell>
                                 <DropdownMenu>
@@ -668,7 +452,9 @@ export default function TicketsPage() {
                                       Atribuir
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={() => handleArchiveTicket(ticket)}>
+                                    <DropdownMenuItem
+                                      onClick={() => handleArchiveTicket(ticket)}
+                                    >
                                       Arquivar Ticket
                                     </DropdownMenuItem>
                                     <DropdownMenuSeparator />
@@ -759,6 +545,12 @@ export default function TicketsPage() {
           </>
         )}
       </Tabs>
+      <AddTicketDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        clientsData={clientsData}
+        ticketsRef={ticketsRef}
+      />
     </div>
   )
 }
