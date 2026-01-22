@@ -28,9 +28,10 @@ import { useSurveyStore } from '../dashboard/(main)/clients/[contractId]/psychos
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { useSearchParams } from 'next/navigation'
-import type { Unit } from '../dashboard/(main)/clients/[contractId]/units/data'
-import type { Sector } from '../dashboard/(main)/clients/[contractId]/sectors/data'
-import type { Role } from '../dashboard/(main)/clients/[contractId]/roles/data'
+import type { Unit } from '@/lib/types/unit'
+import type { Sector } from '@/lib/types/sector'
+import type { Role } from '@/lib/types/role'
+import { useAllSectors } from '@/hooks/use-all-sectors'
 import { Loader2 } from 'lucide-react'
 
 function SurveyContent() {
@@ -51,34 +52,7 @@ function SurveyContent() {
   const { data: units, isLoading: unitsLoading } = useCollection<Unit>(unitsRef);
   const { data: roles, isLoading: rolesLoading } = useCollection<Role>(rolesRef);
 
-  const [allSectors, setAllSectors] = useState<Sector[]>([]);
-  const [sectorsLoading, setSectorsLoading] = useState(true);
-
-  useEffect(() => {
-    if (units && firestore) {
-      setSectorsLoading(true);
-      const fetchAllSectors = async () => {
-        const sectorsData: Sector[] = [];
-        for (const unit of units) {
-          const sectorsColRef = collection(firestore, `clients/${contractId}/units/${unit.id}/sectors`);
-          try {
-            const sectorsSnap = await getDocs(sectorsColRef);
-            sectorsSnap.forEach(doc => {
-              sectorsData.push({ id: doc.id, ...doc.data() } as Sector);
-            });
-          } catch (e) {
-            console.error(e);
-          }
-        }
-        setAllSectors(sectorsData);
-        setSectorsLoading(false);
-      }
-      fetchAllSectors();
-    } else if (!unitsLoading) {
-      setSectorsLoading(false);
-    }
-  }, [units, firestore, contractId, unitsLoading]);
-
+  const { allSectors, isLoadingSectors } = useAllSectors(contractId)
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -114,7 +88,7 @@ function SurveyContent() {
     setStep(3) // Go to thank you page
   }
 
-  const isLoadingDemographics = unitsLoading || sectorsLoading || rolesLoading
+  const isLoadingDemographics = unitsLoading || isLoadingSectors || rolesLoading
 
   if (step === 3) {
     return (

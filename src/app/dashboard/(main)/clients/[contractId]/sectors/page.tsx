@@ -53,9 +53,9 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import type { Unit } from '@/app/dashboard/(main)/clients/[contractId]/units/data'
+import type { Unit } from '@/lib/types/unit'
 import { Badge } from '@/components/ui/badge'
-import { type Sector } from '@/app/dashboard/(main)/clients/[contractId]/sectors/data'
+import { type Sector } from '@/lib/types/sector'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import { useToast } from '@/hooks/use-toast'
@@ -73,7 +73,8 @@ import {
   addDocumentNonBlocking,
   updateDocumentNonBlocking,
 } from '@/firebase'
-import { collection, query, where, getDocs, doc } from 'firebase/firestore'
+import { collection, doc } from 'firebase/firestore'
+import { useAllSectors } from '@/hooks/use-all-sectors'
 
 export default function SectorsPage() {
   const params = useParams()
@@ -104,42 +105,7 @@ export default function SectorsPage() {
   const { data: units, isLoading: isLoadingUnits } =
     useCollection<Unit>(unitsRef)
 
-  const [allSectors, setAllSectors] = useState<Sector[]>([])
-  const [isLoadingSectors, setIsLoadingSectors] = useState(true)
-
-  useEffect(() => {
-    if (units && firestore) {
-      setIsLoadingSectors(true)
-      const fetchAllSectors = async () => {
-        try {
-          const sectorsData: Sector[] = []
-          for (const unit of units) {
-            const sectorsColRef = collection(
-              firestore,
-              `clients/${contractId}/units/${unit.id}/sectors`
-            )
-            const sectorsSnap = await getDocs(sectorsColRef)
-            sectorsSnap.forEach((doc) => {
-              sectorsData.push({
-                id: doc.id,
-                ...doc.data(),
-                unitId: unit.id,
-              } as Sector)
-            })
-          }
-          setAllSectors(sectorsData)
-        } catch (error) {
-          console.error('Error fetching sectors:', error)
-          setAllSectors([])
-        } finally {
-          setIsLoadingSectors(false)
-        }
-      }
-      fetchAllSectors()
-    } else if (!isLoadingUnits) {
-      setIsLoadingSectors(false)
-    }
-  }, [units, firestore, contractId, isLoadingUnits])
+  const { allSectors, isLoadingSectors } = useAllSectors(contractId)
 
   const filteredSectors = useMemo(() => {
     let filtered = allSectors
