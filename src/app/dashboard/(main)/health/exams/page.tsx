@@ -17,7 +17,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { type Exam, type ExamCategory } from '../data/exams'
+import { type Exam, type ExamCategory } from '@/lib/types/exam'
+import { esocialExams } from '../data/exams'
 import { Input } from '@/components/ui/input'
 import { useState, useMemo } from 'react'
 import { Loader2, Search } from 'lucide-react'

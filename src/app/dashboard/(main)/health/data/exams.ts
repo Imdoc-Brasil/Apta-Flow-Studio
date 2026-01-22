@@ -1,16 +1,5 @@
 
-export type ExamCategory =
-  | 'Exame Clínico/Físico'
-  | 'Exame Laboratorial'
-  | 'Exame de Imagem'
-  | 'Exame Gráfico'
-  | 'Outros'
-
-export interface Exam {
-  code: string
-  name: string
-  category: ExamCategory
-}
+import type { Exam } from '@/lib/types/exam'
 
 export const esocialExams: Exam[] = [
   { code: '1', name: '1,1-dicloro-2,2-bis (P-clorofeniletileno)', category: 'Exame Laboratorial' },
