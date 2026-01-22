@@ -40,11 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  useAttendeeStore,
-  type Exam as AttendeeExam,
-} from '../../../health/queue/attendee-store'
-import { useTicketStore } from '@/app/dashboard/(main)/tickets/tickets-store'
+import { useAttendeeStore } from '../../../health/queue/attendee-store'
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import { Separator } from '@/components/ui/separator'
@@ -66,21 +62,7 @@ import type { Role } from '../roles/data'
 import type { PgrInventoryItem } from '../pgr/page'
 import type { Hazard } from '@/lib/types/risk'
 import type { Exam } from '@/lib/types/exam'
-
-export interface Aso {
-  id: string
-  employee: string
-  type: string
-  issueDate: string
-  validity: string
-  status: string
-}
-
-interface PcmsoRule {
-  id: string
-  riskId: string
-  examIds: string[]
-}
+import type { Aso, PcmsoRule, ScheduledExam } from '@/lib/types/health'
 
 export default function AsosPage() {
   const { toast } = useToast()
@@ -249,7 +231,7 @@ export default function AsosPage() {
 
     const ticketSubject = `Solicitação de ${solicitationType} para ${employee.name}`
 
-    const examsForAttendee: AttendeeExam[] = [
+    const examsForAttendee: ScheduledExam[] = [
       {
         id: `EXM-${Date.now()}-A`,
         name: 'Avaliação Clínica',

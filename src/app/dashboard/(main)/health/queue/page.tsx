@@ -50,7 +50,8 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { aptaServiceUnits } from './data'
-import { useAttendeeStore, type Attendee, type Status } from './attendee-store'
+import { useAttendeeStore } from './attendee-store'
+import type { Attendee, AttendeeStatus } from '@/lib/types/health'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase'
@@ -59,7 +60,7 @@ import type { Client } from '@/lib/types/client'
 import type { Employee } from '../../clients/[contractId]/employees/data'
 
 
-const statusLabels: Record<Status, string> = {
+const statusLabels: Record<AttendeeStatus, string> = {
   Agendado: 'Agendado',
   Aguardando: 'Aguardando',
   'Em Atendimento': 'Em Atendimento',
@@ -69,7 +70,7 @@ const statusLabels: Record<Status, string> = {
 
 type QueueType = 'medico' | 'audiometria' | 'laboratorio' | 'rx' | 'graficos'
 
-const columns: Status[] = [
+const columns: AttendeeStatus[] = [
   'Agendado',
   'Aguardando',
   'Em Atendimento',
@@ -170,7 +171,7 @@ const KanbanColumn = ({
   status,
   attendees,
 }: {
-  status: Status
+  status: AttendeeStatus
   attendees: Attendee[]
 }) => {
   const { setNodeRef } = useSortable({ id: status, data: { type: 'Column' } })
@@ -282,7 +283,7 @@ export default function QueuePage() {
     const isOverAColumn = over.data.current?.type === 'Column'
 
     if (isActiveAnAttendee && isOverAColumn) {
-      updateAttendeeStatus(activeId as string, overId as Status)
+      updateAttendeeStatus(activeId as string, overId as AttendeeStatus)
     }
   }
 

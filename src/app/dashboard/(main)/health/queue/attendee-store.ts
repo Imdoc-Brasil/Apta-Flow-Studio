@@ -1,85 +1,15 @@
+
 'use client'
 
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-
-export type Status = 'Agendado' | 'Aguardando' | 'Em Atendimento' | 'Concluído' | 'Cancelado'
-export type ExamStatus = 'Pendente' | 'Realizado'
-
-export interface Exam {
-  id: string
-  name: string
-  status: ExamStatus
-}
-
-export interface Attendee {
-  id: string
-  patientName: string
-  clientName: string
-  solicitationType: string
-  status: Status
-  exams: Exam[]
-  createdAt: string
-  checkInTime?: string
-  allExamsCompletedAt?: string
-}
-
-export const initialAttendees: Attendee[] = [
-  {
-    id: '1',
-    patientName: 'Carlos Pereira',
-    clientName: 'Innovate Inc.',
-    solicitationType: 'ASO Periódico',
-    status: 'Agendado',
-    createdAt: new Date('2024-07-22T09:00:00Z').toISOString(),
-    exams: [
-      { id: 'EXM-001-A', name: 'Avaliação Clínica', status: 'Pendente' },
-      { id: 'EXM-001-B', name: 'Audiometria', status: 'Pendente' },
-    ],
-  },
-  {
-    id: '2',
-    patientName: 'Ana Costa',
-    clientName: 'Solutions Co.',
-    solicitationType: 'Eletrocardiograma',
-    status: 'Em Atendimento',
-    createdAt: new Date('2024-07-22T09:05:00Z').toISOString(),
-    checkInTime: new Date('2024-07-22T09:10:00Z').toISOString(),
-    exams: [{ id: 'EXM-003', name: 'Eletrocardiograma', status: 'Pendente' }],
-  },
-  {
-    id: '3',
-    patientName: 'João da Silva',
-    clientName: 'Innovate Inc.',
-    solicitationType: 'Avaliação Clínica',
-    status: 'Concluído',
-    createdAt: new Date('2024-07-21T14:00:00Z').toISOString(),
-    checkInTime: new Date('2024-07-21T14:05:00Z').toISOString(),
-    allExamsCompletedAt: new Date('2024-07-21T14:30:00Z').toISOString(),
-    exams: [
-      { id: 'EXM-004', name: 'Avaliação Clínica', status: 'Realizado' },
-    ],
-  },
-  {
-    id: '4',
-    patientName: 'Maria Oliveira',
-    clientName: 'Quantum Dynamics',
-    solicitationType: 'Exames de Imagem',
-    status: 'Aguardando',
-    createdAt: new Date('2024-07-22T08:30:00Z').toISOString(),
-    checkInTime: new Date('2024-07-22T08:45:00Z').toISOString(),
-    exams: [
-      { id: 'EXM-005', name: 'Raio-X de Tórax', status: 'Pendente' },
-      { id: 'EXM-006', name: 'Raio-X de Coluna Lombar', status: 'Pendente' },
-    ],
-  },
-]
+import type { Attendee, AttendeeStatus, ExamStatus } from '@/lib/types/health'
 
 type AttendeeStore = {
   attendees: Attendee[]
   addAttendee: (newAttendeeData: Omit<Attendee, 'id' | 'status' | 'createdAt' | 'allExamsCompletedAt'>) => void
   setAttendees: (attendees: Attendee[]) => void
-  updateAttendeeStatus: (attendeeId: string, status: Status) => void
+  updateAttendeeStatus: (attendeeId: string, status: AttendeeStatus) => void
   updateExamStatus: (
     attendeeId: string,
     examId: string,
@@ -90,7 +20,7 @@ type AttendeeStore = {
 export const useAttendeeStore = create<AttendeeStore>()(
   persist(
     (set) => ({
-      attendees: initialAttendees,
+      attendees: [],
       addAttendee: (newAttendeeData) =>
         set((state) => ({
           attendees: [

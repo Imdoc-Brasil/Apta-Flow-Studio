@@ -47,7 +47,7 @@ import type { Unit } from '@/lib/types/unit'
 import type { Environment } from '@/lib/types/environment'
 import type { Process } from '@/lib/types/process'
 import type { EpiDelivery } from '@/lib/types/risk'
-import type { Aso } from '@/app/dashboard/(main)/clients/[contractId]/asos/page'
+import type { Aso } from '@/lib/types/health'
 import { ClientSideDateFormatter } from '@/components/client-side-date-formatter'
 
 const getStatusBadgeVariant = (status: Employee['status']) => {
