@@ -69,6 +69,7 @@ import { ClientSideDateFormatter } from '@/components/client-side-date-formatter
 import { TicketCard } from '@/components/ticket-card'
 import { AddTicketDialog } from '@/components/add-ticket-dialog'
 import type { Client } from '@/lib/types/client'
+import { Dialog } from '@/components/ui/dialog'
 
 const statusVariant = {
   Aberto: 'default',
