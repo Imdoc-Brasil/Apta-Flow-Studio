@@ -7,6 +7,7 @@ import {
   ArrowUpRight,
   Briefcase,
   GraduationCap,
+  Ticket,
   Users,
 } from 'lucide-react'
 
@@ -40,7 +41,7 @@ import { doc, serverTimestamp, collection, query, orderBy, limit } from 'firebas
 import { useToast } from '@/hooks/use-toast'
 import type { Client } from '@/lib/types/client'
 import type { Staff } from '@/lib/types/staff'
-import type { Ticket } from '@/lib/types/ticket'
+import type { Ticket as TicketType } from '@/lib/types/ticket'
 import type { Training } from '@/lib/types/training'
 
 export default function Dashboard() {
@@ -77,13 +78,13 @@ export default function Dashboard() {
         : null,
     [firestore]
   )
-  const { data: recentTickets, isLoading: areTicketsLoading } = useCollection<Ticket>(ticketsQuery)
+  const { data: recentTickets, isLoading: areTicketsLoading } = useCollection<TicketType>(ticketsQuery)
 
   const allTicketsQuery = useMemoFirebase(
     () => (firestore ? collection(firestore, 'tickets') : null),
     [firestore]
   )
-  const { data: allTickets, isLoading: areAllTicketsLoading } = useCollection<Ticket>(allTicketsQuery)
+  const { data: allTickets, isLoading: areAllTicketsLoading } = useCollection<TicketType>(allTicketsQuery)
   
   // Effect to add initial data if collection is empty
   useEffect(() => {
