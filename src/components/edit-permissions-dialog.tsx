@@ -1,3 +1,4 @@
+
 'use client'
 
 import React, { useState, useEffect } from 'react'
@@ -35,7 +36,10 @@ import type {
   PermissionModule,
   SubModule,
 } from '@/lib/types/profile'
-import { permissionActions, permissionModules } from '@/app/dashboard/(main)/profiles/data'
+import {
+  permissionActions,
+  permissionModules,
+} from '@/app/dashboard/(main)/profiles/data'
 import { Label } from '@/components/ui/label'
 
 interface EditPermissionsDialogProps {
@@ -52,7 +56,9 @@ export function EditPermissionsDialog({
   const { user } = useUser()
   const { toast } = useToast()
   const firestore = useFirestore()
-  const [selectedPermissions, setSelectedPermissions] = useState<Set<Permission>>(new Set())
+  const [selectedPermissions, setSelectedPermissions] = useState<
+    Set<Permission>
+  >(new Set())
 
   useEffect(() => {
     if (profile) {
@@ -66,30 +72,67 @@ export function EditPermissionsDialog({
   ) => {
     setSelectedPermissions((prev) => {
       const newSet = new Set(prev)
-      const [action, moduleId] = permission.split(':') as [Action, Module]
-      const mainModule = permissionModules.find((m: PermissionModule) => m.id === moduleId)
+      const [action, moduleId] = permission.split(':') as [Action, string]
 
-      // Cascade action to submodules
-      if (mainModule && mainModule.subModules) {
-        mainModule.subModules.forEach((subModule: SubModule) => {
-          const subPermission = `${action}:${subModule.id}` as Permission
-          if (checked) {
-            newSet.add(subPermission)
-          } else {
-            newSet.delete(subPermission)
-          }
-        })
-      }
+      const isParent = !moduleId.includes('.')
 
-      // Main action
-      if (checked) {
-        newSet.add(permission)
+      if (isParent) {
+        // Handle parent checkbox click
+        if (checked) newSet.add(permission); else newSet.delete(permission)
+
+        // Cascade to children
+        const mainModule = permissionModules.find((m) => m.id === moduleId)
+        if (mainModule?.subModules) {
+          mainModule.subModules.forEach((sub) => {
+            const subPermission = `${action}:${sub.id}` as Permission
+            if (checked) newSet.add(subPermission); else newSet.delete(subPermission)
+          })
+        }
       } else {
-        newSet.delete(permission)
-      }
+        // Handle child checkbox click
+        if (checked) newSet.add(permission); else newSet.delete(permission)
 
+        // Update parent state
+        const parentModuleId = moduleId.split('.')[0] as Module
+        const parentModule = permissionModules.find(
+          (m) => m.id === parentModuleId
+        )
+        const parentPermission = `${action}:${parentModuleId}` as Permission
+
+        if (parentModule?.subModules) {
+          const allChildrenChecked = parentModule.subModules.every((sub) =>
+            newSet.has(`${action}:${sub.id}` as Permission)
+          )
+
+          if (allChildrenChecked) {
+            newSet.add(parentPermission)
+          } else {
+            // if any child is unchecked, parent should be unchecked
+            newSet.delete(parentPermission)
+          }
+        }
+      }
       return newSet
     })
+  }
+
+  const getParentState = (
+    module: PermissionModule,
+    action: Action
+  ): boolean | 'indeterminate' => {
+    if (!module.subModules || module.subModules.length === 0) {
+      return selectedPermissions.has(`${action}:${module.id}` as Permission)
+    }
+    const subModulePermissions = module.subModules.map(
+      (sm) => `${action}:${sm.id}` as Permission
+    )
+    const checkedCount = subModulePermissions.filter((p) =>
+      selectedPermissions.has(p)
+    ).length
+
+    if (checkedCount === 0) return false
+    if (checkedCount === subModulePermissions.length) return true
+    return 'indeterminate'
   }
 
   const handlePermissionsSubmit = (
@@ -100,7 +143,9 @@ export function EditPermissionsDialog({
 
     const updatedPermissions = Array.from(selectedPermissions)
     const profileDocRef = doc(firestore, 'profiles', profile.id)
-    updateDocumentNonBlocking(profileDocRef, { permissions: updatedPermissions })
+    updateDocumentNonBlocking(profileDocRef, {
+      permissions: updatedPermissions,
+    })
 
     createAuditLog(firestore, {
       userId: user?.uid || '',
@@ -154,28 +199,36 @@ export function EditPermissionsDialog({
               {permissionModules.map((module: PermissionModule) => (
                 <AccordionItem value={module.id} key={module.id}>
                   <div className='flex items-center pr-4 border-b hover:bg-muted/50'>
-                    <AccordionTrigger className='flex-1 p-0 pl-4 font-medium text-sm hover:no-underline'>
+                    <AccordionTrigger
+                      className='flex-1 p-0 pl-4 font-medium text-sm hover:no-underline'
+                      disabled={!module.subModules}
+                    >
                       <div className='py-3'>{module.name}</div>
                     </AccordionTrigger>
                     <div className='grid grid-cols-4 gap-4 w-[300px]'>
-                      {permissionActions.map((action: { id: Action; name: string }) => (
-                        <div
-                          key={`${module.id}-${action.id}`}
-                          className='flex justify-center'
-                        >
-                          <Checkbox
-                            checked={selectedPermissions.has(
-                              `${action.id}:${module.id}`
-                            )}
-                            onCheckedChange={(checked) =>
-                              handlePermissionChange(
-                                `${action.id}:${module.id}`,
-                                !!checked
-                              )
-                            }
-                          />
-                        </div>
-                      ))}
+                      {permissionActions.map(
+                        (action: { id: Action; name: string }) => {
+                          const isChecked = getParentState(module, action.id)
+                          return (
+                            <div
+                              key={`${module.id}-${action.id}`}
+                              className='flex justify-center'
+                            >
+                              <Checkbox
+                                checked={isChecked}
+                                onCheckedChange={(checked) =>
+                                  handlePermissionChange(
+                                    `${action.id}:${module.id}`,
+                                    checked === 'indeterminate'
+                                      ? true
+                                      : !!checked
+                                  )
+                                }
+                              />
+                            </div>
+                          )
+                        }
+                      )}
                     </div>
                   </div>
                   <AccordionContent>
@@ -192,24 +245,26 @@ export function EditPermissionsDialog({
                               </Label>
                             </div>
                             <div className='grid grid-cols-4 gap-4 w-[300px]'>
-                              {permissionActions.map((action: { id: Action; name: string }) => (
-                                <div
-                                  key={`${subModule.id}-${action.id}`}
-                                  className='flex justify-center'
-                                >
-                                  <Checkbox
-                                    checked={selectedPermissions.has(
-                                      `${action.id}:${subModule.id}`
-                                    )}
-                                    onCheckedChange={(checked) =>
-                                      handlePermissionChange(
-                                        `${action.id}:${subModule.id}`,
-                                        !!checked
-                                      )
-                                    }
-                                  />
-                                </div>
-                              ))}
+                              {permissionActions.map(
+                                (action: { id: Action; name: string }) => (
+                                  <div
+                                    key={`${subModule.id}-${action.id}`}
+                                    className='flex justify-center'
+                                  >
+                                    <Checkbox
+                                      checked={selectedPermissions.has(
+                                        `${action.id}:${subModule.id}`
+                                      )}
+                                      onCheckedChange={(checked) =>
+                                        handlePermissionChange(
+                                          `${action.id}:${subModule.id}`,
+                                          !!checked
+                                        )
+                                      }
+                                    />
+                                  </div>
+                                )
+                              )}
                             </div>
                           </div>
                         ))

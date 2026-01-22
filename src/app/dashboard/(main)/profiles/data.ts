@@ -14,16 +14,34 @@ export const permissionModules: PermissionModule[] = [
       { id: 'clients.sst', name: 'Gestão de SST' },
     ],
   },
-  { id: 'staffs', name: 'Staffs' },
+  { id: 'staffs', name: 'Equipe (Staffs)' },
   { id: 'tickets', name: 'Tickets (Geral)' },
-  { id: 'services', name: 'Serviços' },
-  { id: 'risks', name: 'Riscos' },
+  {
+    id: 'services',
+    name: 'Serviços',
+    subModules: [
+      { id: 'services.catalog', name: 'Programas e Laudos' },
+      { id: 'services.advisory', name: 'Assessoria Técnica' },
+      { id: 'services.rentals', name: 'Aluguéis' },
+      { id: 'services.outsourcing', name: 'Terceirização SESMT' },
+    ],
+  },
+  {
+    id: 'risks',
+    name: 'Riscos (Catálogos Globais)',
+    subModules: [
+        { id: 'risks.hazards', name: 'Catálogo de Perigos' },
+        { id: 'risks.epc', name: 'Catálogo de EPC' },
+        { id: 'risks.epi', name: 'Catálogo de EPI' },
+    ]
+  },
   {
     id: 'health',
     name: 'Saúde',
     subModules: [
       { id: 'health.queue', name: 'Fila de Atendimento' },
       { id: 'health.exams', name: 'Catálogo de Exames' },
+      { id: 'health.clinical-exams', name: 'Config. Exames Clínicos' },
       { id: 'health.reports', name: 'Portal de Laudos' },
     ],
   },
