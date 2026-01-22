@@ -1,4 +1,3 @@
-
 'use client'
 
 import React, { useState, useEffect } from 'react'
@@ -37,6 +36,7 @@ import type {
   SubModule,
 } from '@/lib/types/profile'
 import { permissionActions, permissionModules } from '@/app/dashboard/(main)/profiles/data'
+import { Label } from '@/components/ui/label'
 
 interface EditPermissionsDialogProps {
   open: boolean
