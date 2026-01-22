@@ -79,7 +79,7 @@ export function AddUnitDialog({
   const [contractingCnae, setContractingCnae] = useState('')
   const [contractingRiskLevel, setContractingRiskLevel] = useState('')
 
-  const resetForm = () => {
+  const resetFormState = () => {
     setFormType('Unidade')
     setInheritData(false)
     setUnitName('')
@@ -105,10 +105,10 @@ export function AddUnitDialog({
     setContractingCnae('')
     setContractingRiskLevel('')
   }
-
+  
   useEffect(() => {
     if (!open) {
-      resetForm()
+      resetFormState()
     } else if (unitToEdit) {
       setFormType(unitToEdit.type)
       setUnitName(unitToEdit.name || '')
@@ -146,8 +146,10 @@ export function AddUnitDialog({
       setUnitRiskLevel(client.riskLevel || '')
       setAddress(client.address || '')
     } else if (!inheritData && !unitToEdit) {
-      resetForm()
+        // Clear fields when unchecked, but not in edit mode
+        resetFormState();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [inheritData, client, unitToEdit])
 
   const handleAddUnit = (event: React.FormEvent<HTMLFormElement>) => {
