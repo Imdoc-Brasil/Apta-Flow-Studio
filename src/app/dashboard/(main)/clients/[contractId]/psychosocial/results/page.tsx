@@ -32,12 +32,12 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart'
 import { Separator } from '@/components/ui/separator'
+import { psychosocialSurveyData } from '@/app/dashboard/(main)/clients/[contractId]/psychosocial/data'
 import {
-  psychosocialSurveyData,
   type PsychosocialSurvey,
   type PsychosocialStressorGroup,
   type PsychosocialQuestion,
-} from '@/app/dashboard/(main)/clients/[contractId]/psychosocial/data'
+} from '@/lib/types/psychosocial'
 import { Logo } from '@/components/logo'
 import { useSurveyStore } from '@/app/dashboard/(main)/clients/[contractId]/psychosocial/psychosocial-store'
 import { useMemo } from 'react'

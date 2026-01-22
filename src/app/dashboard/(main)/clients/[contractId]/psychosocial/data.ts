@@ -1,14 +1,7 @@
-
-export interface PsychosocialQuestion {
-  id: string
-  text: string
-}
-
-export interface PsychosocialStressorGroup {
-  id: string
-  name: string
-  questions: PsychosocialQuestion[]
-}
+import type {
+  PsychosocialSurvey,
+  PsychosocialStressorGroup,
+} from '@/lib/types/psychosocial'
 
 export const psychosocialSurveyData: PsychosocialStressorGroup[] = [
   {
@@ -143,17 +136,6 @@ export const psychosocialSurveyData: PsychosocialStressorGroup[] = [
     ],
   },
 ]
-
-export type SurveyStatus = 'Planejada' | 'Em Andamento' | 'Concluída'
-
-export interface PsychosocialSurvey {
-  id: string
-  creationDate: string
-  clientName: string
-  unit: string
-  circumstances: string
-  status: SurveyStatus
-}
 
 export const initialSurveys: PsychosocialSurvey[] = [
   {

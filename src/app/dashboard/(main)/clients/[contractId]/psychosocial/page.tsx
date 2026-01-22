@@ -56,7 +56,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import Link from 'next/link'
-import { type PsychosocialSurvey, type SurveyStatus } from './data'
+import {
+  type PsychosocialSurvey,
+  type SurveyStatus,
+} from '@/lib/types/psychosocial'
 import {
   Popover,
   PopoverContent,
