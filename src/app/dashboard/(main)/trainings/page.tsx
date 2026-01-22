@@ -55,21 +55,11 @@ import {
   addDocumentNonBlocking,
 } from '@/firebase'
 import { collection } from 'firebase/firestore'
-import type { TrainingModule } from './[trainingId]/page'
-
-export type TrainingModality = 'Online' | 'Presencial' | 'Híbrido'
-export type TrainingType = 'NR' | 'Uso de EPI' | 'Procedimento Interno' | 'Outro'
-
-export interface Training {
-  id: string
-  title: string
-  description: string
-  type: TrainingType
-  modality: TrainingModality
-  workload: number // in hours
-  validity: number // in months
-  modules?: TrainingModule[]
-}
+import type {
+  Training,
+  TrainingType,
+  TrainingModality,
+} from '@/lib/types/training'
 
 export default function TrainingsPage() {
   const firestore = useFirestore()

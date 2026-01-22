@@ -49,16 +49,7 @@ import {
 import { doc } from 'firebase/firestore'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import type { Training } from '../page'
-
-export type ModuleType = 'Video' | 'Texto' | 'Quiz'
-
-export interface TrainingModule {
-  id: string
-  title: string
-  type: ModuleType
-  content: string
-}
+import type { Training, TrainingModule, ModuleType } from '@/lib/types/training'
 
 const getModuleIcon = (type: ModuleType) => {
   switch (type) {

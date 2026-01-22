@@ -39,8 +39,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
-import type { Training } from '@/app/dashboard/(main)/trainings/page'
-import type { Employee } from '../employees/data'
+import type { Employee } from '@/lib/types/employee'
 import type { Staff } from '@/app/dashboard/(main)/employees/page'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
@@ -53,20 +52,12 @@ import {
 import { collection } from 'firebase/firestore'
 import { useParams } from 'next/navigation'
 import { ClientSideDateFormatter } from '@/components/client-side-date-formatter'
-
-type TrainingModality = 'Online' | 'Presencial' | 'Híbrido'
-type ScheduledStatus = 'Agendado' | 'Em Andamento' | 'Concluído' | 'Cancelado'
-
-interface ScheduledTraining {
-  id: string
-  trainingId: string
-  title: string
-  modality: TrainingModality
-  scheduledDate: string
-  status: ScheduledStatus
-  instructorId: string
-  enrolledEmployees: string[]
-}
+import type {
+  Training,
+  TrainingModality,
+  ScheduledStatus,
+  ScheduledTraining,
+} from '@/lib/types/training'
 
 export default function ClientTrainingsPage() {
   const params = useParams()
@@ -177,8 +168,12 @@ export default function ClientTrainingsPage() {
   const getInstructorName = (staffId: string) => {
     return staffs?.find((s) => s.id === staffId)?.name || 'N/A'
   }
-  
-  const isLoading = isLoadingCatalog || isLoadingScheduled || areEmployeesLoading || areStaffsLoading
+
+  const isLoading =
+    isLoadingCatalog ||
+    isLoadingScheduled ||
+    areEmployeesLoading ||
+    areStaffsLoading
 
   return (
     <>
