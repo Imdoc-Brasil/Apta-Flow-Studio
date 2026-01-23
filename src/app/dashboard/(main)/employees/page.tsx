@@ -947,9 +947,8 @@ export default function StaffsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta ação não pode ser desfeita. Isso irá excluir
-              permanentemente o membro{' '}
-              <span className='font-semibold'>{currentStaff?.name}</span>.
+              Esta ação não pode ser desfeita. Isso irá alterar o status do membro{' '}
+              <span className='font-semibold'>{currentStaff?.name}</span> para &quot;Suspenso&quot;.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -957,7 +956,7 @@ export default function StaffsPage() {
               Cancelar
             </AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteStaff}>
-              Excluir
+              Confirmar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
