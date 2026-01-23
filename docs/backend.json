@@ -637,52 +637,6 @@
         "source"
       ]
     },
-    "PsychosocialSurvey": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "PsychosocialSurvey",
-      "description": "Represents a psychosocial survey campaign for a client.",
-      "type": "object",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the survey."
-        },
-        "creationDate": {
-          "type": "string",
-          "format": "date",
-          "description": "The date the survey was created."
-        },
-        "clientName": {
-          "type": "string",
-          "description": "Name of the client the survey belongs to."
-        },
-        "unit": {
-          "type": "string",
-          "description": "The specific unit(s) targeted by the survey."
-        },
-        "circumstances": {
-          "type": "string",
-          "description": "The reason or context for the survey (e.g., Annual Evaluation 2024)."
-        },
-        "status": {
-          "type": "string",
-          "enum": [
-            "Planejada",
-            "Em Andamento",
-            "Concluída"
-          ],
-          "description": "The current status of the survey."
-        }
-      },
-      "required": [
-        "id",
-        "creationDate",
-        "clientName",
-        "unit",
-        "circumstances",
-        "status"
-      ]
-    },
     "Process": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Process",
@@ -1129,26 +1083,6 @@
             {
               "name": "userId",
               "description": "Unique identifier for the user."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/clients/{clientId}/psychosocial_surveys/{surveyId}",
-        "definition": {
-          "entityName": "PsychosocialSurvey",
-          "schema": {
-            "$ref": "#/backend/entities/PsychosocialSurvey"
-          },
-          "description": "Stores psychosocial survey campaigns for a client.",
-          "params": [
-            {
-              "name": "clientId",
-              "description": "Unique identifier for the client."
-            },
-            {
-              "name": "surveyId",
-              "description": "Unique identifier for the survey."
             }
           ]
         }
