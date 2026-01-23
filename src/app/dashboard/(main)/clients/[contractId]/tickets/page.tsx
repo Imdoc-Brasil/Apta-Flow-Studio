@@ -59,16 +59,16 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useToast } from '@/hooks/use-toast'
-import type { Client } from '../../data'
+import type { Client } from '@/lib/types/client'
 import {
   type Ticket,
-  availableLabels,
   type Label as LabelType,
   type Checklist,
   type ChecklistItem,
   type Attachment,
   type TextElement,
-} from '@/app/dashboard/(main)/tickets/tickets-store'
+} from '@/lib/types/ticket'
+import { availableLabels } from '@/app/dashboard/(main)/tickets/data'
 import { useAttendeeStore } from '@/app/dashboard/(main)/health/queue/attendee-store'
 import {
   Select,
@@ -81,7 +81,6 @@ import { format, formatDistanceToNow, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import type { Staff } from '@/lib/types/staff'
-import type { Employee } from '../employees/data'
 import { Separator } from '@/components/ui/separator'
 import { Progress } from '@/components/ui/progress'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -415,7 +414,7 @@ function TicketDetailsDialog({
                       <Progress value={progress} className='h-2' />
                       {checklist.items.map((item) => {
                         const itemAssignedMembers =
-                          staffs.filter((staff) =>
+                          staffs?.filter((staff) =>
                             item.assignedTo?.includes(staff.email)
                           ) ?? []
                         return (
