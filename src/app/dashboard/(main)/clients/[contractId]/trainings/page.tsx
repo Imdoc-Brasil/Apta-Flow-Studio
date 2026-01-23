@@ -40,7 +40,7 @@ import {
 } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 import type { Employee } from '@/lib/types/employee'
-import type { Staff } from '@/app/dashboard/(main)/employees/page'
+import type { Staff } from '@/lib/types/staff'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import {
