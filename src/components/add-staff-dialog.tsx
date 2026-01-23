@@ -56,6 +56,7 @@ import { createUserWithEmailAndPassword } from 'firebase/auth'
 import { doc } from 'firebase/firestore'
 import { useToast } from '@/hooks/use-toast'
 import type { Staff } from '@/lib/types/staff'
+import { Badge } from '@/components/ui/badge'
 
 interface AddStaffDialogProps {
   open: boolean
