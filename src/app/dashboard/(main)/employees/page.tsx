@@ -123,6 +123,22 @@ import { usePermissions } from '@/hooks/use-permissions'
 export default function StaffsPage() {
   const firestore = useFirestore()
   const { user } = useUser()
+  const { toast } = useToast()
+
+  const { staffProfile, isLoading: isStaffLoading } = useStaffProfile()
+
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isDetailOpen, setIsDetailOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [currentStaff, setCurrentStaff] = useState<Staff | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState<string[]>([
+    'Ativo',
+    'Licença',
+  ])
+  const { hasPermission, isLoading: isLoadingPermissions } = usePermissions()
+
   const staffsRef = useMemoFirebase(
     () => (firestore ? collection(firestore, 'staffs') : null),
     [firestore]
@@ -172,19 +188,6 @@ export default function StaffsPage() {
       }
     }
   }, [firestore, isLoading, staffs])
-
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [isDetailOpen, setIsDetailOpen] = useState(false)
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [currentStaff, setCurrentStaff] = useState<Staff | null>(null)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string[]>([
-    'Ativo',
-    'Licença',
-  ])
-  const { toast } = useToast()
-  const { hasPermission, isLoading: isLoadingPermissions } = usePermissions()
 
   const editForm = useForm<EditStaffFormValues>({
     resolver: zodResolver(editStaffFormSchema),
@@ -849,114 +852,115 @@ export default function StaffsPage() {
                   />
                 )
               )}
-          </form>
-        </Form>
-        <DialogFooter>
-          <Button
-            variant='outline'
-            onClick={() => setIsEditDialogOpen(false)}
-          >
-            Cancelar
-          </Button>
-          <Button type='submit' form='edit-staff-form'>
-            Salvar Alterações
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+            </form>
+          </Form>
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => setIsEditDialogOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button type='submit' form='edit-staff-form'>
+              Salvar Alterações
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-    {/* Detail Dialog */}
-    <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Detalhes do Membro</DialogTitle>
-        </DialogHeader>
-        {currentStaff && (
-          <div className='grid gap-4 py-4'>
-            <div className='flex items-center gap-4'>
-              <Avatar className='h-16 w-16'>
-                <AvatarImage
-                  src={currentStaff.avatar}
-                  alt={currentStaff.name}
-                />
-                <AvatarFallback>{currentStaff.fallback}</AvatarFallback>
-              </Avatar>
-              <div>
-                <p className='font-bold text-lg'>{currentStaff.name}</p>
-                <p className='text-sm text-muted-foreground'>
-                  {currentStaff.email}
-                </p>
-                <p className='text-sm text-muted-foreground'>
-                  {currentStaff.phone}
+      {/* Detail Dialog */}
+      <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Detalhes do Membro</DialogTitle>
+          </DialogHeader>
+          {currentStaff && (
+            <div className='grid gap-4 py-4'>
+              <div className='flex items-center gap-4'>
+                <Avatar className='h-16 w-16'>
+                  <AvatarImage
+                    src={currentStaff.avatar}
+                    alt={currentStaff.name}
+                  />
+                  <AvatarFallback>{currentStaff.fallback}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className='font-bold text-lg'>{currentStaff.name}</p>
+                  <p className='text-sm text-muted-foreground'>
+                    {currentStaff.email}
+                  </p>
+                  <p className='text-sm text-muted-foreground'>
+                    {currentStaff.phone}
+                  </p>
+                </div>
+              </div>
+              <div className='space-y-2'>
+                <p className='text-sm font-medium'>Código</p>
+                <p className='text-muted-foreground'>{currentStaff.code}</p>
+              </div>
+              <div className='space-y-2'>
+                <p className='text-sm font-medium'>Perfil</p>
+                <p className='text-muted-foreground'>
+                  {getProfileName(currentStaff.perfilId)}
                 </p>
               </div>
-            </div>
-            <div className='space-y-2'>
-              <p className='text-sm font-medium'>Código</p>
-              <p className='text-muted-foreground'>{currentStaff.code}</p>
-            </div>
-            <div className='space-y-2'>
-              <p className='text-sm font-medium'>Perfil</p>
-              <p className='text-muted-foreground'>
-                {getProfileName(currentStaff.perfilId)}
-              </p>
-            </div>
-            <div className='space-y-2'>
-              <p className='text-sm font-medium'>Assinatura</p>
-              <p className='text-muted-foreground'>
-                {currentStaff.assinatura}
-              </p>
-            </div>
-            <div className='space-y-2'>
-              <p className='text-sm font-medium'>Status</p>
-              <Badge variant={getStatusBadgeVariant(currentStaff.status)}>
-                {currentStaff.status}
-              </Badge>
-            </div>
-            <div className='space-y-2'>
-              <p className='text-sm font-medium'>Situação</p>
-              <div className='flex items-center gap-2'>
-                <span
-                  className={`h-2 w-2 rounded-full ${
-                    currentStaff.situacao === 'Online'
-                      ? 'bg-green-500'
-                      : 'bg-gray-400'
-                  }`}
-                ></span>
-                <span>{currentStaff.situacao}</span>
+              <div className='space-y-2'>
+                <p className='text-sm font-medium'>Assinatura</p>
+                <p className='text-muted-foreground'>
+                  {currentStaff.assinatura}
+                </p>
+              </div>
+              <div className='space-y-2'>
+                <p className='text-sm font-medium'>Status</p>
+                <Badge variant={getStatusBadgeVariant(currentStaff.status)}>
+                  {currentStaff.status}
+                </Badge>
+              </div>
+              <div className='space-y-2'>
+                <p className='text-sm font-medium'>Situação</p>
+                <div className='flex items-center gap-2'>
+                  <span
+                    className={`h-2 w-2 rounded-full ${
+                      currentStaff.situacao === 'Online'
+                        ? 'bg-green-500'
+                        : 'bg-gray-400'
+                    }`}
+                  ></span>
+                  <span>{currentStaff.situacao}</span>
+                </div>
               </div>
             </div>
-          </div>
-        )}
-        <DialogFooter>
-          <Button onClick={() => setIsDetailOpen(false)}>Fechar</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+          )}
+          <DialogFooter>
+            <Button onClick={() => setIsDetailOpen(false)}>Fechar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-    {/* Delete Confirmation Dialog */}
-    <AlertDialog
-      open={isDeleteDialogOpen}
-      onOpenChange={setIsDeleteDialogOpen}
-    >
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Esta ação não pode ser desfeita. Isso irá excluir
-            permanentemente o membro{' '}
-            <span className='font-semibold'>{currentStaff?.name}</span>.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel onClick={() => setCurrentStaff(null)}>
-            Cancelar
-          </AlertDialogCancel>
-          <AlertDialogAction onClick={handleDeleteStaff}>
-            Excluir
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. Isso irá excluir
+              permanentemente o membro{' '}
+              <span className='font-semibold'>{currentStaff?.name}</span>.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setCurrentStaff(null)}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteStaff}>
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }
