@@ -53,6 +53,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -90,10 +91,12 @@ import {
   addDocumentNonBlocking,
   updateDocumentNonBlocking,
   useDoc,
+  useUser,
 } from '@/firebase'
 import { collection, query, where, doc } from 'firebase/firestore'
 import { TicketDetailsDialog } from '@/components/ticket-details-dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ClientSideDateFormatter } from '@/components/client-side-date-formatter'
 
 function ClientTicketsPage() {
   const params = useParams()
@@ -103,15 +106,21 @@ function ClientTicketsPage() {
   const { user } = useUser()
   const currentUserEmail = user?.email || ''
 
+  const clientDocRef = useMemoFirebase(
+    () => (firestore ? doc(firestore, 'clients', contractId) : null),
+    [firestore, contractId]
+  )
+  const { data: client, isLoading: isClientLoading } = useDoc<Client>(clientDocRef);
+
   const ticketsRef = useMemoFirebase(
     () =>
-      firestore
+      (firestore && client)
         ? query(
             collection(firestore, 'tickets'),
-            where('client', '==', params.clientName)
+            where('client', '==', client.name)
           )
         : null,
-    [firestore, params.clientName]
+    [firestore, client]
   )
   const { data: tickets, isLoading: areTicketsLoading } =
     useCollection<Ticket>(ticketsRef)
@@ -131,7 +140,7 @@ function ClientTicketsPage() {
   }
 
   const filteredTickets = tickets || []
-  const isLoading = areTicketsLoading
+  const isLoading = areTicketsLoading || isClientLoading;
 
   return (
     <>
@@ -198,4 +207,3 @@ export default ClientTicketsPage
 // This file can be removed if ClientTicketsPage becomes a default export.
 const DummyComponent = () => null;
 
-```
