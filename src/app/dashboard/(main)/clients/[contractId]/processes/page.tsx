@@ -72,8 +72,8 @@ import {
   createAuditLog,
 } from '@/firebase'
 import { collection, doc, getDocs } from 'firebase/firestore'
-import type { Sector } from '@/app/dashboard/(main)/clients/[contractId]/sectors/data'
-import type { Role } from '@/app/dashboard/(main)/clients/[contractId]/roles/data'
+import type { Sector } from '@/lib/types/sector'
+import type { Role } from '@/lib/types/role'
 import type { Unit } from '@/lib/types/unit'
 import { suggestProcessTool, SuggestProcessToolOutput } from '@/app/actions'
 import {
