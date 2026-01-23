@@ -119,6 +119,7 @@ import {
   type EditStaffFormValues,
 } from '@/lib/schemas/staff'
 import { usePermissions } from '@/hooks/use-permissions'
+import { useStaffProfile } from '@/hooks/use-staff-profile'
 
 export default function StaffsPage() {
   const firestore = useFirestore()
@@ -964,3 +965,5 @@ export default function StaffsPage() {
     </>
   )
 }
+
+    
