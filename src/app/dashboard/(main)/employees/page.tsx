@@ -820,7 +820,7 @@ export default function StaffsPage() {
                           </Popover>
                         )}
                         <div className='mt-2 flex flex-wrap gap-1'>
-                          {(form.watch('clientIds') || []).map(
+                          {(editForm.watch('clientIds') || []).map(
                             (clientId: string) => (
                               <Badge key={clientId} variant='secondary'>
                                 {getClientName(clientId)}
@@ -830,7 +830,7 @@ export default function StaffsPage() {
                                   onClick={() =>
                                     field.onChange(
                                       (
-                                        form.watch('clientIds') || []
+                                        editForm.watch('clientIds') || []
                                       ).filter(
                                         (id: string) => id !== clientId
                                       )
@@ -957,9 +957,6 @@ export default function StaffsPage() {
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
-    </AlertDialog>
-  </>
-)
+    </>
+  )
 }
-
-    
