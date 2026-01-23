@@ -66,7 +66,7 @@ import {
   addDocumentNonBlocking,
 } from '@/firebase'
 import { collection, doc, getDocs } from 'firebase/firestore'
-import type { Staff } from '@/app/dashboard/(main)/employees/page'
+import type { Staff } from '@/lib/types/staff'
 import type { Role } from '@/lib/types/role'
 import type { Sector } from '@/lib/types/sector'
 import type { Unit } from '@/lib/types/unit'
@@ -592,3 +592,5 @@ export default function EmployeesPage() {
     </>
   )
 }
+
+    
